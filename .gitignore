@@ -1,0 +1,10 @@
+# Project exclude paths
+/.gradle/
+/annotations/build/
+/annotations/build/classes/kotlin/main/
+/compiler/build/
+/compiler/build/classes/kotlin/main/
+/gradle-plugin/build/
+/gradle-plugin/build/classes/kotlin/main/
+/sample/build/
+/sample/build/classes/kotlin/main/
