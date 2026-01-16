@@ -1,3 +1,170 @@
+# ============================================================================
+# Gradle
+# ============================================================================
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# Gradle properties (local)
+local.properties
+gradle.properties.local
+
+# ============================================================================
+# Kotlin
+# ============================================================================
+*.class
+*.log
+*.ctxt
+.mtj.tmp/
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Kotlin compiler output
+kotlin-js-store/
+
+# ============================================================================
+# IntelliJ IDEA / Android Studio
+# ============================================================================
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+# IDEA workspace and tasks
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/dictionaries
+.idea/vcs.xml
+.idea/jsLibraryMappings.xml
+.idea/shelf/
+.idea/modules/
+
+# CMake
+cmake-build-*/
+
+# File-based project format
+*.iws
+
+# mpeltonen/sbt-idea plugin
+.idea_modules/
+
+# ============================================================================
+# Eclipse
+# ============================================================================
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+# ============================================================================
+# NetBeans
+# ============================================================================
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# ============================================================================
+# VS Code
+# ============================================================================
+.vscode/
+
+# ============================================================================
+# macOS
+# ============================================================================
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# ============================================================================
+# Windows
+# ============================================================================
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# ============================================================================
+# Linux
+# ============================================================================
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ============================================================================
+# Logs and Databases
+# ============================================================================
+*.log
+*.sql
+*.sqlite
+
+# ============================================================================
+# Package Files
+# ============================================================================
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+*.war
+*.ear
+
+# ============================================================================
+# Virtual Machine Crash Logs
+# ============================================================================
+hs_err_pid*
+replay_pid*
+
+# ============================================================================
+# Compiler Plugin Specific
+# ============================================================================
+# Test compilation outputs
+**/testData/**/build/
+**/testData/**/out/
+
+# Generated sources
+**/generated/
+**/generatedJvmMain/
+
+# ============================================================================
+# Misc
+# ============================================================================
+*.swp
+*.swo
+*~
+.env
+.env.local
+.env.*.local
+.kotlin
 # Project exclude paths
 /.gradle/
 /annotations/build/
