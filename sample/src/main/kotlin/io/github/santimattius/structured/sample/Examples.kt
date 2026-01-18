@@ -46,6 +46,12 @@ import kotlinx.coroutines.launch
 // VALID EXAMPLES - These compile successfully
 // ============================================================================
 
+//fun inlineScopeCreation() {
+//    CoroutineScope(Dispatchers.IO).launch {
+//        println("This is bad!")
+//    }
+//}
+
 /**
  * OK: Parameter annotated with @StructuredScope
  */
@@ -54,7 +60,7 @@ fun loadData(@StructuredScope scope: CoroutineScope) {
     scope.launch {
         println("Loading data...")
     }
-    
+
     scope.async {
         "Async operation"
     }
@@ -66,7 +72,7 @@ fun loadData(@StructuredScope scope: CoroutineScope) {
 class ScopeHolder {
     @StructuredScope
     val managedScope: CoroutineScope = CoroutineScope(Dispatchers.Default)
-    
+
     fun usePropertyScope() {
         // This is valid: managedScope is annotated with @StructuredScope
         managedScope.launch {
@@ -80,7 +86,7 @@ class ScopeHolder {
  * Note: Use @property: use-site target to ensure annotation applies to the property
  */
 class Service(@property:StructuredScope private val scope: CoroutineScope) {
-    
+
     fun performAction() {
         // This is valid: scope property is annotated with @StructuredScope
         scope.launch {
@@ -93,7 +99,7 @@ class Service(@property:StructuredScope private val scope: CoroutineScope) {
  * Example of recommended pattern: inject a structured scope
  */
 class Repository(
-    @property:StructuredScope 
+    @property:StructuredScope
     private val ioScope: CoroutineScope
 ) {
     fun fetchData() {
@@ -101,7 +107,7 @@ class Repository(
             // Perform IO operation
         }
     }
-    
+
     suspend fun fetchDataAsync() = ioScope.async {
         // Return data
         "result"
