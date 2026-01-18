@@ -23,6 +23,7 @@ This plugin enforces structured concurrency best practices at compile time, maki
 - 🚫 **Error-level diagnostics** for critical violations
 - ⚠️ **Warning-level diagnostics** for code smells
 - 🎯 **Opt-in model** via `@StructuredScope` annotation
+- 🤖 **Framework-aware** - recognizes Android/Compose lifecycle scopes
 - 🔧 **K2/FIR compatible** - works with Kotlin 2.3+
 - 📦 **Zero runtime overhead** - all checks happen at compile time
 - 🌍 **Kotlin Multiplatform** - supports JVM, JS, Native, WASM
@@ -35,7 +36,7 @@ This plugin enforces structured concurrency best practices at compile time, maki
 |------|-------------|---------------|
 | `GLOBAL_SCOPE_USAGE` | Prohibits `GlobalScope.launch/async` | 1.1 |
 | `INLINE_COROUTINE_SCOPE` | Prohibits `CoroutineScope(Dispatchers.X).launch` | 1.3 |
-| `UNSTRUCTURED_COROUTINE_LAUNCH` | Requires `@StructuredScope` on scope | 1.1 |
+| `UNSTRUCTURED_COROUTINE_LAUNCH` | Requires structured scope | 1.1 |
 | `RUN_BLOCKING_IN_SUSPEND` | Prohibits `runBlocking` in suspend functions | 2.2 |
 | `JOB_IN_BUILDER_CONTEXT` | Prohibits `Job()`/`SupervisorJob()` in builders | 3.3, 5.1 |
 | `CANCELLATION_EXCEPTION_SUBCLASS` | Prohibits extending `CancellationException` | 5.2 |
@@ -71,7 +72,7 @@ CoroutineScope(Dispatchers.IO).launch {
 }
 ```
 
-#### 3. Structured Scope Required
+#### 3. Structured Scope Required (with Framework Support)
 
 ```kotlin
 // ❌ ERROR: Unstructured coroutine launch detected
@@ -83,7 +84,36 @@ fun processData(scope: CoroutineScope) {
 fun processData(@StructuredScope scope: CoroutineScope) {
     scope.launch { /* ... */ }  // Allowed - conscious decision
 }
+
+// ✅ OK: Framework scopes are automatically recognized
+class MyViewModel : ViewModel() {
+    fun load() {
+        viewModelScope.launch { /* ... */ }  // Lifecycle-aware
+    }
+}
+
+// ✅ OK: Android LifecycleScope
+class MyActivity : AppCompatActivity() {
+    fun load() {
+        lifecycleScope.launch { /* ... */ }  // Tied to Activity lifecycle
+    }
+}
+
+// ✅ OK: Compose scope
+@Composable
+fun MyScreen() {
+    val scope = rememberCoroutineScope()
+    scope.launch { /* ... */ }  // Tied to composition
+}
 ```
+
+**Recognized Framework Scopes (no annotation needed):**
+
+| Scope | Framework | Lifecycle |
+|-------|-----------|-----------|
+| `viewModelScope` | Android ViewModel / KMP Common ViewModel | ViewModel cleared |
+| `lifecycleScope` | Android LifecycleOwner | Lifecycle destroyed |
+| `rememberCoroutineScope()` | Jetpack Compose / Compose Multiplatform | Composition leaves |
 
 #### 4. No runBlocking in Suspend Functions
 
@@ -259,7 +289,40 @@ fun loadData(@StructuredScope scope: CoroutineScope) {
 }
 ```
 
-### Constructor Injection (Recommended)
+### Using Framework Scopes (No Annotation Needed)
+
+```kotlin
+// Android ViewModel
+class MyViewModel : ViewModel() {
+    fun load() {
+        viewModelScope.launch {
+            // Automatically recognized as structured
+        }
+    }
+}
+
+// Android Activity/Fragment
+class MyActivity : AppCompatActivity() {
+    fun load() {
+        lifecycleScope.launch {
+            // Automatically recognized as structured
+        }
+    }
+}
+
+// Jetpack Compose
+@Composable
+fun MyComposable() {
+    val scope = rememberCoroutineScope()
+    Button(onClick = { 
+        scope.launch { doSomething() }
+    }) {
+        Text("Click")
+    }
+}
+```
+
+### Constructor Injection
 
 ```kotlin
 class UserService(
@@ -270,23 +333,6 @@ class UserService(
         scope.launch {
             // Network call
         }
-    }
-}
-```
-
-### Class Properties
-
-```kotlin
-class Repository {
-    @StructuredScope
-    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    
-    fun fetchData() {
-        scope.launch { /* ... */ }
-    }
-    
-    fun cleanup() {
-        scope.cancel()
     }
 }
 ```
@@ -383,3 +429,5 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 - [Kotlin Coroutines Guide](https://kotlinlang.org/docs/coroutines-guide.html)
 - [Structured Concurrency](https://kotlinlang.org/docs/coroutines-basics.html#structured-concurrency)
+- [Android ViewModel Guide](https://developer.android.com/topic/libraries/architecture/viewmodel)
+- [Compose Side Effects](https://developer.android.com/jetpack/compose/side-effects)

@@ -42,19 +42,26 @@ object StructuredCoroutinesErrorRenderer : BaseDiagnosticRendererFactory() {
         // === Core Structured Concurrency Rules ===
         MAP.put(
             StructuredCoroutinesErrors.UNSTRUCTURED_COROUTINE_LAUNCH,
-            "Unstructured coroutine launch detected. Use a CoroutineScope annotated with @StructuredScope, " +
-                "or use structured concurrency patterns like coroutineScope { } or supervisorScope { }."
+            "Unstructured coroutine launch detected. Use one of the following structured alternatives:\n" +
+                "  • Framework scopes: viewModelScope, lifecycleScope, rememberCoroutineScope()\n" +
+                "  • Annotated scopes: @StructuredScope on your CoroutineScope parameter or property\n" +
+                "  • Structured builders: coroutineScope { }, supervisorScope { }"
         )
         MAP.put(
             StructuredCoroutinesErrors.GLOBAL_SCOPE_USAGE,
             "GlobalScope usage is not allowed. GlobalScope bypasses structured concurrency and can lead to " +
-                "resource leaks. Use a CoroutineScope annotated with @StructuredScope instead."
+                "resource leaks. Use one of the following alternatives:\n" +
+                "  • Framework scopes: viewModelScope, lifecycleScope, rememberCoroutineScope()\n" +
+                "  • Annotated scopes: @StructuredScope on your CoroutineScope\n" +
+                "  • Structured builders: coroutineScope { }, supervisorScope { }"
         )
         MAP.put(
             StructuredCoroutinesErrors.INLINE_COROUTINE_SCOPE,
-            "Inline CoroutineScope creation is not allowed. Creating a CoroutineScope inline (e.g., " +
-                "CoroutineScope(Dispatchers.IO).launch { }) bypasses structured concurrency. " +
-                "Use a CoroutineScope annotated with @StructuredScope instead."
+            "Inline CoroutineScope creation is not allowed. Creating CoroutineScope(Dispatchers.X).launch { } " +
+                "creates an orphan coroutine without lifecycle management. Use one of the following:\n" +
+                "  • Framework scopes: viewModelScope, lifecycleScope, rememberCoroutineScope()\n" +
+                "  • Annotated scopes: @StructuredScope on a properly managed CoroutineScope\n" +
+                "  • Structured builders: coroutineScope { }, supervisorScope { }"
         )
 
         // === runBlocking & Blocking Rules ===
