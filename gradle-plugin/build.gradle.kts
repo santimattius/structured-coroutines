@@ -25,3 +25,13 @@ gradlePlugin {
         }
     }
 }
+
+publishing {
+    publications {
+        // The java-gradle-plugin automatically creates publications
+        // We just need to configure the repository
+    }
+    repositories {
+        mavenLocal()
+    }
+}
