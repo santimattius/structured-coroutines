@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 // ============================================================================
 
 /*
- * ERROR: Inline CoroutineScope creation is not allowed.
+ * RULE 1 - ERROR: Inline CoroutineScope creation is not allowed.
  * Creating a scope inline bypasses structured concurrency.
  *
  * fun inlineScopeCreation() {
@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
  */
 
 /*
- * ERROR: GlobalScope usage is prohibited.
+ * RULE 2 - ERROR: GlobalScope usage is prohibited.
  * GlobalScope lives forever and can cause resource leaks.
  *
  * fun globalScopeUsage() {
@@ -33,7 +33,7 @@ import kotlinx.coroutines.launch
  */
 
 /*
- * ERROR: Unstructured scope without @StructuredScope annotation.
+ * RULE 3 - ERROR: Unstructured scope without @StructuredScope annotation.
  *
  * fun unstructuredScope(scope: CoroutineScope) {
  *     scope.launch {
@@ -42,15 +42,51 @@ import kotlinx.coroutines.launch
  * }
  */
 
+/*
+ * RULE 4 - ERROR: runBlocking inside suspend functions.
+ * (Best Practice 2.2)
+ * Blocks the current thread, defeats the purpose of coroutines.
+ *
+ * suspend fun badRunBlocking() {
+ *     runBlocking {
+ *         delay(1000)
+ *     }
+ * }
+ */
+
+/*
+ * RULE 5 - ERROR: Job()/SupervisorJob() passed directly to builders.
+ * (Best Practice 3.3 & 5.1)
+ * Breaks parent-child relationship and structured concurrency.
+ *
+ * fun badJobInLaunch(@StructuredScope scope: CoroutineScope) {
+ *     scope.launch(Job()) {           // ERROR!
+ *         println("Bad!")
+ *     }
+ *     scope.launch(SupervisorJob()) { // ERROR!
+ *         println("Also bad!")
+ *     }
+ *     withContext(SupervisorJob()) {  // ERROR!
+ *         println("Still bad!")
+ *     }
+ * }
+ */
+
+/*
+ * RULE 6 - WARNING: Dispatchers.Unconfined usage.
+ * (Best Practice 3.2)
+ * Makes execution unpredictable, avoid in production.
+ *
+ * fun badUnconfined(@StructuredScope scope: CoroutineScope) {
+ *     scope.launch(Dispatchers.Unconfined) {  // WARNING!
+ *         println("Unpredictable!")
+ *     }
+ * }
+ */
+
 // ============================================================================
 // VALID EXAMPLES - These compile successfully
 // ============================================================================
-
-//fun inlineScopeCreation() {
-//    CoroutineScope(Dispatchers.IO).launch {
-//        println("This is bad!")
-//    }
-//}
 
 /**
  * OK: Parameter annotated with @StructuredScope
@@ -92,6 +128,41 @@ class Service(@property:StructuredScope private val scope: CoroutineScope) {
         scope.launch {
             println("Performing action...")
         }
+    }
+}
+
+/**
+ * OK: Use supervisorScope { } instead of SupervisorJob() in builders
+ * (Best Practice 5.1 - Correct way)
+ */
+class SafeService(@property:StructuredScope private val scope: CoroutineScope) {
+
+    suspend fun performMultipleActions() {
+        // Correct: use supervisorScope for independent child coroutines
+        kotlinx.coroutines.supervisorScope {
+            launch {
+                println("Action 1 - if this fails, action 2 continues")
+            }
+            launch {
+                println("Action 2 - independent of action 1")
+            }
+        }
+    }
+}
+
+/**
+ * OK: Use appropriate dispatchers instead of Unconfined
+ * (Best Practice 3.2 - Correct way)
+ */
+fun useCorrectDispatchers(@StructuredScope scope: CoroutineScope) {
+    // CPU-bound work
+    scope.launch(Dispatchers.Default) {
+        println("CPU intensive work")
+    }
+
+    // IO operations
+    scope.launch(Dispatchers.IO) {
+        println("IO operation")
     }
 }
 
