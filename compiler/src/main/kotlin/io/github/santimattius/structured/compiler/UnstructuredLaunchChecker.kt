@@ -18,12 +18,14 @@ import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
 import org.jetbrains.kotlin.fir.expressions.FirPropertyAccessExpression
 import org.jetbrains.kotlin.fir.expressions.FirResolvedQualifier
+import org.jetbrains.kotlin.fir.references.toResolvedCallableSymbol
 import org.jetbrains.kotlin.fir.references.toResolvedPropertySymbol
 import org.jetbrains.kotlin.fir.references.toResolvedValueParameterSymbol
 import org.jetbrains.kotlin.fir.resolve.toClassSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirValueParameterSymbol
 import org.jetbrains.kotlin.fir.types.resolvedType
+import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -90,6 +92,29 @@ import org.jetbrains.kotlin.name.Name
  * suspend fun process() = coroutineScope {
  *     launch { doWork() }
  * }
+ *
+ * // ✅ GOOD: Android ViewModel scope (lifecycle-aware)
+ * class MyViewModel : ViewModel() {
+ *     fun load() {
+ *         viewModelScope.launch { fetchData() }
+ *     }
+ * }
+ *
+ * // ✅ GOOD: Android Lifecycle scope
+ * class MyActivity : AppCompatActivity() {
+ *     fun load() {
+ *         lifecycleScope.launch { fetchData() }
+ *     }
+ * }
+ *
+ * // ✅ GOOD: Compose rememberCoroutineScope
+ * @Composable
+ * fun MyComposable() {
+ *     val scope = rememberCoroutineScope()
+ *     Button(onClick = { scope.launch { doWork() } }) {
+ *         Text("Click")
+ *     }
+ * }
  * ```
  *
  * ## Detection Logic
@@ -128,6 +153,43 @@ class UnstructuredLaunchChecker : FirFunctionCallChecker(MppCheckerKind.Common) 
         private val STRUCTURED_SCOPE_ANNOTATION_CLASS_ID = ClassId(
             FqName("io.github.santimattius.structured.annotations"),
             Name.identifier("StructuredScope")
+        )
+
+        /**
+         * Well-known framework scope CallableIds that are verified by package origin.
+         * This ensures we only accept the real framework scopes, not user-defined properties
+         * with the same name.
+         *
+         * Format: packageName to callableName
+         */
+        private val FRAMEWORK_SCOPE_CALLABLE_IDS: Set<CallableId> = setOf(
+            // androidx.lifecycle.viewModelScope (extension on ViewModel)
+            CallableId(FqName("androidx.lifecycle"), Name.identifier("viewModelScope")),
+            // androidx.lifecycle.lifecycleScope (extension on LifecycleOwner)
+            CallableId(FqName("androidx.lifecycle"), Name.identifier("lifecycleScope")),
+            // org.koin.androidx.viewmodel (KMP Koin)
+            CallableId(FqName("org.koin.androidx.viewmodel"), Name.identifier("viewModelScope")),
+        )
+
+        /**
+         * Well-known framework scope function CallableIds (for function calls like rememberCoroutineScope()).
+         */
+        private val FRAMEWORK_SCOPE_FUNCTION_IDS: Set<CallableId> = setOf(
+            // Jetpack Compose
+            CallableId(FqName("androidx.compose.runtime"), Name.identifier("rememberCoroutineScope")),
+            // Compose Multiplatform (same package in most cases)
+            CallableId(FqName("androidx.compose.runtime"), Name.identifier("rememberCoroutineScope")),
+        )
+
+        /**
+         * Fallback: Simple name check for cases where we can't resolve the callable ID
+         * but the name matches a well-known framework scope.
+         * This is less strict but provides compatibility when the framework isn't in classpath.
+         */
+        private val FRAMEWORK_SCOPE_NAMES = setOf(
+            Name.identifier("viewModelScope"),
+            Name.identifier("lifecycleScope"),
+            Name.identifier("rememberCoroutineScope"),
         )
     }
 
@@ -213,24 +275,40 @@ class UnstructuredLaunchChecker : FirFunctionCallChecker(MppCheckerKind.Common) 
     }
 
     /**
-     * Checks if the receiver has the @StructuredScope annotation.
+     * Checks if the receiver is a structured scope.
      *
-     * This method handles various cases:
-     * - Function parameters annotated with @StructuredScope
-     * - Properties annotated with @StructuredScope
-     * - Constructor properties with @StructuredScope
+     * A scope is considered structured if:
+     * 1. It has the @StructuredScope annotation
+     * 2. It's a verified framework scope (viewModelScope, lifecycleScope, etc.) from the correct package
+     * 3. It's the result of rememberCoroutineScope() call from Compose
+     *
+     * **Important:** Framework scopes are validated by their CallableId (package + name),
+     * not just by name. This prevents false positives from user-defined properties
+     * with the same name.
      *
      * @param receiver The receiver expression
      * @param context The checker context for symbol resolution
-     * @return true if the receiver is properly annotated
+     * @return true if the receiver is a structured scope
      */
     private fun isStructuredScope(
         receiver: FirExpression,
         context: CheckerContext
     ): Boolean {
-        // Case 1: Property access (e.g., scope.launch where scope is a property or parameter)
+        // Case 1: Check for framework scope functions like rememberCoroutineScope()
+        if (receiver is FirFunctionCall) {
+            if (isFrameworkScopeFunction(receiver)) {
+                return true
+            }
+        }
+
+        // Case 2: Property access (e.g., viewModelScope.launch)
         if (receiver is FirPropertyAccessExpression) {
             val calleeReference = receiver.calleeReference
+
+            // Try to verify the property is from a known framework package
+            if (isFrameworkScopeProperty(receiver)) {
+                return true
+            }
 
             // Check if it's a value parameter (function parameter)
             val parameterSymbol = calleeReference.toResolvedValueParameterSymbol()
@@ -242,11 +320,68 @@ class UnstructuredLaunchChecker : FirFunctionCallChecker(MppCheckerKind.Common) 
             val propertySymbol = calleeReference.toResolvedPropertySymbol()
             if (propertySymbol != null) {
                 // Check annotation on the property itself
-                // Note: For primary constructor val/var properties with annotations,
-                // the annotation is available on the property symbol when using
-                // @field:, @property:, or default behavior
                 return hasStructuredScopeAnnotation(propertySymbol, context)
             }
+        }
+
+        return false
+    }
+
+    /**
+     * Checks if the function call is to a verified framework scope function.
+     * Validates both the name AND the package to ensure it's the real framework function.
+     *
+     * @param call The function call expression
+     * @return true if it's a verified framework scope function
+     */
+    private fun isFrameworkScopeFunction(call: FirFunctionCall): Boolean {
+        val symbol = call.calleeReference.toResolvedCallableSymbol() ?: return false
+        val callableId = symbol.callableId ?: return false
+
+        // Check if the callable ID matches any known framework scope function
+        if (callableId in FRAMEWORK_SCOPE_FUNCTION_IDS) {
+            return true
+        }
+
+        // Additional check: verify by package prefix for Compose functions
+        val packageName = callableId.packageName.asString()
+        val callableName = callableId.callableName
+
+        if (packageName.startsWith("androidx.compose.runtime") && callableName in FRAMEWORK_SCOPE_NAMES) {
+            return true
+        }
+
+        return false
+    }
+
+    /**
+     * Checks if the property access is to a verified framework scope property.
+     * Validates both the name AND the package to ensure it's the real framework property.
+     *
+     * @param propertyAccess The property access expression
+     * @return true if it's a verified framework scope property
+     */
+    private fun isFrameworkScopeProperty(propertyAccess: FirPropertyAccessExpression): Boolean {
+        val symbol = propertyAccess.calleeReference.toResolvedCallableSymbol() ?: return false
+        val callableId = symbol.callableId ?: return false
+
+        // Check if the callable ID matches any known framework scope property
+        if (callableId in FRAMEWORK_SCOPE_CALLABLE_IDS) {
+            return true
+        }
+
+        // Additional check: verify by package prefix for extension properties
+        // Framework scopes from androidx.lifecycle are always safe
+        val packageName = callableId.packageName.asString()
+        val callableName = callableId.callableName
+
+        if (packageName.startsWith("androidx.lifecycle") && callableName in FRAMEWORK_SCOPE_NAMES) {
+            return true
+        }
+
+        // Compose runtime scopes
+        if (packageName.startsWith("androidx.compose.runtime") && callableName in FRAMEWORK_SCOPE_NAMES) {
+            return true
         }
 
         return false
