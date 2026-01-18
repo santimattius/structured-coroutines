@@ -11,3 +11,6 @@
 /sample/build/classes/kotlin/main/
 /.kotlin/
 /build/
+
+# Local documentation (not for public repo)
+/docs-local/
