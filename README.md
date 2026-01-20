@@ -72,12 +72,26 @@ This toolkit enforces structured concurrency best practices through:
 
 ### Detekt Rules (Static Analysis)
 
+#### Compiler Plugin Rules 
+
+| Rule | Description |
+|------|-------------|
+| `GlobalScopeUsage` | Detects `GlobalScope.launch/async` |
+| `InlineCoroutineScope` | Detects `CoroutineScope(...).launch/async` and property initialization |
+| `RunBlockingInSuspend` | Detects `runBlocking` in suspend functions |
+| `DispatchersUnconfined` | Detects `Dispatchers.Unconfined` usage |
+| `CancellationExceptionSubclass` | Detects classes extending `CancellationException` |
+
+#### Detekt-Only Rules
+
 | Rule | Description |
 |------|-------------|
 | `BlockingCallInCoroutine` | Detects `Thread.sleep`, JDBC, sync HTTP in coroutines |
 | `RunBlockingWithDelayInTest` | Detects `runBlocking` + `delay` in tests |
 | `ExternalScopeLaunch` | Detects launch on external scope from suspend |
 | `LoopWithoutYield` | Detects loops without cooperation points |
+
+**Total: 9 Detekt Rules** (5 from Compiler Plugin + 4 Detekt-only)
 
 ---
 
@@ -376,6 +390,24 @@ suspend fun process(items: List<Item>) {
 
 ```yaml
 structured-coroutines:
+  # Compiler Plugin Rules 
+  GlobalScopeUsage:
+    active: true
+    severity: error
+  InlineCoroutineScope:
+    active: true
+    severity: error
+  RunBlockingInSuspend:
+    active: true
+    severity: warning
+  DispatchersUnconfined:
+    active: true
+    severity: warning
+  CancellationExceptionSubclass:
+    active: true
+    severity: error
+  
+  # Detekt-Only Rules
   BlockingCallInCoroutine:
     active: true
     excludes: ['commonMain', 'iosMain']  # JVM-only
@@ -386,6 +418,8 @@ structured-coroutines:
   LoopWithoutYield:
     active: true
 ```
+
+**📖 Ver documentación completa:** [Detekt Rules Documentation](./docs-local/DETEKT_RULES.md)
 
 ---
 
@@ -403,6 +437,11 @@ structured-coroutines/
 │   ├── SuspendInFinallyChecker
 │   └── CancellationExceptionSwallowedChecker
 ├── detekt-rules/         # Detekt Custom Rules
+│   ├── GlobalScopeUsageRule 
+│   ├── InlineCoroutineScopeRule 
+│   ├── RunBlockingInSuspendRule 
+│   ├── DispatchersUnconfinedRule 
+│   ├── CancellationExceptionSubclassRule 
 │   ├── BlockingCallInCoroutineRule
 │   ├── RunBlockingWithDelayInTestRule
 │   ├── ExternalScopeLaunchRule
@@ -453,10 +492,12 @@ structured-coroutines/
 | Approach | When | Errors | Warnings | CI |
 |----------|------|--------|----------|-----|
 | **Compiler Plugin** | Compile | ✅ 6 rules | ✅ 3 rules | ✅ |
-| **Detekt Rules** | Analysis | - | ✅ 4 rules | ✅ |
-| **Combined** | Both | ✅ 6 rules | ✅ 7 rules | ✅ |
+| **Detekt Rules** | Analysis | ✅ 3 rules | ✅ 6 rules | ✅ |
+| **Combined** | Both | ✅ 6 rules | ✅ 9 rules | ✅ |
 | Code Review | Manual | ❌ | ❌ | ❌ |
 | Runtime | Late | ❌ | ❌ | ❌ |
+
+**Nota:** Detekt Rules incluye 5 reglas del Compiler Plugin  + 4 reglas Detekt-only = **9 reglas totales**
 
 ---
 
@@ -498,3 +539,4 @@ cd structured-coroutines
 - [Structured Concurrency](https://kotlinlang.org/docs/coroutines-basics.html#structured-concurrency)
 - [Detekt Documentation](https://detekt.dev/)
 - [K2 Compiler Guide](https://kotlinlang.org/docs/k2-compiler-migration-guide.html)
+- [Detekt Rules Documentation](./docs-local/DETEKT_RULES.md) - Guía completa de uso de Detekt Rules
