@@ -105,6 +105,20 @@ object StructuredCoroutinesErrorRenderer : BaseDiagnosticRendererFactory() {
                 "Either add a separate catch(CancellationException) { throw it } clause, use ensureActive() in the " +
                 "catch block, or re-throw the exception."
         )
+
+        // === Additional Rules ===
+        MAP.put(
+            StructuredCoroutinesErrors.UNUSED_DEFERRED,
+            "async call creates a Deferred that is never awaited. This can hide exceptions and is confusing. " +
+                "Either call .await() on the Deferred, use awaitAll() for multiple deferreds, or use launch() " +
+                "if you don't need a result."
+        )
+        MAP.put(
+            StructuredCoroutinesErrors.REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE,
+            "coroutineScope contains only a single launch, which is redundant. " +
+                "If you want the function to wait for the work, execute it directly without launch. " +
+                "If you don't want to wait, use an explicit external scope to make it clear you're breaking structured concurrency."
+        )
     }
 }
 
@@ -260,6 +274,34 @@ object StructuredCoroutinesErrors {
         rendererFactory = StructuredCoroutinesErrorRenderer
     )
 
+    // ============================================================
+    // Additional Rules (Best Practice 1.2, 2.1)
+    // ============================================================
+
+    /**
+     * Error when async is called but the Deferred result is never awaited.
+     * Note: This is an ERROR because unused Deferred can hide exceptions.
+     */
+    val UNUSED_DEFERRED: KtDiagnosticFactory0 = KtDiagnosticFactory0(
+        name = "UNUSED_DEFERRED",
+        severity = Severity.ERROR,
+        defaultPositioningStrategy = SourceElementPositioningStrategies.CALL_ELEMENT_WITH_DOT,
+        psiType = KtElement::class,
+        rendererFactory = StructuredCoroutinesErrorRenderer
+    )
+
+    /**
+     * Warning when coroutineScope contains only a single launch, which is redundant.
+     * Note: This is a WARNING because it can be intentional in some cases.
+     */
+    val REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE: KtDiagnosticFactory0 = KtDiagnosticFactory0(
+        name = "REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE",
+        severity = Severity.WARNING,
+        defaultPositioningStrategy = SourceElementPositioningStrategies.CALL_ELEMENT_WITH_DOT,
+        psiType = KtElement::class,
+        rendererFactory = StructuredCoroutinesErrorRenderer
+    )
+
     init {
         // Register error messages after factories are created
         StructuredCoroutinesErrorRenderer.registerMessages()
@@ -350,4 +392,20 @@ fun DiagnosticReporter.reportCancellationExceptionSwallowed(
     context: CheckerContext
 ) {
     reportOn(expression.source, StructuredCoroutinesErrors.CANCELLATION_EXCEPTION_SWALLOWED, context)
+}
+
+// --- Additional Rules ---
+
+/**
+ * Reports an unused Deferred error.
+ */
+fun DiagnosticReporter.reportUnusedDeferred(call: FirCall, context: CheckerContext) {
+    reportOn(call.source, StructuredCoroutinesErrors.UNUSED_DEFERRED, context)
+}
+
+/**
+ * Reports a redundant launch in coroutineScope warning.
+ */
+fun DiagnosticReporter.reportRedundantLaunchInCoroutineScope(call: FirCall, context: CheckerContext) {
+    reportOn(call.source, StructuredCoroutinesErrors.REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE, context)
 }
