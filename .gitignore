@@ -14,3 +14,4 @@
 
 # Local documentation (not for public repo)
 /docs-local/
+/detekt-rules/build/

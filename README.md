@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
 [![Multiplatform](https://img.shields.io/badge/Multiplatform-Supported-orange.svg)](https://kotlinlang.org/docs/multiplatform.html)
 
-A Kotlin Compiler Plugin that enforces **structured concurrency** rules for Kotlin Coroutines, inspired by Swift Concurrency. It detects unsafe coroutine patterns at compile-time, emitting **errors** (not warnings) to prevent common pitfalls.
+A comprehensive toolkit for enforcing **structured concurrency** in Kotlin Coroutines, inspired by Swift Concurrency. It provides multiple layers of protection through compile-time checks and static analysis.
 
 ## 🎯 Purpose
 
@@ -14,8 +14,24 @@ Kotlin Coroutines are powerful but can be misused, leading to:
 - **Difficult debugging** due to scattered coroutine launches
 - **Deadlocks** from `runBlocking` in suspend functions
 - **Broken cancellation** from swallowed `CancellationException`
+- **Thread starvation** from blocking calls in coroutines
 
-This plugin enforces structured concurrency best practices at compile time, making your concurrent code safer, more predictable, and easier to maintain.
+This toolkit enforces structured concurrency best practices through:
+1. **Compiler Plugin** - Errors at compile time (K2/FIR)
+2. **Detekt Rules** - Static analysis warnings
+
+---
+
+## 📦 Toolkit Components
+
+| Module | Purpose | When |
+|--------|---------|------|
+| `compiler` | K2/FIR Compiler Plugin | Compile-time errors |
+| `detekt-rules` | Detekt custom rules | Static analysis |
+| `annotations` | `@StructuredScope` annotation | Runtime/Compile |
+| `gradle-plugin` | Gradle integration | Build configuration |
+
+---
 
 ## ✨ Features
 
@@ -23,201 +39,73 @@ This plugin enforces structured concurrency best practices at compile time, maki
 - 🚫 **Error-level diagnostics** for critical violations
 - ⚠️ **Warning-level diagnostics** for code smells
 - 🎯 **Opt-in model** via `@StructuredScope` annotation
-- 🤖 **Framework-aware** - recognizes Android/Compose lifecycle scopes
+- 🤖 **Framework-aware** - recognizes `viewModelScope`, `lifecycleScope`, `rememberCoroutineScope()`
 - 🔧 **K2/FIR compatible** - works with Kotlin 2.3+
 - 📦 **Zero runtime overhead** - all checks happen at compile time
 - 🌍 **Kotlin Multiplatform** - supports JVM, JS, Native, WASM
-
-## 🚨 Rules Enforced
-
-### Errors (Block Compilation)
-
-| Rule | Description | Best Practice |
-|------|-------------|---------------|
-| `GLOBAL_SCOPE_USAGE` | Prohibits `GlobalScope.launch/async` | 1.1 |
-| `INLINE_COROUTINE_SCOPE` | Prohibits `CoroutineScope(Dispatchers.X).launch` | 1.3 |
-| `UNSTRUCTURED_COROUTINE_LAUNCH` | Requires structured scope | 1.1 |
-| `RUN_BLOCKING_IN_SUSPEND` | Prohibits `runBlocking` in suspend functions | 2.2 |
-| `JOB_IN_BUILDER_CONTEXT` | Prohibits `Job()`/`SupervisorJob()` in builders | 3.3, 5.1 |
-| `CANCELLATION_EXCEPTION_SUBCLASS` | Prohibits extending `CancellationException` | 5.2 |
-
-### Warnings (Allow Compilation)
-
-| Rule | Description | Best Practice |
-|------|-------------|---------------|
-| `DISPATCHERS_UNCONFINED_USAGE` | Warns about `Dispatchers.Unconfined` | 3.2 |
-| `SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE` | Warns about unprotected suspend in finally | 4.3 |
-| `CANCELLATION_EXCEPTION_SWALLOWED` | Warns about `catch(Exception)` in suspend | 4.2 |
+- 🔎 **Detekt integration** - additional static analysis rules
 
 ---
 
-### Rule Details
+## 🚨 Rules Overview
 
-#### 1. No GlobalScope Usage
+### Compiler Plugin (Compile-time)
 
-```kotlin
-// ❌ ERROR: GlobalScope usage is not allowed
-GlobalScope.launch {
-    // This coroutine will run until completion regardless of
-    // any other lifecycle considerations
-}
-```
+#### Errors (Block Compilation)
 
-#### 2. No Inline CoroutineScope Creation
+| Rule | Description |
+|------|-------------|
+| `GLOBAL_SCOPE_USAGE` | Prohibits `GlobalScope.launch/async` |
+| `INLINE_COROUTINE_SCOPE` | Prohibits `CoroutineScope(Dispatchers.X).launch` |
+| `UNSTRUCTURED_COROUTINE_LAUNCH` | Requires structured scope |
+| `RUN_BLOCKING_IN_SUSPEND` | Prohibits `runBlocking` in suspend functions |
+| `JOB_IN_BUILDER_CONTEXT` | Prohibits `Job()`/`SupervisorJob()` in builders |
+| `CANCELLATION_EXCEPTION_SUBCLASS` | Prohibits extending `CancellationException` |
 
-```kotlin
-// ❌ ERROR: Inline CoroutineScope creation is not allowed
-CoroutineScope(Dispatchers.IO).launch {
-    // This coroutine has no parent scope to manage its lifecycle
-}
-```
+#### Warnings (Allow Compilation)
 
-#### 3. Structured Scope Required (with Framework Support)
+| Rule | Description |
+|------|-------------|
+| `DISPATCHERS_UNCONFINED_USAGE` | Warns about `Dispatchers.Unconfined` |
+| `SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE` | Warns about unprotected suspend in finally |
+| `CANCELLATION_EXCEPTION_SWALLOWED` | Warns about `catch(Exception)` in suspend |
 
-```kotlin
-// ❌ ERROR: Unstructured coroutine launch detected
-fun processData(scope: CoroutineScope) {
-    scope.launch { /* ... */ }  // scope is not marked as structured
-}
+### Detekt Rules (Static Analysis)
 
-// ✅ OK: Scope is explicitly marked as structured
-fun processData(@StructuredScope scope: CoroutineScope) {
-    scope.launch { /* ... */ }  // Allowed - conscious decision
-}
+#### Compiler Plugin Rules 
 
-// ✅ OK: Framework scopes are automatically recognized
-class MyViewModel : ViewModel() {
-    fun load() {
-        viewModelScope.launch { /* ... */ }  // Lifecycle-aware
-    }
-}
+| Rule | Description |
+|------|-------------|
+| `GlobalScopeUsage` | Detects `GlobalScope.launch/async` |
+| `InlineCoroutineScope` | Detects `CoroutineScope(...).launch/async` and property initialization |
+| `RunBlockingInSuspend` | Detects `runBlocking` in suspend functions |
+| `DispatchersUnconfined` | Detects `Dispatchers.Unconfined` usage |
+| `CancellationExceptionSubclass` | Detects classes extending `CancellationException` |
 
-// ✅ OK: Android LifecycleScope
-class MyActivity : AppCompatActivity() {
-    fun load() {
-        lifecycleScope.launch { /* ... */ }  // Tied to Activity lifecycle
-    }
-}
+#### Detekt-Only Rules
 
-// ✅ OK: Compose scope
-@Composable
-fun MyScreen() {
-    val scope = rememberCoroutineScope()
-    scope.launch { /* ... */ }  // Tied to composition
-}
-```
+| Rule | Description |
+|------|-------------|
+| `BlockingCallInCoroutine` | Detects `Thread.sleep`, JDBC, sync HTTP in coroutines |
+| `RunBlockingWithDelayInTest` | Detects `runBlocking` + `delay` in tests |
+| `ExternalScopeLaunch` | Detects launch on external scope from suspend |
+| `LoopWithoutYield` | Detects loops without cooperation points |
 
-**Recognized Framework Scopes (no annotation needed):**
+**Total: 9 Detekt Rules** (5 from Compiler Plugin + 4 Detekt-only)
 
-| Scope | Framework | Lifecycle |
-|-------|-----------|-----------|
-| `viewModelScope` | Android ViewModel / KMP Common ViewModel | ViewModel cleared |
-| `lifecycleScope` | Android LifecycleOwner | Lifecycle destroyed |
-| `rememberCoroutineScope()` | Jetpack Compose / Compose Multiplatform | Composition leaves |
-
-#### 4. No runBlocking in Suspend Functions
-
-```kotlin
-// ❌ ERROR: runBlocking should not be called inside a suspend function
-suspend fun fetchData() {
-    runBlocking {  // Blocks the thread, defeats coroutines purpose
-        delay(1000)
-    }
-}
-
-// ✅ OK: runBlocking in regular function (entry point)
-fun main() = runBlocking {
-    fetchData()
-}
-```
-
-#### 5. No Job/SupervisorJob in Builders
-
-```kotlin
-// ❌ ERROR: Breaks parent-child relationship
-scope.launch(Job()) { /* ... */ }
-scope.launch(SupervisorJob()) { /* ... */ }
-withContext(SupervisorJob()) { /* ... */ }
-
-// ✅ OK: Use supervisorScope for supervisor behavior
-suspend fun process() = supervisorScope {
-    launch { task1() }
-    launch { task2() }
-}
-```
-
-#### 6. No Extending CancellationException
-
-```kotlin
-// ❌ ERROR: Domain errors should not extend CancellationException
-class UserNotFoundException : CancellationException("User not found")
-
-// ✅ OK: Use regular Exception
-class UserNotFoundException : Exception("User not found")
-```
-
-#### 7. Dispatchers.Unconfined Warning
-
-```kotlin
-// ⚠️ WARNING: Unpredictable execution thread
-scope.launch(Dispatchers.Unconfined) { /* ... */ }
-
-// ✅ OK: Use appropriate dispatchers
-scope.launch(Dispatchers.Default) { /* CPU-bound */ }
-scope.launch(Dispatchers.IO) { /* IO-bound */ }
-```
-
-#### 8. Suspend in Finally Warning
-
-```kotlin
-// ⚠️ WARNING: May not execute if cancelled
-try { doWork() } finally {
-    saveToDb()  // Suspend call without NonCancellable
-}
-
-// ✅ OK: Protected with NonCancellable
-try { doWork() } finally {
-    withContext(NonCancellable) {
-        saveToDb()
-    }
-}
-```
-
-#### 9. CancellationException Swallowed Warning
-
-```kotlin
-// ⚠️ WARNING: May swallow CancellationException
-suspend fun process() {
-    try { work() }
-    catch (e: Exception) { log(e) }  // Catches CancellationException too!
-}
-
-// ✅ OK: Handle CancellationException separately
-suspend fun process() {
-    try { work() }
-    catch (e: CancellationException) { throw e }
-    catch (e: Exception) { log(e) }
-}
-```
+---
 
 ## 📦 Installation
 
-### Gradle (Kotlin DSL)
+### Compiler Plugin
 
 ```kotlin
 // settings.gradle.kts
 pluginManagement {
     repositories {
-        mavenLocal()  // For local development
-        mavenCentral()
-        gradlePluginPortal()
-    }
-}
-
-dependencyResolutionManagement {
-    repositories {
         mavenLocal()
         mavenCentral()
+        gradlePluginPortal()
     }
 }
 
@@ -233,10 +121,22 @@ dependencies {
 }
 ```
 
-### Kotlin Multiplatform
+### Detekt Rules
 
 ```kotlin
 // build.gradle.kts
+plugins {
+    id("io.gitlab.arturbosch.detekt") version "1.23.7"
+}
+
+dependencies {
+    detektPlugins("io.github.santimattius:structured-coroutines-detekt-rules:0.1.0")
+}
+```
+
+### Kotlin Multiplatform
+
+```kotlin
 plugins {
     kotlin("multiplatform") version "2.3.0"
     id("io.github.santimattius.structured-coroutines") version "0.1.0"
@@ -259,175 +159,384 @@ kotlin {
 }
 ```
 
-### Supported Platforms
-
-| Platform | Target |
-|----------|--------|
-| **JVM** | jvm |
-| **JavaScript** | js (browser, nodejs) |
-| **iOS** | iosArm64, iosX64, iosSimulatorArm64 |
-| **macOS** | macosArm64, macosX64 |
-| **watchOS** | watchosArm64, watchosX64, watchosSimulatorArm64 |
-| **tvOS** | tvosArm64, tvosX64, tvosSimulatorArm64 |
-| **Linux** | linuxX64, linuxArm64 |
-| **Windows** | mingwX64 |
-| **WASM** | wasmJs, wasmWasi |
+---
 
 ## 🔧 Usage
 
-### Basic Usage with Function Parameters
+### Using @StructuredScope Annotation
 
 ```kotlin
 import io.github.santimattius.structured.annotations.StructuredScope
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 
+// Function parameter
 fun loadData(@StructuredScope scope: CoroutineScope) {
-    scope.launch {
-        // Fetch data from network
-    }
-}
-```
-
-### Using Framework Scopes (No Annotation Needed)
-
-```kotlin
-// Android ViewModel
-class MyViewModel : ViewModel() {
-    fun load() {
-        viewModelScope.launch {
-            // Automatically recognized as structured
-        }
-    }
+    scope.launch { fetchData() }
 }
 
-// Android Activity/Fragment
-class MyActivity : AppCompatActivity() {
-    fun load() {
-        lifecycleScope.launch {
-            // Automatically recognized as structured
-        }
-    }
-}
-
-// Jetpack Compose
-@Composable
-fun MyComposable() {
-    val scope = rememberCoroutineScope()
-    Button(onClick = { 
-        scope.launch { doSomething() }
-    }) {
-        Text("Click")
-    }
-}
-```
-
-### Constructor Injection
-
-```kotlin
+// Constructor injection
 class UserService(
     @property:StructuredScope 
     private val scope: CoroutineScope
 ) {
     fun fetchUser(id: String) {
-        scope.launch {
-            // Network call
-        }
+        scope.launch { /* ... */ }
     }
 }
-```
 
-### Complete Repository Example
-
-```kotlin
-class DataRepository(
-    @property:StructuredScope private val scope: CoroutineScope
-) {
-    fun fetchData() {
-        scope.launch {
-            try {
-                val data = loadFromNetwork()
-                saveToCache(data)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                handleError(e)
-            }
-        }
-    }
+// Class property
+class Repository {
+    @StructuredScope
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     
-    suspend fun fetchMultiple() = supervisorScope {
-        val result1 = async { fetchItem1() }
-        val result2 = async { fetchItem2() }
-        listOf(result1.await(), result2.await())
+    fun fetchData() {
+        scope.launch { /* ... */ }
     }
 }
 ```
 
-## 📋 Annotation Reference
+### Framework Scopes (Auto-recognized)
 
-### @StructuredScope
-
-Marks a CoroutineScope as intentionally structured.
+The plugin automatically recognizes lifecycle-aware framework scopes:
 
 ```kotlin
-@Target(
-    AnnotationTarget.VALUE_PARAMETER,
-    AnnotationTarget.PROPERTY,
-    AnnotationTarget.FIELD
-)
-@Retention(AnnotationRetention.BINARY)
-annotation class StructuredScope
+// ✅ Android ViewModel - No annotation needed
+class MyViewModel : ViewModel() {
+    fun load() {
+        viewModelScope.launch { fetchData() }
+    }
+}
+
+// ✅ Android Activity/Fragment - No annotation needed
+class MyActivity : AppCompatActivity() {
+    fun load() {
+        lifecycleScope.launch { fetchData() }
+    }
+}
+
+// ✅ Jetpack Compose - No annotation needed
+@Composable
+fun MyScreen() {
+    val scope = rememberCoroutineScope()
+    Button(onClick = { scope.launch { doWork() } }) {
+        Text("Click")
+    }
+}
 ```
 
-**Use-site targets:**
+**Recognized Framework Scopes:**
 
-| Syntax | Target | Use Case |
-|--------|--------|----------|
-| `@StructuredScope val x` | Parameter | Won't work for property access |
-| `@property:StructuredScope val x` | Property | ✅ Recommended |
-| `@field:StructuredScope val x` | Backing field | Java interop |
+| Scope | Framework | Package |
+|-------|-----------|---------|
+| `viewModelScope` | Android ViewModel | `androidx.lifecycle` |
+| `lifecycleScope` | Android Lifecycle | `androidx.lifecycle` |
+| `rememberCoroutineScope()` | Jetpack Compose | `androidx.compose.runtime` |
+
+---
+
+## 📋 Rule Details
+
+### 1. No GlobalScope
+
+```kotlin
+// ❌ ERROR
+GlobalScope.launch { work() }
+
+// ✅ Use framework scopes or @StructuredScope
+viewModelScope.launch { work() }
+```
+
+### 2. No Inline CoroutineScope
+
+```kotlin
+// ❌ ERROR
+CoroutineScope(Dispatchers.IO).launch { work() }
+
+// ✅ Use a managed scope
+class MyClass(@StructuredScope private val scope: CoroutineScope) {
+    fun doWork() = scope.launch { work() }
+}
+```
+
+### 3. No runBlocking in Suspend
+
+```kotlin
+// ❌ ERROR
+suspend fun bad() {
+    runBlocking { delay(1000) }
+}
+
+// ✅ Just suspend
+suspend fun good() {
+    delay(1000)
+}
+```
+
+### 4. No Job/SupervisorJob in Builders
+
+```kotlin
+// ❌ ERROR
+scope.launch(Job()) { work() }
+scope.launch(SupervisorJob()) { work() }
+
+// ✅ Use supervisorScope
+suspend fun process() = supervisorScope {
+    launch { task1() }
+    launch { task2() }
+}
+```
+
+### 5. No Extending CancellationException
+
+```kotlin
+// ❌ ERROR
+class MyError : CancellationException()
+
+// ✅ Use regular Exception
+class MyError : Exception()
+```
+
+### 6. Handle CancellationException
+
+```kotlin
+// ⚠️ WARNING - May swallow cancellation
+suspend fun bad() {
+    try { work() }
+    catch (e: Exception) { log(e) }
+}
+
+// ✅ Handle separately
+suspend fun good() {
+    try { work() }
+    catch (e: CancellationException) { throw e }
+    catch (e: Exception) { log(e) }
+}
+```
+
+### 7. NonCancellable in Finally
+
+```kotlin
+// ⚠️ WARNING - May not execute
+try { work() } finally {
+    saveToDb()  // Suspend call
+}
+
+// ✅ Protected
+try { work() } finally {
+    withContext(NonCancellable) {
+        saveToDb()
+    }
+}
+```
+
+### 8. No Blocking Calls (Detekt)
+
+```kotlin
+// ⚠️ Detekt WARNING
+scope.launch {
+    Thread.sleep(1000)      // Blocking!
+    inputStream.read()       // Blocking I/O!
+    jdbcStatement.execute()  // Blocking JDBC!
+}
+
+// ✅ Use non-blocking alternatives
+scope.launch {
+    delay(1000)
+    withContext(Dispatchers.IO) {
+        inputStream.read()
+    }
+}
+```
+
+### 9. Use runTest in Tests (Detekt)
+
+```kotlin
+// ⚠️ Detekt WARNING - Slow test
+@Test
+fun test() = runBlocking {
+    delay(1000)  // Real delay!
+}
+
+// ✅ Fast test with virtual time
+@Test
+fun test() = runTest {
+    delay(1000)  // Instant!
+}
+```
+
+### 10. Cooperation Points in Loops (Detekt)
+
+```kotlin
+// ⚠️ Detekt WARNING - Can't cancel
+suspend fun process(items: List<Item>) {
+    for (item in items) {
+        heavyWork(item)  // No cooperation point
+    }
+}
+
+// ✅ Can be cancelled
+suspend fun process(items: List<Item>) {
+    for (item in items) {
+        ensureActive()
+        heavyWork(item)
+    }
+}
+```
+
+---
+
+## ⚙️ Configuration
+
+### Detekt (detekt.yml)
+
+```yaml
+structured-coroutines:
+  # Compiler Plugin Rules 
+  GlobalScopeUsage:
+    active: true
+    severity: error
+  InlineCoroutineScope:
+    active: true
+    severity: error
+  RunBlockingInSuspend:
+    active: true
+    severity: warning
+  DispatchersUnconfined:
+    active: true
+    severity: warning
+  CancellationExceptionSubclass:
+    active: true
+    severity: error
+  
+  # Detekt-Only Rules
+  BlockingCallInCoroutine:
+    active: true
+    excludes: ['commonMain', 'iosMain']  # JVM-only
+  RunBlockingWithDelayInTest:
+    active: true
+  ExternalScopeLaunch:
+    active: true
+  LoopWithoutYield:
+    active: true
+```
+
+**📖 Ver documentación completa:** [Detekt Rules Documentation](./docs-local/DETEKT_RULES.md)
+
+---
 
 ## 🏗️ Architecture
 
 ```
 structured-coroutines/
-├── annotations/          # Multiplatform annotations
-├── compiler/             # K2/FIR Compiler Plugin (7 checkers)
-├── gradle-plugin/        # Gradle Plugin Integration
-└── sample/               # Usage examples
+├── annotations/          # @StructuredScope (Multiplatform)
+├── compiler/             # K2/FIR Compiler Plugin
+│   ├── UnstructuredLaunchChecker
+│   ├── RunBlockingInSuspendChecker
+│   ├── JobInBuilderContextChecker
+│   ├── DispatchersUnconfinedChecker
+│   ├── CancellationExceptionSubclassChecker
+│   ├── SuspendInFinallyChecker
+│   └── CancellationExceptionSwallowedChecker
+├── detekt-rules/         # Detekt Custom Rules
+│   ├── GlobalScopeUsageRule 
+│   ├── InlineCoroutineScopeRule 
+│   ├── RunBlockingInSuspendRule 
+│   ├── DispatchersUnconfinedRule 
+│   ├── CancellationExceptionSubclassRule 
+│   ├── BlockingCallInCoroutineRule
+│   ├── RunBlockingWithDelayInTestRule
+│   ├── ExternalScopeLaunchRule
+│   └── LoopWithoutYieldRule
+├── gradle-plugin/        # Gradle Integration
+└── sample/               # Examples
 ```
+
+---
+
+## 🌍 Supported Platforms
+
+| Platform | Compiler Plugin | Detekt Rules |
+|----------|-----------------|--------------|
+| JVM | ✅ | ✅ |
+| Android | ✅ | ✅ |
+| iOS | ✅ | ✅ |
+| macOS | ✅ | ✅ |
+| watchOS | ✅ | ✅ |
+| tvOS | ✅ | ✅ |
+| Linux | ✅ | ✅ |
+| Windows | ✅ | ✅ |
+| JS | ✅ | ✅ |
+| WASM | ✅ | ✅ |
+
+---
 
 ## 🧪 Testing
 
 ```bash
-# Publish to Maven Local first
+# Publish locally
 ./gradlew publishToMavenLocal
 
-# Run tests
+# Run compiler plugin tests
 ./gradlew :compiler:test
+
+# Run detekt rules tests
+./gradlew :detekt-rules:test
+
+# Run all tests
+./gradlew test
 ```
+
+---
+
+## 🆚 Comparison
+
+| Approach | When | Errors | Warnings | CI |
+|----------|------|--------|----------|-----|
+| **Compiler Plugin** | Compile | ✅ 6 rules | ✅ 3 rules | ✅ |
+| **Detekt Rules** | Analysis | ✅ 3 rules | ✅ 6 rules | ✅ |
+| **Combined** | Both | ✅ 6 rules | ✅ 9 rules | ✅ |
+| Code Review | Manual | ❌ | ❌ | ❌ |
+| Runtime | Late | ❌ | ❌ | ❌ |
+
+**Nota:** Detekt Rules incluye 5 reglas del Compiler Plugin  + 4 reglas Detekt-only = **9 reglas totales**
+
+---
 
 ## 🛠️ Requirements
 
-- Kotlin 2.3.0 or higher
-- K2 compiler (enabled by default in Kotlin 2.3+)
+- Kotlin 2.3.0+
+- K2 compiler (default in Kotlin 2.3+)
 - Gradle 8.0+
+- Detekt 1.23+ (for detekt-rules)
+
+---
 
 ## 📄 License
 
 ```
 Copyright 2024 Santiago Mattiauda
+
 Licensed under the Apache License, Version 2.0
 ```
 
+---
+
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions welcome! Please submit a Pull Request.
 
-## 📚 Related Resources
+```bash
+git clone https://github.com/santimattius/structured-coroutines.git
+cd structured-coroutines
+./gradlew publishToMavenLocal
+./gradlew test
+```
+
+---
+
+## 📚 Resources
 
 - [Kotlin Coroutines Guide](https://kotlinlang.org/docs/coroutines-guide.html)
 - [Structured Concurrency](https://kotlinlang.org/docs/coroutines-basics.html#structured-concurrency)
-- [Android ViewModel Guide](https://developer.android.com/topic/libraries/architecture/viewmodel)
-- [Compose Side Effects](https://developer.android.com/jetpack/compose/side-effects)
+- [Detekt Documentation](https://detekt.dev/)
+- [K2 Compiler Guide](https://kotlinlang.org/docs/k2-compiler-migration-guide.html)
+- [Detekt Rules Documentation](./docs-local/DETEKT_RULES.md) - Guía completa de uso de Detekt Rules
