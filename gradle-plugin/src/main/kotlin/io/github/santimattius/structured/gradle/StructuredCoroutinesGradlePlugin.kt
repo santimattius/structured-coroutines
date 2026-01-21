@@ -34,8 +34,24 @@ class StructuredCoroutinesGradlePlugin : KotlinCompilerPluginSupportPlugin {
     }
 
     override fun apply(target: Project) {
-        // No additional configuration needed
-        // The compiler plugin is automatically applied by KotlinCompilerPluginSupportPlugin
+        // Register the extension with default values
+        val extension = target.extensions.create(
+            "structuredCoroutines",
+            StructuredCoroutinesExtension::class.java
+        )
+        
+        // Set default severities
+        extension.globalScopeUsage.convention("error")
+        extension.inlineCoroutineScope.convention("error")
+        extension.unstructuredLaunch.convention("error")
+        extension.runBlockingInSuspend.convention("error")
+        extension.jobInBuilderContext.convention("error")
+        extension.dispatchersUnconfined.convention("warning")
+        extension.cancellationExceptionSubclass.convention("error")
+        extension.suspendInFinally.convention("warning")
+        extension.cancellationExceptionSwallowed.convention("warning")
+        extension.unusedDeferred.convention("error")
+        extension.redundantLaunchInCoroutineScope.convention("warning")
     }
 
     override fun isApplicable(kotlinCompilation: KotlinCompilation<*>): Boolean {
@@ -54,7 +70,25 @@ class StructuredCoroutinesGradlePlugin : KotlinCompilerPluginSupportPlugin {
     }
 
     override fun applyToCompilation(kotlinCompilation: KotlinCompilation<*>): Provider<List<SubpluginOption>> {
-        // No additional options needed for the MVP
-        return kotlinCompilation.target.project.provider { emptyList() }
+        return kotlinCompilation.target.project.provider {
+            val extension = kotlinCompilation.target.project.extensions.findByType(
+                StructuredCoroutinesExtension::class.java
+            ) ?: return@provider emptyList()
+            
+            buildList {
+                // Pass severity configuration for each rule
+                add(SubpluginOption("globalScopeUsage", extension.globalScopeUsage.get()))
+                add(SubpluginOption("inlineCoroutineScope", extension.inlineCoroutineScope.get()))
+                add(SubpluginOption("unstructuredLaunch", extension.unstructuredLaunch.get()))
+                add(SubpluginOption("runBlockingInSuspend", extension.runBlockingInSuspend.get()))
+                add(SubpluginOption("jobInBuilderContext", extension.jobInBuilderContext.get()))
+                add(SubpluginOption("dispatchersUnconfined", extension.dispatchersUnconfined.get()))
+                add(SubpluginOption("cancellationExceptionSubclass", extension.cancellationExceptionSubclass.get()))
+                add(SubpluginOption("suspendInFinally", extension.suspendInFinally.get()))
+                add(SubpluginOption("cancellationExceptionSwallowed", extension.cancellationExceptionSwallowed.get()))
+                add(SubpluginOption("unusedDeferred", extension.unusedDeferred.get()))
+                add(SubpluginOption("redundantLaunchInCoroutineScope", extension.redundantLaunchInCoroutineScope.get()))
+            }
+        }
     }
 }

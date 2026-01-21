@@ -34,6 +34,8 @@ import org.jetbrains.kotlin.fir.analysis.extensions.FirAdditionalCheckersExtensi
  * | [RunBlockingInSuspendChecker] | runBlocking in suspend functions | ERROR |
  * | [JobInBuilderContextChecker] | Job()/SupervisorJob() in builder context | ERROR |
  * | [DispatchersUnconfinedChecker] | Dispatchers.Unconfined usage | WARNING |
+ * | [UnusedDeferredChecker] | async without await | ERROR |
+ * | [RedundantLaunchInCoroutineScopeChecker] | redundant launch in coroutineScope | WARNING |
  *
  * ### Try Expression Checkers ([ExpressionCheckers.tryExpressionCheckers])
  *
@@ -60,11 +62,20 @@ import org.jetbrains.kotlin.fir.analysis.extensions.FirAdditionalCheckersExtensi
  * - **4.2** Handle CancellationException in catch blocks
  * - **4.3** Use NonCancellable for suspend calls in finally
  * - **5.2** Don't extend CancellationException
+ * - **1.2** Use await() with async calls
+ * - **2.1** Avoid redundant launch in coroutineScope
  *
  * @param session The FIR session used for symbol resolution
  * @see FirAdditionalCheckersExtension
  */
 class ScoroutinesCallCheckerExtension(session: FirSession) : FirAdditionalCheckersExtension(session) {
+    
+    /**
+     * Gets the plugin configuration from the holder.
+     */
+    private val configuration: PluginConfiguration
+        get() = PluginConfigurationHolder.configuration
+            ?: PluginConfiguration(org.jetbrains.kotlin.config.CompilerConfiguration())
 
     /**
      * Expression checkers analyze FIR expressions (function calls, try expressions, etc.)
@@ -83,7 +94,11 @@ class ScoroutinesCallCheckerExtension(session: FirSession) : FirAdditionalChecke
             // Rule 5: Job()/SupervisorJob() in builder context (Best Practice 3.3 & 5.1)
             JobInBuilderContextChecker(),
             // Rule 6: Dispatchers.Unconfined usage (Best Practice 3.2)
-            DispatchersUnconfinedChecker()
+            DispatchersUnconfinedChecker(),
+            // Rule 10: async without await (Best Practice 1.2)
+            UnusedDeferredChecker(),
+            // Rule 11: redundant launch in coroutineScope (Best Practice 2.1)
+            RedundantLaunchInCoroutineScopeChecker()
         )
 
         /**

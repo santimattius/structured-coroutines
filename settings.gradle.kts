@@ -4,5 +4,6 @@ include(
     ":annotations",
     ":compiler",
     ":gradle-plugin",
+    ":detekt-rules",
     ":sample"
 )

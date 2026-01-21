@@ -48,7 +48,9 @@ import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
  * @see StructuredCoroutinesCompilerPluginRegistrar
  * @see <a href="https://kotlinlang.org/docs/fir-api-reference.html">FIR API Reference</a>
  */
-class ScoroutinesFirExtensionRegistrar : FirExtensionRegistrar() {
+class ScoroutinesFirExtensionRegistrar(
+    private val configuration: PluginConfiguration
+) : FirExtensionRegistrar() {
 
     /**
      * Configures the plugin by registering all FIR extensions.
@@ -58,7 +60,18 @@ class ScoroutinesFirExtensionRegistrar : FirExtensionRegistrar() {
      * and emit diagnostics for any violations found.
      */
     override fun ExtensionRegistrarContext.configurePlugin() {
+        // Store configuration globally so checkers can access it
+        PluginConfigurationHolder.configuration = configuration
+        
         // Register the main checker extension that provides all coroutine analysis
         +::ScoroutinesCallCheckerExtension
     }
+}
+
+/**
+ * Holder for plugin configuration to make it accessible to checkers.
+ * This is a workaround since FIR extensions are created via function references.
+ */
+object PluginConfigurationHolder {
+    var configuration: PluginConfiguration? = null
 }

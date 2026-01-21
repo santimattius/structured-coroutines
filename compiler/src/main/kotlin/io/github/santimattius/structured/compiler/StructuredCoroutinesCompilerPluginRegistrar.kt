@@ -97,6 +97,7 @@ class StructuredCoroutinesCompilerPluginRegistrar : CompilerPluginRegistrar() {
      * @param configuration The compiler configuration
      */
     override fun ExtensionStorage.registerExtensions(configuration: CompilerConfiguration) {
-        FirExtensionRegistrarAdapter.registerExtension(ScoroutinesFirExtensionRegistrar())
+        val pluginConfig = PluginConfiguration(configuration)
+        FirExtensionRegistrarAdapter.registerExtension(ScoroutinesFirExtensionRegistrar(pluginConfig))
     }
 }
