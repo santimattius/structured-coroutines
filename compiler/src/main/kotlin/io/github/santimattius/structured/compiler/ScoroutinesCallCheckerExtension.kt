@@ -69,6 +69,13 @@ import org.jetbrains.kotlin.fir.analysis.extensions.FirAdditionalCheckersExtensi
  * @see FirAdditionalCheckersExtension
  */
 class ScoroutinesCallCheckerExtension(session: FirSession) : FirAdditionalCheckersExtension(session) {
+    
+    /**
+     * Gets the plugin configuration from the holder.
+     */
+    private val configuration: PluginConfiguration
+        get() = PluginConfigurationHolder.configuration
+            ?: PluginConfiguration(org.jetbrains.kotlin.config.CompilerConfiguration())
 
     /**
      * Expression checkers analyze FIR expressions (function calls, try expressions, etc.)

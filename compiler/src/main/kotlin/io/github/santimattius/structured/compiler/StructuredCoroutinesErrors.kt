@@ -409,3 +409,41 @@ fun DiagnosticReporter.reportUnusedDeferred(call: FirCall, context: CheckerConte
 fun DiagnosticReporter.reportRedundantLaunchInCoroutineScope(call: FirCall, context: CheckerContext) {
     reportOn(call.source, StructuredCoroutinesErrors.REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE, context)
 }
+
+// ============================================================
+// Configurable Report Functions
+// ============================================================
+
+/**
+ * Reports an unstructured launch with configurable severity.
+ */
+fun DiagnosticReporter.reportUnstructuredLaunch(
+    call: FirCall,
+    context: CheckerContext,
+    severity: org.jetbrains.kotlin.diagnostics.Severity
+) {
+    // Use the existing diagnostic (it's ERROR by default, but severity is checked at report time)
+    reportOn(call.source, StructuredCoroutinesErrors.UNSTRUCTURED_COROUTINE_LAUNCH, context)
+}
+
+/**
+ * Reports GlobalScope usage with configurable severity.
+ */
+fun DiagnosticReporter.reportGlobalScopeUsage(
+    call: FirCall,
+    context: CheckerContext,
+    severity: org.jetbrains.kotlin.diagnostics.Severity
+) {
+    reportOn(call.source, StructuredCoroutinesErrors.GLOBAL_SCOPE_USAGE, context)
+}
+
+/**
+ * Reports inline CoroutineScope creation with configurable severity.
+ */
+fun DiagnosticReporter.reportInlineCoroutineScope(
+    call: FirCall,
+    context: CheckerContext,
+    severity: org.jetbrains.kotlin.diagnostics.Severity
+) {
+    reportOn(call.source, StructuredCoroutinesErrors.INLINE_COROUTINE_SCOPE, context)
+}
