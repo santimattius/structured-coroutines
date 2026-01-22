@@ -5,5 +5,6 @@ include(
     ":compiler",
     ":gradle-plugin",
     ":detekt-rules",
+    ":lint-rules",
     ":sample"
 )
