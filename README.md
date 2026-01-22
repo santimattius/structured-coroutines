@@ -19,6 +19,7 @@ Kotlin Coroutines are powerful but can be misused, leading to:
 This toolkit enforces structured concurrency best practices through:
 1. **Compiler Plugin** - Errors at compile time (K2/FIR)
 2. **Detekt Rules** - Static analysis warnings
+3. **Android Lint Rules** - Android-specific static analysis with quick fixes
 
 ---
 
@@ -28,6 +29,7 @@ This toolkit enforces structured concurrency best practices through:
 |--------|---------|------|
 | `compiler` | K2/FIR Compiler Plugin | Compile-time errors |
 | `detekt-rules` | Detekt custom rules | Static analysis |
+| `lint-rules` | Android Lint rules | Android projects |
 | `annotations` | `@StructuredScope` annotation | Runtime/Compile |
 | `gradle-plugin` | Gradle integration | Build configuration |
 
@@ -44,6 +46,7 @@ This toolkit enforces structured concurrency best practices through:
 - 📦 **Zero runtime overhead** - all checks happen at compile time
 - 🌍 **Kotlin Multiplatform** - supports JVM, JS, Native, WASM
 - 🔎 **Detekt integration** - additional static analysis rules
+- 📱 **Android Lint integration** - Android-specific rules with quick fixes
 
 ---
 
@@ -93,6 +96,42 @@ This toolkit enforces structured concurrency best practices through:
 
 **Total: 9 Detekt Rules** (5 from Compiler Plugin + 4 Detekt-only)
 
+### Android Lint Rules (Static Analysis)
+
+#### Compiler Plugin Rules (9 rules)
+
+| Rule | Description |
+|------|-------------|
+| `GlobalScopeUsage` | Detects `GlobalScope.launch/async` |
+| `InlineCoroutineScope` | Detects `CoroutineScope(...).launch/async` and property initialization |
+| `RunBlockingInSuspend` | Detects `runBlocking` in suspend functions |
+| `DispatchersUnconfined` | Detects `Dispatchers.Unconfined` usage |
+| `CancellationExceptionSubclass` | Detects classes extending `CancellationException` |
+| `JobInBuilderContext` | Detects `Job()`/`SupervisorJob()` in builders |
+| `SuspendInFinally` | Detects suspend calls in finally without NonCancellable |
+| `CancellationExceptionSwallowed` | Detects `catch(Exception)` that may swallow CancellationException |
+| `AsyncWithoutAwait` | Detects `async` without `await()` |
+
+#### Android-Specific Rules (3 rules)
+
+| Rule | Description |
+|------|-------------|
+| `MainDispatcherMisuse` | Detects blocking code on Dispatchers.Main (can cause ANRs) |
+| `ViewModelScopeLeak` | Detects incorrect ViewModel scope usage |
+| `LifecycleAwareScope` | Validates correct lifecycle-aware scope usage |
+
+#### Additional Rules (5 rules)
+
+| Rule | Description |
+|------|-------------|
+| `UnstructuredLaunch` | Detects launch/async without structured scope |
+| `RedundantLaunchInCoroutineScope` | Detects redundant launch in coroutineScope |
+| `RunBlockingWithDelayInTest` | Detects `runBlocking` + `delay` in tests |
+| `LoopWithoutYield` | Detects loops without cooperation points (partial) |
+| `ScopeReuseAfterCancel` | Detects scope cancelled and reused (partial) |
+
+**Total: 17 Android Lint Rules** (9 from Compiler Plugin + 3 Android-specific + 5 additional)
+
 ---
 
 ## 📦 Installation
@@ -133,6 +172,17 @@ dependencies {
     detektPlugins("io.github.santimattius:structured-coroutines-detekt-rules:0.1.0")
 }
 ```
+
+### Android Lint Rules
+
+```kotlin
+// build.gradle.kts (Android project)
+dependencies {
+    lintChecks("io.github.santimattius:structured-coroutines-lint-rules:0.1.0")
+}
+```
+
+**Note:** Android Lint Rules are only available for Android projects. For multiplatform projects, use the Compiler Plugin or Detekt Rules.
 
 ### Kotlin Multiplatform
 
@@ -446,6 +496,11 @@ structured-coroutines/
 │   ├── RunBlockingWithDelayInTestRule
 │   ├── ExternalScopeLaunchRule
 │   └── LoopWithoutYieldRule
+├── lint-rules/           # Android Lint Rules
+│   ├── GlobalScopeUsageDetector
+│   ├── MainDispatcherMisuseDetector
+│   ├── ViewModelScopeLeakDetector
+│   └── ... (17 rules total)
 ├── gradle-plugin/        # Gradle Integration
 └── sample/               # Examples
 ```
@@ -454,18 +509,18 @@ structured-coroutines/
 
 ## 🌍 Supported Platforms
 
-| Platform | Compiler Plugin | Detekt Rules |
-|----------|-----------------|--------------|
-| JVM | ✅ | ✅ |
-| Android | ✅ | ✅ |
-| iOS | ✅ | ✅ |
-| macOS | ✅ | ✅ |
-| watchOS | ✅ | ✅ |
-| tvOS | ✅ | ✅ |
-| Linux | ✅ | ✅ |
-| Windows | ✅ | ✅ |
-| JS | ✅ | ✅ |
-| WASM | ✅ | ✅ |
+| Platform | Compiler Plugin | Detekt Rules | Android Lint |
+|----------|-----------------|--------------|--------------|
+| JVM | ✅ | ✅ | ❌ |
+| Android | ✅ | ✅ | ✅ |
+| iOS | ✅ | ✅ | ❌ |
+| macOS | ✅ | ✅ | ❌ |
+| watchOS | ✅ | ✅ | ❌ |
+| tvOS | ✅ | ✅ | ❌ |
+| Linux | ✅ | ✅ | ❌ |
+| Windows | ✅ | ✅ | ❌ |
+| JS | ✅ | ✅ | ❌ |
+| WASM | ✅ | ✅ | ❌ |
 
 ---
 
@@ -489,15 +544,19 @@ structured-coroutines/
 
 ## 🆚 Comparison
 
-| Approach | When | Errors | Warnings | CI |
-|----------|------|--------|----------|-----|
-| **Compiler Plugin** | Compile | ✅ 6 rules | ✅ 3 rules | ✅ |
-| **Detekt Rules** | Analysis | ✅ 3 rules | ✅ 6 rules | ✅ |
-| **Combined** | Both | ✅ 6 rules | ✅ 9 rules | ✅ |
-| Code Review | Manual | ❌ | ❌ | ❌ |
-| Runtime | Late | ❌ | ❌ | ❌ |
+| Approach | When | Errors | Warnings | CI | Platform |
+|----------|------|--------|----------|-----|----------|
+| **Compiler Plugin** | Compile | ✅ 6 rules | ✅ 3 rules | ✅ | All (KMP) |
+| **Detekt Rules** | Analysis | ✅ 3 rules | ✅ 6 rules | ✅ | All (KMP) |
+| **Android Lint Rules** | Analysis | ✅ 9 rules | ✅ 8 rules | ✅ | Android only |
+| **Combined (All)** | All | ✅ 9 rules | ✅ 17 rules | ✅ | - |
+| Code Review | Manual | ❌ | ❌ | ❌ | - |
+| Runtime | Late | ❌ | ❌ | ❌ | - |
 
-**Nota:** Detekt Rules incluye 5 reglas del Compiler Plugin  + 4 reglas Detekt-only = **9 reglas totales**
+**Notes:**
+- Detekt Rules: 5 from Compiler Plugin + 4 Detekt-only = **9 rules total**
+- Android Lint Rules: 9 from Compiler Plugin + 3 Android-specific + 5 additional = **17 rules total**
+- Android Lint Rules include **quick fixes** for better developer experience
 
 ---
 
@@ -540,3 +599,4 @@ cd structured-coroutines
 - [Detekt Documentation](https://detekt.dev/)
 - [K2 Compiler Guide](https://kotlinlang.org/docs/k2-compiler-migration-guide.html)
 - [Detekt Rules Documentation](./docs-local/DETEKT_RULES.md) - Guía completa de uso de Detekt Rules
+- [Android Lint Rules Documentation](./docs-local/LINT_RULES.md) - Guía completa de uso de Android Lint Rules
