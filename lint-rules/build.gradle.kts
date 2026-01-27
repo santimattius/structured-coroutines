@@ -1,33 +1,28 @@
 plugins {
-    kotlin("jvm") version "2.3.0"
-    `java-library`
-    `maven-publish`
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.maven.publish)
 }
 
 dependencies {
     // Android Lint API - compileOnly to avoid runtime conflicts
-    compileOnly("com.android.tools.lint:lint-api:31.4.0")
-    compileOnly("com.android.tools.lint:lint-checks:31.4.0")
+    compileOnly(libs.lint.api)
+    compileOnly(libs.lint.checks)
     
     // Testing
-    testImplementation("com.android.tools.lint:lint:31.4.0")
-    testImplementation("com.android.tools.lint:lint-tests:31.4.0")
-    testImplementation("junit:junit:4.13.2")
-    testImplementation("org.assertj:assertj-core:3.25.3")
+    testImplementation(libs.lint)
+    testImplementation(libs.lint.tests)
+    testImplementation(libs.junit)
+    testImplementation(libs.assertj.core)
 }
+
+// Lint 31.4.0 embeds Kotlin 2.0; align test runtime to avoid "metadata version 2.3.0, expected 2.0.0"
+configurations.testRuntimeClasspath.get().resolutionStrategy.force("org.jetbrains.kotlin:kotlin-stdlib:2.0.21")
 
 kotlin {
     jvmToolchain(17)
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
-}
-
-tasks.withType<Test> {
-    useJUnitPlatform()
-}
+// Tests use @org.junit.Test (JUnit 4); lint-tests expects JUnit 4. Do not use useJUnitPlatform().
 
 // Create JAR with Lint rules
 val lintJar = tasks.register<Jar>("lintJar") {

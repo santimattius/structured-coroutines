@@ -11,10 +11,11 @@ package io.github.santimattius.structured.lint.detectors
 
 import com.android.tools.lint.checks.infrastructure.TestFiles
 import com.android.tools.lint.checks.infrastructure.TestLintTask
+import io.github.santimattius.structured.lint.LintTestStubs
 import org.junit.Test
 
 class RunBlockingInSuspendDetectorTest {
-    
+
     @Test
     fun `detects runBlocking in suspend function`() {
         val code = """
@@ -30,13 +31,18 @@ class RunBlockingInSuspendDetectorTest {
         """.trimIndent()
         
         TestLintTask.lint()
-            .files(TestFiles.kotlin(code))
+            .files(
+                *LintTestStubs.coroutinesOnly().toTypedArray(),
+                TestFiles.kotlin(code).indented()
+            )
             .issues(RunBlockingInSuspendDetector.ISSUE)
+            .allowMissingSdk()
             .run()
             .expect("""
                 src/test/test.kt:6: Error: Remove runBlocking wrapper. Inside suspend functions, use suspend calls directly or withContext(Dispatchers.IO) for blocking operations [RunBlockingInSuspend]
-                runBlocking {
-                ^
+                    runBlocking {
+                    ^
+                1 errors, 0 warnings
             """.trimIndent())
     }
     
@@ -53,8 +59,12 @@ class RunBlockingInSuspendDetectorTest {
         """.trimIndent()
         
         TestLintTask.lint()
-            .files(TestFiles.kotlin(code))
+            .files(
+                *LintTestStubs.coroutinesOnly().toTypedArray(),
+                TestFiles.kotlin(code).indented()
+            )
             .issues(RunBlockingInSuspendDetector.ISSUE)
+            .allowMissingSdk()
             .run()
             .expectClean()
     }

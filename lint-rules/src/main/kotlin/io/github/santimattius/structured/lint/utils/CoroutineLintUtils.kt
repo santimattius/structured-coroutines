@@ -48,11 +48,18 @@ object CoroutineLintUtils {
 
     /**
      * Checks if a UCallExpression is a GlobalScope call.
+     * Handles both simple names (GlobalScope) and fully qualified names (kotlinx.coroutines.GlobalScope).
      */
     fun isGlobalScopeCall(call: UCallExpression): Boolean {
-        val receiver = call.receiver as? UQualifiedReferenceExpression
-        return receiver?.receiver?.asSourceString() == "GlobalScope" &&
-            call.methodName in COROUTINE_BUILDERS
+        val receiver = call.receiver
+        val receiverName = when (receiver) {
+            is UQualifiedReferenceExpression -> receiver.asSourceString()
+            is UReferenceExpression -> receiver.asSourceString()
+            else -> null
+        }
+        val isGlobalScope = receiverName == "GlobalScope" ||
+                           receiverName == "kotlinx.coroutines.GlobalScope"
+        return isGlobalScope && call.methodName in COROUTINE_BUILDERS
     }
 
     /**
@@ -120,16 +127,69 @@ object CoroutineLintUtils {
 
     /**
      * Checks if a UCallExpression uses Dispatchers.Main.
+     * Uses AST traversal to be robust against argument reordering.
      */
     fun usesMainDispatcher(call: UCallExpression): Boolean {
         val arguments = call.valueArguments
         for (arg in arguments) {
-            val argSource = arg.asSourceString()
-            if (argSource.contains("Dispatchers.Main") || 
-                argSource.contains("Dispatchers.Main.immediate")) {
+            // Skip lambda arguments
+            if (arg is ULambdaExpression) continue
+
+            if (containsMainDispatcherReference(arg)) {
                 return true
             }
         }
+        return false
+    }
+
+    /**
+     * Recursively checks if an expression contains a reference to Dispatchers.Main.
+     */
+    private fun containsMainDispatcherReference(expr: UExpression): Boolean {
+        // Check if this is a qualified reference like Dispatchers.Main
+        if (expr is UQualifiedReferenceExpression) {
+            val receiver = expr.receiver
+            val selector = expr.selector
+
+            // Check for Dispatchers.Main or Dispatchers.Main.immediate
+            val receiverSource = receiver.asSourceString()
+            if (receiverSource == "Dispatchers" || receiverSource.endsWith(".Dispatchers")) {
+                val selectorName = when (selector) {
+                    is UReferenceExpression -> selector.asSourceString()
+                    is UQualifiedReferenceExpression -> selector.receiver.asSourceString()
+                    else -> null
+                }
+                if (selectorName == "Main") {
+                    return true
+                }
+            }
+
+            // Check for kotlinx.coroutines.Dispatchers.Main (fully qualified)
+            if (receiverSource.contains("Dispatchers")) {
+                val selectorSource = selector.asSourceString()
+                if (selectorSource == "Main" || selectorSource.startsWith("Main.")) {
+                    return true
+                }
+            }
+
+            // Recurse into parts
+            if (containsMainDispatcherReference(receiver)) return true
+            if (selector is UExpression && containsMainDispatcherReference(selector)) return true
+        }
+
+        // Check the asSourceString which should contain the expression representation
+        val sourceString = expr.asSourceString()
+        val mainPattern = Regex("""Dispatchers\.Main(\b|\.immediate)?""")
+        if (mainPattern.containsMatchIn(sourceString)) {
+            return true
+        }
+
+        // Also check PSI text as fallback
+        val psiText = expr.sourcePsi?.text
+        if (psiText != null && mainPattern.containsMatchIn(psiText)) {
+            return true
+        }
+
         return false
     }
 

@@ -1,14 +1,14 @@
 plugins {
-    kotlin("jvm")
-    `java-gradle-plugin`
-    `maven-publish`
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.java.gradle.plugin)
+    alias(libs.plugins.maven.publish)
 }
 
 dependencies {
     // Only Gradle API and Kotlin Gradle Plugin API
     // NO compiler dependencies here
     implementation(gradleApi())
-    implementation(kotlin("gradle-plugin-api"))
+    implementation(libs.kotlin.gradle.plugin.api)
 }
 
 kotlin {

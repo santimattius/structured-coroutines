@@ -11,19 +11,21 @@ package io.github.santimattius.structured.lint.detectors
 
 import com.android.tools.lint.checks.infrastructure.TestFiles
 import com.android.tools.lint.checks.infrastructure.TestLintTask
+import io.github.santimattius.structured.lint.LintTestStubs
 import org.junit.Test
 
 class DispatchersUnconfinedDetectorTest {
-    
+
     @Test
     fun `detects Dispatchers Unconfined in launch`() {
         val code = """
             package test
             
             import kotlinx.coroutines.*
+            import androidx.lifecycle.ViewModel
             import androidx.lifecycle.viewModelScope
             
-            class MyViewModel {
+            class MyViewModel : ViewModel() {
                 fun test() {
                     viewModelScope.launch(Dispatchers.Unconfined) {
                         println("test")
@@ -31,15 +33,20 @@ class DispatchersUnconfinedDetectorTest {
                 }
             }
         """.trimIndent()
-        
+
         TestLintTask.lint()
-            .files(TestFiles.kotlin(code))
+            .files(
+                *LintTestStubs.all().toTypedArray(),
+                TestFiles.kotlin(code).indented()
+            )
             .issues(DispatchersUnconfinedDetector.ISSUE)
+            .allowMissingSdk()
             .run()
             .expect("""
-                src/test/test.kt:8: Warning: Use an appropriate dispatcher (Dispatchers.Default, Dispatchers.IO, Dispatchers.Main) instead of Dispatchers.Unconfined [DispatchersUnconfined]
-                viewModelScope.launch(Dispatchers.Unconfined) {
-                ^
+                src/test/MyViewModel.kt:9: Warning: Use an appropriate dispatcher (Dispatchers.Default, Dispatchers.IO, Dispatchers.Main) instead of Dispatchers.Unconfined [DispatchersUnconfined]
+                        viewModelScope.launch(Dispatchers.Unconfined) {
+                        ^
+                0 errors, 1 warnings
             """.trimIndent())
     }
     
@@ -49,9 +56,10 @@ class DispatchersUnconfinedDetectorTest {
             package test
             
             import kotlinx.coroutines.*
+            import androidx.lifecycle.ViewModel
             import androidx.lifecycle.viewModelScope
             
-            class MyViewModel {
+            class MyViewModel : ViewModel() {
                 fun test() {
                     viewModelScope.launch(Dispatchers.IO) {
                         println("test")
@@ -61,8 +69,12 @@ class DispatchersUnconfinedDetectorTest {
         """.trimIndent()
         
         TestLintTask.lint()
-            .files(TestFiles.kotlin(code))
+            .files(
+                *LintTestStubs.all().toTypedArray(),
+                TestFiles.kotlin(code).indented()
+            )
             .issues(DispatchersUnconfinedDetector.ISSUE)
+            .allowMissingSdk()
             .run()
             .expectClean()
     }

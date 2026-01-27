@@ -11,19 +11,22 @@ package io.github.santimattius.structured.lint.detectors
 
 import com.android.tools.lint.checks.infrastructure.TestFiles
 import com.android.tools.lint.checks.infrastructure.TestLintTask
+import com.android.tools.lint.checks.infrastructure.TestMode
+import io.github.santimattius.structured.lint.LintTestStubs
 import org.junit.Test
 
 class MainDispatcherMisuseDetectorTest {
-    
+
     @Test
     fun `detects Thread sleep on Main dispatcher`() {
         val code = """
             package test
             
             import kotlinx.coroutines.*
+            import androidx.lifecycle.ViewModel
             import androidx.lifecycle.viewModelScope
             
-            class MyViewModel {
+            class MyViewModel : ViewModel() {
                 fun test() {
                     viewModelScope.launch(Dispatchers.Main) {
                         Thread.sleep(1000)
@@ -31,27 +34,34 @@ class MainDispatcherMisuseDetectorTest {
                 }
             }
         """.trimIndent()
-        
+
         TestLintTask.lint()
-            .files(TestFiles.kotlin(code))
+            .files(
+                *LintTestStubs.all().toTypedArray(),
+                TestFiles.kotlin(code).indented()
+            )
             .issues(MainDispatcherMisuseDetector.ISSUE)
+            .allowMissingSdk()
+            .skipTestModes(TestMode.REORDER_ARGUMENTS)
             .run()
             .expect("""
-                src/test/test.kt:9: Error: Blocking call on Main dispatcher. Move this to Dispatchers.IO using withContext(Dispatchers.IO) { } [MainDispatcherMisuse]
-                Thread.sleep(1000)
-                ^
+src/test/MyViewModel.kt:10: Error: Blocking call on Main dispatcher. Move this to Dispatchers.IO using withContext(Dispatchers.IO) { } [MainDispatcherMisuse]
+            Thread.sleep(1000)
+            ~~~~~~~~~~~~~~~~~~
+1 errors, 0 warnings
             """.trimIndent())
     }
-    
+
     @Test
     fun `does not detect blocking call on IO dispatcher`() {
         val code = """
             package test
             
             import kotlinx.coroutines.*
+            import androidx.lifecycle.ViewModel
             import androidx.lifecycle.viewModelScope
             
-            class MyViewModel {
+            class MyViewModel : ViewModel() {
                 fun test() {
                     viewModelScope.launch(Dispatchers.IO) {
                         Thread.sleep(1000)
@@ -61,8 +71,13 @@ class MainDispatcherMisuseDetectorTest {
         """.trimIndent()
         
         TestLintTask.lint()
-            .files(TestFiles.kotlin(code))
+            .files(
+                *LintTestStubs.all().toTypedArray(),
+                TestFiles.kotlin(code).indented()
+            )
             .issues(MainDispatcherMisuseDetector.ISSUE)
+            .allowMissingSdk()
+            .skipTestModes(TestMode.REORDER_ARGUMENTS)
             .run()
             .expectClean()
     }
