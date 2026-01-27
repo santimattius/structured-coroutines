@@ -11,10 +11,11 @@ package io.github.santimattius.structured.lint.detectors
 
 import com.android.tools.lint.checks.infrastructure.TestFiles
 import com.android.tools.lint.checks.infrastructure.TestLintTask
+import io.github.santimattius.structured.lint.LintTestStubs
 import org.junit.Test
 
 class GlobalScopeUsageDetectorTest {
-    
+
     @Test
     fun `detects GlobalScope launch`() {
         val code = """
@@ -28,15 +29,20 @@ class GlobalScopeUsageDetectorTest {
                 }
             }
         """.trimIndent()
-        
+
         TestLintTask.lint()
-            .files(TestFiles.kotlin(code))
+            .files(
+                *LintTestStubs.coroutinesOnly().toTypedArray(),
+                TestFiles.kotlin(code).indented()
+            )
             .issues(GlobalScopeUsageDetector.ISSUE)
+            .allowMissingSdk()
             .run()
             .expect("""
                 src/test/test.kt:6: Error: Use viewModelScope, lifecycleScope, rememberCoroutineScope(), or coroutineScope { } instead of GlobalScope [GlobalScopeUsage]
-                GlobalScope.launch {
-                ^
+                    GlobalScope.launch {
+                    ^
+                1 errors, 0 warnings
             """.trimIndent())
     }
     
@@ -55,13 +61,18 @@ class GlobalScopeUsageDetectorTest {
         """.trimIndent()
         
         TestLintTask.lint()
-            .files(TestFiles.kotlin(code))
+            .files(
+                *LintTestStubs.coroutinesOnly().toTypedArray(),
+                TestFiles.kotlin(code).indented()
+            )
             .issues(GlobalScopeUsageDetector.ISSUE)
+            .allowMissingSdk()
             .run()
             .expect("""
                 src/test/test.kt:6: Error: Use viewModelScope, lifecycleScope, rememberCoroutineScope(), or coroutineScope { } instead of GlobalScope [GlobalScopeUsage]
-                GlobalScope.async {
-                ^
+                    GlobalScope.async {
+                    ^
+                1 errors, 0 warnings
             """.trimIndent())
     }
     
@@ -84,8 +95,12 @@ class GlobalScopeUsageDetectorTest {
         """.trimIndent()
         
         TestLintTask.lint()
-            .files(TestFiles.kotlin(code))
+            .files(
+                *LintTestStubs.all().toTypedArray(),
+                TestFiles.kotlin(code).indented()
+            )
             .issues(GlobalScopeUsageDetector.ISSUE)
+            .allowMissingSdk()
             .run()
             .expectClean()
     }

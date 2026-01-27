@@ -1,14 +1,14 @@
 plugins {
-    kotlin("jvm")
-    `maven-publish`
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.maven.publish)
 }
 
 dependencies {
     // Kotlin Compiler - compileOnly because it's provided at compile time
-    compileOnly(kotlin("compiler-embeddable"))
+    compileOnly(libs.kotlin.compiler.embeddable)
     
     // Test dependencies - using Gradle TestKit for functional testing
-    testImplementation(kotlin("test"))
+    testImplementation(libs.kotlin.test)
     testImplementation(gradleTestKit())
 }
 

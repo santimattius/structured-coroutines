@@ -11,19 +11,21 @@ package io.github.santimattius.structured.lint.detectors
 
 import com.android.tools.lint.checks.infrastructure.TestFiles
 import com.android.tools.lint.checks.infrastructure.TestLintTask
+import io.github.santimattius.structured.lint.LintTestStubs
 import org.junit.Test
 
 class JobInBuilderContextDetectorTest {
-    
+
     @Test
     fun `detects Job in launch`() {
         val code = """
             package test
             
             import kotlinx.coroutines.*
+            import androidx.lifecycle.ViewModel
             import androidx.lifecycle.viewModelScope
             
-            class MyViewModel {
+            class MyViewModel : ViewModel() {
                 fun test() {
                     viewModelScope.launch(Job()) {
                         println("test")
@@ -31,27 +33,33 @@ class JobInBuilderContextDetectorTest {
                 }
             }
         """.trimIndent()
-        
+
         TestLintTask.lint()
-            .files(TestFiles.kotlin(code))
+            .files(
+                *LintTestStubs.all().toTypedArray(),
+                TestFiles.kotlin(code).indented()
+            )
             .issues(JobInBuilderContextDetector.ISSUE)
+            .allowMissingSdk()
             .run()
             .expect("""
-                src/test/test.kt:8: Error: Don't pass Job() or SupervisorJob() to coroutine builders. Use supervisorScope { } for supervisor semantics, or use the scope's Job (default behavior) [JobInBuilderContext]
-                viewModelScope.launch(Job()) {
-                ^
+                src/test/MyViewModel.kt:9: Error: Don't pass Job() or SupervisorJob() to coroutine builders. Use supervisorScope { } for supervisor semantics, or use the scope's Job (default behavior) [JobInBuilderContext]
+                        viewModelScope.launch(Job()) {
+                        ^
+                1 errors, 0 warnings
             """.trimIndent())
     }
-    
+
     @Test
     fun `detects SupervisorJob in async`() {
         val code = """
             package test
             
             import kotlinx.coroutines.*
+            import androidx.lifecycle.ViewModel
             import androidx.lifecycle.viewModelScope
             
-            class MyViewModel {
+            class MyViewModel : ViewModel() {
                 fun test() {
                     viewModelScope.async(SupervisorJob()) {
                         "result"
@@ -61,13 +69,18 @@ class JobInBuilderContextDetectorTest {
         """.trimIndent()
         
         TestLintTask.lint()
-            .files(TestFiles.kotlin(code))
+            .files(
+                *LintTestStubs.all().toTypedArray(),
+                TestFiles.kotlin(code).indented()
+            )
             .issues(JobInBuilderContextDetector.ISSUE)
+            .allowMissingSdk()
             .run()
             .expect("""
-                src/test/test.kt:8: Error: Don't pass Job() or SupervisorJob() to coroutine builders. Use supervisorScope { } for supervisor semantics, or use the scope's Job (default behavior) [JobInBuilderContext]
-                viewModelScope.async(SupervisorJob()) {
-                ^
+                src/test/MyViewModel.kt:9: Error: Don't pass Job() or SupervisorJob() to coroutine builders. Use supervisorScope { } for supervisor semantics, or use the scope's Job (default behavior) [JobInBuilderContext]
+                        viewModelScope.async(SupervisorJob()) {
+                        ^
+                1 errors, 0 warnings
             """.trimIndent())
     }
 }
