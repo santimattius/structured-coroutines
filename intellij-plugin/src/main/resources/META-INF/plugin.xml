@@ -1,0 +1,230 @@
+<!--
+  Copyright 2024 Santiago Mattiauda
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+-->
+<idea-plugin>
+    <id>io.github.santimattius.structured-coroutines</id>
+    <name>Structured Coroutines</name>
+    <vendor email="santimattius@gmail.com" url="https://github.com/santimattius/structured-coroutines">
+        Santiago Mattiauda
+    </vendor>
+
+    <description><![CDATA[
+        <p>Enforces structured concurrency best practices for Kotlin Coroutines.</p>
+        <p><b>Features:</b></p>
+        <ul>
+            <li>Real-time inspections for coroutine anti-patterns</li>
+            <li>Quick fixes for automatic code correction</li>
+            <li>Intentions for code refactoring</li>
+            <li>Gutter icons for scope and dispatcher visualization</li>
+        </ul>
+        <p><b>Inspections:</b></p>
+        <ul>
+            <li>GlobalScope usage detection</li>
+            <li>Main dispatcher misuse (blocking on Main)</li>
+            <li>Scope reuse after cancel</li>
+            <li>runBlocking in suspend functions</li>
+            <li>Unstructured coroutine launch</li>
+            <li>async without await</li>
+            <li>Inline CoroutineScope creation</li>
+            <li>Job in builder context</li>
+            <li>Suspend in finally without NonCancellable</li>
+            <li>CancellationException swallowed</li>
+            <li>Dispatchers.Unconfined usage</li>
+        </ul>
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+    <depends>org.jetbrains.kotlin</depends>
+
+    <resource-bundle>messages.StructuredCoroutinesBundle</resource-bundle>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Inspection Group -->
+        <inspectionToolProvider
+            implementation="io.github.santimattius.structured.intellij.inspections.StructuredCoroutinesInspectionProvider"/>
+
+        <!-- Individual Inspections -->
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
+            shortName="GlobalScopeUsage"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.global.scope.display.name"
+            enabledByDefault="true"
+            level="ERROR"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.GlobalScopeInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
+            shortName="MainDispatcherMisuse"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.main.dispatcher.display.name"
+            enabledByDefault="true"
+            level="WARNING"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.MainDispatcherMisuseInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
+            shortName="ScopeReuseAfterCancel"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.scope.reuse.display.name"
+            enabledByDefault="true"
+            level="WARNING"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.ScopeReuseAfterCancelInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
+            shortName="RunBlockingInSuspend"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.run.blocking.display.name"
+            enabledByDefault="true"
+            level="ERROR"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.RunBlockingInSuspendInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
+            shortName="UnstructuredLaunch"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.unstructured.launch.display.name"
+            enabledByDefault="true"
+            level="WARNING"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.UnstructuredLaunchInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
+            shortName="AsyncWithoutAwait"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.async.without.await.display.name"
+            enabledByDefault="true"
+            level="WARNING"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.AsyncWithoutAwaitInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
+            shortName="InlineCoroutineScope"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.inline.scope.display.name"
+            enabledByDefault="true"
+            level="ERROR"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.InlineCoroutineScopeInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
+            shortName="JobInBuilderContext"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.job.in.builder.display.name"
+            enabledByDefault="true"
+            level="ERROR"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.JobInBuilderContextInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
+            shortName="SuspendInFinally"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.suspend.in.finally.display.name"
+            enabledByDefault="true"
+            level="WARNING"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.SuspendInFinallyInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
+            shortName="CancellationExceptionSwallowed"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.cancellation.swallowed.display.name"
+            enabledByDefault="true"
+            level="WARNING"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.CancellationExceptionSwallowedInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
+            shortName="DispatchersUnconfined"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.dispatchers.unconfined.display.name"
+            enabledByDefault="true"
+            level="WARNING"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.DispatchersUnconfinedInspection"/>
+
+        <!-- Intentions -->
+        <intentionAction>
+            <language>kotlin</language>
+            <className>io.github.santimattius.structured.intellij.intentions.MigrateToViewModelScopeIntention</className>
+            <bundleName>messages.StructuredCoroutinesBundle</bundleName>
+            <categoryKey>intention.category</categoryKey>
+        </intentionAction>
+
+        <intentionAction>
+            <language>kotlin</language>
+            <className>io.github.santimattius.structured.intellij.intentions.MigrateToLifecycleScopeIntention</className>
+            <bundleName>messages.StructuredCoroutinesBundle</bundleName>
+            <categoryKey>intention.category</categoryKey>
+        </intentionAction>
+
+        <intentionAction>
+            <language>kotlin</language>
+            <className>io.github.santimattius.structured.intellij.intentions.WrapWithCoroutineScopeIntention</className>
+            <bundleName>messages.StructuredCoroutinesBundle</bundleName>
+            <categoryKey>intention.category</categoryKey>
+        </intentionAction>
+
+        <intentionAction>
+            <language>kotlin</language>
+            <className>io.github.santimattius.structured.intellij.intentions.ConvertLaunchToAsyncIntention</className>
+            <bundleName>messages.StructuredCoroutinesBundle</bundleName>
+            <categoryKey>intention.category</categoryKey>
+        </intentionAction>
+
+        <intentionAction>
+            <language>kotlin</language>
+            <className>io.github.santimattius.structured.intellij.intentions.ExtractSuspendFunctionIntention</className>
+            <bundleName>messages.StructuredCoroutinesBundle</bundleName>
+            <categoryKey>intention.category</categoryKey>
+        </intentionAction>
+
+        <!-- Line Markers (Gutter Icons) -->
+        <codeInsight.lineMarkerProvider
+            language="kotlin"
+            implementationClass="io.github.santimattius.structured.intellij.guttericons.CoroutineScopeLineMarkerProvider"/>
+
+        <codeInsight.lineMarkerProvider
+            language="kotlin"
+            implementationClass="io.github.santimattius.structured.intellij.guttericons.DispatcherContextLineMarkerProvider"/>
+    </extensions>
+</idea-plugin>
