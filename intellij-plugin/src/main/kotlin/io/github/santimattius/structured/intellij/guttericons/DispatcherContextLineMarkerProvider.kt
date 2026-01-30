@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Santiago Mattiauda
+ * Copyright 2026 Santiago Mattiauda
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,14 @@ import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerProvider
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.psi.PsiElement
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.ui.JBColor
 import io.github.santimattius.structured.intellij.StructuredCoroutinesBundle
 import io.github.santimattius.structured.intellij.utils.ScopeAnalyzer
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import java.awt.Color
 import java.awt.Component
 import java.awt.Graphics
@@ -36,12 +40,22 @@ import javax.swing.Icon
 class DispatcherContextLineMarkerProvider : LineMarkerProvider {
 
     override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? {
-        // Only process withContext calls
-        val callExpression = element as? KtCallExpression ?: return null
-        val calleeName = callExpression.calleeExpression?.text ?: return null
+        // Work with leaf elements only for K2 compatibility
+        if (element !is LeafPsiElement) return null
+        if (element.elementType != KtTokens.IDENTIFIER) return null
 
-        // Only show for withContext and coroutine builders with explicit dispatcher
-        if (calleeName !in setOf("withContext", "launch", "async")) return null
+        // Check if this identifier is one of our target functions
+        val identifierText = element.text
+        if (identifierText !in setOf("withContext", "launch", "async")) return null
+
+        // Get the parent KtNameReferenceExpression
+        val nameRef = element.parent as? KtNameReferenceExpression ?: return null
+
+        // Find the call expression containing this identifier
+        val callExpression = nameRef.getParentOfType<KtCallExpression>(strict = false) ?: return null
+
+        // Verify this identifier is the callee of the call expression
+        if (callExpression.calleeExpression != nameRef) return null
 
         // Get the dispatcher type
         val dispatcherType = ScopeAnalyzer.getDispatcherType(callExpression)
@@ -49,6 +63,7 @@ class DispatcherContextLineMarkerProvider : LineMarkerProvider {
 
         val dispatcherInfo = getDispatcherInfo(dispatcherType) ?: return null
 
+        // Return marker for the leaf element (identifier) - required for K2 compatibility
         return LineMarkerInfo(
             element,
             element.textRange,

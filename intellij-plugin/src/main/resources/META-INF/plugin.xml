@@ -1,5 +1,5 @@
 <!--
-  Copyright 2024 Santiago Mattiauda
+  Copyright 2026 Santiago Mattiauda
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -41,6 +41,10 @@
 
     <depends>com.intellij.modules.platform</depends>
     <depends>org.jetbrains.kotlin</depends>
+
+    <extensions defaultExtensionNs="org.jetbrains.kotlin">
+        <supportsKotlinPluginMode supportsK2="true" />
+    </extensions>
 
     <resource-bundle>messages.StructuredCoroutinesBundle</resource-bundle>
 
@@ -220,10 +224,12 @@
 
         <!-- Line Markers (Gutter Icons) -->
         <codeInsight.lineMarkerProvider
+            id="structured-coroutines.scope-line-marker"
             language="kotlin"
             implementationClass="io.github.santimattius.structured.intellij.guttericons.CoroutineScopeLineMarkerProvider"/>
 
         <codeInsight.lineMarkerProvider
+            id="structured-coroutines.dispatcher-line-marker"
             language="kotlin"
             implementationClass="io.github.santimattius.structured.intellij.guttericons.DispatcherContextLineMarkerProvider"/>
     </extensions>

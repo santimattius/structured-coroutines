@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Santiago Mattiauda
+ * Copyright 2026 Santiago Mattiauda
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,16 +51,18 @@ intellijPlatform {
             </ul>
         """.trimIndent()
         changeNotes = """
-            <p>Initial release with:</p>
+            <p><b>v0.1.0 - Initial Release</b></p>
             <ul>
                 <li>11 inspections for coroutine best practices</li>
                 <li>9 quick fixes for automatic corrections</li>
                 <li>5 intentions for refactoring</li>
                 <li>2 gutter icon providers</li>
+                <li>Full K2 compiler mode support</li>
             </ul>
         """.trimIndent()
         ideaVersion {
             sinceBuild = "243"
+            untilBuild = "252.*"
         }
         vendor {
             name = "Santiago Mattiauda"

@@ -6,6 +6,19 @@
 
 A comprehensive toolkit for enforcing **structured concurrency** in Kotlin Coroutines, inspired by Swift Concurrency. It provides multiple layers of protection through compile-time checks and static analysis.
 
+## Project Status
+
+| Module | Status | Documentation |
+|--------|--------|---------------|
+| Compiler Plugin | ✅ Complete (11 rules) | [gradle-plugin/README.md](gradle-plugin/README.md) |
+| Gradle Plugin | ✅ Complete | [gradle-plugin/README.md](gradle-plugin/README.md) |
+| Detekt Rules | ✅ Complete (9 rules) | [detekt-rules/README.md](detekt-rules/README.md) |
+| Android Lint | ✅ Complete (17 rules) | [lint-rules/README.md](lint-rules/README.md) |
+| IntelliJ Plugin | ✅ Complete (11 inspections, 9 quick fixes) | [intellij-plugin/README.md](intellij-plugin/README.md) |
+| Annotations | ✅ Complete | [annotations/README.md](annotations/README.md) |
+
+---
+
 ## 🎯 Purpose
 
 Kotlin Coroutines are powerful but can be misused, leading to:
@@ -535,7 +548,7 @@ structured-coroutines:
     active: true
 ```
 
-**📖 Ver documentación completa:** [Detekt Rules Documentation](./docs-local/DETEKT_RULES.md)
+**📖 Full Documentation:** [Detekt Rules Documentation](detekt-rules/README.md)
 
 ---
 
@@ -646,7 +659,7 @@ structured-coroutines/
 ## 📄 License
 
 ```
-Copyright 2024 Santiago Mattiauda
+Copyright 2026 Santiago Mattiauda
 
 Licensed under the Apache License, Version 2.0
 ```
@@ -666,12 +679,26 @@ cd structured-coroutines
 
 ---
 
-## 📚 Resources
+## 📚 Documentation
+
+### Module Documentation
+
+Each module contains its own detailed documentation:
+
+| Module | Documentation | Description |
+|--------|---------------|-------------|
+| **Gradle Plugin** | [gradle-plugin/README.md](gradle-plugin/README.md) | Installation, configuration, severity settings |
+| **Detekt Rules** | [detekt-rules/README.md](detekt-rules/README.md) | All 9 rules with examples and configuration |
+| **Android Lint** | [lint-rules/README.md](lint-rules/README.md) | All 17 rules, Android-specific detection |
+| **IntelliJ Plugin** | [intellij-plugin/README.md](intellij-plugin/README.md) | Inspections, quick fixes, intentions, K2 support |
+| **Annotations** | [annotations/README.md](annotations/README.md) | @StructuredScope usage and multiplatform support |
+| **Compiler** | [compiler/README.md](compiler/README.md) | K2/FIR checker implementation details |
+
+### External Resources
 
 - [Kotlin Coroutines Guide](https://kotlinlang.org/docs/coroutines-guide.html)
 - [Structured Concurrency](https://kotlinlang.org/docs/coroutines-basics.html#structured-concurrency)
 - [Detekt Documentation](https://detekt.dev/)
+- [Android Lint API](https://googlesamples.github.io/android-custom-lint-rules/)
+- [IntelliJ Plugin SDK](https://plugins.jetbrains.com/docs/intellij/welcome.html)
 - [K2 Compiler Guide](https://kotlinlang.org/docs/k2-compiler-migration-guide.html)
-- [Detekt Rules Documentation](./docs-local/DETEKT_RULES.md) - Guía completa de uso de Detekt Rules
-- [Android Lint Rules Documentation](./docs-local/LINT_RULES.md) - Guía completa de uso de Android Lint Rules
-- [IntelliJ Plugin Documentation](./docs-local/INTELLIJ_PLUGIN.md) - Complete IntelliJ/Android Studio plugin guide
