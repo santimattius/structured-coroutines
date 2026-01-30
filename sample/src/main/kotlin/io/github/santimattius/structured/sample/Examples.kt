@@ -3,8 +3,10 @@ package io.github.santimattius.structured.sample
 import io.github.santimattius.structured.annotations.StructuredScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 // ============================================================================
 // INVALID EXAMPLES - These produce compilation errors (commented out)
