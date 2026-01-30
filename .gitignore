@@ -16,3 +16,5 @@
 /docs-local/
 /detekt-rules/build/
 /lint-rules/build/
+/.intellijPlatform/
+/intellij-plugin/build/
