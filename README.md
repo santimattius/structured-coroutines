@@ -1,3 +1,7 @@
+<p align="center">
+  <img  src="https://github.com/santimattius/structured-coroutines/blob/main/docs/structured-coroutines.png?raw=true"/>
+</p>
+
 # Structured Coroutines
 
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.3.0-blue.svg)](https://kotlinlang.org)
