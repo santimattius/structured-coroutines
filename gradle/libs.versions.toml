@@ -1,6 +1,7 @@
 [versions]
 kotlin = "2.3.0"
 detekt = "1.23.7"
+maven-publish-plugin = "0.36.0"
 lint = "31.4.0"
 junit-jupiter = "5.10.2"
 junit = "4.13.2"
@@ -37,5 +38,6 @@ kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 maven-publish = { id = "maven-publish" }
+maven-publish-vanniktech = { id = "com.vanniktech.maven.publish", version.ref = "maven-publish-plugin" }
 java-library = { id = "java-library" }
 java-gradle-plugin = { id = "java-gradle-plugin" }

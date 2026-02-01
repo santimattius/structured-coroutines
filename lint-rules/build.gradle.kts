@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.maven.publish)
+    signing
 }
 
 dependencies {
@@ -51,25 +52,23 @@ tasks.named("jar") {
 publishing {
     publications {
         create<MavenPublication>("maven") {
-            groupId = "io.github.santimattius"
+            groupId = project.group.toString()
             artifactId = "structured-coroutines-lint-rules"
             version = project.version.toString()
-            
+
             // Use the lintJar task instead of default jar
             artifact(lintJar)
-            
+
             pom {
                 name.set("Structured Coroutines Lint Rules")
                 description.set("Android Lint rules for enforcing structured concurrency best practices in Kotlin Coroutines")
                 url.set("https://github.com/santimattius/structured-coroutines")
-                
                 licenses {
                     license {
                         name.set("Apache License, Version 2.0")
                         url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
                     }
                 }
-                
                 developers {
                     developer {
                         id.set("santimattius")
@@ -79,4 +78,24 @@ publishing {
             }
         }
     }
+    repositories {
+        maven {
+            name = "mavenCentral"
+            url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+            credentials {
+                username = project.findProperty("mavenCentralUsername")?.toString() ?: ""
+                password = project.findProperty("mavenCentralPassword")?.toString() ?: ""
+            }
+        }
+    }
+}
+
+signing {
+    val keyId = project.findProperty("signingInMemoryKeyId")?.toString()
+    val key = project.findProperty("signingInMemoryKey")?.toString()
+    val password = project.findProperty("signingInMemoryKeyPassword")?.toString()
+    if (key != null && key.isNotEmpty()) {
+        useInMemoryPgpKeys(keyId, key, password)
+    }
+    sign(publishing.publications["maven"])
 }

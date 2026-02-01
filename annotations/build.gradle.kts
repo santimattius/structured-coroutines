@@ -1,6 +1,6 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.maven.publish)
+    alias(libs.plugins.maven.publish.vanniktech)
 }
 
 kotlin {
@@ -62,8 +62,10 @@ kotlin {
     }
 }
 
-publishing {
-    repositories {
-        mavenLocal()
-    }
+mavenPublishing {
+    coordinates(
+        groupId = project.group.toString(),
+        artifactId = "structured-coroutines-annotations",
+        version = project.version.toString()
+    )
 }
