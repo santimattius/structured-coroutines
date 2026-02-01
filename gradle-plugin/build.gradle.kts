@@ -1,8 +1,9 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.java.gradle.plugin)
-    alias(libs.plugins.maven.publish)
+    alias(libs.plugins.maven.publish.vanniktech)
 }
+
 
 dependencies {
     // Only Gradle API and Kotlin Gradle Plugin API
@@ -26,12 +27,10 @@ gradlePlugin {
     }
 }
 
-publishing {
-    publications {
-        // The java-gradle-plugin automatically creates publications
-        // We just need to configure the repository
-    }
-    repositories {
-        mavenLocal()
-    }
+mavenPublishing {
+    coordinates(
+        groupId = project.group.toString(),
+        artifactId = "structured-coroutines-gradle-plugin",
+        version = project.version.toString()
+    )
 }

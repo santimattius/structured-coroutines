@@ -1,6 +1,6 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
-    alias(libs.plugins.maven.publish)
+    alias(libs.plugins.maven.publish.vanniktech)
 }
 
 dependencies {
@@ -22,31 +22,10 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
-publishing {
-    publications {
-        create<MavenPublication>("maven") {
-            from(components["java"])
-            artifactId = "structured-coroutines-detekt-rules"
-            
-            pom {
-                name.set("Structured Coroutines Detekt Rules")
-                description.set("Detekt rules for enforcing structured concurrency best practices in Kotlin Coroutines")
-                url.set("https://github.com/santimattius/structured-coroutines")
-                
-                licenses {
-                    license {
-                        name.set("Apache License, Version 2.0")
-                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
-                    }
-                }
-                
-                developers {
-                    developer {
-                        id.set("santimattius")
-                        name.set("Santiago Mattiauda")
-                    }
-                }
-            }
-        }
-    }
+mavenPublishing {
+    coordinates(
+        groupId = project.group.toString(),
+        artifactId = "structured-coroutines-detekt-rules",
+        version = project.version.toString()
+    )
 }
