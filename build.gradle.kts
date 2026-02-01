@@ -22,6 +22,6 @@ tasks.register("publishToMavenCentral") {
         ":compiler:publishToMavenCentral",
         ":detekt-rules:publishToMavenCentral",
         ":gradle-plugin:publishToMavenCentral",
-        ":lint-rules:publishMavenPublicationToMavenCentralRepository",
+        //":lint-rules:publishMavenPublicationToMavenCentralRepository", TODO: review
     )
 }
