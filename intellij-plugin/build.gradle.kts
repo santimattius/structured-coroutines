@@ -76,6 +76,15 @@ intellijPlatform {
             recommended()
         }
     }
+
+    publishing {
+        token.set(providers.gradleProperty("marketplaceToken")
+            .orElse(providers.environmentVariable("JB_MARKETPLACE_TOKEN")))
+
+        // El "channel" por defecto es "default" (estable).
+        // Puedes usar "EAP" o "Beta" si quieres probar antes.
+        channels.set(listOf("default"))
+    }
 }
 
 kotlin {
