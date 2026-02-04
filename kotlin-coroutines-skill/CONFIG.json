@@ -1,0 +1,64 @@
+{
+  "name": "Kotlin Coroutines Agent Skill",
+  "slug": "kotlin-coroutines-skill",
+  "description": "Expert guidance for Kotlin Coroutines: structured concurrency, safe scopes, Dispatchers, cancellation, exception handling, and testing. Aligned with Kotlin 1.9/2.0+ best practices. Use when reviewing or writing Kotlin/Android async code.",
+  "version": "1.0.0",
+  "author": "Santiago Mattiauda",
+  "license": "MIT",
+  "triggers": [
+    "Kotlin Coroutines",
+    "coroutines",
+    "GlobalScope",
+    "viewModelScope",
+    "lifecycleScope",
+    "Dispatchers",
+    "runBlocking",
+    "suspend function",
+    "CancellationException",
+    "SupervisorJob",
+    "structured concurrency",
+    "kotlinx-coroutines",
+    "async/await",
+    "launch",
+    "withContext",
+    "coroutineScope",
+    "runTest",
+    "kotlinx-coroutines-test"
+  ],
+  "files": {
+    "systemPrompt": "SYSTEM_PROMPT.md",
+    "playbook": "SKILL.md",
+    "examples": "EXAMPLES_SUITE.kt",
+    "reference": "../docs/BEST_PRACTICES_COROUTINES.md",
+    "references": "references/"
+  },
+  "referenceIndex": [
+    "ref-1-1-global-scope.md",
+    "ref-1-2-async-without-await.md",
+    "ref-1-3-breaking-structured-concurrency.md",
+    "ref-2-1-launch-last-line-coroutine-scope.md",
+    "ref-2-2-runblocking-in-suspend.md",
+    "ref-3-1-blocking-wrong-dispatchers.md",
+    "ref-3-2-dispatchers-unconfined.md",
+    "ref-3-3-job-context-builders.md",
+    "ref-4-1-cancellation-intensive-loops.md",
+    "ref-4-2-swallowing-cancellation-exception.md",
+    "ref-4-3-suspend-cleanup-noncancellable.md",
+    "ref-4-4-reusing-cancelled-scope.md",
+    "ref-5-1-supervisor-job-single-builder.md",
+    "ref-5-2-cancellation-exception-domain-errors.md",
+    "ref-6-1-slow-tests-real-delays.md",
+    "ref-6-2-uncontrolled-fire-and-forget-tests.md",
+    "ref-7-1-channel-close.md",
+    "ref-7-2-consume-each-multiple-consumers.md",
+    "ref-8-architecture-patterns.md"
+  ],
+  "outputFormat": {
+    "sections": [
+      "Análisis del problema",
+      "Fragmento de código Erróneo",
+      "Fragmento de código Optimizado",
+      "Explicación técnica de la mejora"
+    ]
+  }
+}
