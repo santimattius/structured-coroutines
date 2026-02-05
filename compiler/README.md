@@ -43,6 +43,19 @@ compiler/
 | `UnusedDeferredChecker` | async without await | Error |
 | `RedundantLaunchInCoroutineScopeChecker` | Redundant launch | Warning |
 
+### CancellationExceptionSwallowedChecker — suspend lambdas
+
+The **CancellationExceptionSwallowed** rule runs not only inside **suspend functions** but also inside **suspend lambdas** (e.g. the block of `scope.launch { }`, `async { }`, `withContext { }`). Code like the following is now reported when it may swallow `CancellationException`:
+
+```kotlin
+scope.launch {
+    try { getData() }
+    catch (e: Exception) { showError(e) }  // Warning: may swallow CancellationException
+}
+```
+
+The checker uses `isInsideSuspendContext()` and resolves the declaration hierarchy (including `FirBasedSymbol` → `fir`) so that any suspend callable context is considered.
+
 ## Configuration
 
 All rules support configurable severity via the Gradle Plugin:

@@ -7,6 +7,7 @@ This document provides detailed information about the Structured Coroutines Inte
 - [Installation](#installation)
 - [Features](#features)
 - [Inspections](#inspections)
+- [Structured Coroutines Tool Window](#structured-coroutines-tool-window)
 - [Quick Fixes](#quick-fixes)
 - [Intentions](#intentions)
 - [Gutter Icons](#gutter-icons)
@@ -58,9 +59,10 @@ Then install from disk: **Settings/Preferences** → **Plugins** → gear icon �
 The plugin provides four main feature categories:
 
 1. **Real-time Inspections** - Detect coroutine anti-patterns as you type
-2. **Quick Fixes** - One-click corrections for detected issues
-3. **Intentions** - Refactoring suggestions available via Alt+Enter
-4. **Gutter Icons** - Visual indicators for scope type and dispatcher context
+2. **Structured Coroutines Tool Window** - View all findings for the current file in one place
+3. **Quick Fixes** - One-click corrections for detected issues
+4. **Intentions** - Refactoring suggestions available via Alt+Enter
+5. **Gutter Icons** - Visual indicators for scope type and dispatcher context
 
 ---
 
@@ -74,7 +76,7 @@ The plugin provides four main feature categories:
 | MainDispatcherMisuse | WARNING | Detects blocking code on `Dispatchers.Main` |
 | ScopeReuseAfterCancel | WARNING | Detects scope cancelled then reused |
 | RunBlockingInSuspend | ERROR | Detects `runBlocking` in suspend functions |
-| UnstructuredLaunch | WARNING | Detects launch without structured scope |
+| UnstructuredLaunch | WARNING | Detects launch without structured scope (recognizes `@StructuredScope` on parameters and properties) |
 | AsyncWithoutAwait | WARNING | Detects `async` without `await()` |
 | InlineCoroutineScope | ERROR | Detects `CoroutineScope(...).launch` |
 | JobInBuilderContext | ERROR | Detects `Job()`/`SupervisorJob()` in builders |
@@ -223,6 +225,25 @@ suspend fun work() {
     catch (e: Exception) { log(e) }
 }
 ```
+
+---
+
+## Structured Coroutines Tool Window
+
+The plugin adds a **Structured Coroutines** tool window (bottom strip) that shows all inspection findings for the **current file**.
+
+### How to open
+
+- **View** → **Tool Windows** → **Structured Coroutines**
+
+### Usage
+
+1. **Open a Kotlin file** in the editor (the one you want to analyze).
+2. Click **Refresh** in the tool window toolbar. The plugin runs all 11 Structured Coroutines inspections on that file.
+3. The table shows **Severity** (icon), **Location** (file:line), **Inspection** name, and **Message**.
+4. **Double-click** a row to navigate to the reported element in the editor.
+
+If no file is selected or the current file is not Kotlin, the view shows a short message. With the tool window you can see every coroutine issue in the active file in one place without scrolling through the editor.
 
 ---
 
@@ -442,7 +463,8 @@ intellij-plugin/
 │       ├── quickfixes/
 │       ├── intentions/
 │       ├── guttericons/
-│       └── utils/
+│       ├── utils/
+│       └── view/           # Tool window (panel, runner, tree visitor)
 ├── src/main/resources/
 │   ├── META-INF/plugin.xml
 │   └── messages/StructuredCoroutinesBundle.properties
@@ -612,6 +634,11 @@ Include:
 ---
 
 ## Version History
+
+### After v0.1.0
+
+- **Structured Coroutines tool window** — View → Tool Windows → Structured Coroutines; lists all findings for the current file; Refresh to run inspections, double-click to navigate.
+- **@StructuredScope detection** — UnstructuredLaunch inspection now correctly recognizes parameters and properties annotated with `@StructuredScope` (via `ScopeAnalyzer.findScopeDeclarationByName` and `hasStructuredScopeAnnotation`).
 
 ### v0.1.0
 
