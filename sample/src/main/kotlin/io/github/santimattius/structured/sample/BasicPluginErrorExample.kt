@@ -6,7 +6,6 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 fun badJobInLaunch(scope: CoroutineScope) {
     scope.launch(Job()) {           // ERROR!
@@ -14,9 +13,6 @@ fun badJobInLaunch(scope: CoroutineScope) {
     }
     scope.launch(SupervisorJob()) { // ERROR!
         println("Also bad!")
-    }
-    withContext(SupervisorJob()) {  // ERROR!
-        println("Still bad!")
     }
 }
 

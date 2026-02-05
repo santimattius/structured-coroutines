@@ -1,6 +1,7 @@
 # Gradle Plugin for Structured Coroutines
 
-Gradle plugin that integrates the Structured Coroutines Kotlin Compiler Plugin for enforcing structured concurrency best practices.
+Gradle plugin that integrates the Structured Coroutines Kotlin Compiler Plugin for enforcing
+structured concurrency best practices.
 
 ## Table of Contents
 
@@ -27,11 +28,11 @@ From the plugin project directory:
 
 This publishes artifacts to `~/.m2/repository/`:
 
-| Artifact | Purpose |
-|----------|---------|
-| `io.github.santimattius:annotations:0.1.0` | Annotations (`@StructuredScope`) - Multiplatform |
-| `io.github.santimattius:structured-coroutines-compiler:0.1.0` | Kotlin Compiler Plugin |
-| `io.github.santimattius.structured-coroutines:...gradle.plugin:0.1.0` | Gradle Plugin |
+| Artifact                                                              | Purpose                                          |
+|-----------------------------------------------------------------------|--------------------------------------------------|
+| `io.github.santimattius:structured-coroutines-annotations:0.1.0`      | Annotations (`@StructuredScope`) - Multiplatform |
+| `io.github.santimattius:structured-coroutines-compiler:0.1.0`         | Kotlin Compiler Plugin                           |
+| `io.github.santimattius.structured-coroutines:...gradle.plugin:0.1.0` | Gradle Plugin                                    |
 
 ### 2. Configure Repositories
 
@@ -68,7 +69,7 @@ plugins {
 
 dependencies {
     // Annotations for @StructuredScope
-    implementation("io.github.santimattius:annotations:0.1.0")
+    implementation("io.github.santimattius:structured-coroutines-annotations:0.1.0")
 
     // Coroutines dependency
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
@@ -104,9 +105,9 @@ structuredCoroutines {
 
 ### Severity Levels
 
-| Level | Behavior |
-|-------|----------|
-| `"error"` | Reports as compilation error (blocks build) |
+| Level       | Behavior                                     |
+|-------------|----------------------------------------------|
+| `"error"`   | Reports as compilation error (blocks build)  |
 | `"warning"` | Reports as warning (allows build to succeed) |
 
 ---
@@ -115,27 +116,27 @@ structuredCoroutines {
 
 ### Summary Table
 
-| Rule | Default Severity | Description |
-|------|------------------|-------------|
-| `globalScopeUsage` | Error | Detects `GlobalScope.launch/async` |
-| `inlineCoroutineScope` | Error | Detects `CoroutineScope(...).launch/async` |
-| `unstructuredLaunch` | Error | Detects launch on non-annotated scopes |
-| `runBlockingInSuspend` | Error | Detects `runBlocking` in suspend functions |
-| `jobInBuilderContext` | Error | Detects `Job()`/`SupervisorJob()` in builders |
-| `cancellationExceptionSubclass` | Error | Detects classes extending `CancellationException` |
-| `unusedDeferred` | Error | Detects `async` without `await()` |
-| `dispatchersUnconfined` | Warning | Detects `Dispatchers.Unconfined` usage |
-| `suspendInFinally` | Warning | Detects suspend in finally without `NonCancellable` |
-| `cancellationExceptionSwallowed` | Warning | Detects `catch(Exception)` swallowing cancellation |
-| `redundantLaunchInCoroutineScope` | Warning | Detects redundant launch in `coroutineScope` |
+| Rule                              | Default Severity | Description                                         |
+|-----------------------------------|------------------|-----------------------------------------------------|
+| `globalScopeUsage`                | Error            | Detects `GlobalScope.launch/async`                  |
+| `inlineCoroutineScope`            | Error            | Detects `CoroutineScope(...).launch/async`          |
+| `unstructuredLaunch`              | Error            | Detects launch on non-annotated scopes              |
+| `runBlockingInSuspend`            | Error            | Detects `runBlocking` in suspend functions          |
+| `jobInBuilderContext`             | Error            | Detects `Job()`/`SupervisorJob()` in builders       |
+| `cancellationExceptionSubclass`   | Error            | Detects classes extending `CancellationException`   |
+| `unusedDeferred`                  | Error            | Detects `async` without `await()`                   |
+| `dispatchersUnconfined`           | Warning          | Detects `Dispatchers.Unconfined` usage              |
+| `suspendInFinally`                | Warning          | Detects suspend in finally without `NonCancellable` |
+| `cancellationExceptionSwallowed`  | Warning          | Detects `catch(Exception)` swallowing cancellation  |
+| `redundantLaunchInCoroutineScope` | Warning          | Detects redundant launch in `coroutineScope`        |
 
 ### Rules Count
 
-| Severity | Count |
-|----------|-------|
-| Error (default) | 7 |
-| Warning (default) | 4 |
-| **Total** | **11** |
+| Severity          | Count  |
+|-------------------|--------|
+| Error (default)   | 7      |
+| Warning (default) | 4      |
+| **Total**         | **11** |
 
 ---
 
@@ -210,14 +211,18 @@ val deferred = scope.async { compute() }
 launch(Dispatchers.Unconfined) { }
 
 // ⚠️ WARNING: Suspend in finally without NonCancellable
-try { } finally {
+try {
+} finally {
     suspendFunction()  // Should be wrapped in withContext(NonCancellable)
 }
 
 // ⚠️ WARNING: catch(Exception) may swallow CancellationException
 suspend fun process() {
-    try { work() }
-    catch (e: Exception) { log(e) }  // Should handle CancellationException
+    try {
+        work()
+    } catch (e: Exception) {
+        log(e)
+    }  // Should handle CancellationException
 }
 
 // ⚠️ WARNING: Redundant launch
@@ -234,17 +239,17 @@ The plugin fully supports Kotlin Multiplatform projects.
 
 ### Supported Targets
 
-| Platform | Artifacts |
-|----------|-----------|
-| JVM | `annotations-jvm` |
-| JS | `annotations-js` |
-| iOS | `annotations-iosarm64`, `annotations-iossimulatorarm64` |
-| macOS | `annotations-macosx64`, `annotations-macosarm64` |
-| watchOS | `annotations-watchosarm64`, etc. |
-| tvOS | `annotations-tvosarm64`, etc. |
-| Linux | `annotations-linuxx64`, `annotations-linuxarm64` |
-| Windows | `annotations-mingwx64` |
-| WASM | `annotations-wasmjs`, `annotations-wasmwasi` |
+| Platform | Artifacts                                               |
+|----------|---------------------------------------------------------|
+| JVM      | `annotations-jvm`                                       |
+| JS       | `annotations-js`                                        |
+| iOS      | `annotations-iosarm64`, `annotations-iossimulatorarm64` |
+| macOS    | `annotations-macosx64`, `annotations-macosarm64`        |
+| watchOS  | `annotations-watchosarm64`, etc.                        |
+| tvOS     | `annotations-tvosarm64`, etc.                           |
+| Linux    | `annotations-linuxx64`, `annotations-linuxarm64`        |
+| Windows  | `annotations-mingwx64`                                  |
+| WASM     | `annotations-wasmjs`, `annotations-wasmwasi`            |
 
 ### KMP Configuration
 
@@ -269,7 +274,7 @@ kotlin {
         commonMain {
             dependencies {
                 // Multiplatform annotations
-                implementation("io.github.santimattius:annotations:0.1.0")
+                implementation("io.github.santimattius:structured-coroutines-annotations:0.1.0")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
             }
         }
@@ -376,28 +381,28 @@ structuredCoroutines {
 
 ### Plugin Not Found
 
-| Issue | Solution |
-|-------|----------|
-| Plugin not found | Run `publishToMavenLocal` in the plugin project |
+| Issue                     | Solution                                                                                                     |
+|---------------------------|--------------------------------------------------------------------------------------------------------------|
+| Plugin not found          | Run `publishToMavenLocal` in the plugin project                                                              |
 | Repository not configured | Add `mavenLocal()` to both `pluginManagement.repositories` and `dependencyResolutionManagement.repositories` |
-| Wrong Kotlin version | Requires Kotlin 2.0+ (K2 compiler) |
+| Wrong Kotlin version      | Requires Kotlin 2.0+ (K2 compiler)                                                                           |
 
 ### Configuration Not Working
 
-| Issue | Solution |
-|-------|----------|
-| Severity not applied | Use `set("error")` or `set("warning")` syntax |
-| Stale configuration | Run `./gradlew clean build` |
-| Wrong file | Ensure `structuredCoroutines` block is in the correct `build.gradle.kts` |
+| Issue                | Solution                                                                 |
+|----------------------|--------------------------------------------------------------------------|
+| Severity not applied | Use `set("error")` or `set("warning")` syntax                            |
+| Stale configuration  | Run `./gradlew clean build`                                              |
+| Wrong file           | Ensure `structuredCoroutines` block is in the correct `build.gradle.kts` |
 
 ### Annotations Not Found
 
 ```kotlin
 // For JVM projects
-implementation("io.github.santimattius:annotations:0.1.0")
+implementation("io.github.santimattius:structured-coroutines-annotations:0.1.0")
 
 // For KMP projects (in commonMain)
-implementation("io.github.santimattius:annotations:0.1.0")
+implementation("io.github.santimattius:structured-coroutines-annotations:0.1.0")
 ```
 
 ### Verify Maven Local
@@ -407,6 +412,7 @@ ls ~/.m2/repository/io/github/santimattius/
 ```
 
 Expected directories:
+
 - `annotations/`
 - `structured-coroutines-compiler/`
 - `structured-coroutines/` (plugin marker)
@@ -447,7 +453,7 @@ plugins {
 }
 
 dependencies {
-    implementation("io.github.santimattius:annotations:0.1.0")
+    implementation("io.github.santimattius:structured-coroutines-annotations:0.1.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
 }
 
@@ -519,7 +525,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation("io.github.santimattius:annotations:0.1.0")
+                implementation("io.github.santimattius:structured-coroutines-annotations:0.1.0")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
             }
         }
