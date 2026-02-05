@@ -7,7 +7,7 @@ Multiplatform annotations for marking structured coroutine scopes.
 ```kotlin
 // build.gradle.kts
 dependencies {
-    implementation("io.github.santimattius:annotations:0.1.0")
+    implementation("io.github.santimattius:structured-coroutines-annotations:0.1.0")
 }
 
 // For KMP projects (commonMain)
@@ -15,7 +15,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation("io.github.santimattius:annotations:0.1.0")
+                implementation("io.github.santimattius:structured-coroutines-annotations:0.1.0")
             }
         }
     }

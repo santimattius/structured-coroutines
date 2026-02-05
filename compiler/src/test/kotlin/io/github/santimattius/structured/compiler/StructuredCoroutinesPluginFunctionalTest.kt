@@ -56,7 +56,7 @@ class StructuredCoroutinesPluginFunctionalTest {
             }
             
             dependencies {
-                implementation("io.github.santimattius:annotations:0.1.0")
+                implementation("io.github.santimattius:structured-coroutines-annotations:0.1.0")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
             }
             

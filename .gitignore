@@ -1,3 +1,6 @@
+# macOS
+.DS_Store
+
 # Project exclude paths
 /.gradle/
 /.idea/
@@ -18,3 +21,4 @@
 /lint-rules/build/
 /.intellijPlatform/
 /intellij-plugin/build/
+
