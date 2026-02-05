@@ -4,6 +4,8 @@
 
 Expert guidance for any AI coding tool that supports Agent Skills or custom instructions — **safe structured concurrency**, performance, and Kotlin 1.9/2.0+ best practices for Coroutines.
 
+This package is part of the [Structured Coroutines](https://github.com/santimattius/structured-coroutines) project and was added to provide consistent, rule-based AI/agent-driven guidance for reviewing or refactoring Kotlin/Android coroutine code.
+
 Inspired by the [Swift Concurrency Agent Skill](https://github.com/AvdLee/Swift-Concurrency-Agent-Skill) model: industry-standard practices, no forced architecture. This skill helps agents give **consistent, correct** advice on Kotlin Coroutines without pushing a specific app structure.
 
 ---

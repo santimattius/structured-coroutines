@@ -560,6 +560,12 @@ w: MyFile.kt:15:9: Dispatchers.Unconfined usage detected. Dispatchers.Unconfined
 
 ---
 
+## Sample: Compilation examples per rule
+
+The **sample** project in this repository includes a `compilation` package with one Kotlin file per compiler rule (7 errors, 4 warnings). Use it to verify the plugin in your environment or to see exactly what code triggers each rule. See [sample/compilation/README.md](../sample/src/main/kotlin/io/github/santimattius/structured/sample/compilation/README.md) for the package layout and build commands. With the plugin enabled, the sample fails compilation by design due to the error examples.
+
+---
+
 ## License
 
 ```

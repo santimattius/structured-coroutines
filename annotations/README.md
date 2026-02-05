@@ -70,6 +70,10 @@ class Repository {
 | Windows | `annotations-mingwx64` |
 | WASM | `annotations-wasmjs`, `annotations-wasmwasi` |
 
+## Recognition by compiler and IDE
+
+The **Structured Coroutines compiler plugin** and **IntelliJ plugin** both recognize `@StructuredScope` on function parameters and class properties. For example, `fun foo(@StructuredScope scope: CoroutineScope) { scope.launch { } }` is not reported as an unstructured launch. The IDE resolves the scope name to the parameter or property declaration and checks for the annotation.
+
 ## Framework Scopes (Auto-recognized)
 
 The following scopes are automatically recognized without annotation:

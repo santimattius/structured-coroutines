@@ -18,8 +18,10 @@ A comprehensive toolkit for enforcing **structured concurrency** in Kotlin Corou
 | Gradle Plugin | ✅ Complete | [gradle-plugin/README.md](gradle-plugin/README.md) |
 | Detekt Rules | ✅ Complete (9 rules) | [detekt-rules/README.md](detekt-rules/README.md) |
 | Android Lint | ✅ Complete (17 rules) | [lint-rules/README.md](lint-rules/README.md) |
-| IntelliJ Plugin | ✅ Complete (11 inspections, 9 quick fixes) | [intellij-plugin/README.md](intellij-plugin/README.md) |
+| IntelliJ Plugin | ✅ Complete (11 inspections, 9 quick fixes, tool window) | [intellij-plugin/README.md](intellij-plugin/README.md) |
 | Annotations | ✅ Complete | [annotations/README.md](annotations/README.md) |
+| Sample | ✅ Compilation examples per rule | [compilation/README](sample/src/main/kotlin/io/github/santimattius/structured/sample/compilation/README.md) |
+| Kotlin Coroutines Agent Skill | ✅ AI/agent guidance | [kotlin-coroutines-skill/README.md](kotlin-coroutines-skill/README.md) |
 
 ---
 
@@ -65,6 +67,18 @@ This toolkit enforces structured concurrency best practices through:
 - 🌍 **Kotlin Multiplatform** - supports JVM, JS, Native, WASM
 - 🔎 **Detekt integration** - additional static analysis rules
 - 📱 **Android Lint integration** - Android-specific rules with quick fixes
+- 📋 **Structured Coroutines tool window** (IntelliJ) - view all findings for the current file in one place
+- 📂 **Compilation samples** - one example per compiler rule in the sample project
+- 🤖 **Kotlin Coroutines Agent Skill** - consistent AI/agent-driven guidance for coroutine code
+
+### Recent changes (since 0.1.0)
+
+- **Compiler:** `CancellationExceptionSwallowed` now detects `catch(Exception)` inside **suspend lambdas** (e.g. `scope.launch { try { } catch (e: Exception) { } }`), not only in suspend functions.
+- **IntelliJ plugin:** Correct detection of `@StructuredScope` on parameters and properties; new **Structured Coroutines** tool window (View → Tool Windows) to list and navigate all findings for the current file.
+- **Sample:** New `compilation` package with one subpackage per compiler check (7 errors, 4 warnings) for testing and documentation.
+- **New:** `kotlin-coroutines-skill/` package for AI/agent-driven coroutine best practices.
+
+See [CHANGES_SINCE_0.1.0.md](CHANGES_SINCE_0.1.0.md) for full details.
 
 ---
 
@@ -82,6 +96,7 @@ This toolkit enforces structured concurrency best practices through:
 | `RUN_BLOCKING_IN_SUSPEND` | Prohibits `runBlocking` in suspend functions |
 | `JOB_IN_BUILDER_CONTEXT` | Prohibits `Job()`/`SupervisorJob()` in builders |
 | `CANCELLATION_EXCEPTION_SUBCLASS` | Prohibits extending `CancellationException` |
+| `UNUSED_DEFERRED` | Prohibits `async` without `.await()` |
 
 #### Warnings (Allow Compilation)
 
@@ -90,6 +105,7 @@ This toolkit enforces structured concurrency best practices through:
 | `DISPATCHERS_UNCONFINED_USAGE` | Warns about `Dispatchers.Unconfined` |
 | `SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE` | Warns about unprotected suspend in finally |
 | `CANCELLATION_EXCEPTION_SWALLOWED` | Warns about `catch(Exception)` in suspend |
+| `REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE` | Warns about single `launch` in `coroutineScope { }` |
 
 ### Detekt Rules (Static Analysis)
 
@@ -198,6 +214,10 @@ The IDE plugin provides real-time inspections, quick fixes, intentions, and gutt
 
 - **Scope Type Icons**: Visual indicators for viewModelScope (green), lifecycleScope (blue), GlobalScope (red), etc.
 - **Dispatcher Context Icons**: Shows current dispatcher (Main, IO, Default, Unconfined)
+
+#### Structured Coroutines tool window
+
+- **View → Tool Windows → Structured Coroutines**: Lists all inspection findings for the **current file** (severity, location, inspection name, message). Use **Refresh** to run inspections; **double-click** a row to navigate to the issue. The plugin correctly recognizes `@StructuredScope` on parameters and properties, so annotated scopes are not reported as unstructured.
 
 ---
 
@@ -588,9 +608,12 @@ structured-coroutines/
 │   ├── inspections/      # 11 real-time inspections
 │   ├── quickfixes/       # 9 automatic quick fixes
 │   ├── intentions/       # 5 refactoring intentions
-│   └── guttericons/      # Scope & dispatcher visualization
+│   ├── guttericons/      # Scope & dispatcher visualization
+│   └── view/             # Tool window (findings list, runner, tree visitor)
 ├── gradle-plugin/        # Gradle Integration
-└── sample/               # Examples
+├── sample/               # Examples
+│   └── compilation/     # One example per compiler rule (errors & warnings)
+└── kotlin-coroutines-skill/  # AI/agent skill for coroutine best practices
 ```
 
 ---
@@ -697,6 +720,8 @@ Each module contains its own detailed documentation:
 | **IntelliJ Plugin** | [intellij-plugin/README.md](intellij-plugin/README.md) | Inspections, quick fixes, intentions, K2 support |
 | **Annotations** | [annotations/README.md](annotations/README.md) | @StructuredScope usage and multiplatform support |
 | **Compiler** | [compiler/README.md](compiler/README.md) | K2/FIR checker implementation details |
+| **Sample (compilation)** | [compilation/README.md](sample/src/main/kotlin/io/github/santimattius/structured/sample/compilation/README.md) | One example per compiler rule (errors and warnings) |
+| **Kotlin Coroutines Agent Skill** | [kotlin-coroutines-skill/README.md](kotlin-coroutines-skill/README.md) | AI/agent skill for coroutine best practices |
 
 ### External Resources
 
