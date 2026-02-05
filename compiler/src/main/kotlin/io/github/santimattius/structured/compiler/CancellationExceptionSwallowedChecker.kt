@@ -13,6 +13,8 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.expression.FirTryExpressionChecker
+import org.jetbrains.kotlin.fir.declarations.FirDeclaration
+import org.jetbrains.kotlin.fir.declarations.FirFunction
 import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
 import org.jetbrains.kotlin.fir.expressions.FirBlock
 import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
@@ -20,6 +22,8 @@ import org.jetbrains.kotlin.fir.expressions.FirStatement
 import org.jetbrains.kotlin.fir.expressions.FirThrowExpression
 import org.jetbrains.kotlin.fir.expressions.FirTryExpression
 import org.jetbrains.kotlin.fir.resolve.toClassSymbol
+import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
+import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.types.coneType
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -77,7 +81,7 @@ import org.jetbrains.kotlin.name.Name
  * ## Detection
  *
  * This checker:
- * 1. Only analyzes code inside `suspend` functions
+ * 1. Only analyzes code inside `suspend` functions or suspend lambdas (e.g. inside `launch { }`)
  * 2. Looks for `catch(e: Exception)` or `catch(e: Throwable)` blocks
  * 3. Verifies there's no separate `catch(CancellationException)` clause
  * 4. Checks if the catch block re-throws or calls `ensureActive()`
@@ -109,8 +113,8 @@ class CancellationExceptionSwallowedChecker : FirTryExpressionChecker(MppChecker
 
     context(context: CheckerContext, reporter: DiagnosticReporter)
     override fun check(expression: FirTryExpression) {
-        // Only check inside suspend functions
-        if (!isInsideSuspendFunction(context)) return
+        // Only check inside suspend functions or suspend lambdas (e.g. launch { }, async { })
+        if (!isInsideSuspendContext(context)) return
 
         // Check if there's a catch block that catches broad exceptions
         val catches = expression.catches
@@ -142,15 +146,32 @@ class CancellationExceptionSwallowedChecker : FirTryExpressionChecker(MppChecker
     }
 
     /**
-     * Checks if we're currently inside a suspend function.
+     * Checks if we're currently inside a suspend context: either a suspend function
+     * or a suspend lambda (e.g. the block of launch { }, async { }, withContext { }).
+     * This ensures we flag catch(Exception) that may swallow CancellationException
+     * inside coroutine builders, not only in top-level suspend functions.
      */
-    private fun isInsideSuspendFunction(context: CheckerContext): Boolean {
-        for (declaration in context.containingDeclarations) {
-            if (declaration is FirSimpleFunction && declaration.status.isSuspend) {
-                return true
+    @OptIn(SymbolInternals::class)
+    private fun isInsideSuspendContext(context: CheckerContext): Boolean {
+        for (element in context.containingDeclarations) {
+            val symbol = element as FirBasedSymbol<*>
+            val declaration = symbol.fir
+            when (declaration) {
+                is FirSimpleFunction -> if (declaration.status.isSuspend) return true
+                else -> if (isSuspendLambda(declaration)) return true
             }
         }
         return false
+    }
+
+    /**
+     * Returns true if the declaration is a suspend lambda (e.g. the block of
+     * launch { }, async { }). In FIR, lambdas are represented as functions
+     * (e.g. FirAnonymousFunction extends FirFunction); we detect suspend via status.
+     */
+    private fun isSuspendLambda(declaration: FirDeclaration): Boolean {
+        val fn = declaration as? FirFunction ?: return false
+        return fn.status.isSuspend
     }
 
     /**
