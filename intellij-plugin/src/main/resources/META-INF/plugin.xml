@@ -22,6 +22,7 @@
             <li>Quick fixes for automatic code correction</li>
             <li>Intentions for code refactoring</li>
             <li>Gutter icons for scope and dispatcher visualization</li>
+            <li>Structured Coroutines tool window: view all findings for the current file in one place</li>
         </ul>
         <p><b>Inspections:</b></p>
         <ul>
@@ -232,5 +233,12 @@
             id="structured-coroutines.dispatcher-line-marker"
             language="kotlin"
             implementationClass="io.github.santimattius.structured.intellij.guttericons.DispatcherContextLineMarkerProvider"/>
+
+        <!-- Tool Window: Structured Coroutines findings view -->
+        <toolWindow
+            id="StructuredCoroutines"
+            factoryClass="io.github.santimattius.structured.intellij.view.StructuredCoroutinesToolWindowFactory"
+            anchor="bottom"
+            secondary="false"/>
     </extensions>
 </idea-plugin>

@@ -263,4 +263,19 @@ object ScopeAnalyzer {
             else -> false
         }
     }
+
+    /**
+     * Finds the declaration (KtParameter or KtProperty) for the scope used in a coroutine
+     * builder call by name. For "scope.launch", looks up a parameter or property named "scope"
+     * in the containing function or class and returns it so callers can check @StructuredScope.
+     */
+    fun findScopeDeclarationByName(call: KtCallExpression, scopeName: String): PsiElement? {
+        val containingFunction = call.getParentOfType<KtNamedFunction>(strict = false) ?: return null
+        // Check value parameters (e.g. @StructuredScope scope: CoroutineScope)
+        val parameter = containingFunction.valueParameters.find { it.name == scopeName }
+        if (parameter != null) return parameter
+        // Check property in containing class (e.g. @StructuredScope val scope)
+        val containingClass = containingFunction.getParentOfType<KtClass>(strict = false) ?: return null
+        return containingClass.getBody()?.properties?.find { it.name == scopeName }
+    }
 }
