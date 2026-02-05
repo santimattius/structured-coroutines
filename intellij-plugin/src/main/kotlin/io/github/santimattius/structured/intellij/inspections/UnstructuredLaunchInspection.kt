@@ -14,6 +14,7 @@ import io.github.santimattius.structured.intellij.StructuredCoroutinesBundle
 import io.github.santimattius.structured.intellij.inspections.base.CoroutineInspectionBase
 import io.github.santimattius.structured.intellij.quickfixes.ReplaceGlobalScopeQuickFix
 import io.github.santimattius.structured.intellij.utils.CoroutinePsiUtils
+import io.github.santimattius.structured.intellij.utils.ScopeAnalyzer
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
@@ -69,8 +70,11 @@ class UnstructuredLaunchInspection : CoroutineInspectionBase() {
                 val parent = expression.parent as? KtDotQualifiedExpression
                 if (parent != null) {
                     val scopeName = CoroutinePsiUtils.getScopeName(expression)
-                    if (scopeName != null && isAnnotatedStructuredScope(expression, scopeName)) {
-                        return
+                    if (scopeName != null) {
+                        val scopeDeclaration = ScopeAnalyzer.findScopeDeclarationByName(expression, scopeName)
+                        if (scopeDeclaration != null && ScopeAnalyzer.hasStructuredScopeAnnotation(scopeDeclaration)) {
+                            return
+                        }
                     }
                 }
 
@@ -105,9 +109,4 @@ class UnstructuredLaunchInspection : CoroutineInspectionBase() {
         return false
     }
 
-    private fun isAnnotatedStructuredScope(expression: KtCallExpression, scopeName: String): Boolean {
-        // This would require resolve context to properly check annotations
-        // For now, we accept common scope patterns
-        return scopeName.endsWith("Scope") && scopeName != "CoroutineScope"
-    }
 }
