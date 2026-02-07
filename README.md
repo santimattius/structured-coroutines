@@ -78,7 +78,7 @@ This toolkit enforces structured concurrency best practices through:
 - **Sample:** New `compilation` package with one subpackage per compiler check (7 errors, 4 warnings) for testing and documentation.
 - **New:** `kotlin-coroutines-skill/` package for AI/agent-driven coroutine best practices.
 
-See [CHANGES_SINCE_0.1.0.md](CHANGES_SINCE_0.1.0.md) for full details.
+See [CHANGES_SINCE_0.1.0.md](docs-local/CHANGES_SINCE_0.1.0.md) for full details.
 
 ---
 
