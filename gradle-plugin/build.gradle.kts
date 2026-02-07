@@ -34,3 +34,10 @@ mavenPublishing {
         version = project.version.toString()
     )
 }
+
+// Custom task that runs all checks for the Gradle plugin
+tasks.register("structuredCoroutinesCheck") {
+    group = "verification"
+    description = "Runs all checks for the Gradle plugin (validatePlugins + test) and validates execution in sample"
+    dependsOn(tasks.validatePlugins, tasks.test)
+}

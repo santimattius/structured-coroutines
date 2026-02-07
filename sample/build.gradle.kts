@@ -9,11 +9,11 @@ dependencies {
 
 kotlin {
     jvmToolchain(17)
-    
+
     compilerOptions {
         // Enable the structured coroutines compiler plugin
         freeCompilerArgs.addAll(
-            "-Xplugin=${project(":compiler").layout.buildDirectory.get().asFile}/libs/compiler-0.1.0.jar"
+            "-Xplugin=${project(":compiler").layout.buildDirectory.get().asFile}/libs/compiler-${project.version}.jar"
         )
     }
 }
