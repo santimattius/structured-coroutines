@@ -1,6 +1,9 @@
 ---
-name: kotlin-coroutines
+name: kotlin-coroutines-skill
 description: 'Expert guidance on Kotlin Coroutines best practices, structured concurrency, and safe async code. Use when developers mention: (1) Kotlin Coroutines, suspend, launch, async, or Flow, (2) "use coroutines" or "structured concurrency" in Kotlin, (3) GlobalScope, viewModelScope, lifecycleScope, or CoroutineScope, (4) Dispatchers (Main, IO, Default, Unconfined), (5) cancellation, CancellationException, or SupervisorJob, (6) runBlocking, blocking in coroutines, or wrong dispatchers, (7) Channels, produce, or consumeEach, (8) testing coroutines, runTest, or TestDispatcher, (9) architecture layers with suspend/Flow vs callbacks.'
+license: MIT
+metadata:
+  version: "1.0"
 ---
 
 # Kotlin Coroutines
