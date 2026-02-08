@@ -108,7 +108,8 @@ publishing {
         if (!username.isNullOrBlank() && !password.isNullOrBlank()) {
             maven {
                 name = "mavenCentral"
-                url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+                // Central Portal OSSRH Staging API (s01.oss.sonatype.org was shut down 2025-06-30)
+                url = uri("https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/")
                 credentials {
                     this.username = username
                     this.password = password
