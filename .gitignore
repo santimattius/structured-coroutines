@@ -15,6 +15,9 @@
 /.kotlin/
 /build/
 
+# Agent Skills validator (optional clone)
+/.tools-agentskills/
+
 # Local documentation (not for public repo)
 /docs-local/
 /detekt-rules/build/

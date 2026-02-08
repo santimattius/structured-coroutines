@@ -1,0 +1,42 @@
+# Valida kotlin-coroutines-skill contra la especificación Agent Skills (agentskills.io)
+# usando el validador oficial skills-ref: https://github.com/agentskills/agentskills/tree/main/skills-ref
+
+name: Validate Agent Skill
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "kotlin-coroutines-skill/**"
+  pull_request:
+    branches: [main, master]
+    paths:
+      - "kotlin-coroutines-skill/**"
+
+jobs:
+  validate-skill:
+    name: Validate skill (skills-ref)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Clone skills-ref
+        run: |
+          git clone --depth 1 https://github.com/agentskills/agentskills.git .tools-agentskills
+
+      - name: Install skills-ref dependencies
+        run: |
+          cd .tools-agentskills/skills-ref
+          python -m venv .venv
+          .venv/bin/pip install --quiet click strictyaml hatchling
+
+      - name: Validate kotlin-coroutines-skill
+        run: |
+          cd .tools-agentskills/skills-ref
+          PYTHONPATH=src .venv/bin/python -m skills_ref.cli validate "$GITHUB_WORKSPACE/kotlin-coroutines-skill"
