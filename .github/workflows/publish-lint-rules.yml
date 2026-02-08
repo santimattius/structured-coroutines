@@ -19,6 +19,17 @@ jobs:
           distribution: "zulu"
           java-version: "17"
 
+      - name: Validate required secrets
+        run: |
+          if [ -z "${{ secrets.MAVEN_CENTRAL_USERNAME }}" ] || [ -z "${{ secrets.MAVEN_CENTRAL_PASSWORD }}" ]; then
+            echo "::error::MAVEN_CENTRAL_USERNAME and MAVEN_CENTRAL_PASSWORD must be set in repository secrets."
+            exit 1
+          fi
+          if [ -z "${{ secrets.SIGNING_KEY_ID }}" ] || [ -z "${{ secrets.SIGNING_PASSWORD }}" ] || [ -z "${{ secrets.GPG_KEY_CONTENTS }}" ]; then
+            echo "::error::SIGNING_KEY_ID, SIGNING_PASSWORD, and GPG_KEY_CONTENTS must be set in repository secrets."
+            exit 1
+          fi
+
       - name: Publish lint-rules to Maven Central
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
