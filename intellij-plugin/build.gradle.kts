@@ -51,12 +51,14 @@ intellijPlatform {
             </ul>
         """.trimIndent()
         changeNotes = """
-            <p><b>v0.1.0 - Initial Release</b></p>
+            <p><b>v0.2.0</b></p>
             <ul>
+                <li>IDE compatibility: IntelliJ IDEA 2024.3–2025.x (builds 243–252)</li>
                 <li>11 inspections for coroutine best practices</li>
                 <li>9 quick fixes for automatic corrections</li>
                 <li>5 intentions for refactoring</li>
                 <li>2 gutter icon providers</li>
+                <li>Structured Coroutines tool window</li>
                 <li>Full K2 compiler mode support</li>
             </ul>
         """.trimIndent()
