@@ -30,7 +30,7 @@ class StructuredCoroutinesGradlePlugin : KotlinCompilerPluginSupportPlugin {
         // These should match the published artifact coordinates
         const val GROUP_ID = "io.github.santimattius"
         const val ARTIFACT_ID = "structured-coroutines-compiler"
-        const val VERSION = "0.1.0"
+        const val VERSION = "0.2.0"
     }
 
     override fun apply(target: Project) {
