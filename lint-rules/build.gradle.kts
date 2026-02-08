@@ -49,6 +49,22 @@ tasks.named("jar") {
     enabled = false
 }
 
+// Sources JAR for Maven Central (required for main artifacts)
+val sourcesJar = tasks.register<Jar>("sourcesJar") {
+    archiveClassifier.set("sources")
+    from(sourceSets.main.get().allSource)
+    dependsOn(tasks.named("classes"))
+}
+
+// Empty Javadoc JAR (Maven Central expects -javadoc.jar; lint rules typically ship empty)
+val javadocJar = tasks.register<Jar>("javadocJar") {
+    archiveClassifier.set("javadoc")
+    // Empty jar; Maven Central accepts this for lint/processor libraries
+}
+
+fun Project.pomProperty(name: String): String? =
+    findProperty(name)?.toString()?.takeIf { it.isNotBlank() }
+
 publishing {
     publications {
         create<MavenPublication>("maven") {
@@ -56,35 +72,47 @@ publishing {
             artifactId = "structured-coroutines-lint-rules"
             version = project.version.toString()
 
-            // Use the lintJar task instead of default jar
             artifact(lintJar)
+            artifact(sourcesJar)
+            artifact(javadocJar)
 
             pom {
                 name.set("Structured Coroutines Lint Rules")
                 description.set("Android Lint rules for enforcing structured concurrency best practices in Kotlin Coroutines")
-                url.set("https://github.com/santimattius/structured-coroutines")
+                url.set(project.pomProperty("POM_URL") ?: "https://github.com/santimattius/structured-coroutines")
                 licenses {
                     license {
-                        name.set("Apache License, Version 2.0")
-                        url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                        name.set(project.pomProperty("POM_LICENSE_NAME") ?: "Apache-2.0")
+                        url.set(project.pomProperty("POM_LICENSE_URL") ?: "https://www.apache.org/licenses/LICENSE-2.0.txt")
+                        distribution.set(project.pomProperty("POM_LICENSE_DIST") ?: "repo")
                     }
                 }
                 developers {
                     developer {
-                        id.set("santimattius")
-                        name.set("Santiago Mattiauda")
+                        id.set(project.pomProperty("POM_DEVELOPER_ID") ?: "santimattius")
+                        name.set(project.pomProperty("POM_DEVELOPER_NAME") ?: "Santiago Mattiauda")
+                        url.set(project.pomProperty("POM_DEVELOPER_URL") ?: "https://github.com/santimattius")
                     }
+                }
+                scm {
+                    url.set(project.pomProperty("POM_SCM_URL") ?: "https://github.com/santimattius/structured-coroutines")
+                    connection.set(project.pomProperty("POM_SCM_CONNECTION") ?: "scm:git:git://github.com/santimattius/structured-coroutines.git")
+                    developerConnection.set(project.pomProperty("POM_SCM_DEV_CONNECTION") ?: "scm:git:ssh://git@github.com/santimattius/structured-coroutines.git")
                 }
             }
         }
     }
     repositories {
-        maven {
-            name = "mavenCentral"
-            url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
-            credentials {
-                username = project.findProperty("mavenCentralUsername")?.toString() ?: ""
-                password = project.findProperty("mavenCentralPassword")?.toString() ?: ""
+        val username = project.findProperty("mavenCentralUsername")?.toString()
+        val password = project.findProperty("mavenCentralPassword")?.toString()
+        if (!username.isNullOrBlank() && !password.isNullOrBlank()) {
+            maven {
+                name = "mavenCentral"
+                url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+                credentials {
+                    this.username = username
+                    this.password = password
+                }
             }
         }
     }
