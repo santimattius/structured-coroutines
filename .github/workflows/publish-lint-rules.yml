@@ -19,10 +19,11 @@ jobs:
           distribution: "zulu"
           java-version: "17"
 
+      # Central Portal token (from https://central.sonatype.com/usertoken). Old OSSRH credentials return 402.
       - name: Validate required secrets
         run: |
           if [ -z "${{ secrets.MAVEN_CENTRAL_USERNAME }}" ] || [ -z "${{ secrets.MAVEN_CENTRAL_PASSWORD }}" ]; then
-            echo "::error::MAVEN_CENTRAL_USERNAME and MAVEN_CENTRAL_PASSWORD must be set in repository secrets."
+            echo "::error::MAVEN_CENTRAL_USERNAME and MAVEN_CENTRAL_PASSWORD must be set (use a Central Portal token from https://central.sonatype.com/usertoken)."
             exit 1
           fi
           if [ -z "${{ secrets.SIGNING_KEY_ID }}" ] || [ -z "${{ secrets.SIGNING_PASSWORD }}" ] || [ -z "${{ secrets.GPG_KEY_CONTENTS }}" ]; then
@@ -30,7 +31,7 @@ jobs:
             exit 1
           fi
 
-      - name: Publish lint-rules to Maven Central
+      - name: Publish lint-rules to Maven Central (Portal Staging API)
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
@@ -45,13 +46,37 @@ jobs:
             echo "Publish attempt $attempt of $max_attempts"
             if ./gradlew :lint-rules:publishMavenPublicationToMavenCentralRepository --no-configuration-cache; then
               echo "Publish succeeded."
-              exit 0
+              break
             fi
             if [ $attempt -lt $max_attempts ]; then
-              echo "Attempt $attempt failed (e.g. 504 Gateway Time-out). Retrying in 90 seconds..."
+              echo "Attempt $attempt failed. Retrying in 90 seconds..."
               sleep 90
             fi
             attempt=$((attempt + 1))
           done
-          echo "All publish attempts failed."
-          exit 1
+          if [ $attempt -gt $max_attempts ]; then
+            echo "All publish attempts failed."
+            exit 1
+          fi
+
+      # Required for Gradle maven-publish: upload staging repo to Portal so it can be released (same IP as publish).
+      - name: Upload deployment to Central Portal and release
+        env:
+          PORTAL_USER: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          PORTAL_SECRET: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+        run: |
+          NAMESPACE="io.github.santimattius"
+          AUTH=$(echo -n "${PORTAL_USER}:${PORTAL_SECRET}" | base64)
+          RESP=$(curl -s -w "\n%{http_code}" -X POST \
+            "https://ossrh-staging-api.central.sonatype.com/manual/upload/defaultRepository/${NAMESPACE}?publishing_type=automatic" \
+            -H "Authorization: Bearer ${AUTH}")
+          HTTP_CODE=$(echo "$RESP" | tail -n1)
+          BODY=$(echo "$RESP" | sed '$d')
+          if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "201" ]; then
+            echo "Deployment uploaded to Central Portal (auto-release to Maven Central requested)."
+            echo "$BODY"
+          else
+            echo "::error::Portal upload failed (HTTP $HTTP_CODE). Check token at https://central.sonatype.com/usertoken"
+            echo "$BODY"
+            exit 1
+          fi
