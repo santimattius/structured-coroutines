@@ -14,7 +14,7 @@ plugins {
 }
 
 group = "io.github.santimattius"
-version = "0.3.0-ALPHA02"
+version = "0.3.0-ALPHA01"
 
 repositories {
     mavenCentral()
