@@ -13,6 +13,7 @@ import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
 import io.github.santimattius.structured.intellij.inspections.AsyncWithoutAwaitInspection
+import io.github.santimattius.structured.intellij.inspections.CancellationExceptionSubclassInspection
 import io.github.santimattius.structured.intellij.inspections.CancellationExceptionSwallowedInspection
 import io.github.santimattius.structured.intellij.inspections.DispatchersUnconfinedInspection
 import io.github.santimattius.structured.intellij.inspections.GlobalScopeInspection
@@ -48,6 +49,7 @@ object StructuredCoroutinesInspectionRunner {
         JobInBuilderContextInspection::class.java,
         SuspendInFinallyInspection::class.java,
         CancellationExceptionSwallowedInspection::class.java,
+        CancellationExceptionSubclassInspection::class.java,
         DispatchersUnconfinedInspection::class.java
     )
 
