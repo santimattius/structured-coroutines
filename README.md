@@ -722,6 +722,7 @@ Each module contains its own detailed documentation:
 | **Compiler** | [compiler/README.md](compiler/README.md) | K2/FIR checker implementation details |
 | **Sample (compilation)** | [compilation/README.md](sample/src/main/kotlin/io/github/santimattius/structured/sample/compilation/README.md) | One example per compiler rule (errors and warnings) |
 | **Kotlin Coroutines Agent Skill** | [kotlin-coroutines-skill/README.md](kotlin-coroutines-skill/README.md) | AI/agent skill for coroutine best practices |
+| **Best Practices** | [docs/BEST_PRACTICES_COROUTINES.md](docs/BEST_PRACTICES_COROUTINES.md) | Canonical guide to coroutine good/bad practices |
 
 ### External Resources
 
