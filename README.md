@@ -724,6 +724,17 @@ Each module contains its own detailed documentation:
 | **Kotlin Coroutines Agent Skill** | [kotlin-coroutines-skill/README.md](kotlin-coroutines-skill/README.md) | AI/agent skill for coroutine best practices |
 | **Best Practices** | [docs/BEST_PRACTICES_COROUTINES.md](docs/BEST_PRACTICES_COROUTINES.md) | Canonical guide to coroutine good/bad practices |
 
+### Internationalization (i18n)
+
+All user-facing text is externalized for localization:
+
+- **Compiler plugin:** Messages are in `compiler/src/main/resources/messages/CompilerBundle*.properties`. **Default language is English** so builds and CI are predictable. To use Spanish (or the JVM default locale), set the system property:
+  - **Spanish:** `-Dstructured.coroutines.compiler.locale=es` (e.g. in `gradle.properties`: `org.gradle.jvmargs=... -Dstructured.coroutines.compiler.locale=es`)
+  - **JVM default:** `-Dstructured.coroutines.compiler.locale=default`
+- **IntelliJ plugin:** Uses `StructuredCoroutinesBundle.properties`; the IDE uses the platform language. Spanish: `StructuredCoroutinesBundle_es.properties`.
+
+To add a new language, add a `_<locale>` properties file (e.g. `CompilerBundle_de.properties`) with the same keys.
+
 ### External Resources
 
 - [Kotlin Coroutines Guide](https://kotlinlang.org/docs/coroutines-guide.html)

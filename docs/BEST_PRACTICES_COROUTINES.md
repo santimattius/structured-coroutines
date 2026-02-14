@@ -354,6 +354,8 @@ Use this checklist when reviewing coroutine code:
 
 For each practice, the table below indicates **which tools can implement** it and **caveats** (severity, false positives, platform scope, or analysis limits).
 
+**Rule codes and doc links:** Compiler Plugin and IntelliJ Plugin messages include the rule code (e.g. `[SCOPE_001]`) and a "Ver:" / "Learn more" link to the corresponding section in this document, so developers can identify the rule and open the doc in one click.
+
 | § | Practice | Compiler | Detekt | Android Lint | IntelliJ Plugin | Acotaciones |
 |---|----------|----------|--------|--------------|-----------------|-------------|
 | 1.1 | GlobalScope usage | ✅ Error | ✅ | ✅ | ✅ Error | Sin acotaciones; bien cubierto. |
