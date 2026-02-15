@@ -13,6 +13,7 @@ import com.android.tools.lint.detector.api.*
 import com.android.tools.lint.detector.api.Category
 import com.android.tools.lint.detector.api.Severity
 import io.github.santimattius.structured.lint.utils.CoroutineLintUtils
+import io.github.santimattius.structured.lint.utils.LintDocUrl
 import org.jetbrains.uast.UCallExpression
 
 /**
@@ -52,14 +53,16 @@ class DispatchersUnconfinedDetector : Detector(), SourceCodeScanner {
             id = "DispatchersUnconfined",
             briefDescription = "Dispatchers.Unconfined usage",
             explanation = """
-                Dispatchers.Unconfined runs code on whatever thread happens to resume it, 
-                which makes it difficult to reason about execution and can end up running 
+                [DISPATCH_003] Dispatchers.Unconfined runs code on whatever thread happens to resume it,
+                which makes it difficult to reason about execution and can end up running
                 on the UI thread with blocking calls.
-                
-                In production, always choose a dispatcher appropriate for the type of 
+
+                In production, always choose a dispatcher appropriate for the type of
                 workload: Default (CPU-bound), Main (UI), IO (blocking I/O), etc.
-                
+
                 Reserve Dispatchers.Unconfined for very special cases or legacy testing.
+
+                See: ${LintDocUrl.buildDocLink("33-dispatch_003--abusing-dispatchersunconfined")}
             """.trimIndent(),
             category = Category.CORRECTNESS,
             priority = 6,

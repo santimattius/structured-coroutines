@@ -13,6 +13,7 @@ import com.android.tools.lint.detector.api.*
 import com.android.tools.lint.detector.api.Category
 import com.android.tools.lint.detector.api.Severity
 import io.github.santimattius.structured.lint.utils.AndroidLintUtils
+import io.github.santimattius.structured.lint.utils.LintDocUrl
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
@@ -51,11 +52,13 @@ class RunBlockingWithDelayInTestDetector : Detector(), SourceCodeScanner {
             id = "RunBlockingWithDelayInTest",
             briefDescription = "runBlocking with delay in test file",
             explanation = """
-                Using runBlocking with delay() in tests makes tests slow and flaky because 
-                they wait for real time to pass. This defeats the purpose of virtual time 
+                [TEST_001] Using runBlocking with delay() in tests makes tests slow and flaky because
+                they wait for real time to pass. This defeats the purpose of virtual time
                 testing provided by kotlinx-coroutines-test.
-                
+
                 Use runTest { } from kotlinx-coroutines-test for instant virtual time support.
+
+                See: ${LintDocUrl.buildDocLink("61-test_001--slow-tests-with-real-delays")}
             """.trimIndent(),
             category = Category.PERFORMANCE,
             priority = 6,
@@ -90,7 +93,8 @@ class RunBlockingWithDelayInTestDetector : Detector(), SourceCodeScanner {
                 ISSUE,
                 node,
                 context.getLocation(node),
-                "runBlocking with delay() in test file. Use runTest { } from kotlinx-coroutines-test for instant virtual time"
+                "[TEST_001] runBlocking with delay() in test file. Use runTest { } from kotlinx-coroutines-test for instant virtual time. " +
+                    "See: ${LintDocUrl.buildDocLink("61-test_001--slow-tests-with-real-delays")}"
             )
         }
     }

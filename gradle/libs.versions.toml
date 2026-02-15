@@ -37,6 +37,7 @@ kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 maven-publish = { id = "maven-publish" }
 maven-publish-vanniktech = { id = "com.vanniktech.maven.publish", version.ref = "maven-publish-plugin" }
 java-library = { id = "java-library" }

@@ -13,6 +13,7 @@ import com.android.tools.lint.detector.api.*
 import com.android.tools.lint.detector.api.Category
 import com.android.tools.lint.detector.api.Severity
 import io.github.santimattius.structured.lint.utils.CoroutineLintUtils
+import io.github.santimattius.structured.lint.utils.LintDocUrl
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
@@ -55,12 +56,14 @@ class InlineCoroutineScopeDetector : Detector(), SourceCodeScanner {
             id = "InlineCoroutineScope",
             briefDescription = "Inline CoroutineScope creation",
             explanation = """
-                Creating a CoroutineScope inline and immediately launching a coroutine 
-                creates an orphan coroutine that isn't tied to any lifecycle or 
+                [SCOPE_003] Creating a CoroutineScope inline and immediately launching a coroutine
+                creates an orphan coroutine that isn't tied to any lifecycle or
                 structured concurrency tree.
-                
-                Use framework scopes (viewModelScope, lifecycleScope) or structured 
+
+                Use framework scopes (viewModelScope, lifecycleScope) or structured
                 concurrency patterns (coroutineScope, supervisorScope) instead.
+
+                See: ${LintDocUrl.buildDocLink("13-scope_003--breaking-structured-concurrency")}
             """.trimIndent(),
             category = Category.CORRECTNESS,
             priority = 9,

@@ -12,6 +12,7 @@ package io.github.santimattius.structured.lint.detectors
 import com.android.tools.lint.detector.api.*
 import com.android.tools.lint.detector.api.Category
 import com.android.tools.lint.detector.api.Severity
+import io.github.santimattius.structured.lint.utils.LintDocUrl
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
@@ -55,15 +56,12 @@ class ScopeReuseAfterCancelDetector : Detector(), SourceCodeScanner {
             id = "ScopeReuseAfterCancel",
             briefDescription = "Scope cancelled and then reused",
             explanation = """
-                Cancelling a CoroutineScope and then trying to launch more coroutines 
-                in that same scope doesn't work. A scope with a cancelled Job doesn't 
+                [CANCEL_005] Cancelling a CoroutineScope and then trying to launch more coroutines
+                in that same scope doesn't work. A scope with a cancelled Job doesn't
                 accept new children, and subsequent launches fail silently.
-                
-                To "clean up" children but keep the scope usable, use 
-                coroutineContext.job.cancelChildren() instead of scope.cancel().
-                
-                Note: This is a heuristic detection. It only detects obvious cases in 
-                the same function. Complex cases requiring flow analysis are not detected.
+                Use coroutineContext.job.cancelChildren() instead of scope.cancel() to keep the scope usable.
+
+                See: ${LintDocUrl.buildDocLink("45-cancel_005--reusing-a-cancelled-coroutinescope")}
             """.trimIndent(),
             category = Category.CORRECTNESS,
             priority = 6,

@@ -622,6 +622,8 @@ jobs:
 
 ## Suppressing Rules
 
+For a **unified table** of suppression identifiers across Compiler, Detekt, Lint, and IntelliJ (by rule code), see [Suppressing rules](../docs/SUPPRESSING_RULES.md).
+
 ### Suppress for Specific Code
 
 ```kotlin

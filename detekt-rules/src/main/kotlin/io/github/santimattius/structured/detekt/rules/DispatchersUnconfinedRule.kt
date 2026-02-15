@@ -9,6 +9,7 @@
  */
 package io.github.santimattius.structured.detekt.rules
 
+import io.github.santimattius.structured.detekt.utils.DetektDocUrl
 import io.gitlab.arturbosch.detekt.api.CodeSmell
 import io.gitlab.arturbosch.detekt.api.Config
 import io.gitlab.arturbosch.detekt.api.Debt
@@ -79,8 +80,9 @@ class DispatchersUnconfinedRule(config: Config = Config.empty) : Rule(config) {
     override val issue = Issue(
         id = "DispatchersUnconfined",
         severity = Severity.CodeSmell,
-        description = "Dispatchers.Unconfined has unpredictable execution thread behavior. " +
-            "Consider using Dispatchers.Default, Dispatchers.IO, or Dispatchers.Main instead.",
+        description = "[DISPATCH_003] Dispatchers.Unconfined has unpredictable execution thread behavior. " +
+            "Consider using Dispatchers.Default, Dispatchers.IO, or Dispatchers.Main instead. " +
+            "See: ${DetektDocUrl.buildDocLink("33-dispatch_003--abusing-dispatchersunconfined")}",
         debt = Debt.TEN_MINS
     )
 
@@ -112,8 +114,9 @@ class DispatchersUnconfinedRule(config: Config = Config.empty) : Rule(config) {
     }
 
     private fun buildMessage(builderName: String): String {
-        return "Dispatchers.Unconfined in $builderName has unpredictable execution thread. " +
+        return "[DISPATCH_003] Dispatchers.Unconfined in $builderName has unpredictable execution thread. " +
             "Consider using Dispatchers.Default (CPU-bound), Dispatchers.IO (IO-bound), " +
-            "or Dispatchers.Main (UI updates) instead."
+            "or Dispatchers.Main (UI updates) instead. " +
+            "See: ${DetektDocUrl.buildDocLink("33-dispatch_003--abusing-dispatchersunconfined")}"
     }
 }

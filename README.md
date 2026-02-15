@@ -21,6 +21,7 @@ A comprehensive toolkit for enforcing **structured concurrency** in Kotlin Corou
 | IntelliJ Plugin | ✅ Complete (11 inspections, 9 quick fixes, tool window) | [intellij-plugin/README.md](intellij-plugin/README.md) |
 | Annotations | ✅ Complete | [annotations/README.md](annotations/README.md) |
 | Sample | ✅ Compilation examples per rule | [compilation/README](sample/src/main/kotlin/io/github/santimattius/structured/sample/compilation/README.md) |
+| Sample (Detekt) | ✅ Detekt rule validation (10 examples) | [sample-detekt/README.md](sample-detekt/README.md) |
 | Kotlin Coroutines Agent Skill | ✅ AI/agent guidance | [kotlin-coroutines-skill/README.md](kotlin-coroutines-skill/README.md) |
 
 ---
@@ -69,6 +70,7 @@ This toolkit enforces structured concurrency best practices through:
 - 📱 **Android Lint integration** - Android-specific rules with quick fixes
 - 📋 **Structured Coroutines tool window** (IntelliJ) - view all findings for the current file in one place
 - 📂 **Compilation samples** - one example per compiler rule in the sample project
+- 📂 **Detekt validation samples** - `sample-detekt` module with one example per Detekt rule (`./gradlew :sample-detekt:detekt`)
 - 🤖 **Kotlin Coroutines Agent Skill** - consistent AI/agent-driven guidance for coroutine code
 
 ### Recent changes (since 0.1.0)
@@ -721,8 +723,10 @@ Each module contains its own detailed documentation:
 | **Annotations** | [annotations/README.md](annotations/README.md) | @StructuredScope usage and multiplatform support |
 | **Compiler** | [compiler/README.md](compiler/README.md) | K2/FIR checker implementation details |
 | **Sample (compilation)** | [compilation/README.md](sample/src/main/kotlin/io/github/santimattius/structured/sample/compilation/README.md) | One example per compiler rule (errors and warnings) |
+| **Sample (Detekt)** | [sample-detekt/README.md](sample-detekt/README.md) | One example per Detekt rule; run `:sample-detekt:detekt` to validate |
 | **Kotlin Coroutines Agent Skill** | [kotlin-coroutines-skill/README.md](kotlin-coroutines-skill/README.md) | AI/agent skill for coroutine best practices |
 | **Best Practices** | [docs/BEST_PRACTICES_COROUTINES.md](docs/BEST_PRACTICES_COROUTINES.md) | Canonical guide to coroutine good/bad practices |
+| **Suppressing Rules** | [docs/SUPPRESSING_RULES.md](docs/SUPPRESSING_RULES.md) | Unified suppression IDs (Compiler, Detekt, Lint, IntelliJ) by rule code |
 
 ### Internationalization (i18n)
 

@@ -13,6 +13,7 @@ import com.android.tools.lint.detector.api.*
 import com.android.tools.lint.detector.api.Category
 import com.android.tools.lint.detector.api.Severity
 import io.github.santimattius.structured.lint.utils.CoroutineLintUtils
+import io.github.santimattius.structured.lint.utils.LintDocUrl
 import org.jetbrains.uast.*
 
 /**
@@ -52,12 +53,14 @@ class CancellationExceptionSubclassDetector : Detector(), SourceCodeScanner {
             id = "CancellationExceptionSubclass",
             briefDescription = "Class extends CancellationException",
             explanation = """
-                Defining domain errors that inherit from CancellationException doesn't 
-                propagate upward like other exceptions; it only cancels the current 
+                [EXCEPT_002] Defining domain errors that inherit from CancellationException doesn't
+                propagate upward like other exceptions; it only cancels the current
                 coroutine and its children, which can break error logic.
-                
+
                 For domain errors, use normal Exception or RuntimeException.
                 Reserve CancellationException for true cancellation cases.
+
+                See: ${LintDocUrl.buildDocLink("52-except_002--extending-cancellationexception-for-domain-errors")}
             """.trimIndent(),
             category = Category.CORRECTNESS,
             priority = 9,

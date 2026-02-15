@@ -13,6 +13,7 @@ import com.android.tools.lint.detector.api.*
 import com.android.tools.lint.detector.api.Category
 import com.android.tools.lint.detector.api.Severity
 import io.github.santimattius.structured.lint.utils.CoroutineLintUtils
+import io.github.santimattius.structured.lint.utils.LintDocUrl
 import org.jetbrains.uast.UCallExpression
 
 /**
@@ -52,15 +53,17 @@ class RunBlockingInSuspendDetector : Detector(), SourceCodeScanner {
             id = "RunBlockingInSuspend",
             briefDescription = "runBlocking in suspend function",
             explanation = """
-                runBlocking blocks the current thread, which breaks the non-blocking model 
+                [RUNBLOCK_002] runBlocking blocks the current thread, which breaks the non-blocking model
                 of coroutines and can cause deadlocks or ANRs (on Android).
-                
-                Inside suspend functions, keep suspending. Use the suspend versions of 
-                libraries or wrap blocking operations with withContext(Dispatchers.IO) 
+
+                Inside suspend functions, keep suspending. Use the suspend versions of
+                libraries or wrap blocking operations with withContext(Dispatchers.IO)
                 when no suspend API is available.
-                
-                runBlocking should only be used as a bridge from purely blocking code 
+
+                runBlocking should only be used as a bridge from purely blocking code
                 to coroutines (e.g., old entry points, console scripts).
+
+                See: ${LintDocUrl.buildDocLink("22-runblock_002--using-runblocking-inside-suspend-functions")}
             """.trimIndent(),
             category = Category.CORRECTNESS,
             priority = 8,
@@ -87,7 +90,8 @@ class RunBlockingInSuspendDetector : Detector(), SourceCodeScanner {
                 ISSUE,
                 node,
                 context.getLocation(node),
-                "Remove runBlocking wrapper. Inside suspend functions, use suspend calls directly or withContext(Dispatchers.IO) for blocking operations"
+                "[RUNBLOCK_002] Remove runBlocking. Use suspend calls directly or withContext(Dispatchers.IO) for blocking work. " +
+                    "See: ${LintDocUrl.buildDocLink("22-runblock_002--using-runblocking-inside-suspend-functions")}"
             )
         }
     }

@@ -29,6 +29,7 @@ class CancellationExceptionSubclassRuleTest {
         val findings = rule.compileAndLint(code)
         assertThat(findings).hasSize(1)
         assertThat(findings[0].message).contains("CancellationException")
+        assertThat(findings[0].message).contains("[EXCEPT_002]")
     }
 
     @Test

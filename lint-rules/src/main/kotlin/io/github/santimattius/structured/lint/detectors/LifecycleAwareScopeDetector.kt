@@ -14,6 +14,7 @@ import com.android.tools.lint.detector.api.Category
 import com.android.tools.lint.detector.api.Severity
 import io.github.santimattius.structured.lint.utils.AndroidLintUtils
 import io.github.santimattius.structured.lint.utils.CoroutineLintUtils
+import io.github.santimattius.structured.lint.utils.LintDocUrl
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
@@ -63,13 +64,12 @@ class LifecycleAwareScopeDetector : Detector(), SourceCodeScanner {
             id = "LifecycleAwareScope",
             briefDescription = "Incorrect lifecycle-aware scope usage",
             explanation = """
-                lifecycleScope should only be used in LifecycleOwner components 
-                (Activity, Fragment) and is automatically cancelled when the lifecycle 
-                is destroyed. Using custom scopes in lifecycle-aware components or 
-                using lifecycleScope outside of them can lead to memory leaks.
-                
-                Always use lifecycleScope.launch { } inside Activity/Fragment classes.
-                For ViewModels, use viewModelScope instead.
+                [ARCH_002] lifecycleScope should only be used in LifecycleOwner components
+                (Activity, Fragment). Using custom scopes in lifecycle-aware components or
+                lifecycleScope outside of them can lead to memory leaks.
+                Use lifecycleScope in Activity/Fragment; use viewModelScope in ViewModels.
+
+                See: ${LintDocUrl.buildDocLink("82-lifecycle-aware-flow-collection-android")}
             """.trimIndent(),
             category = Category.CORRECTNESS,
             priority = 7,

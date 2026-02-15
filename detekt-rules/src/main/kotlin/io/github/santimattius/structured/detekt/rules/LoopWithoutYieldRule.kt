@@ -10,6 +10,7 @@
 package io.github.santimattius.structured.detekt.rules
 
 import io.github.santimattius.structured.detekt.utils.CoroutineDetektUtils
+import io.github.santimattius.structured.detekt.utils.DetektDocUrl
 import io.gitlab.arturbosch.detekt.api.CodeSmell
 import io.gitlab.arturbosch.detekt.api.Config
 import io.gitlab.arturbosch.detekt.api.Debt
@@ -91,9 +92,10 @@ class LoopWithoutYieldRule(config: Config = Config.empty) : Rule(config) {
     override val issue = Issue(
         id = "LoopWithoutYield",
         severity = Severity.Warning,
-        description = "Loop in suspend function without cooperation point. " +
+        description = "[CANCEL_001] Loop in suspend function without cooperation point. " +
             "The coroutine cannot be cancelled until the loop completes. " +
-            "Add yield(), ensureActive(), or delay() to allow cancellation.",
+            "Add yield(), ensureActive(), or delay() to allow cancellation. " +
+            "See: ${DetektDocUrl.buildDocLink("41-cancel_001--ignoring-cancellation-in-intensive-loops")}",
         debt = Debt.TEN_MINS
     )
 
@@ -131,9 +133,10 @@ class LoopWithoutYieldRule(config: Config = Config.empty) : Rule(config) {
                 CodeSmell(
                     issue = issue,
                     entity = Entity.from(loop),
-                    message = "'$loopType' loop in suspend function '${containingFunction.name}' " +
+                    message = "[CANCEL_001] '$loopType' loop in suspend function '${containingFunction.name}' " +
                         "without cooperation point. The coroutine cannot be cancelled during iteration. " +
-                        "Add ensureActive() or yield() inside the loop to enable cancellation."
+                        "Add ensureActive() or yield() inside the loop to enable cancellation. " +
+                        "See: ${DetektDocUrl.buildDocLink("41-cancel_001--ignoring-cancellation-in-intensive-loops")}"
                 )
             )
         }

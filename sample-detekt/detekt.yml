@@ -1,0 +1,49 @@
+# Detekt config for sample-detekt: validates structured-coroutines rules.
+# Run: ./gradlew :sample-detekt:detekt
+# Expected: findings from each structured-coroutines rule (see README in sample-detekt).
+
+# Disable default rules that would fire on intentional example code
+exceptions:
+  TooGenericExceptionCaught:
+    active: false
+naming:
+  MatchingDeclarationName:
+    active: false
+style:
+  UnusedPrivateProperty:
+    active: false
+structured-coroutines:
+  GlobalScopeUsage:
+    active: true
+    severity: warning
+  InlineCoroutineScope:
+    active: true
+    severity: warning
+  RunBlockingInSuspend:
+    active: true
+    severity: warning
+  DispatchersUnconfined:
+    active: true
+    severity: warning
+  CancellationExceptionSubclass:
+    active: true
+    severity: warning
+  CancellationExceptionSwallowed:
+    active: true
+    severity: warning
+  BlockingCallInCoroutine:
+    active: true
+  RunBlockingWithDelayInTest:
+    active: true
+  ExternalScopeLaunch:
+    active: true
+  LoopWithoutYield:
+    active: true
+  JobInBuilderContext:
+    active: true
+  RedundantLaunchInCoroutineScope:
+    active: true
+  SuspendInFinally:
+    active: true
+  UnusedDeferred:
+    active: true
