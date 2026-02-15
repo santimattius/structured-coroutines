@@ -21,6 +21,7 @@ import io.github.santimattius.structured.detekt.rules.LoopWithoutYieldRule
 import io.github.santimattius.structured.detekt.rules.RedundantLaunchInCoroutineScopeRule
 import io.github.santimattius.structured.detekt.rules.RunBlockingInSuspendRule
 import io.github.santimattius.structured.detekt.rules.RunBlockingWithDelayInTestRule
+import io.github.santimattius.structured.detekt.rules.ScopeReuseAfterCancelRule
 import io.github.santimattius.structured.detekt.rules.SuspendInFinallyRule
 import io.github.santimattius.structured.detekt.rules.UnusedDeferredRule
 import io.gitlab.arturbosch.detekt.api.Config
@@ -128,6 +129,7 @@ class StructuredCoroutinesRuleSetProvider : RuleSetProvider {
             RunBlockingWithDelayInTestRule(config),
             ExternalScopeLaunchRule(config),
             LoopWithoutYieldRule(config),
+            ScopeReuseAfterCancelRule(config),
         )
     )
 }

@@ -120,6 +120,9 @@ structured-coroutines:
 
   LoopWithoutYield:
     active: true
+
+  ScopeReuseAfterCancel:
+    active: true
 ```
 
 ---
@@ -144,6 +147,7 @@ structured-coroutines:
 | `RunBlockingWithDelayInTest` | Detekt-Only | Warning | Detects `runBlocking` + `delay` in tests |
 | `ExternalScopeLaunch` | Detekt-Only | Warning | Detects launch on external scopes from suspend functions |
 | `LoopWithoutYield` | Detekt-Only | Warning | Detects loops without cooperation points |
+| `ScopeReuseAfterCancel` | Detekt-Only | Warning | Detects scope.cancel() then scope.launch/async |
 
 ### Best Practices Reference
 
@@ -163,6 +167,7 @@ structured-coroutines:
 | `RunBlockingWithDelayInTest` | 6.1 - Slow Tests with Real Delays |
 | `ExternalScopeLaunch` | 1.3 - Breaking Structured Concurrency |
 | `LoopWithoutYield` | 4.1 - Ignoring Cancellation in Intensive Loops |
+| `ScopeReuseAfterCancel` | 4.5 - Reusing a Cancelled CoroutineScope |
 
 ---
 
@@ -532,6 +537,14 @@ suspend fun processItems(items: List<Item>) {
 
 ---
 
+### 15. ScopeReuseAfterCancel
+
+**Detects:** `scope.cancel()` followed by `scope.launch` or `scope.async` in the same function. A cancelled scope does not accept new children.
+
+**Severity:** Warning
+
+---
+
 ## Running Detekt
 
 ### Validating rules in this repository
@@ -542,7 +555,7 @@ The **sample-detekt** module contains one intentional violation per rule so you 
 ./gradlew :sample-detekt:detekt
 ```
 
-You should see 14 findings from the `structured-coroutines` rule set. See [sample-detekt/README.md](../sample-detekt/README.md) for the list of example files and expected findings.
+You should see 15 findings from the `structured-coroutines` rule set. See [sample-detekt/README.md](../sample-detekt/README.md) for the list of example files and expected findings.
 
 ### In your own project
 

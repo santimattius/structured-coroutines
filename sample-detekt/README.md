@@ -15,9 +15,9 @@ From the project root:
 ./gradlew :sample-detekt:detekt
 ```
 
-You should see **14 findings** from the `structured-coroutines` rule set (the build is configured not to fail; see below).
+You should see **15 findings** from the `structured-coroutines` rule set (the build is configured not to fail; see below).
 
-## Expected findings (14)
+## Expected findings (15)
 
 | Rule | File | What triggers it |
 |------|------|------------------|
@@ -35,6 +35,7 @@ You should see **14 findings** from the `structured-coroutines` rule set (the bu
 | RedundantLaunchInCoroutineScope (RUNBLOCK_001) | RedundantLaunchInCoroutineScopeExample.kt | single `launch { }` inside `coroutineScope { }` |
 | SuspendInFinally (CANCEL_004) | SuspendInFinallyExample.kt | `delay()` in `finally` without `NonCancellable` |
 | UnusedDeferred (SCOPE_002) | UnusedDeferredExample.kt | `async { }` result never awaited |
+| ScopeReuseAfterCancel (CANCEL_005) | ScopeReuseAfterCancelExample.kt | `scope.cancel()` then `scope.launch { }` |
 
 ## Configuration
 

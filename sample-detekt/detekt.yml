@@ -47,3 +47,5 @@ structured-coroutines:
     active: true
   UnusedDeferred:
     active: true
+  ScopeReuseAfterCancel:
+    active: true
