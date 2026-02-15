@@ -114,4 +114,48 @@ interface StructuredCoroutinesExtension {
      * Default: "warning"
      */
     val redundantLaunchInCoroutineScope: Property<String>
+
+    /**
+     * Applies the **strict** profile: 7 rules as error, 4 as warning (defaults).
+     * Use for greenfield projects or when you want the build to fail on violations.
+     */
+    fun useStrictProfile() {
+        globalScopeUsage.set("error")
+        inlineCoroutineScope.set("error")
+        unstructuredLaunch.set("error")
+        runBlockingInSuspend.set("error")
+        jobInBuilderContext.set("error")
+        cancellationExceptionSubclass.set("error")
+        unusedDeferred.set("error")
+        dispatchersUnconfined.set("warning")
+        suspendInFinally.set("warning")
+        cancellationExceptionSwallowed.set("warning")
+        redundantLaunchInCoroutineScope.set("warning")
+    }
+
+    /**
+     * Applies the **gradual** profile: all 11 rules as warning.
+     * Use when migrating a legacy project so the build does not fail while you fix issues.
+     */
+    fun useGradualProfile() {
+        globalScopeUsage.set("warning")
+        inlineCoroutineScope.set("warning")
+        unstructuredLaunch.set("warning")
+        runBlockingInSuspend.set("warning")
+        jobInBuilderContext.set("warning")
+        cancellationExceptionSubclass.set("warning")
+        unusedDeferred.set("warning")
+        dispatchersUnconfined.set("warning")
+        suspendInFinally.set("warning")
+        cancellationExceptionSwallowed.set("warning")
+        redundantLaunchInCoroutineScope.set("warning")
+    }
+
+    /**
+     * Applies the **relaxed** profile: same as gradual (all rules as warning).
+     * Use when you want to see findings without blocking the build.
+     */
+    fun useRelaxedProfile() {
+        useGradualProfile()
+    }
 }
