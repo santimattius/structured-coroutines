@@ -36,12 +36,33 @@ plugins {
 
 ### 2. Add Custom Rules Dependency
 
+**From Maven Central** (requires [Central Portal token](https://central.sonatype.com/usertoken) for publishing):
+
 ```kotlin
 // build.gradle.kts (Android module)
 dependencies {
-    lintChecks("io.github.santimattius:structured-coroutines-lint-rules:0.1.0")
+    lintChecks("io.github.santimattius:structured-coroutines-lint-rules:0.2.0")
 }
 ```
+
+**From JitPack** (free, no publisher account; create a Git tag or release first):
+
+```kotlin
+// settings.gradle.kts (project)
+dependencyResolutionManagement {
+    repositories {
+        maven("https://jitpack.io")
+        // ...
+    }
+}
+
+// build.gradle.kts (Android module) — version = Git tag (e.g. 0.2.0)
+dependencies {
+    lintChecks("com.github.santimattius.structured-coroutines:lint-rules:0.2.0")
+}
+```
+
+Exact coordinates: [jitpack.io/#santimattius/structured-coroutines](https://jitpack.io/#santimattius/structured-coroutines) (subproject artifact = `lint-rules`).
 
 ### 3. Local Development Setup
 
