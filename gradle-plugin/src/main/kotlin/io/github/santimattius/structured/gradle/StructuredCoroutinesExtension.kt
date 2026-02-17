@@ -9,6 +9,7 @@
  */
 package io.github.santimattius.structured.gradle
 
+import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 
 /**
@@ -114,4 +115,78 @@ interface StructuredCoroutinesExtension {
      * Default: "warning"
      */
     val redundantLaunchInCoroutineScope: Property<String>
+
+    /**
+     * Source set (compilation) names to exclude from the compiler plugin.
+     * Excluded compilations will not run the Structured Coroutines plugin.
+     * Use for legacy modules or test source sets during migration.
+     * Example: `excludeSourceSets("legacyMain", "test")`
+     */
+    val excludeSourceSets: ListProperty<String>
+
+    /**
+     * Project paths to exclude from the compiler plugin (e.g. `:legacy-module`, `:app:old`).
+     * All compilations of excluded projects will not run the plugin.
+     */
+    val excludeProjects: ListProperty<String>
+
+    /**
+     * Excludes the given source set (compilation) names from the plugin.
+     * Names match [KotlinCompilation.getName] (e.g. "main", "test", "jvmMain").
+     */
+    fun excludeSourceSets(vararg names: String) {
+        excludeSourceSets.set(excludeSourceSets.getOrElse(emptyList()) + names.toList())
+    }
+
+    /**
+     * Excludes the given project paths from the plugin.
+     * Use project path format (e.g. ":subproject", ":app:feature").
+     */
+    fun excludeProjects(vararg paths: String) {
+        excludeProjects.set(excludeProjects.getOrElse(emptyList()) + paths.toList())
+    }
+
+    /**
+     * Applies the **strict** profile: 7 rules as error, 4 as warning (defaults).
+     * Use for greenfield projects or when you want the build to fail on violations.
+     */
+    fun useStrictProfile() {
+        globalScopeUsage.set("error")
+        inlineCoroutineScope.set("error")
+        unstructuredLaunch.set("error")
+        runBlockingInSuspend.set("error")
+        jobInBuilderContext.set("error")
+        cancellationExceptionSubclass.set("error")
+        unusedDeferred.set("error")
+        dispatchersUnconfined.set("warning")
+        suspendInFinally.set("warning")
+        cancellationExceptionSwallowed.set("warning")
+        redundantLaunchInCoroutineScope.set("warning")
+    }
+
+    /**
+     * Applies the **gradual** profile: all 11 rules as warning.
+     * Use when migrating a legacy project so the build does not fail while you fix issues.
+     */
+    fun useGradualProfile() {
+        globalScopeUsage.set("warning")
+        inlineCoroutineScope.set("warning")
+        unstructuredLaunch.set("warning")
+        runBlockingInSuspend.set("warning")
+        jobInBuilderContext.set("warning")
+        cancellationExceptionSubclass.set("warning")
+        unusedDeferred.set("warning")
+        dispatchersUnconfined.set("warning")
+        suspendInFinally.set("warning")
+        cancellationExceptionSwallowed.set("warning")
+        redundantLaunchInCoroutineScope.set("warning")
+    }
+
+    /**
+     * Applies the **relaxed** profile: same as gradual (all rules as warning).
+     * Use when you want to see findings without blocking the build.
+     */
+    fun useRelaxedProfile() {
+        useGradualProfile()
+    }
 }

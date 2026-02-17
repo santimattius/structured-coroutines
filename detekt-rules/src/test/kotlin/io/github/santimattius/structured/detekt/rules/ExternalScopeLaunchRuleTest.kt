@@ -33,6 +33,7 @@ class ExternalScopeLaunchRuleTest {
         val findings = rule.compileAndLint(code)
         assertThat(findings).hasSize(1)
         assertThat(findings[0].message).contains("external scope")
+        assertThat(findings[0].message).contains("[SCOPE_003]")
     }
 
     @Test

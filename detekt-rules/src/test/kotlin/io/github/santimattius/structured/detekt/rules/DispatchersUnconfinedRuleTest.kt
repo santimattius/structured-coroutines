@@ -33,6 +33,7 @@ class DispatchersUnconfinedRuleTest {
         val findings = rule.compileAndLint(code)
         assertThat(findings).hasSize(1)
         assertThat(findings[0].message).contains("Dispatchers.Unconfined")
+        assertThat(findings[0].message).contains("[DISPATCH_003]")
     }
 
     @Test

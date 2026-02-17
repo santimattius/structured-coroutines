@@ -14,6 +14,7 @@ import com.android.tools.lint.detector.api.Category
 import com.android.tools.lint.detector.api.Severity
 import io.github.santimattius.structured.lint.utils.AndroidLintUtils
 import io.github.santimattius.structured.lint.utils.CoroutineLintUtils
+import io.github.santimattius.structured.lint.utils.LintDocUrl
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
@@ -64,12 +65,14 @@ class ViewModelScopeLeakDetector : Detector(), SourceCodeScanner {
             id = "ViewModelScopeLeak",
             briefDescription = "Incorrect ViewModel scope usage",
             explanation = """
-                ViewModels should use the official viewModelScope which is automatically 
-                cancelled when the ViewModel is cleared. Creating custom scopes in ViewModels 
+                [SCOPE_003] ViewModels should use the official viewModelScope which is automatically
+                cancelled when the ViewModel is cleared. Creating custom scopes in ViewModels
                 or using viewModelScope outside of ViewModels can lead to memory leaks.
-                
+
                 Always use viewModelScope.launch { } inside ViewModel classes.
                 For other classes, inject a CoroutineScope or use structured concurrency.
+
+                See: ${LintDocUrl.buildDocLink("13-scope_003--breaking-structured-concurrency")}
             """.trimIndent(),
             category = Category.CORRECTNESS,
             priority = 8,
@@ -98,9 +101,11 @@ class ViewModelScopeLeakDetector : Detector(), SourceCodeScanner {
                 if (current is UVariable) {
                     val variableName = current.name
                     val message = if (variableName == "viewModelScope") {
-                        "Don't create a custom viewModelScope. Use the official viewModelScope property from androidx.lifecycle.ViewModel"
+                        "[SCOPE_003] Don't create a custom viewModelScope. Use the official viewModelScope property from androidx.lifecycle.ViewModel. " +
+                            "See: ${LintDocUrl.buildDocLink("13-scope_003--breaking-structured-concurrency")}"
                     } else {
-                        "Don't create custom CoroutineScope in ViewModel. Use viewModelScope instead"
+                        "[SCOPE_003] Don't create custom CoroutineScope in ViewModel. Use viewModelScope instead. " +
+                            "See: ${LintDocUrl.buildDocLink("13-scope_003--breaking-structured-concurrency")}"
                     }
                     
                     context.report(
@@ -121,7 +126,8 @@ class ViewModelScopeLeakDetector : Detector(), SourceCodeScanner {
                 ISSUE,
                 node,
                 context.getLocation(node),
-                "Use viewModelScope instead of creating a custom CoroutineScope in ViewModel"
+                "[SCOPE_003] Use viewModelScope instead of creating a custom CoroutineScope in ViewModel. " +
+                    "See: ${LintDocUrl.buildDocLink("13-scope_003--breaking-structured-concurrency")}"
             )
         }
         
@@ -131,7 +137,8 @@ class ViewModelScopeLeakDetector : Detector(), SourceCodeScanner {
                 ISSUE,
                 node,
                 context.getLocation(node),
-                "viewModelScope should only be used inside ViewModel classes. Use injected scope or structured concurrency instead"
+                "[SCOPE_003] viewModelScope should only be used inside ViewModel classes. Use injected scope or structured concurrency instead. " +
+                    "See: ${LintDocUrl.buildDocLink("13-scope_003--breaking-structured-concurrency")}"
             )
         }
     }

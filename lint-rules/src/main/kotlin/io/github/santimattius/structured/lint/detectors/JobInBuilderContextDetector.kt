@@ -12,6 +12,7 @@ package io.github.santimattius.structured.lint.detectors
 import com.android.tools.lint.detector.api.*
 import com.android.tools.lint.detector.api.Category
 import com.android.tools.lint.detector.api.Severity
+import io.github.santimattius.structured.lint.utils.LintDocUrl
 import org.jetbrains.uast.*
 
 /**
@@ -54,15 +55,14 @@ class JobInBuilderContextDetector : Detector(), SourceCodeScanner {
             id = "JobInBuilderContext",
             briefDescription = "Job() or SupervisorJob() in coroutine builder",
             explanation = """
-                Passing Job() or SupervisorJob() directly to coroutine builders breaks 
+                [DISPATCH_004] Passing Job() or SupervisorJob() directly to coroutine builders breaks
                 the parent-child relationship that is fundamental to structured concurrency.
-                
-                The new Job becomes an independent parent, breaking the hierarchy. The original 
-                parent loses control over cancellation, exceptions don't propagate as expected, 
-                and resources may leak if the parent is cancelled.
-                
-                Use supervisorScope { } for supervisor semantics, or use the scope's Job 
+                The new Job becomes an independent parent, breaking the hierarchy.
+
+                Use supervisorScope { } for supervisor semantics, or use the scope's Job
                 (default behavior) for regular coroutines.
+
+                See: ${LintDocUrl.buildDocLink("34-dispatch_004--passing-job-directly-as-context-to-builders")}
             """.trimIndent(),
             category = Category.CORRECTNESS,
             priority = 9,

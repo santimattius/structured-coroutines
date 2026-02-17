@@ -7,10 +7,14 @@ structured concurrency best practices.
 
 - [Installation](#installation)
 - [Configuration](#configuration)
+- [Profiles (strict / gradual / relaxed)](#profiles-strict--gradual--relaxed)
+- [Excluding source sets and projects](#excluding-source-sets-and-projects)
 - [Rules Overview](#rules-overview)
 - [Usage Examples](#usage-examples)
 - [Kotlin Multiplatform Support](#kotlin-multiplatform-support)
 - [Configuration Strategies](#configuration-strategies)
+- [Testing i18n (Compiler Messages)](#testing-i18n-compiler-messages)
+- [Testing from Another Project](#testing-from-another-project)
 - [Troubleshooting](#troubleshooting)
 - [Quick Start Templates](#quick-start-templates)
 
@@ -110,6 +114,71 @@ structuredCoroutines {
 | `"error"`   | Reports as compilation error (blocks build)  |
 | `"warning"` | Reports as warning (allows build to succeed) |
 
+### Profiles (strict / gradual / relaxed)
+
+You can apply a preset instead of configuring each rule:
+
+```kotlin
+structuredCoroutines {
+    useStrictProfile()   // Default: 7 error, 4 warning (greenfield)
+    // useGradualProfile()  // All rules warning (migration)
+    // useRelaxedProfile()   // Same as gradual
+}
+```
+
+| Profile   | When to use | Effect |
+|-----------|--------------|--------|
+| **Strict**  | New projects or when you want the build to fail on violations | 7 rules → error, 4 rules → warning (defaults) |
+| **Gradual** | Migrating legacy code; build must not fail while you fix issues | All 11 rules → **warning** |
+| **Relaxed** | Same as gradual; see findings without blocking the build | All 11 rules → **warning** |
+
+**Severity per rule by profile:**
+
+| Rule                              | Strict | Gradual / Relaxed |
+|-----------------------------------|--------|-------------------|
+| `globalScopeUsage`                | error  | warning           |
+| `inlineCoroutineScope`            | error  | warning           |
+| `unstructuredLaunch`              | error  | warning           |
+| `runBlockingInSuspend`            | error  | warning           |
+| `jobInBuilderContext`             | error  | warning           |
+| `cancellationExceptionSubclass`   | error  | warning           |
+| `unusedDeferred`                  | error  | warning           |
+| `dispatchersUnconfined`           | warning| warning           |
+| `suspendInFinally`                | warning| warning           |
+| `cancellationExceptionSwallowed`  | warning| warning           |
+| `redundantLaunchInCoroutineScope` | warning| warning           |
+
+### Excluding source sets and projects
+
+During migration you can disable the compiler plugin for specific source sets or entire projects so legacy code does not fail the build.
+
+**Exclude by source set (compilation name):**
+
+```kotlin
+structuredCoroutines {
+    useGradualProfile()
+    excludeSourceSets("legacyMain", "test")  // "main", "test", "jvmMain", etc.
+}
+```
+
+**Exclude by project path:**
+
+```kotlin
+structuredCoroutines {
+    excludeProjects(":legacy-module", ":app:oldFeature")
+}
+```
+
+- **Source set names** match Kotlin compilation names (e.g. `main`, `test`, `jvmMain`, `commonMain`). Excluded compilations do not run the plugin.
+- **Project paths** use Gradle path format (e.g. `:subproject`, `:app:lib`). All compilations of that project are excluded.
+- When the plugin is applied to the root only, exclusion lists are read from the root extension. When applied per project, each project’s extension is used.
+
+For a full migration path (relaxed → gradual → strict) and suppression best practices, see the [Gradual adoption guide](../docs/GRADUAL_ADOPTION.md).
+
+### Single entry point for rules
+
+This plugin is the **recommended single entry point** for structured-coroutines: it applies the Kotlin compiler plugin and fits into the same project as **Detekt** and **Android Lint**. For consistent behavior across tools, keep severity choices aligned (e.g. use the same error/warning level for a given rule in the plugin and in `detekt.yml` / Lint config). Rule codes and suppression IDs are listed in [docs/rule-codes.yml](../docs/rule-codes.yml) and [docs/RULES_SYNC_COMPARISON.md](../docs/RULES_SYNC_COMPARISON.md).
+
 ---
 
 ## Rules Overview
@@ -141,6 +210,29 @@ structuredCoroutines {
 ---
 
 ## Usage Examples
+
+### Using a profile
+
+**New project (strict):** one line applies the default strict behavior.
+
+```kotlin
+plugins {
+    kotlin("jvm") version "2.3.0"
+    id("io.github.santimattius.structured-coroutines") version "0.1.0"
+}
+
+structuredCoroutines {
+    useStrictProfile()
+}
+```
+
+**Legacy project (gradual):** all rules as warnings so the build does not fail while you fix issues.
+
+```kotlin
+structuredCoroutines {
+    useGradualProfile()
+}
+```
 
 ### Using @StructuredScope
 
@@ -374,6 +466,132 @@ structuredCoroutines {
     redundantLaunchInCoroutineScope.set("warning")
 }
 ```
+
+---
+
+## Testing i18n (Compiler Messages)
+
+The Gradle plugin does not show its own messages; the texts you see when a rule is violated (e.g. `[SCOPE_001] GlobalScope usage...`) come from the **compiler plugin**. **The default language is English** so builds are consistent regardless of system locale.
+
+### See messages in Spanish
+
+Set the compiler locale system property so diagnostics use `CompilerBundle_es.properties`:
+
+**Option A – one-off (Unix/macOS):**
+
+```bash
+JAVA_TOOL_OPTIONS="-Dstructured.coroutines.compiler.locale=es" ./gradlew compileKotlin
+```
+
+**Option B – Gradle JVM args (project-wide):**
+
+In `gradle.properties`:
+
+```properties
+org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8 -Dstructured.coroutines.compiler.locale=es
+```
+
+**Trigger a diagnostic:** Use code that triggers a rule, e.g. `GlobalScope.launch { }`. The error message should appear in Spanish (e.g. *"El uso de GlobalScope no está permitido..."*).
+
+**Back to English:** Omit the property or remove `-Dstructured.coroutines.compiler.locale=es`. **Use system locale:** `-Dstructured.coroutines.compiler.locale=default`.
+
+---
+
+## Testing from Another Project
+
+To try the plugin from a **different project** (e.g. another repo or a folder outside this one):
+
+### 1. Publish to Maven Local (from this repo)
+
+In the **structured-coroutines** repo root:
+
+```bash
+./gradlew :annotations:publishToMavenLocal :compiler:publishToMavenLocal :gradle-plugin:publishToMavenLocal
+```
+
+Use the same **version** as in this project (see `gradle.properties` → `PROJECT_VERSION`). Your other project must use that version in the plugin and dependencies.
+
+### 2. Create a minimal project
+
+In another directory (e.g. `~/my-app` or another repo), create:
+
+**settings.gradle.kts:**
+
+```kotlin
+rootProject.name = "my-app"
+
+pluginManagement {
+    repositories {
+        mavenLocal()   // Must be first so it picks up your published plugin
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
+dependencyResolutionManagement {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+}
+```
+
+**build.gradle.kts:**
+
+```kotlin
+plugins {
+    kotlin("jvm") version "2.3.0"
+    id("io.github.santimattius.structured-coroutines") version "0.3.1"  // Same as PROJECT_VERSION in this repo
+}
+
+kotlin {
+    jvmToolchain(17)
+}
+
+dependencies {
+    implementation("io.github.santimattius:structured-coroutines-annotations:0.3.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
+}
+```
+
+**src/main/kotlin/Main.kt** (code that triggers an error on purpose):
+
+```kotlin
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+
+fun main() {
+    GlobalScope.launch { println("Hello") }  // Will fail with [SCOPE_001]
+}
+```
+
+### 3. Run the build
+
+From the **other project** directory:
+
+```bash
+./gradlew compileKotlin
+```
+
+The build should **fail** with a message like `[SCOPE_001] GlobalScope usage is not allowed...` and a link to the docs. That confirms the plugin and compiler are applied.
+
+### 4. Optional: Spanish messages
+
+In the **other project**, create or edit `gradle.properties`:
+
+```properties
+org.gradle.jvmargs=-Xmx1024m -Dstructured.coroutines.compiler.locale=es
+```
+
+Run `./gradlew compileKotlin` again; the error should appear in Spanish (e.g. *El uso de GlobalScope no está permitido...*).
+
+### 5. Successful build (no errors)
+
+Remove or change the offending code (e.g. use `coroutineScope { launch { ... } }` or inject a `CoroutineScope` with `@StructuredScope`) so that the project compiles successfully.
+
+---
+
+**Automated validation:** The compiler module’s functional tests (which use the Gradle plugin) include i18n checks: they verify that a failing build shows the rule code `[SCOPE_001]` and the localized message (English or Spanish), and that `JAVA_TOOL_OPTIONS=-Dstructured.coroutines.compiler.locale=es` yields the Spanish message. Run `./gradlew :compiler:test` (after `publishToMavenLocal` for the plugin/compiler/annotations).
 
 ---
 

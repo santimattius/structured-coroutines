@@ -13,6 +13,7 @@ import com.android.tools.lint.detector.api.*
 import com.android.tools.lint.detector.api.Category
 import com.android.tools.lint.detector.api.Severity
 import io.github.santimattius.structured.lint.utils.CoroutineLintUtils
+import io.github.santimattius.structured.lint.utils.LintDocUrl
 import org.jetbrains.uast.UCallExpression
 
 /**
@@ -49,12 +50,14 @@ class GlobalScopeUsageDetector : Detector(), SourceCodeScanner {
             id = "GlobalScopeUsage",
             briefDescription = "GlobalScope usage in production code",
             explanation = """
-                GlobalScope breaks structured concurrency by creating orphan coroutines 
-                that don't have a parent-child relationship. This makes cancellation 
+                [SCOPE_001] GlobalScope breaks structured concurrency by creating orphan coroutines
+                that don't have a parent-child relationship. This makes cancellation
                 and exception propagation difficult to manage.
-                
-                Use framework scopes (viewModelScope, lifecycleScope, rememberCoroutineScope) 
+
+                Use framework scopes (viewModelScope, lifecycleScope, rememberCoroutineScope)
                 or structured concurrency patterns (coroutineScope, supervisorScope) instead.
+
+                See: ${LintDocUrl.buildDocLink("11-scope_001--using-globalscope-in-production-code")}
             """.trimIndent(),
             category = Category.CORRECTNESS,
             priority = 9,
@@ -80,7 +83,8 @@ class GlobalScopeUsageDetector : Detector(), SourceCodeScanner {
                 ISSUE,
                 node,
                 context.getLocation(node),
-                "Use viewModelScope, lifecycleScope, rememberCoroutineScope(), or coroutineScope { } instead of GlobalScope"
+                "[SCOPE_001] Use viewModelScope, lifecycleScope, rememberCoroutineScope(), or coroutineScope { } instead of GlobalScope. " +
+                    "See: ${LintDocUrl.buildDocLink("11-scope_001--using-globalscope-in-production-code")}"
             )
         }
     }

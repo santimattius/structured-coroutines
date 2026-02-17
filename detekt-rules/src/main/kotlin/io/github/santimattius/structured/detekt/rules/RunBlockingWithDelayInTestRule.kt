@@ -10,6 +10,7 @@
 package io.github.santimattius.structured.detekt.rules
 
 import io.github.santimattius.structured.detekt.utils.CoroutineDetektUtils
+import io.github.santimattius.structured.detekt.utils.DetektDocUrl
 import io.gitlab.arturbosch.detekt.api.CodeSmell
 import io.gitlab.arturbosch.detekt.api.Config
 import io.gitlab.arturbosch.detekt.api.Debt
@@ -75,8 +76,9 @@ class RunBlockingWithDelayInTestRule(config: Config = Config.empty) : Rule(confi
     override val issue = Issue(
         id = "RunBlockingWithDelayInTest",
         severity = Severity.Warning,
-        description = "Using runBlocking with delay() in tests makes tests slow. " +
-            "Use runTest { } from kotlinx-coroutines-test for virtual time support.",
+        description = "[TEST_001] Using runBlocking with delay() in tests makes tests slow. " +
+            "Use runTest { } from kotlinx-coroutines-test for virtual time support. " +
+            "See: ${DetektDocUrl.buildDocLink("61-test_001--slow-tests-with-real-delays")}",
         debt = Debt.FIVE_MINS
     )
 
@@ -101,9 +103,10 @@ class RunBlockingWithDelayInTestRule(config: Config = Config.empty) : Rule(confi
                 CodeSmell(
                     issue = issue,
                     entity = Entity.from(expression),
-                    message = "runBlocking with delay() in test file. " +
+                    message = "[TEST_001] runBlocking with delay() in test file. " +
                         "Use runTest { } from kotlinx-coroutines-test for instant virtual time. " +
-                        "Example: @Test fun myTest() = runTest { delay(1000) /* instant */ }"
+                        "Example: @Test fun myTest() = runTest { delay(1000) /* instant */ }. " +
+                        "See: ${DetektDocUrl.buildDocLink("61-test_001--slow-tests-with-real-delays")}"
                 )
             )
         }
