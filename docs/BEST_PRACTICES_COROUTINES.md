@@ -354,58 +354,56 @@ Use this checklist when reviewing coroutine code:
 
 For each practice, the table below indicates **which tools can implement** it and **caveats** (severity, false positives, platform scope, or analysis limits).
 
-**Rule codes and doc links:** Compiler Plugin and IntelliJ Plugin messages include the rule code (e.g. `[SCOPE_001]`) and a "Ver:" / "Learn more" link to the corresponding section in this document, so developers can identify the rule and open the doc in one click.
+| § | Practice | Compiler | Detekt | Android Lint | IntelliJ Plugin | Notes |
+|---|----------|----------|--------|--------------|-----------------|-------|
+| 1.1 | GlobalScope usage | ✅ Error | ✅ | ✅ | ✅ Error | No caveats; well covered. |
+| 1.2 | async without await | ✅ Error | ✅ (parity) | ✅ | ✅ Warning | Compiler: UNUSED_DEFERRED. Exclude when Deferred is passed to another method (heuristic). |
+| 1.3 | Breaking structured concurrency | ⚠️ Partial | ✅ ExternalScopeLaunch | ✅ | ✅ UnstructuredLaunch | Compiler: requires @StructuredScope; Detekt/Lint/IDE can detect launch on external scope from suspend. |
+| 1.4 | awaitAll exception propagation | ❌ | ⚠️ Heuristic | ⚠️ Heuristic | ⚠️ Doc/Inspection | Hard: detect coroutineScope + awaitAll without supervisorScope. Better as documentation or informational inspection. |
+| 2.1 | Redundant launch in coroutineScope | ✅ Warning | ✅ | ✅ | ✅ | Compiler: REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE. Possible FPs if more than one launch. |
+| 2.2 | runBlocking in suspend | ✅ Error | ✅ | ✅ | ✅ Error | No caveats; well covered. Exclude main() / JUnit @Test if desired. |
+| 3.1 | Blocking on wrong dispatchers | ❌ | ✅ BlockingCallInCoroutine | ✅ MainDispatcherMisuse | ✅ MainDispatcherMisuse | Detekt/Lint: lists of blocking calls (Thread.sleep, JDBC, etc.). Compiler lacks easy dispatcher context in FIR. |
+| 3.2 | Main-safe suspend | ❌ | ⚠️ Heuristic | ⚠️ Heuristic | ⚠️ Heuristic | Requires “called from Main” analysis; complex. Priority: doc + possible heuristic rule in Detekt/Lint. |
+| 3.3 | Dispatchers.Unconfined | ✅ Warning | ✅ | ✅ | ✅ Warning | No caveats. |
+| 3.4 | Job() in builders | ✅ Error | ✅ | ✅ | ✅ Error | No caveats. |
+| 3.5 | Inject Dispatchers | ❌ | ⚠️ Optional | ⚠️ Optional | ⚠️ Optional | Style/architecture: detect Dispatchers.X in constructors/functions. Many FPs (tests, main). Better as doc/skill recommendation. |
+| 4.1 | Loops without cooperation | ⚠️ Warning viable | ✅ LoopWithoutYield | ✅ (partial) | ✅ + Quick fix | Compiler: for/while loops in suspend without delay/yield/ensureActive; possible FPs in very small loops. IDE quick fix: add ensureActive(). |
+| 4.2 | Periodic work (repeating) | ⚠️ Same as 4.1 | ✅ (same rule) | ✅ (same rule) | ✅ | Same implementation as 4.1; while(true) without isActive/delay is a subset. |
+| 4.3 | Swallowing CancellationException | ✅ Warning | ✅ (parity) | ✅ | ✅ Warning | Compiler: also in suspend lambdas (scope.launch { try/catch }). |
+| 4.4 | Suspend in finally without NonCancellable | ✅ Warning | ✅ (parity) | ✅ | ✅ + Quick fix | No caveats. |
+| 4.5 | Reusing cancelled scope | ⚠️ Optional | ✅ | ✅ ScopeReuseAfterCancel | ✅ + Quick fix | Detekt/Lint/IDE: scope.cancel() followed by scope.launch in same type/module. Compiler: costlier (control flow). |
+| 4.6 | withTimeout scope cancellation | ❌ | ⚠️ Heuristic | ⚠️ Heuristic | ⚠️ Heuristic | Detect withTimeout without try/catch TimeoutCancellationException or withTimeoutOrNull. Possible FPs if caught in upper layer. |
+| 4.7 | withTimeout resource cleanup | ❌ | ❌ | ❌ | ❌ | Not reliably automatable; doc/skill. |
+| 5.1 | SupervisorJob in single builder | ✅ Error | ✅ | ✅ | ✅ Error | No caveats. |
+| 5.2 | CancellationException for domain | ✅ Error | ✅ | ✅ | ✅ | No caveats. |
+| 5.3 | CoroutineExceptionHandler / launch vs async | ❌ | ❌ | ❌ | ⚠️ Doc/Inspection | Explain in async without await inspection description. No new rule; strengthen message. |
+| 6.1 | runBlocking + delay in tests | ❌ | ✅ RunBlockingWithDelayInTest | ✅ | ⚠️ Intention | Detekt/Lint: test files (name/package). Compiler: possible but requires test context. IDE intention: “Convert to runTest”. |
+| 6.2 | Uncontrolled fire-and-forget in tests | ❌ | ✅ ExternalScopeLaunch (in test) | ✅ | ⚠️ | In test modules, detect use of external scope without injection. Heuristic by file/package name. |
+| 6.3 | setMain / resetMain in tests | ❌ | ⚠️ Optional | ⚠️ Optional | ⚠️ Optional | Detect tests using Dispatchers.Main without setMain. May FP if Main is injected. Better as doc. |
+| 7.1 | Channel not closed | ❌ | ✅ ChannelNotClosed (to implement) | ✅ (to implement) | ⚠️ Heuristic | Heuristic: Channel() without close() on any path; produce closes automatically. Compiler: complex flow analysis. |
+| 7.2 | consumeEach multiple consumers | ❌ | ✅ ConsumeEachMultipleConsumers (to implement) | ✅ (to implement) | ⚠️ Heuristic | Same Channel in multiple launch/async with consumeEach. Heuristic. |
+| 8.1 | General architecture | — | — | — | — | Documentation and skill only. |
+| 8.2 | Lifecycle-aware Flow (Android) | ❌ | ❌ | ✅ (to implement) | ⚠️ Android | Lint: detect collect in lifecycleScope without repeatOnLifecycle/flowWithLifecycle. Android-specific. |
+| 9.1 | Blocking in flow { } | ❌ | ✅ FlowBlockingCall (to implement) | ✅ (to implement) | ⚠️ Heuristic | Same idea as BlockingCallInCoroutine but inside flow { }. Detekt/Lint. |
+| 9.2 | Cold vs hot (StateFlow/SharedFlow) | ❌ | ❌ | ❌ | ⚠️ Doc | Decision guide; hard to automate “should be StateFlow”. |
+| 9.3 | collectLatest semantics | ❌ | ❌ | ❌ | ⚠️ Doc | Documentation; no automatic rule. |
+| 9.4 | SharedFlow configuration | ❌ | ⚠️ Optional | ❌ | ❌ | SharedFlow() without params or with defaults; optional suggestion in Detekt. |
 
-| § | Practice | Compiler | Detekt | Android Lint | IntelliJ Plugin | Acotaciones |
-|---|----------|----------|--------|--------------|-----------------|-------------|
-| 1.1 | GlobalScope usage | ✅ Error | ✅ | ✅ | ✅ Error | Sin acotaciones; bien cubierto. |
-| 1.2 | async without await | ✅ Error | ✅ (paridad) | ✅ | ✅ Warning | Compiler: UNUSED_DEFERRED. Excluir cuando el Deferred se pasa a otro método (heurística). |
-| 1.3 | Breaking structured concurrency | ⚠️ Parcial | ✅ ExternalScopeLaunch | ✅ | ✅ UnstructuredLaunch | Compiler: requiere @StructuredScope; Detekt/Lint/IDE pueden detectar launch en scope externo desde suspend. |
-| 1.4 | awaitAll exception propagation | ❌ | ⚠️ Heurística | ⚠️ Heurística | ⚠️ Doc/Inspection | Difícil: detectar coroutineScope + awaitAll sin supervisorScope. Mejor como documentación o inspección informativa. |
-| 2.1 | Redundant launch in coroutineScope | ✅ Warning | ✅ | ✅ | ✅ | Compiler: REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE. Posibles FP si hay más de un launch. |
-| 2.2 | runBlocking in suspend | ✅ Error | ✅ | ✅ | ✅ Error | Sin acotaciones; bien cubierto. Excluir main() / JUnit @Test si se desea. |
-| 3.1 | Blocking on wrong dispatchers | ❌ | ✅ BlockingCallInCoroutine | ✅ MainDispatcherMisuse | ✅ MainDispatcherMisuse | Detekt/Lint: listas de llamadas bloqueantes (Thread.sleep, JDBC, etc.). Compiler no tiene contexto de dispatcher fácil en FIR. |
-| 3.2 | Main-safe suspend | ❌ | ⚠️ Heurística | ⚠️ Heurística | ⚠️ Heurística | Requiere análisis de "llamado desde Main"; complejo. Prioridad doc + posible regla heurística en Detekt/Lint. |
-| 3.3 | Dispatchers.Unconfined | ✅ Warning | ✅ | ✅ | ✅ Warning | Sin acotaciones. |
-| 3.4 | Job() in builders | ✅ Error | ✅ | ✅ | ✅ Error | Sin acotaciones. |
-| 3.5 | Inject Dispatchers | ❌ | ⚠️ Opcional | ⚠️ Opcional | ⚠️ Opcional | Estilo/arquitectura: detectar Dispatchers.X en constructores/funciones. Muchos FP (tests, main). Mejor como recomendación en doc/skill. |
-| 4.1 | Loops without cooperation | ⚠️ Warning viable | ✅ LoopWithoutYield | ✅ (parcial) | ✅ + Quick fix | Compiler: bucles for/while en suspend sin delay/yield/ensureActive; puede haber FP en bucles muy pequeños. Quick fix IDE: añadir ensureActive(). |
-| 4.2 | Periodic work (repeating) | ⚠️ Igual que 4.1 | ✅ (misma regla) | ✅ (misma regla) | ✅ | Misma implementación que 4.1; patrón while(true) sin isActive/delay es subconjunto. |
-| 4.3 | Swallowing CancellationException | ✅ Warning | ✅ (paridad) | ✅ | ✅ Warning | Compiler: también en lambdas suspend (scope.launch { try/catch }). |
-| 4.4 | Suspend in finally without NonCancellable | ✅ Warning | ✅ (paridad) | ✅ | ✅ + Quick fix | Sin acotaciones. |
-| 4.5 | Reusing cancelled scope | ⚠️ Opcional | ✅ | ✅ ScopeReuseAfterCancel | ✅ + Quick fix | Detekt/Lint/IDE: scope.cancel() seguido de scope.launch en mismo tipo/módulo. Compiler: más costoso (flujo de control). |
-| 4.6 | withTimeout scope cancellation | ❌ | ⚠️ Heurística | ⚠️ Heurística | ⚠️ Heurística | Detectar withTimeout sin try/catch TimeoutCancellationException ni withTimeoutOrNull. Posibles FP si se captura en capa superior. |
-| 4.7 | withTimeout resource cleanup | ❌ | ❌ | ❌ | ❌ | No automatizable de forma fiable; doc/skill. |
-| 5.1 | SupervisorJob in single builder | ✅ Error | ✅ | ✅ | ✅ Error | Sin acotaciones. |
-| 5.2 | CancellationException for domain | ✅ Error | ✅ | ✅ | ✅ | Sin acotaciones. |
-| 5.3 | CoroutineExceptionHandler / launch vs async | ❌ | ❌ | ❌ | ⚠️ Doc/Inspection | Explicación en descripción de inspección async without await. No regla nueva; reforzar mensaje. |
-| 6.1 | runBlocking + delay in tests | ❌ | ✅ RunBlockingWithDelayInTest | ✅ | ⚠️ Intención | Detekt/Lint: archivos de test (nombre/paquete). Compiler: posible pero requiere contexto de test. Intención IDE: "Convertir a runTest". |
-| 6.2 | Uncontrolled fire-and-forget in tests | ❌ | ✅ ExternalScopeLaunch (en test) | ✅ | ⚠️ | En módulos de test, detectar uso de scope externo sin inyección. Heurística por nombre de archivo/paquete. |
-| 6.3 | setMain / resetMain in tests | ❌ | ⚠️ Opcional | ⚠️ Opcional | ⚠️ Opcional | Detectar tests que usan Dispatchers.Main sin setMain. Puede dar FP si Main se inyecta. Mejor doc. |
-| 7.1 | Channel not closed | ❌ | ✅ ChannelNotClosed (a implementar) | ✅ (a implementar) | ⚠️ Heurística | Heurística: Channel() sin close() en ningún path; produce cierra solo. Compiler: análisis de flujo complejo. |
-| 7.2 | consumeEach multiple consumers | ❌ | ✅ ConsumeEachMultipleConsumers (a implementar) | ✅ (a implementar) | ⚠️ Heurística | Mismo Channel en varios launch/async con consumeEach. Heurística. |
-| 8.1 | General architecture | — | — | — | — | Solo documentación y skill. |
-| 8.2 | Lifecycle-aware Flow (Android) | ❌ | ❌ | ✅ (a implementar) | ⚠️ Android | Lint: detectar collect en lifecycleScope sin repeatOnLifecycle/flowWithLifecycle. Específico Android. |
-| 9.1 | Blocking in flow { } | ❌ | ✅ FlowBlockingCall (a implementar) | ✅ (a implementar) | ⚠️ Heurística | Misma idea que BlockingCallInCoroutine pero dentro de flow { }. Detekt/Lint. |
-| 9.2 | Cold vs hot (StateFlow/SharedFlow) | ❌ | ❌ | ❌ | ⚠️ Doc | Guía de decisión; difícil automatizar "debería ser StateFlow". |
-| 9.3 | collectLatest semantics | ❌ | ❌ | ❌ | ⚠️ Doc | Documentación; no regla automática. |
-| 9.4 | SharedFlow configuration | ❌ | ⚠️ Opcional | ❌ | ❌ | SharedFlow() sin params o con defaults; sugerencia opcional en Detekt. |
+### Legend
 
-### Leyenda
+- **✅** = Implemented or planned in that tool.
+- **⚠️** = Implementable with heuristics, limited context, or only in certain cases (partial/optional).
+- **❌** = Not recommended or not viable for that tool.
+- **Notes** = False positives, default severity, scope (KMP/Android), or analysis limits.
 
-- **✅** = Implementable en esa herramienta (ya existe o está planificado).
-- **⚠️** = Implementable con heurísticas, contexto limitado, o solo en ciertos casos (parcial/opcional).
-- **❌** = No recomendado o no viable para esa herramienta.
-- **Acotaciones** = Falsos positivos, severidad por defecto, alcance (KMP/Android), o límites del análisis.
+### Summary by tool
 
-### Resumen por herramienta
-
-| Tool | Reglas bien cubiertas | Reglas heurísticas/parciales | Candidatas a añadir |
-|------|------------------------|------------------------------|----------------------|
-| **Compiler** | 1.1, 1.2, 2.1, 2.2, 3.3, 3.4, 4.3, 4.4, 5.1, 5.2 | 1.3, 4.1, 4.5 | 4.1 (LoopWithoutYield) como warning |
-| **Detekt** | 1.1–1.3, 2.1, 2.2, 3.1, 3.3, 3.4, 4.1, 4.3–4.5, 5.1, 5.2, 6.1, 6.2 | 1.4, 4.6, 6.3, 3.5 | 7.1, 7.2, 9.1; opcional 4.6, 9.4 |
-| **Android Lint** | Igual que Detekt + 3.1 Main, 8.2 lifecycle Flow | 1.4, 4.5, 4.6, 6.2, 6.3 | 7.1, 7.2, 8.2, 9.1 |
-| **IntelliJ** | Paridad con Compiler/Lint + quick fixes/intentions | 1.4, 4.6, 5.3, 6.1, 6.3, 7.1, 7.2, 8.2, 9.1 | Intentions runTest, ensureActive; mensajes que citen §5.3, §4.6 |
+| Tool | Rules well covered | Heuristic/partial rules | Candidates to add |
+|------|--------------------|-------------------------|--------------------|
+| **Compiler** | 1.1, 1.2, 2.1, 2.2, 3.3, 3.4, 4.3, 4.4, 5.1, 5.2 | 1.3, 4.1, 4.5 | 4.1 (LoopWithoutYield) as warning |
+| **Detekt** | 1.1–1.3, 2.1, 2.2, 3.1, 3.3, 3.4, 4.1, 4.3–4.5, 5.1, 5.2, 6.1, 6.2 | 1.4, 4.6, 6.3, 3.5 | 7.1, 7.2, 9.1; optional 4.6, 9.4 |
+| **Android Lint** | Same as Detekt + 3.1 Main, 8.2 lifecycle Flow | 1.4, 4.5, 4.6, 6.2, 6.3 | 7.1, 7.2, 8.2, 9.1 |
+| **IntelliJ** | Parity with Compiler/Lint + quick fixes/intentions | 1.4, 4.6, 5.3, 6.1, 6.3, 7.1, 7.2, 8.2, 9.1 | Intentions runTest, ensureActive; messages citing §5.3, §4.6 |
 
 ---
 
