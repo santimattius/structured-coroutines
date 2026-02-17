@@ -9,6 +9,7 @@
  */
 package io.github.santimattius.structured.detekt.rules
 
+import io.github.santimattius.structured.detekt.utils.DetektDocUrl
 import io.gitlab.arturbosch.detekt.api.CodeSmell
 import io.gitlab.arturbosch.detekt.api.Config
 import io.gitlab.arturbosch.detekt.api.Debt
@@ -78,9 +79,10 @@ class GlobalScopeUsageRule(config: Config = Config.empty) : Rule(config) {
     override val issue = Issue(
         id = "GlobalScopeUsage",
         severity = Severity.CodeSmell,
-        description = "GlobalScope usage bypasses structured concurrency and can lead to resource leaks. " +
+        description = "[SCOPE_001] GlobalScope usage bypasses structured concurrency and can lead to resource leaks. " +
             "Use framework scopes (viewModelScope, lifecycleScope), @StructuredScope annotated scopes, " +
-            "or structured builders (coroutineScope, supervisorScope).",
+            "or structured builders (coroutineScope, supervisorScope). " +
+            "See: ${DetektDocUrl.buildDocLink("11-scope_001--using-globalscope-in-production-code")}",
         debt = Debt.TEN_MINS
     )
 
@@ -126,8 +128,9 @@ class GlobalScopeUsageRule(config: Config = Config.empty) : Rule(config) {
     }
 
     private fun buildMessage(builderName: String): String {
-        return "GlobalScope.$builderName bypasses structured concurrency. " +
+        return "[SCOPE_001] GlobalScope.$builderName bypasses structured concurrency. " +
             "Use framework scopes (viewModelScope, lifecycleScope), @StructuredScope annotated scopes, " +
-            "or structured builders (coroutineScope { }, supervisorScope { })."
+            "or structured builders (coroutineScope { }, supervisorScope { }). " +
+            "See: ${DetektDocUrl.buildDocLink("11-scope_001--using-globalscope-in-production-code")}"
     }
 }

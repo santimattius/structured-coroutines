@@ -13,6 +13,7 @@ import com.android.tools.lint.detector.api.*
 import com.android.tools.lint.detector.api.Category
 import com.android.tools.lint.detector.api.Severity
 import io.github.santimattius.structured.lint.utils.CoroutineLintUtils
+import io.github.santimattius.structured.lint.utils.LintDocUrl
 import org.jetbrains.uast.*
 
 /**
@@ -59,12 +60,12 @@ class UnstructuredLaunchDetector : Detector(), SourceCodeScanner {
             id = "UnstructuredLaunch",
             briefDescription = "Unstructured coroutine launch",
             explanation = """
-                Launching coroutines on scopes that are not explicitly marked as structured 
+                [SCOPE_003] Launching coroutines on scopes that are not explicitly marked as structured
                 makes it hard to track coroutine lifecycles and ensure proper cleanup.
-                
-                Use framework scopes (viewModelScope, lifecycleScope, rememberCoroutineScope), 
-                structured concurrency patterns (coroutineScope, supervisorScope), or annotate 
-                the scope with @StructuredScope.
+                Use framework scopes (viewModelScope, lifecycleScope, rememberCoroutineScope),
+                structured builders (coroutineScope, supervisorScope), or @StructuredScope.
+
+                See: ${LintDocUrl.buildDocLink("13-scope_003--breaking-structured-concurrency")}
             """.trimIndent(),
             category = Category.CORRECTNESS,
             priority = 8,

@@ -33,6 +33,7 @@ class GlobalScopeUsageRuleTest {
         val findings = rule.compileAndLint(code)
         assertThat(findings).hasSize(1)
         assertThat(findings[0].message).contains("GlobalScope")
+        assertThat(findings[0].message).contains("[SCOPE_001]")
     }
 
     @Test

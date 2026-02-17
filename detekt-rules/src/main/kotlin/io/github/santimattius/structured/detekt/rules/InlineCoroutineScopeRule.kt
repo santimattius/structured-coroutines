@@ -9,6 +9,7 @@
  */
 package io.github.santimattius.structured.detekt.rules
 
+import io.github.santimattius.structured.detekt.utils.DetektDocUrl
 import io.gitlab.arturbosch.detekt.api.CodeSmell
 import io.gitlab.arturbosch.detekt.api.Config
 import io.gitlab.arturbosch.detekt.api.Debt
@@ -80,8 +81,9 @@ class InlineCoroutineScopeRule(config: Config = Config.empty) : Rule(config) {
     override val issue = Issue(
         id = "InlineCoroutineScope",
         severity = Severity.CodeSmell,
-        description = "Inline CoroutineScope creation creates orphan coroutines without lifecycle management. " +
-            "Use @StructuredScope annotated scopes, framework scopes, or structured builders.",
+        description = "[SCOPE_003] Inline CoroutineScope creation creates orphan coroutines without lifecycle management. " +
+            "Use @StructuredScope annotated scopes, framework scopes, or structured builders. " +
+            "See: ${DetektDocUrl.buildDocLink("13-scope_003--breaking-structured-concurrency")}",
         debt = Debt.TEN_MINS
     )
 
@@ -122,10 +124,11 @@ class InlineCoroutineScopeRule(config: Config = Config.empty) : Rule(config) {
                 CodeSmell(
                     issue = issue,
                     entity = Entity.from(property),
-                    message = "Property '${property.name}' initialized with inline CoroutineScope creation. " +
+                    message = "[SCOPE_003] Property '${property.name}' initialized with inline CoroutineScope creation. " +
                         "This creates an orphan coroutine scope without lifecycle management. " +
                         "Use @StructuredScope annotation on a properly managed CoroutineScope, " +
-                        "framework scopes (viewModelScope, lifecycleScope), or structured builders."
+                        "framework scopes (viewModelScope, lifecycleScope), or structured builders. " +
+                        "See: ${DetektDocUrl.buildDocLink("13-scope_003--breaking-structured-concurrency")}"
                 )
             )
         }
@@ -151,8 +154,9 @@ class InlineCoroutineScopeRule(config: Config = Config.empty) : Rule(config) {
     }
 
     private fun buildMessage(builderName: String): String {
-        return "CoroutineScope(...).$builderName creates an orphan coroutine without lifecycle management. " +
+        return "[SCOPE_003] CoroutineScope(...).$builderName creates an orphan coroutine without lifecycle management. " +
             "Use @StructuredScope on a properly managed CoroutineScope, framework scopes " +
-            "(viewModelScope, lifecycleScope), or structured builders (coroutineScope { }, supervisorScope { })."
+            "(viewModelScope, lifecycleScope), or structured builders (coroutineScope { }, supervisorScope { }). " +
+            "See: ${DetektDocUrl.buildDocLink("13-scope_003--breaking-structured-concurrency")}"
     }
 }
