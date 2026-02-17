@@ -41,6 +41,8 @@ tasks.test {
             "gradle-plugin.jar",
             project(":gradle-plugin").tasks.jar.get().archiveFile.get().asFile.absolutePath
         )
+        systemProperty("structuredCoroutines.version", project.version.toString())
+        systemProperty("structuredCoroutines.rootDir", project.rootProject.projectDir.absolutePath)
     }
 }
 

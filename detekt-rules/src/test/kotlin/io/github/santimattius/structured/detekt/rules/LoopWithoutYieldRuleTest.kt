@@ -32,6 +32,7 @@ class LoopWithoutYieldRuleTest {
         assertThat(findings).hasSize(1)
         assertThat(findings[0].message).contains("for")
         assertThat(findings[0].message).contains("cooperation point")
+        assertThat(findings[0].message).contains("[CANCEL_001]")
     }
 
     @Test

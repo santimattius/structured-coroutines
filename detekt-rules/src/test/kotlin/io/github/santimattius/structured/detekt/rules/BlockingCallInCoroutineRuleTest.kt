@@ -33,6 +33,7 @@ class BlockingCallInCoroutineRuleTest {
         val findings = rule.compileAndLint(code)
         assertThat(findings).hasSize(1)
         assertThat(findings[0].message).contains("Thread.sleep")
+        assertThat(findings[0].message).contains("[DISPATCH_001]")
     }
 
     @Test

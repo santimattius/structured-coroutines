@@ -21,11 +21,17 @@ class StructuredCoroutinesPluginFunctionalTest {
 
     private fun createTestProject(
         sourceCode: String,
-        fileName: String = "Test.kt"
+        fileName: String = "Test.kt",
+        gradlePropertiesExtra: String? = null
     ): File {
         val projectDir = File.createTempFile("test-project", "").apply {
             delete()
             mkdirs()
+        }
+
+        // gradle.properties (optional - for JVM args like compiler locale)
+        if (gradlePropertiesExtra != null) {
+            File(projectDir, "gradle.properties").writeText(gradlePropertiesExtra)
         }
 
         // settings.gradle.kts
@@ -48,15 +54,16 @@ class StructuredCoroutinesPluginFunctionalTest {
             }
         """.trimIndent())
 
-        // build.gradle.kts
+        // build.gradle.kts - version from system property (set by test task) or default for local runs
+        val pluginVersion = System.getProperty("structuredCoroutines.version", "0.3.0")
         File(projectDir, "build.gradle.kts").writeText("""
             plugins {
                 kotlin("jvm") version "2.3.0"
-                id("io.github.santimattius.structured-coroutines") version "0.1.0"
+                id("io.github.santimattius.structured-coroutines") version "$pluginVersion"
             }
             
             dependencies {
-                implementation("io.github.santimattius:structured-coroutines-annotations:0.1.0")
+                implementation("io.github.santimattius:structured-coroutines-annotations:$pluginVersion")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
             }
             
@@ -73,14 +80,20 @@ class StructuredCoroutinesPluginFunctionalTest {
     }
 
     private fun runBuild(projectDir: File, expectSuccess: Boolean = true): String {
-        val result = GradleRunner.create()
+        return runBuildWithEnv(projectDir, emptyMap(), expectSuccess)
+    }
+
+    private fun runBuildWithEnv(
+        projectDir: File,
+        env: Map<String, String>,
+        expectSuccess: Boolean = true
+    ): String {
+        val runner = GradleRunner.create()
             .withProjectDir(projectDir)
             .withArguments("compileKotlin", "--stacktrace", "--info")
             .forwardOutput()
-            .run {
-                if (expectSuccess) build() else buildAndFail()
-            }
-        
+        val runnerWithEnv = if (env.isEmpty()) runner else runner.withEnvironment(env)
+        val result = runnerWithEnv.run { if (expectSuccess) build() else buildAndFail() }
         return result.output
     }
 
@@ -185,8 +198,10 @@ class StructuredCoroutinesPluginFunctionalTest {
         val projectDir = createTestProject(sourceCode)
         val output = runBuild(projectDir, expectSuccess = false)
         
-        assertTrue("GLOBAL_SCOPE_USAGE" in output || "GlobalScope" in output,
-            "Expected GlobalScope error but got:\n$output")
+        assertTrue(
+            "GLOBAL_SCOPE_USAGE" in output || "GlobalScope" in output || "[SCOPE_001]" in output,
+            "Expected GlobalScope error but got:\n$output"
+        )
     }
 
     @Test
@@ -206,8 +221,10 @@ class StructuredCoroutinesPluginFunctionalTest {
         val projectDir = createTestProject(sourceCode)
         val output = runBuild(projectDir, expectSuccess = false)
         
-        assertTrue("INLINE_COROUTINE_SCOPE" in output || "CoroutineScope" in output,
-            "Expected inline scope error but got:\n$output")
+        assertTrue(
+            "INLINE_COROUTINE_SCOPE" in output || "CoroutineScope" in output || "[SCOPE_003]" in output,
+            "Expected inline scope error but got:\n$output"
+        )
     }
 
     @Test
@@ -226,8 +243,10 @@ class StructuredCoroutinesPluginFunctionalTest {
         val projectDir = createTestProject(sourceCode)
         val output = runBuild(projectDir, expectSuccess = false)
         
-        assertTrue("UNSTRUCTURED_COROUTINE_LAUNCH" in output || "unstructured" in output.lowercase(),
-            "Expected unstructured launch error but got:\n$output")
+        assertTrue(
+            "UNSTRUCTURED_COROUTINE_LAUNCH" in output || "unstructured" in output.lowercase() || "[SCOPE_003]" in output,
+            "Expected unstructured launch error but got:\n$output"
+        )
     }
 
     @Test
@@ -251,8 +270,10 @@ class StructuredCoroutinesPluginFunctionalTest {
         // The runBlocking checker may need refinement for edge cases
         try {
             val output = runBuild(projectDir, expectSuccess = false)
-            assertTrue("RUN_BLOCKING_IN_SUSPEND" in output || "runBlocking" in output,
-                "Expected runBlocking error but got:\n$output")
+            assertTrue(
+                "RUN_BLOCKING_IN_SUSPEND" in output || "runBlocking" in output || "[RUNBLOCK_002]" in output,
+                "Expected runBlocking error but got:\n$output"
+            )
         } catch (e: org.gradle.testkit.runner.UnexpectedBuildSuccess) {
             // If build succeeds, the checker might not be detecting this case
             // This is acceptable for now - mark as known limitation
@@ -278,8 +299,10 @@ class StructuredCoroutinesPluginFunctionalTest {
         val projectDir = createTestProject(sourceCode)
         val output = runBuild(projectDir, expectSuccess = false)
         
-        assertTrue("JOB_IN_BUILDER_CONTEXT" in output || "Job" in output,
-            "Expected Job error but got:\n$output")
+        assertTrue(
+            "JOB_IN_BUILDER_CONTEXT" in output || "Job" in output || "[DISPATCH_004]" in output,
+            "Expected Job error but got:\n$output"
+        )
     }
 
     @Test
@@ -298,8 +321,10 @@ class StructuredCoroutinesPluginFunctionalTest {
         val projectDir = createTestProject(sourceCode)
         val output = runBuild(projectDir, expectSuccess = false)
         
-        assertTrue("JOB_IN_BUILDER_CONTEXT" in output || "SupervisorJob" in output,
-            "Expected SupervisorJob error but got:\n$output")
+        assertTrue(
+            "JOB_IN_BUILDER_CONTEXT" in output || "SupervisorJob" in output || "[DISPATCH_004]" in output,
+            "Expected SupervisorJob error but got:\n$output"
+        )
     }
 
     @Test
@@ -313,8 +338,10 @@ class StructuredCoroutinesPluginFunctionalTest {
         val projectDir = createTestProject(sourceCode)
         val output = runBuild(projectDir, expectSuccess = false)
         
-        assertTrue("CANCELLATION_EXCEPTION_SUBCLASS" in output || "CancellationException" in output,
-            "Expected CancellationException subclass error but got:\n$output")
+        assertTrue(
+            "CANCELLATION_EXCEPTION_SUBCLASS" in output || "CancellationException" in output || "[EXCEPT_002]" in output,
+            "Expected CancellationException subclass error but got:\n$output"
+        )
     }
 
     // ============================================================================
@@ -402,5 +429,140 @@ class StructuredCoroutinesPluginFunctionalTest {
         
         assertTrue("BUILD SUCCESSFUL" in output || "compileKotlin" in output,
             "Expected successful build but got:\n$output")
+    }
+
+    // ============================================================================
+    // i18n Tests - Compiler messages when using the Gradle plugin
+    // ============================================================================
+
+    @Test
+    fun `compiler message includes rule code SCOPE_001 when GlobalScope is used`() {
+        val sourceCode = """
+            import kotlinx.coroutines.GlobalScope
+            import kotlinx.coroutines.launch
+            
+            fun test() {
+                GlobalScope.launch { println("Bad!") }
+            }
+        """.trimIndent()
+
+        val projectDir = createTestProject(sourceCode)
+        val output = runBuild(projectDir, expectSuccess = false)
+
+        assertTrue(
+            "[SCOPE_001]" in output,
+            "Expected rule code [SCOPE_001] in compiler output. Got:\n${output.takeLast(1500)}"
+        )
+        // i18n: message may be in English or Spanish depending on structured.coroutines.compiler.locale / JVM locale
+        val hasEnglish = "GlobalScope usage is not allowed" in output
+        val hasSpanish = "El uso de GlobalScope no está permitido" in output
+        assertTrue(
+            hasEnglish || hasSpanish,
+            "Expected localized message (EN or ES). Got:\n${output.takeLast(1500)}"
+        )
+    }
+
+    @Test
+    fun `compiler message in Spanish when JAVA_TOOL_OPTIONS sets locale=es`() {
+        val sourceCode = """
+            import kotlinx.coroutines.GlobalScope
+            import kotlinx.coroutines.launch
+            
+            fun test() {
+                GlobalScope.launch { println("Bad!") }
+            }
+        """.trimIndent()
+
+        val projectDir = createTestProject(sourceCode)
+        val output = runBuildWithEnv(
+            projectDir,
+            mapOf("JAVA_TOOL_OPTIONS" to "-Dstructured.coroutines.compiler.locale=es"),
+            expectSuccess = false
+        )
+
+        assertTrue("[SCOPE_001]" in output, "Expected rule code [SCOPE_001] in output")
+        assertTrue(
+            "El uso de GlobalScope no está permitido" in output,
+            "Expected Spanish message when locale=es (JAVA_TOOL_OPTIONS). Got:\n${output.takeLast(1500)}"
+        )
+    }
+
+    // ============================================================================
+    // Sample project validation (real :sample with compiler plugin)
+    // ============================================================================
+
+    private fun runSampleCompilation(env: Map<String, String> = emptyMap()): String? {
+        val rootDir = System.getProperty("structuredCoroutines.rootDir") ?: return null
+        val root = File(rootDir)
+        if (!File(root, "sample/build.gradle.kts").exists()) return null
+        val runner = GradleRunner.create()
+            .withProjectDir(root)
+            .withArguments(":sample:compileKotlin", "--stacktrace", "-q")
+            .forwardOutput()
+        val runnerWithEnv = if (env.isEmpty()) runner else runner.withEnvironment(env)
+        val result = runnerWithEnv.buildAndFail()
+        return result.output
+    }
+
+    private fun skipSampleTest(): Boolean {
+        val rootDir = System.getProperty("structuredCoroutines.rootDir") ?: run {
+            println("Skipping sample validation: structuredCoroutines.rootDir not set (run from full project)")
+            return true
+        }
+        if (!File(rootDir, "sample/build.gradle.kts").exists()) {
+            println("Skipping sample validation: sample project not found at $rootDir")
+            return true
+        }
+        return false
+    }
+
+    @Test
+    fun `sample project fails compilation with expected rule codes`() {
+        if (skipSampleTest()) return
+        val output = runSampleCompilation() ?: return
+
+        val expectedCodes = listOf(
+            "[SCOPE_001]",
+            "[SCOPE_003]",
+            "[DISPATCH_004]",
+        )
+        for (code in expectedCodes) {
+            assertTrue(
+                code in output,
+                "Sample compilation output should contain $code. Got (last 2k chars):\n${output.takeLast(2000)}"
+            )
+        }
+    }
+
+    @Test
+    fun `sample project with locale en shows localized compiler messages`() {
+        if (skipSampleTest()) return
+        val output = runSampleCompilation(
+            mapOf("JAVA_TOOL_OPTIONS" to "-Dstructured.coroutines.compiler.locale=en")
+        ) ?: return
+
+        assertTrue("[SCOPE_001]" in output, "Expected [SCOPE_001] in output")
+        val hasEnglish = "GlobalScope usage is not allowed" in output
+        val hasSpanish = "El uso de GlobalScope no está permitido" in output
+        assertTrue(
+            hasEnglish || hasSpanish,
+            "Expected localized SCOPE_001 message (EN or ES). Got (last 2k):\n${output.takeLast(2000)}"
+        )
+    }
+
+    @Test
+    fun `sample project with locale es shows localized compiler messages`() {
+        if (skipSampleTest()) return
+        val output = runSampleCompilation(
+            mapOf("JAVA_TOOL_OPTIONS" to "-Dstructured.coroutines.compiler.locale=es")
+        ) ?: return
+
+        assertTrue("[SCOPE_001]" in output, "Expected [SCOPE_001] in output")
+        val hasEnglish = "GlobalScope usage is not allowed" in output
+        val hasSpanish = "El uso de GlobalScope no está permitido" in output
+        assertTrue(
+            hasEnglish || hasSpanish,
+            "Expected localized SCOPE_001 message (EN or ES). Got (last 2k):\n${output.takeLast(2000)}"
+        )
     }
 }

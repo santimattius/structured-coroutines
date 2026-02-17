@@ -11,13 +11,19 @@ package io.github.santimattius.structured.detekt
 
 import io.github.santimattius.structured.detekt.rules.BlockingCallInCoroutineRule
 import io.github.santimattius.structured.detekt.rules.CancellationExceptionSubclassRule
+import io.github.santimattius.structured.detekt.rules.CancellationExceptionSwallowedRule
 import io.github.santimattius.structured.detekt.rules.DispatchersUnconfinedRule
 import io.github.santimattius.structured.detekt.rules.ExternalScopeLaunchRule
 import io.github.santimattius.structured.detekt.rules.GlobalScopeUsageRule
 import io.github.santimattius.structured.detekt.rules.InlineCoroutineScopeRule
+import io.github.santimattius.structured.detekt.rules.JobInBuilderContextRule
 import io.github.santimattius.structured.detekt.rules.LoopWithoutYieldRule
+import io.github.santimattius.structured.detekt.rules.RedundantLaunchInCoroutineScopeRule
 import io.github.santimattius.structured.detekt.rules.RunBlockingInSuspendRule
 import io.github.santimattius.structured.detekt.rules.RunBlockingWithDelayInTestRule
+import io.github.santimattius.structured.detekt.rules.ScopeReuseAfterCancelRule
+import io.github.santimattius.structured.detekt.rules.SuspendInFinallyRule
+import io.github.santimattius.structured.detekt.rules.UnusedDeferredRule
 import io.gitlab.arturbosch.detekt.api.Config
 import io.gitlab.arturbosch.detekt.api.RuleSet
 import io.gitlab.arturbosch.detekt.api.RuleSetProvider
@@ -112,12 +118,18 @@ class StructuredCoroutinesRuleSetProvider : RuleSetProvider {
             RunBlockingInSuspendRule(config),
             DispatchersUnconfinedRule(config),
             CancellationExceptionSubclassRule(config),
-            
+            CancellationExceptionSwallowedRule(config),
+            JobInBuilderContextRule(config),
+            RedundantLaunchInCoroutineScopeRule(config),
+            SuspendInFinallyRule(config),
+            UnusedDeferredRule(config),
+
             // Detekt-Only Rules
             BlockingCallInCoroutineRule(config),
             RunBlockingWithDelayInTestRule(config),
             ExternalScopeLaunchRule(config),
             LoopWithoutYieldRule(config),
+            ScopeReuseAfterCancelRule(config),
         )
     )
 }

@@ -13,6 +13,7 @@ import com.android.tools.lint.detector.api.*
 import com.android.tools.lint.detector.api.Category
 import com.android.tools.lint.detector.api.Severity
 import io.github.santimattius.structured.lint.utils.CoroutineLintUtils
+import io.github.santimattius.structured.lint.utils.LintDocUrl
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
@@ -65,14 +66,13 @@ class CancellationExceptionSwallowedDetector : Detector(), SourceCodeScanner {
             id = "CancellationExceptionSwallowed",
             briefDescription = "catch(Exception) may swallow CancellationException",
             explanation = """
-                Catching Exception or Throwable in suspend functions can prevent 
-                CancellationException from propagating correctly, leaving coroutines 
-                alive when they should terminate.
-                
-                Always handle CancellationException separately by either:
-                1. Adding a catch (e: CancellationException) { throw e } clause before 
-                   the general Exception catch
-                2. Calling ensureActive() in the catch block to re-throw if cancelled
+                [CANCEL_003] Catching Exception or Throwable in suspend functions can prevent
+                CancellationException from propagating correctly, leaving coroutines
+                alive when they should terminate. Handle CancellationException separately:
+                add catch (e: CancellationException) { throw e } before the general catch,
+                or call ensureActive() in the catch block.
+
+                See: ${LintDocUrl.buildDocLink("43-cancel_003--swallowing-cancellationexception")}
             """.trimIndent(),
             category = Category.CORRECTNESS,
             priority = 7,

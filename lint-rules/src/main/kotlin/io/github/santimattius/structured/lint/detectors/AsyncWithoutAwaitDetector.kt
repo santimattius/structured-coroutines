@@ -12,6 +12,7 @@ package io.github.santimattius.structured.lint.detectors
 import com.android.tools.lint.detector.api.*
 import com.android.tools.lint.detector.api.Category
 import com.android.tools.lint.detector.api.Severity
+import io.github.santimattius.structured.lint.utils.LintDocUrl
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
@@ -49,12 +50,11 @@ class AsyncWithoutAwaitDetector : Detector(), SourceCodeScanner {
             id = "AsyncWithoutAwait",
             briefDescription = "async without await",
             explanation = """
-                Using async without calling await() is confusing and can hide exceptions 
-                that remain hanging inside the Deferred. If you don't need a result, 
-                use launch instead.
-                
-                Always call .await() or awaitAll() on Deferred values, or use launch 
-                if you don't need a result.
+                [SCOPE_002] Using async without calling await() is confusing and can hide exceptions
+                that remain hanging inside the Deferred. If you don't need a result,
+                use launch instead. Always call .await() or awaitAll() on Deferred values.
+
+                See: ${LintDocUrl.buildDocLink("12-scope_002--using-async-without-calling-await")}
             """.trimIndent(),
             category = Category.CORRECTNESS,
             priority = 8,

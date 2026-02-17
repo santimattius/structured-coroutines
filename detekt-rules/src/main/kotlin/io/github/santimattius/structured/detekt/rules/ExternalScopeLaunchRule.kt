@@ -10,6 +10,7 @@
 package io.github.santimattius.structured.detekt.rules
 
 import io.github.santimattius.structured.detekt.utils.CoroutineDetektUtils
+import io.github.santimattius.structured.detekt.utils.DetektDocUrl
 import io.gitlab.arturbosch.detekt.api.CodeSmell
 import io.gitlab.arturbosch.detekt.api.Config
 import io.gitlab.arturbosch.detekt.api.Debt
@@ -88,9 +89,10 @@ class ExternalScopeLaunchRule(config: Config = Config.empty) : Rule(config) {
     override val issue = Issue(
         id = "ExternalScopeLaunch",
         severity = Severity.Warning,
-        description = "Launching coroutine on external scope from suspend function. " +
+        description = "[SCOPE_003] Launching coroutine on external scope from suspend function. " +
             "This breaks structured concurrency. Use coroutineScope { } instead, " +
-            "or make the function non-suspend if fire-and-forget is intentional.",
+            "or make the function non-suspend if fire-and-forget is intentional. " +
+            "See: ${DetektDocUrl.buildDocLink("13-scope_003--breaking-structured-concurrency")}",
         debt = Debt.TEN_MINS
     )
 
@@ -134,10 +136,11 @@ class ExternalScopeLaunchRule(config: Config = Config.empty) : Rule(config) {
                 CodeSmell(
                     issue = issue,
                     entity = Entity.from(expression),
-                    message = "Launching on external scope '$scopeName' from suspend function " +
+                    message = "[SCOPE_003] Launching on external scope '$scopeName' from suspend function " +
                         "'${containingFunction.name}'. This breaks structured concurrency. " +
                         "Use coroutineScope { launch { } } to maintain parent-child relationship, " +
-                        "or make the function non-suspend if fire-and-forget is intentional."
+                        "or make the function non-suspend if fire-and-forget is intentional. " +
+                        "See: ${DetektDocUrl.buildDocLink("13-scope_003--breaking-structured-concurrency")}"
                 )
             )
         }

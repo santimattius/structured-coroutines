@@ -26,8 +26,8 @@ import org.jetbrains.kotlin.psi.KtElement
 /**
  * Renderer factory for structured coroutines error messages.
  *
- * This factory provides human-readable error messages for all diagnostics
- * emitted by the Structured Coroutines compiler plugin.
+ * Messages are loaded from [CompilerMessages] (messages.CompilerBundle) for i18n.
+ * Each message includes a rule code (e.g. [SCOPE_001]) and a link to BEST_PRACTICES.
  *
  * Must be defined before [StructuredCoroutinesErrors] to avoid initialization issues.
  */
@@ -36,89 +36,20 @@ object StructuredCoroutinesErrorRenderer : BaseDiagnosticRendererFactory() {
     override val MAP = KtDiagnosticFactoryToRendererMap("StructuredCoroutines")
 
     /**
-     * Registers all error messages. Called from [StructuredCoroutinesErrors.init].
+     * Registers all error messages from the compiler message bundle. Called from [StructuredCoroutinesErrors.init].
      */
     internal fun registerMessages() {
-        // === Core Structured Concurrency Rules ===
-        MAP.put(
-            StructuredCoroutinesErrors.UNSTRUCTURED_COROUTINE_LAUNCH,
-            "Unstructured coroutine launch detected. Use one of the following structured alternatives:\n" +
-                "  • Framework scopes: viewModelScope, lifecycleScope, rememberCoroutineScope()\n" +
-                "  • Annotated scopes: @StructuredScope on your CoroutineScope parameter or property\n" +
-                "  • Structured builders: coroutineScope { }, supervisorScope { }"
-        )
-        MAP.put(
-            StructuredCoroutinesErrors.GLOBAL_SCOPE_USAGE,
-            "GlobalScope usage is not allowed. GlobalScope bypasses structured concurrency and can lead to " +
-                "resource leaks. Use one of the following alternatives:\n" +
-                "  • Framework scopes: viewModelScope, lifecycleScope, rememberCoroutineScope()\n" +
-                "  • Annotated scopes: @StructuredScope on your CoroutineScope\n" +
-                "  • Structured builders: coroutineScope { }, supervisorScope { }"
-        )
-        MAP.put(
-            StructuredCoroutinesErrors.INLINE_COROUTINE_SCOPE,
-            "Inline CoroutineScope creation is not allowed. Creating CoroutineScope(Dispatchers.X).launch { } " +
-                "creates an orphan coroutine without lifecycle management. Use one of the following:\n" +
-                "  • Framework scopes: viewModelScope, lifecycleScope, rememberCoroutineScope()\n" +
-                "  • Annotated scopes: @StructuredScope on a properly managed CoroutineScope\n" +
-                "  • Structured builders: coroutineScope { }, supervisorScope { }"
-        )
-
-        // === runBlocking & Blocking Rules ===
-        MAP.put(
-            StructuredCoroutinesErrors.RUN_BLOCKING_IN_SUSPEND,
-            "runBlocking should not be called inside a suspend function. It blocks the current thread and " +
-                "defeats the purpose of coroutines. Use suspending alternatives or withContext instead."
-        )
-
-        // === Job & Context Rules ===
-        MAP.put(
-            StructuredCoroutinesErrors.JOB_IN_BUILDER_CONTEXT,
-            "Passing Job() or SupervisorJob() directly to launch/async/withContext breaks structured concurrency. " +
-                "The new Job becomes an independent parent, breaking the parent-child relationship. " +
-                "Use supervisorScope { } instead, or define a proper CoroutineScope with SupervisorJob."
-        )
-
-        // === Dispatcher Rules ===
-        MAP.put(
-            StructuredCoroutinesErrors.DISPATCHERS_UNCONFINED_USAGE,
-            "Dispatchers.Unconfined should be avoided in production code. It runs coroutines in whatever thread " +
-                "resumes them, making execution unpredictable. Use Dispatchers.Default, Dispatchers.IO, or Dispatchers.Main instead."
-        )
-
-        // === Exception Handling Rules ===
-        MAP.put(
-            StructuredCoroutinesErrors.CANCELLATION_EXCEPTION_SUBCLASS,
-            "Extending CancellationException for domain errors is not allowed. CancellationException has special " +
-                "semantics in coroutines - it doesn't propagate like normal exceptions and only cancels the current " +
-                "coroutine and its children. Use a regular Exception or RuntimeException for domain errors."
-        )
-        MAP.put(
-            StructuredCoroutinesErrors.SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE,
-            "Suspend call in finally block without NonCancellable context. If the coroutine is cancelled, " +
-                "any suspend call will throw CancellationException and cleanup may not execute. " +
-                "Wrap critical cleanup in withContext(NonCancellable) { }."
-        )
-        MAP.put(
-            StructuredCoroutinesErrors.CANCELLATION_EXCEPTION_SWALLOWED,
-            "catch(Exception) or catch(Throwable) may swallow CancellationException, preventing proper cancellation. " +
-                "Either add a separate catch(CancellationException) { throw it } clause, use ensureActive() in the " +
-                "catch block, or re-throw the exception."
-        )
-
-        // === Additional Rules ===
-        MAP.put(
-            StructuredCoroutinesErrors.UNUSED_DEFERRED,
-            "async call creates a Deferred that is never awaited. This can hide exceptions and is confusing. " +
-                "Either call .await() on the Deferred, use awaitAll() for multiple deferreds, or use launch() " +
-                "if you don't need a result."
-        )
-        MAP.put(
-            StructuredCoroutinesErrors.REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE,
-            "coroutineScope contains only a single launch, which is redundant. " +
-                "If you want the function to wait for the work, execute it directly without launch. " +
-                "If you don't want to wait, use an explicit external scope to make it clear you're breaking structured concurrency."
-        )
+        MAP.put(StructuredCoroutinesErrors.UNSTRUCTURED_COROUTINE_LAUNCH, CompilerMessages.message("UNSTRUCTURED_COROUTINE_LAUNCH"))
+        MAP.put(StructuredCoroutinesErrors.GLOBAL_SCOPE_USAGE, CompilerMessages.message("GLOBAL_SCOPE_USAGE"))
+        MAP.put(StructuredCoroutinesErrors.INLINE_COROUTINE_SCOPE, CompilerMessages.message("INLINE_COROUTINE_SCOPE"))
+        MAP.put(StructuredCoroutinesErrors.RUN_BLOCKING_IN_SUSPEND, CompilerMessages.message("RUN_BLOCKING_IN_SUSPEND"))
+        MAP.put(StructuredCoroutinesErrors.JOB_IN_BUILDER_CONTEXT, CompilerMessages.message("JOB_IN_BUILDER_CONTEXT"))
+        MAP.put(StructuredCoroutinesErrors.DISPATCHERS_UNCONFINED_USAGE, CompilerMessages.message("DISPATCHERS_UNCONFINED_USAGE"))
+        MAP.put(StructuredCoroutinesErrors.CANCELLATION_EXCEPTION_SUBCLASS, CompilerMessages.message("CANCELLATION_EXCEPTION_SUBCLASS"))
+        MAP.put(StructuredCoroutinesErrors.SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE, CompilerMessages.message("SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE"))
+        MAP.put(StructuredCoroutinesErrors.CANCELLATION_EXCEPTION_SWALLOWED, CompilerMessages.message("CANCELLATION_EXCEPTION_SWALLOWED"))
+        MAP.put(StructuredCoroutinesErrors.UNUSED_DEFERRED, CompilerMessages.message("UNUSED_DEFERRED"))
+        MAP.put(StructuredCoroutinesErrors.REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE, CompilerMessages.message("REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE"))
     }
 }
 

@@ -9,6 +9,7 @@
  */
 package io.github.santimattius.structured.detekt.rules
 
+import io.github.santimattius.structured.detekt.utils.DetektDocUrl
 import io.gitlab.arturbosch.detekt.api.CodeSmell
 import io.gitlab.arturbosch.detekt.api.Config
 import io.gitlab.arturbosch.detekt.api.Debt
@@ -79,9 +80,10 @@ class CancellationExceptionSubclassRule(config: Config = Config.empty) : Rule(co
     override val issue = Issue(
         id = "CancellationExceptionSubclass",
         severity = Severity.CodeSmell,
-        description = "Domain errors should not extend CancellationException. " +
+        description = "[EXCEPT_002] Domain errors should not extend CancellationException. " +
             "CancellationException is reserved for coroutine cancellation. " +
-            "Use regular Exception for domain errors.",
+            "Use regular Exception for domain errors. " +
+            "See: ${DetektDocUrl.buildDocLink("52-except_002--extending-cancellationexception-for-domain-errors")}",
         debt = Debt.TEN_MINS
     )
 
@@ -117,8 +119,9 @@ class CancellationExceptionSubclassRule(config: Config = Config.empty) : Rule(co
     }
 
     private fun buildMessage(className: String): String {
-        return "Class '$className' extends CancellationException. " +
+        return "[EXCEPT_002] Class '$className' extends CancellationException. " +
             "CancellationException is reserved for coroutine cancellation. " +
-            "Use regular Exception for domain errors to avoid unexpected cancellation behavior."
+            "Use regular Exception for domain errors to avoid unexpected cancellation behavior. " +
+            "See: ${DetektDocUrl.buildDocLink("52-except_002--extending-cancellationexception-for-domain-errors")}"
     }
 }

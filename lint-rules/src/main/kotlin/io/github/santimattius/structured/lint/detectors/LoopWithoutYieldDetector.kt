@@ -13,6 +13,7 @@ import com.android.tools.lint.detector.api.*
 import com.android.tools.lint.detector.api.Category
 import com.android.tools.lint.detector.api.Severity
 import io.github.santimattius.structured.lint.utils.CoroutineLintUtils
+import io.github.santimattius.structured.lint.utils.LintDocUrl
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
@@ -62,13 +63,15 @@ class LoopWithoutYieldDetector : Detector(), SourceCodeScanner {
             id = "LoopWithoutYield",
             briefDescription = "Loop without cooperation point in suspend function",
             explanation = """
-                Long-running loops in suspend functions without cooperation points 
+                [CANCEL_001] Long-running loops in suspend functions without cooperation points
                 (yield, ensureActive, delay) cannot be cancelled until the loop completes.
-                
+
                 Add yield(), ensureActive(), or delay() inside the loop to allow cancellation.
-                
-                Note: This is a heuristic rule. False positives may occur if the loop body 
+
+                Note: This is a heuristic rule. False positives may occur if the loop body
                 contains suspend function calls that themselves provide cooperation points.
+
+                See: ${LintDocUrl.buildDocLink("41-cancel_001--ignoring-cancellation-in-intensive-loops")}
             """.trimIndent(),
             category = Category.CORRECTNESS,
             priority = 5,

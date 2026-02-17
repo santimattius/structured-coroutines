@@ -39,6 +39,9 @@ class RunBlockingWithDelayInTestRuleTest {
         // - The rule should report runBlocking + delay in *Test.kt files
         // - In unit tests, the file name check may not work as expected
         assertThat(findings.size).isGreaterThanOrEqualTo(0)
+        if (findings.isNotEmpty()) {
+            assertThat(findings[0].message).contains("[TEST_001]")
+        }
     }
 
     @Test

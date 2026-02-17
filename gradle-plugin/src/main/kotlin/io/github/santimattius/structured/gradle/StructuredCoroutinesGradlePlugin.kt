@@ -52,10 +52,19 @@ class StructuredCoroutinesGradlePlugin : KotlinCompilerPluginSupportPlugin {
         extension.cancellationExceptionSwallowed.convention("warning")
         extension.unusedDeferred.convention("error")
         extension.redundantLaunchInCoroutineScope.convention("warning")
+        extension.excludeSourceSets.convention(emptyList())
+        extension.excludeProjects.convention(emptyList())
     }
 
     override fun isApplicable(kotlinCompilation: KotlinCompilation<*>): Boolean {
-        // Apply to all Kotlin compilations
+        val project = kotlinCompilation.target.project
+        val extension = project.extensions.findByType(StructuredCoroutinesExtension::class.java)
+            ?: project.rootProject.extensions.findByType(StructuredCoroutinesExtension::class.java)
+            ?: return true
+        val excludedProjects = extension.excludeProjects.getOrElse(emptyList())
+        if (project.path in excludedProjects) return false
+        val excludedSourceSets = extension.excludeSourceSets.getOrElse(emptyList())
+        if (kotlinCompilation.name in excludedSourceSets) return false
         return true
     }
 

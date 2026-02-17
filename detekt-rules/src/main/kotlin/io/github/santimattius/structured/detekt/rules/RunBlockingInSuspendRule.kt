@@ -9,6 +9,7 @@
  */
 package io.github.santimattius.structured.detekt.rules
 
+import io.github.santimattius.structured.detekt.utils.DetektDocUrl
 import io.gitlab.arturbosch.detekt.api.CodeSmell
 import io.gitlab.arturbosch.detekt.api.Config
 import io.gitlab.arturbosch.detekt.api.Debt
@@ -77,9 +78,10 @@ class RunBlockingInSuspendRule(config: Config = Config.empty) : Rule(config) {
     override val issue = Issue(
         id = "RunBlockingInSuspend",
         severity = Severity.CodeSmell,
-        description = "runBlocking should not be called inside suspend functions. " +
+        description = "[RUNBLOCK_002] runBlocking should not be called inside suspend functions. " +
             "It blocks the thread and defeats the purpose of coroutines. " +
-            "Use runBlocking only at top level (main, test functions).",
+            "Use runBlocking only at top level (main, test functions). " +
+            "See: ${DetektDocUrl.buildDocLink("22-runblock_002--using-runblocking-inside-suspend-functions")}",
         debt = Debt.TEN_MINS
     )
 
@@ -96,9 +98,10 @@ class RunBlockingInSuspendRule(config: Config = Config.empty) : Rule(config) {
                 CodeSmell(
                     issue = issue,
                     entity = Entity.from(expression),
-                    message = "runBlocking blocks the thread and defeats coroutines purpose. " +
+                    message = "[RUNBLOCK_002] runBlocking blocks the thread and defeats coroutines purpose. " +
                         "Remove runBlocking and use suspend functions directly. " +
-                        "runBlocking should only be used at top level (main, test functions)."
+                        "runBlocking should only be used at top level (main, test functions). " +
+                        "See: ${DetektDocUrl.buildDocLink("22-runblock_002--using-runblocking-inside-suspend-functions")}"
                 )
             )
         }

@@ -36,6 +36,7 @@
             <li>Job in builder context</li>
             <li>Suspend in finally without NonCancellable</li>
             <li>CancellationException swallowed</li>
+            <li>CancellationException subclass (domain error)</li>
             <li>Dispatchers.Unconfined usage</li>
         </ul>
     ]]></description>
@@ -174,6 +175,18 @@
             enabledByDefault="true"
             level="WARNING"
             implementationClass="io.github.santimattius.structured.intellij.inspections.CancellationExceptionSwallowedInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
+            shortName="CancellationExceptionSubclass"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.cancellation.subclass.display.name"
+            enabledByDefault="true"
+            level="ERROR"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.CancellationExceptionSubclassInspection"/>
 
         <localInspection
             language="kotlin"

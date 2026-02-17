@@ -13,6 +13,7 @@ import com.android.tools.lint.detector.api.*
 import com.android.tools.lint.detector.api.Category
 import com.android.tools.lint.detector.api.Severity
 import io.github.santimattius.structured.lint.utils.CoroutineLintUtils
+import io.github.santimattius.structured.lint.utils.LintDocUrl
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
@@ -53,13 +54,12 @@ class SuspendInFinallyDetector : Detector(), SourceCodeScanner {
             id = "SuspendInFinally",
             briefDescription = "Suspend call in finally without NonCancellable",
             explanation = """
-                In a finally block, making suspend calls without wrapping them in 
-                withContext(NonCancellable) is dangerous. If the coroutine is in 
-                *cancelling* state, any suspension will throw CancellationException 
-                again and the cleanup may not execute.
-                
-                For critical cleanup that needs to suspend, wrap it with 
-                withContext(NonCancellable) { }.
+                [CANCEL_004] In a finally block, making suspend calls without wrapping them in
+                withContext(NonCancellable) is dangerous. If the coroutine is cancelling,
+                any suspension will throw CancellationException again and the cleanup may not execute.
+                Wrap critical cleanup with withContext(NonCancellable) { }.
+
+                See: ${LintDocUrl.buildDocLink("44-cancel_004--suspendable-cleanup-without-noncancellable")}
             """.trimIndent(),
             category = Category.CORRECTNESS,
             priority = 7,

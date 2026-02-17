@@ -12,6 +12,7 @@ package io.github.santimattius.structured.lint.detectors
 import com.android.tools.lint.detector.api.*
 import com.android.tools.lint.detector.api.Category
 import com.android.tools.lint.detector.api.Severity
+import io.github.santimattius.structured.lint.utils.LintDocUrl
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
@@ -50,12 +51,11 @@ class RedundantLaunchInCoroutineScopeDetector : Detector(), SourceCodeScanner {
             id = "RedundantLaunchInCoroutineScope",
             briefDescription = "Redundant launch in coroutineScope",
             explanation = """
-                Using launch on the last line of a coroutineScope is redundant because 
-                coroutineScope already waits for all children to complete. If you want 
+                [RUNBLOCK_001] Using launch on the last line of a coroutineScope is redundant because
+                coroutineScope already waits for all children to complete. If you want
                 the function to wait, execute the work directly without wrapping it in launch.
-                
-                Only use launch inside coroutineScope when you need multiple concurrent 
-                operations. For a single operation, execute it directly.
+
+                See: ${LintDocUrl.buildDocLink("21-runblock_001--using-launch-on-the-last-line-of-coroutinescope")}
             """.trimIndent(),
             category = Category.PERFORMANCE,
             priority = 5,

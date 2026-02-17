@@ -14,6 +14,7 @@ import com.android.tools.lint.detector.api.Category
 import com.android.tools.lint.detector.api.Severity
 import io.github.santimattius.structured.lint.utils.AndroidLintUtils
 import io.github.santimattius.structured.lint.utils.CoroutineLintUtils
+import io.github.santimattius.structured.lint.utils.LintDocUrl
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
@@ -58,14 +59,16 @@ class MainDispatcherMisuseDetector : Detector(), SourceCodeScanner {
             id = "MainDispatcherMisuse",
             briefDescription = "Blocking code on Main dispatcher",
             explanation = """
-                Blocking operations on Dispatchers.Main can freeze the UI and cause 
+                [DISPATCH_001] Blocking operations on Dispatchers.Main can freeze the UI and cause
                 ANRs (Application Not Responding).
-                
-                For blocking operations (I/O, JDBC, synchronous HTTP), use 
+
+                For blocking operations (I/O, JDBC, synchronous HTTP), use
                 Dispatchers.IO or wrap the blocking code with withContext(Dispatchers.IO).
-                
-                Dispatchers.Main should only be used for quick UI updates and 
+
+                Dispatchers.Main should only be used for quick UI updates and
                 non-blocking operations.
+
+                See: ${LintDocUrl.buildDocLink("31-dispatch_001--mixing-blocking-code-with-wrong-dispatchers")}
             """.trimIndent(),
             category = Category.CORRECTNESS,
             priority = 10, // Highest priority - can cause ANRs

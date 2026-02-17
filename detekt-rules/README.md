@@ -31,9 +31,12 @@ plugins {
 
 ```kotlin
 dependencies {
-    detektPlugins("io.github.santimattius:structured-coroutines-detekt-rules:0.1.0")
+    // Use the version published on Maven Central, or the same version as in this repo (see gradle.properties PROJECT_VERSION)
+    detektPlugins("io.github.santimattius:structured-coroutines-detekt-rules:0.3.0-ALPHA01")
 }
 ```
+
+**Important:** Use `detektPlugins(...)`, not `implementation(...)`. Detekt only loads custom rules from the `detektPlugins` configuration.
 
 ### 3. Local Development Setup
 
@@ -81,6 +84,26 @@ structured-coroutines:
     active: true
     severity: error
 
+  CancellationExceptionSwallowed:
+    active: true
+    severity: warning
+
+  JobInBuilderContext:
+    active: true
+    severity: warning
+
+  RedundantLaunchInCoroutineScope:
+    active: true
+    severity: warning
+
+  SuspendInFinally:
+    active: true
+    severity: warning
+
+  UnusedDeferred:
+    active: true
+    severity: warning
+
   # ============================================
   # Detekt-Only Rules (Static Analysis)
   # ============================================
@@ -97,6 +120,9 @@ structured-coroutines:
 
   LoopWithoutYield:
     active: true
+
+  ScopeReuseAfterCancel:
+    active: true
 ```
 
 ---
@@ -112,10 +138,16 @@ structured-coroutines:
 | `RunBlockingInSuspend` | Compiler Plugin | Warning | Detects `runBlocking` in suspend functions |
 | `DispatchersUnconfined` | Compiler Plugin | Warning | Detects `Dispatchers.Unconfined` usage |
 | `CancellationExceptionSubclass` | Compiler Plugin | Error | Detects classes extending `CancellationException` |
+| `CancellationExceptionSwallowed` | Compiler Plugin | Warning | Detects `catch(Exception)` that may swallow `CancellationException` |
+| `JobInBuilderContext` | Compiler Plugin | Warning | Detects `Job()`/`SupervisorJob()` passed to launch/async/withContext |
+| `RedundantLaunchInCoroutineScope` | Compiler Plugin | Warning | Detects single `launch` inside `coroutineScope`/`supervisorScope` |
+| `SuspendInFinally` | Compiler Plugin | Warning | Detects suspend calls in `finally` without `withContext(NonCancellable)` |
+| `UnusedDeferred` | Compiler Plugin | Warning | Detects `async` result never awaited |
 | `BlockingCallInCoroutine` | Detekt-Only | Warning | Detects blocking calls inside coroutines |
 | `RunBlockingWithDelayInTest` | Detekt-Only | Warning | Detects `runBlocking` + `delay` in tests |
 | `ExternalScopeLaunch` | Detekt-Only | Warning | Detects launch on external scopes from suspend functions |
 | `LoopWithoutYield` | Detekt-Only | Warning | Detects loops without cooperation points |
+| `ScopeReuseAfterCancel` | Detekt-Only | Warning | Detects scope.cancel() then scope.launch/async |
 
 ### Best Practices Reference
 
@@ -126,10 +158,16 @@ structured-coroutines:
 | `RunBlockingInSuspend` | 2.2 - Using runBlocking Inside Suspend Functions |
 | `DispatchersUnconfined` | 3.2 - Abusing Dispatchers.Unconfined |
 | `CancellationExceptionSubclass` | 5.2 - Extending CancellationException for Domain Errors |
+| `CancellationExceptionSwallowed` | 4.3 - Swallowing CancellationException |
+| `JobInBuilderContext` | 3.4 - Passing Job() Directly as Context to Builders |
+| `RedundantLaunchInCoroutineScope` | 2.1 - Using launch on the Last Line of coroutineScope |
+| `SuspendInFinally` | 4.4 - Suspendable Cleanup Without NonCancellable |
+| `UnusedDeferred` | 1.2 - Using async Without Calling await |
 | `BlockingCallInCoroutine` | 3.1 - Mixing Blocking Code with Wrong Dispatchers |
 | `RunBlockingWithDelayInTest` | 6.1 - Slow Tests with Real Delays |
 | `ExternalScopeLaunch` | 1.3 - Breaking Structured Concurrency |
 | `LoopWithoutYield` | 4.1 - Ignoring Cancellation in Intensive Loops |
+| `ScopeReuseAfterCancel` | 4.5 - Reusing a Cancelled CoroutineScope |
 
 ---
 
@@ -319,11 +357,51 @@ suspend fun process() {
 
 ---
 
+### 6. CancellationExceptionSwallowed
+
+**Detects:** `catch(Exception)` or `catch(Throwable)` in coroutine context (suspend functions or builder blocks) that may swallow `CancellationException`. Use a separate `catch (e: CancellationException) { throw e }` or rethrow in the catch block.
+
+**Severity:** Warning
+
+---
+
+### 7. JobInBuilderContext
+
+**Detects:** `Job()` or `SupervisorJob()` passed as context to `launch`, `async`, or `withContext`. Use `supervisorScope { }` for supervision, or omit the context to use the parent's Job.
+
+**Severity:** Warning
+
+---
+
+### 8. RedundantLaunchInCoroutineScope
+
+**Detects:** A single `launch { }` inside `coroutineScope { }` or `supervisorScope { }`. Execute the work directly without wrapping in `launch`.
+
+**Severity:** Warning
+
+---
+
+### 9. SuspendInFinally
+
+**Detects:** Suspend calls (e.g. `delay`, `withContext`) in a `finally` block not wrapped in `withContext(NonCancellable) { }`. Wrap cleanup in `withContext(NonCancellable)` so it runs even when cancelled.
+
+**Severity:** Warning
+
+---
+
+### 10. UnusedDeferred
+
+**Detects:** `async { }` result assigned to a variable that is never awaited (no `.await()` or `awaitAll()` in the same block). Use `launch { }` if no result is needed, or call `.await()`.
+
+**Severity:** Warning
+
+---
+
 ## Detekt-Only Rules
 
 These rules are only available as Detekt Rules because they require static analysis that is not possible at compile time.
 
-### 6. BlockingCallInCoroutine
+### 11. BlockingCallInCoroutine
 
 **Detects:** Blocking calls inside coroutines.
 
@@ -359,7 +437,7 @@ scope.launch {
 
 ---
 
-### 7. RunBlockingWithDelayInTest
+### 12. RunBlockingWithDelayInTest
 
 **Detects:** `runBlocking` with `delay()` in test files.
 
@@ -387,7 +465,7 @@ fun `test something`() = runTest {
 
 ---
 
-### 8. ExternalScopeLaunch
+### 13. ExternalScopeLaunch
 
 **Detects:** Launch on external scope from suspend functions.
 
@@ -421,7 +499,7 @@ class MyService(private val scope: CoroutineScope) {
 
 ---
 
-### 9. LoopWithoutYield
+### 14. LoopWithoutYield
 
 **Detects:** Loops without cooperation points in suspend functions.
 
@@ -459,7 +537,27 @@ suspend fun processItems(items: List<Item>) {
 
 ---
 
+### 15. ScopeReuseAfterCancel
+
+**Detects:** `scope.cancel()` followed by `scope.launch` or `scope.async` in the same function. A cancelled scope does not accept new children.
+
+**Severity:** Warning
+
+---
+
 ## Running Detekt
+
+### Validating rules in this repository
+
+The **sample-detekt** module contains one intentional violation per rule so you can confirm that each rule runs correctly. From the project root:
+
+```bash
+./gradlew :sample-detekt:detekt
+```
+
+You should see 15 findings from the `structured-coroutines` rule set. See [sample-detekt/README.md](../sample-detekt/README.md) for the list of example files and expected findings.
+
+### In your own project
 
 ```bash
 # Full analysis
@@ -472,6 +570,80 @@ suspend fun processItems(items: List<Item>) {
 ./gradlew detekt
 # Then open: build/reports/detekt/detekt.html
 ```
+
+---
+
+## Troubleshooting: Detekt not running in another project
+
+If Detekt runs but the **Structured Coroutines rules** do not report anything (or you get a class-loading error), check the following.
+
+### 1. Use `detektPlugins`, not `implementation`
+
+Custom rules are loaded only from the `detektPlugins` configuration:
+
+```kotlin
+// ✅ Correct
+dependencies {
+    detektPlugins("io.github.santimattius:structured-coroutines-detekt-rules:0.3.0-ALPHA01")
+}
+
+// ❌ Wrong – rules will not be loaded
+dependencies {
+    implementation("io.github.santimattius:structured-coroutines-detekt-rules:0.3.0-ALPHA01")
+}
+```
+
+### 2. Config section name must be `structured-coroutines`
+
+In `detekt.yml` (or your config file), the section for these rules **must** be named exactly `structured-coroutines:` (with hyphen):
+
+```yaml
+# ✅ Correct
+structured-coroutines:
+  GlobalScopeUsage:
+    active: true
+  BlockingCallInCoroutine:
+    active: true
+
+# ❌ Wrong – rules will not be configured
+structured_coroutines:   # underscore
+  ...
+```
+
+### 3. Repositories
+
+- **Published artifact:** the project (or its `buildscript`/plugin management) must have `mavenCentral()` so the dependency can be resolved.
+- **Local build:** from this repo run `./gradlew :detekt-rules:publishToMavenLocal`. In the other project add `mavenLocal()` and use the same version as in this repo’s `gradle.properties` (`PROJECT_VERSION`):
+
+```kotlin
+// settings.gradle.kts (or build.gradle.kts)
+dependencyResolutionManagement {
+    repositories {
+        mavenLocal()   // for local testing
+        mavenCentral()
+    }
+}
+```
+
+### 4. Detekt version compatibility
+
+These rules are built against **Detekt 1.23.x**. If your project uses a very different Detekt version (e.g. 1.19 or 2.x), you may see `NoClassDefFoundError` or rules not loading. Prefer the same major/minor Detekt version:
+
+```kotlin
+plugins {
+    id("io.gitlab.arturbosch.detekt") version "1.23.7"
+}
+```
+
+### 5. Verify that the rule set is loaded
+
+Run Detekt with `--debug` and look for the rule set in the output:
+
+```bash
+./gradlew detekt --debug 2>&1 | grep -i structured
+```
+
+You should see references to the `structured-coroutines` rule set. If not, the JAR is not on the `detektPlugins` classpath or the version could not be resolved.
 
 ---
 
@@ -543,6 +715,8 @@ jobs:
 ---
 
 ## Suppressing Rules
+
+For a **unified table** of suppression identifiers across Compiler, Detekt, Lint, and IntelliJ (by rule code), see [Suppressing rules](../docs/SUPPRESSING_RULES.md).
 
 ### Suppress for Specific Code
 

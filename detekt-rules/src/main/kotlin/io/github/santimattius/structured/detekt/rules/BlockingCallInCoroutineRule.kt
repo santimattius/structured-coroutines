@@ -10,6 +10,7 @@
 package io.github.santimattius.structured.detekt.rules
 
 import io.github.santimattius.structured.detekt.utils.CoroutineDetektUtils
+import io.github.santimattius.structured.detekt.utils.DetektDocUrl
 import io.gitlab.arturbosch.detekt.api.CodeSmell
 import io.gitlab.arturbosch.detekt.api.Config
 import io.gitlab.arturbosch.detekt.api.Debt
@@ -81,9 +82,10 @@ class BlockingCallInCoroutineRule(config: Config = Config.empty) : Rule(config) 
     override val issue = Issue(
         id = "BlockingCallInCoroutine",
         severity = Severity.Warning,
-        description = "Blocking call detected inside a coroutine. " +
+        description = "[DISPATCH_001] Blocking call detected inside a coroutine. " +
             "This can block the coroutine thread and cause thread starvation. " +
-            "Use non-blocking alternatives or wrap in withContext(Dispatchers.IO).",
+            "Use non-blocking alternatives or wrap in withContext(Dispatchers.IO). " +
+            "See: ${DetektDocUrl.buildDocLink("31-dispatch_001--mixing-blocking-code-with-wrong-dispatchers")}",
         debt = Debt.TEN_MINS
     )
 
@@ -125,6 +127,7 @@ class BlockingCallInCoroutineRule(config: Config = Config.empty) : Rule(config) 
                 "Wrap in withContext(Dispatchers.IO) { } to avoid blocking the coroutine thread."
         }
         
-        return "Blocking call '$callName' inside coroutine. $suggestion"
+        return "[DISPATCH_001] Blocking call '$callName' inside coroutine. $suggestion " +
+            "See: ${DetektDocUrl.buildDocLink("31-dispatch_001--mixing-blocking-code-with-wrong-dispatchers")}"
     }
 }
