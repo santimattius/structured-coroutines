@@ -7,6 +7,7 @@ structured concurrency best practices.
 
 - [Installation](#installation)
 - [Configuration](#configuration)
+- [Profiles (strict / gradual / relaxed)](#profiles-strict--gradual--relaxed)
 - [Rules Overview](#rules-overview)
 - [Usage Examples](#usage-examples)
 - [Kotlin Multiplatform Support](#kotlin-multiplatform-support)
@@ -112,6 +113,40 @@ structuredCoroutines {
 | `"error"`   | Reports as compilation error (blocks build)  |
 | `"warning"` | Reports as warning (allows build to succeed) |
 
+### Profiles (strict / gradual / relaxed)
+
+You can apply a preset instead of configuring each rule:
+
+```kotlin
+structuredCoroutines {
+    useStrictProfile()   // Default: 7 error, 4 warning (greenfield)
+    // useGradualProfile()  // All rules warning (migration)
+    // useRelaxedProfile()   // Same as gradual
+}
+```
+
+| Profile   | When to use | Effect |
+|-----------|--------------|--------|
+| **Strict**  | New projects or when you want the build to fail on violations | 7 rules → error, 4 rules → warning (defaults) |
+| **Gradual** | Migrating legacy code; build must not fail while you fix issues | All 11 rules → **warning** |
+| **Relaxed** | Same as gradual; see findings without blocking the build | All 11 rules → **warning** |
+
+**Severity per rule by profile:**
+
+| Rule                              | Strict | Gradual / Relaxed |
+|-----------------------------------|--------|-------------------|
+| `globalScopeUsage`                | error  | warning           |
+| `inlineCoroutineScope`            | error  | warning           |
+| `unstructuredLaunch`              | error  | warning           |
+| `runBlockingInSuspend`            | error  | warning           |
+| `jobInBuilderContext`             | error  | warning           |
+| `cancellationExceptionSubclass`   | error  | warning           |
+| `unusedDeferred`                  | error  | warning           |
+| `dispatchersUnconfined`           | warning| warning           |
+| `suspendInFinally`                | warning| warning           |
+| `cancellationExceptionSwallowed`  | warning| warning           |
+| `redundantLaunchInCoroutineScope` | warning| warning           |
+
 ### Single entry point for rules
 
 This plugin is the **recommended single entry point** for structured-coroutines: it applies the Kotlin compiler plugin and fits into the same project as **Detekt** and **Android Lint**. For consistent behavior across tools, keep severity choices aligned (e.g. use the same error/warning level for a given rule in the plugin and in `detekt.yml` / Lint config). Rule codes and suppression IDs are listed in [docs/rule-codes.yml](../docs/rule-codes.yml) and [docs/RULES_SYNC_COMPARISON.md](../docs/RULES_SYNC_COMPARISON.md).
@@ -147,6 +182,29 @@ This plugin is the **recommended single entry point** for structured-coroutines:
 ---
 
 ## Usage Examples
+
+### Using a profile
+
+**New project (strict):** one line applies the default strict behavior.
+
+```kotlin
+plugins {
+    kotlin("jvm") version "2.3.0"
+    id("io.github.santimattius.structured-coroutines") version "0.1.0"
+}
+
+structuredCoroutines {
+    useStrictProfile()
+}
+```
+
+**Legacy project (gradual):** all rules as warnings so the build does not fail while you fix issues.
+
+```kotlin
+structuredCoroutines {
+    useGradualProfile()
+}
+```
 
 ### Using @StructuredScope
 
