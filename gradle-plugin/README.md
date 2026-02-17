@@ -8,6 +8,7 @@ structured concurrency best practices.
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Profiles (strict / gradual / relaxed)](#profiles-strict--gradual--relaxed)
+- [Excluding source sets and projects](#excluding-source-sets-and-projects)
 - [Rules Overview](#rules-overview)
 - [Usage Examples](#usage-examples)
 - [Kotlin Multiplatform Support](#kotlin-multiplatform-support)
@@ -146,6 +147,33 @@ structuredCoroutines {
 | `suspendInFinally`                | warning| warning           |
 | `cancellationExceptionSwallowed`  | warning| warning           |
 | `redundantLaunchInCoroutineScope` | warning| warning           |
+
+### Excluding source sets and projects
+
+During migration you can disable the compiler plugin for specific source sets or entire projects so legacy code does not fail the build.
+
+**Exclude by source set (compilation name):**
+
+```kotlin
+structuredCoroutines {
+    useGradualProfile()
+    excludeSourceSets("legacyMain", "test")  // "main", "test", "jvmMain", etc.
+}
+```
+
+**Exclude by project path:**
+
+```kotlin
+structuredCoroutines {
+    excludeProjects(":legacy-module", ":app:oldFeature")
+}
+```
+
+- **Source set names** match Kotlin compilation names (e.g. `main`, `test`, `jvmMain`, `commonMain`). Excluded compilations do not run the plugin.
+- **Project paths** use Gradle path format (e.g. `:subproject`, `:app:lib`). All compilations of that project are excluded.
+- When the plugin is applied to the root only, exclusion lists are read from the root extension. When applied per project, each project’s extension is used.
+
+For a full migration path (relaxed → gradual → strict) and suppression best practices, see the [Gradual adoption guide](../docs/GRADUAL_ADOPTION.md).
 
 ### Single entry point for rules
 

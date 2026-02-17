@@ -9,6 +9,7 @@
  */
 package io.github.santimattius.structured.gradle
 
+import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 
 /**
@@ -114,6 +115,36 @@ interface StructuredCoroutinesExtension {
      * Default: "warning"
      */
     val redundantLaunchInCoroutineScope: Property<String>
+
+    /**
+     * Source set (compilation) names to exclude from the compiler plugin.
+     * Excluded compilations will not run the Structured Coroutines plugin.
+     * Use for legacy modules or test source sets during migration.
+     * Example: `excludeSourceSets("legacyMain", "test")`
+     */
+    val excludeSourceSets: ListProperty<String>
+
+    /**
+     * Project paths to exclude from the compiler plugin (e.g. `:legacy-module`, `:app:old`).
+     * All compilations of excluded projects will not run the plugin.
+     */
+    val excludeProjects: ListProperty<String>
+
+    /**
+     * Excludes the given source set (compilation) names from the plugin.
+     * Names match [KotlinCompilation.getName] (e.g. "main", "test", "jvmMain").
+     */
+    fun excludeSourceSets(vararg names: String) {
+        excludeSourceSets.set(excludeSourceSets.getOrElse(emptyList()) + names.toList())
+    }
+
+    /**
+     * Excludes the given project paths from the plugin.
+     * Use project path format (e.g. ":subproject", ":app:feature").
+     */
+    fun excludeProjects(vararg paths: String) {
+        excludeProjects.set(excludeProjects.getOrElse(emptyList()) + paths.toList())
+    }
 
     /**
      * Applies the **strict** profile: 7 rules as error, 4 as warning (defaults).
