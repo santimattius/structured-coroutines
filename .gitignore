@@ -14,6 +14,7 @@
 /sample/build/classes/kotlin/main/
 /.kotlin/
 /build/
+*/build/*
 
 # Agent Skills validator (optional clone)
 /.tools-agentskills/

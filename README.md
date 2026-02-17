@@ -776,6 +776,17 @@ All user-facing text is externalized for localization:
 To add a new language, add a `_<locale>` properties file (e.g. `CompilerBundle_de.properties`) with
 the same keys.
 
+### Internationalization (i18n)
+
+All user-facing text is externalized for localization:
+
+- **Compiler plugin:** Messages are in `compiler/src/main/resources/messages/CompilerBundle*.properties`. **Default language is English** so builds and CI are predictable. To use Spanish (or the JVM default locale), set the system property:
+  - **Spanish:** `-Dstructured.coroutines.compiler.locale=es` (e.g. in `gradle.properties`: `org.gradle.jvmargs=... -Dstructured.coroutines.compiler.locale=es`)
+  - **JVM default:** `-Dstructured.coroutines.compiler.locale=default`
+- **IntelliJ plugin:** Uses `StructuredCoroutinesBundle.properties`; the IDE uses the platform language. Spanish: `StructuredCoroutinesBundle_es.properties`.
+
+To add a new language, add a `_<locale>` properties file (e.g. `CompilerBundle_de.properties`) with the same keys.
+
 ### External Resources
 
 - [Kotlin Coroutines Guide](https://kotlinlang.org/docs/coroutines-guide.html)
