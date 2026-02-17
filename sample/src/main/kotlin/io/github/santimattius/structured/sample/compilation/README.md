@@ -41,3 +41,28 @@ With the plugin applied, the sample will **fail** compilation due to the error e
 other error examples in the sample, e.g. `BasicPluginErrorExample.kt`). To get a successful build
 you can temporarily exclude the `compilation` source set, remove the error example packages, or
 configure the plugin (e.g. via the gradle-plugin) to downgrade those rules to `"warning"`.
+
+## Automated validation
+
+The compiler’s functional tests include:
+
+1. **Rule codes:** Compile the **sample** (expecting failure) and assert the output contains
+   `[SCOPE_001]`, `[SCOPE_003]`, `[DISPATCH_004]`.
+2. **Locales:** Run the sample compile with `JAVA_TOOL_OPTIONS=-Dstructured.coroutines.compiler.locale=en`
+   and with `locale=es`, and assert the output contains a **localized** SCOPE_001 message (English or
+   Spanish). This checks that i18n bundles are used; the exact language can depend on whether the
+   Gradle worker receives the JVM options.
+
+Together this validates that the sample and the compiler (rule codes and i18n) stay in sync.
+
+From the project root:
+
+```bash
+./gradlew validateSample
+```
+
+or run all compiler tests:
+
+```bash
+./gradlew :compiler:test
+```

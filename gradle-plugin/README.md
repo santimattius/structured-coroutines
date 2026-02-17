@@ -11,6 +11,8 @@ structured concurrency best practices.
 - [Usage Examples](#usage-examples)
 - [Kotlin Multiplatform Support](#kotlin-multiplatform-support)
 - [Configuration Strategies](#configuration-strategies)
+- [Testing i18n (Compiler Messages)](#testing-i18n-compiler-messages)
+- [Testing from Another Project](#testing-from-another-project)
 - [Troubleshooting](#troubleshooting)
 - [Quick Start Templates](#quick-start-templates)
 
@@ -374,6 +376,132 @@ structuredCoroutines {
     redundantLaunchInCoroutineScope.set("warning")
 }
 ```
+
+---
+
+## Testing i18n (Compiler Messages)
+
+The Gradle plugin does not show its own messages; the texts you see when a rule is violated (e.g. `[SCOPE_001] GlobalScope usage...`) come from the **compiler plugin**. **The default language is English** so builds are consistent regardless of system locale.
+
+### See messages in Spanish
+
+Set the compiler locale system property so diagnostics use `CompilerBundle_es.properties`:
+
+**Option A – one-off (Unix/macOS):**
+
+```bash
+JAVA_TOOL_OPTIONS="-Dstructured.coroutines.compiler.locale=es" ./gradlew compileKotlin
+```
+
+**Option B – Gradle JVM args (project-wide):**
+
+In `gradle.properties`:
+
+```properties
+org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8 -Dstructured.coroutines.compiler.locale=es
+```
+
+**Trigger a diagnostic:** Use code that triggers a rule, e.g. `GlobalScope.launch { }`. The error message should appear in Spanish (e.g. *"El uso de GlobalScope no está permitido..."*).
+
+**Back to English:** Omit the property or remove `-Dstructured.coroutines.compiler.locale=es`. **Use system locale:** `-Dstructured.coroutines.compiler.locale=default`.
+
+---
+
+## Testing from Another Project
+
+To try the plugin from a **different project** (e.g. another repo or a folder outside this one):
+
+### 1. Publish to Maven Local (from this repo)
+
+In the **structured-coroutines** repo root:
+
+```bash
+./gradlew :annotations:publishToMavenLocal :compiler:publishToMavenLocal :gradle-plugin:publishToMavenLocal
+```
+
+Use the same **version** as in this project (see `gradle.properties` → `PROJECT_VERSION`). Your other project must use that version in the plugin and dependencies.
+
+### 2. Create a minimal project
+
+In another directory (e.g. `~/my-app` or another repo), create:
+
+**settings.gradle.kts:**
+
+```kotlin
+rootProject.name = "my-app"
+
+pluginManagement {
+    repositories {
+        mavenLocal()   // Must be first so it picks up your published plugin
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
+dependencyResolutionManagement {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+}
+```
+
+**build.gradle.kts:**
+
+```kotlin
+plugins {
+    kotlin("jvm") version "2.3.0"
+    id("io.github.santimattius.structured-coroutines") version "0.3.1"  // Same as PROJECT_VERSION in this repo
+}
+
+kotlin {
+    jvmToolchain(17)
+}
+
+dependencies {
+    implementation("io.github.santimattius:structured-coroutines-annotations:0.3.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
+}
+```
+
+**src/main/kotlin/Main.kt** (code that triggers an error on purpose):
+
+```kotlin
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+
+fun main() {
+    GlobalScope.launch { println("Hello") }  // Will fail with [SCOPE_001]
+}
+```
+
+### 3. Run the build
+
+From the **other project** directory:
+
+```bash
+./gradlew compileKotlin
+```
+
+The build should **fail** with a message like `[SCOPE_001] GlobalScope usage is not allowed...` and a link to the docs. That confirms the plugin and compiler are applied.
+
+### 4. Optional: Spanish messages
+
+In the **other project**, create or edit `gradle.properties`:
+
+```properties
+org.gradle.jvmargs=-Xmx1024m -Dstructured.coroutines.compiler.locale=es
+```
+
+Run `./gradlew compileKotlin` again; the error should appear in Spanish (e.g. *El uso de GlobalScope no está permitido...*).
+
+### 5. Successful build (no errors)
+
+Remove or change the offending code (e.g. use `coroutineScope { launch { ... } }` or inject a `CoroutineScope` with `@StructuredScope`) so that the project compiles successfully.
+
+---
+
+**Automated validation:** The compiler module’s functional tests (which use the Gradle plugin) include i18n checks: they verify that a failing build shows the rule code `[SCOPE_001]` and the localized message (English or Spanish), and that `JAVA_TOOL_OPTIONS=-Dstructured.coroutines.compiler.locale=es` yields the Spanish message. Run `./gradlew :compiler:test` (after `publishToMavenLocal` for the plugin/compiler/annotations).
 
 ---
 

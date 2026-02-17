@@ -31,6 +31,7 @@ class StructuredCoroutinesInspectionProvider : InspectionToolProvider {
             JobInBuilderContextInspection::class.java,
             SuspendInFinallyInspection::class.java,
             CancellationExceptionSwallowedInspection::class.java,
+            CancellationExceptionSubclassInspection::class.java,
             DispatchersUnconfinedInspection::class.java
         )
     }
