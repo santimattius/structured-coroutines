@@ -239,7 +239,7 @@ The plugin adds a **Structured Coroutines** tool window (bottom strip) that show
 ### Usage
 
 1. **Open a Kotlin file** in the editor (the one you want to analyze).
-2. Click **Refresh** in the tool window toolbar. The plugin runs all 11 Structured Coroutines inspections on that file.
+2. Click **Refresh** in the tool window toolbar. The plugin runs all Structured Coroutines inspections on that file (single source of truth: `StructuredCoroutinesInspectionProvider`).
 3. The table shows **Severity** (icon), **Location** (file:line), **Inspection** name, and **Message**.
 4. **Double-click** a row to navigate to the reported element in the editor.
 
@@ -644,7 +644,7 @@ Include:
 
 **Initial Release**
 
-- 11 inspections for coroutine best practices
+- 13 inspections for coroutine best practices (Loop without yield, Scope reuse, runBlocking, etc.)
 - 9 quick fixes for automatic corrections
 - 5 intentions for refactoring
 - 2 gutter icon providers (scope type and dispatcher context)

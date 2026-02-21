@@ -14,7 +14,7 @@ plugins {
 }
 
 group = "io.github.santimattius"
-version = "0.3.0"
+version = "0.4.0-ALPHA04"
 
 repositories {
     mavenCentral()
@@ -61,7 +61,7 @@ intellijPlatform {
             <p><b>v0.2.0</b></p>
             <ul>
                 <li>IDE compatibility: IntelliJ IDEA 2024.3–2025.x (builds 243–252)</li>
-                <li>11 inspections for coroutine best practices</li>
+                <li>13 inspections for coroutine best practices</li>
                 <li>9 quick fixes for automatic corrections</li>
                 <li>5 intentions for refactoring</li>
                 <li>2 gutter icon providers</li>
@@ -89,9 +89,6 @@ intellijPlatform {
     publishing {
         token.set(providers.gradleProperty("marketplaceToken")
             .orElse(providers.environmentVariable("JB_MARKETPLACE_TOKEN")))
-
-        // El "channel" por defecto es "default" (estable).
-        // Puedes usar "EAP" o "Beta" si quieres probar antes.
         channels.set(listOf("default"))
     }
 }

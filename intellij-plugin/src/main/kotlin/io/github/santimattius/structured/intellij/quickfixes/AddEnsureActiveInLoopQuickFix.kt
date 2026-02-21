@@ -29,16 +29,22 @@ class AddEnsureActiveInLoopQuickFix : LocalQuickFix {
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val element = descriptor.psiElement
-        val loop = element.getParentOfType<KtLoopExpression>(strict = true) ?: return
+        // descriptor.psiElement is the loop when registered from LoopWithoutYieldInspection
+        val loop = element as? KtLoopExpression ?: element.getParentOfType<KtLoopExpression>(strict = false) ?: return
         val body = loop.body ?: return
         val factory = KtPsiFactory(project)
-        val ensureActiveStatement = factory.createExpression("kotlinx.coroutines.ensureActive()")
         when (body) {
             is KtBlockExpression -> {
-                body.addBefore(ensureActiveStatement, body.statements.firstOrNull())
+                val statements = body.statements
+                val lines = mutableListOf("kotlinx.coroutines.ensureActive()")
+                statements.forEach { lines.add(it.text) }
+                val newBlock = factory.createBlock(lines.joinToString("\n"))
+                body.replace(newBlock)
             }
             else -> {
-                val newBlock = factory.createBlock("kotlinx.coroutines.ensureActive()\n${body.text}")
+                val newBlock = factory.createBlock(
+                    "kotlinx.coroutines.ensureActive()\n${body.text}"
+                )
                 body.replace(newBlock)
             }
         }
