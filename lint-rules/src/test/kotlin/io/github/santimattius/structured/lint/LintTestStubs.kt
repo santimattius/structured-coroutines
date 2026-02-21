@@ -28,6 +28,15 @@ object LintTestStubs {
         }
     """.trimIndent()
 
+    val kotlinxCoroutinesChannels = """
+        package kotlinx.coroutines.channels
+        interface Channel<E>
+        interface ReceiveChannel<out E>
+        fun <E> Channel(capacity: Int = 0): Channel<E> = error("stub")
+        fun <E> ReceiveChannel<E>.consumeEach(action: (E) -> Unit): Unit = error("stub")
+        fun <E> ReceiveChannel<E>.close(): Unit = error("stub")
+    """.trimIndent()
+
     val androidxLifecycle = """
         package androidx.lifecycle
         import kotlinx.coroutines.CoroutineScope
@@ -37,10 +46,16 @@ object LintTestStubs {
 
     fun all() = listOf(
         TestFiles.kotlin(kotlinxCoroutines).indented(),
+        TestFiles.kotlin(kotlinxCoroutinesChannels).indented(),
         TestFiles.kotlin(androidxLifecycle).indented()
     )
 
     fun coroutinesOnly() = listOf(
         TestFiles.kotlin(kotlinxCoroutines).indented()
+    )
+
+    fun coroutinesAndChannels() = listOf(
+        TestFiles.kotlin(kotlinxCoroutines).indented(),
+        TestFiles.kotlin(kotlinxCoroutinesChannels).indented()
     )
 }
