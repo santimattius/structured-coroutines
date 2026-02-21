@@ -50,6 +50,7 @@ object StructuredCoroutinesErrorRenderer : BaseDiagnosticRendererFactory() {
         MAP.put(StructuredCoroutinesErrors.CANCELLATION_EXCEPTION_SWALLOWED, CompilerMessages.message("CANCELLATION_EXCEPTION_SWALLOWED"))
         MAP.put(StructuredCoroutinesErrors.UNUSED_DEFERRED, CompilerMessages.message("UNUSED_DEFERRED"))
         MAP.put(StructuredCoroutinesErrors.REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE, CompilerMessages.message("REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE"))
+        MAP.put(StructuredCoroutinesErrors.LOOP_WITHOUT_YIELD, CompilerMessages.message("LOOP_WITHOUT_YIELD"))
     }
 }
 
@@ -233,6 +234,22 @@ object StructuredCoroutinesErrors {
         rendererFactory = StructuredCoroutinesErrorRenderer
     )
 
+    // ============================================================
+    // Cancellation & Loops (Best Practice 4.1)
+    // ============================================================
+
+    /**
+     * Warning when a for/while loop in a suspend function has no cooperation point.
+     * The coroutine cannot be cancelled until the loop completes.
+     */
+    val LOOP_WITHOUT_YIELD: KtDiagnosticFactory0 = KtDiagnosticFactory0(
+        name = "LOOP_WITHOUT_YIELD",
+        severity = Severity.WARNING,
+        defaultPositioningStrategy = SourceElementPositioningStrategies.DEFAULT,
+        psiType = KtElement::class,
+        rendererFactory = StructuredCoroutinesErrorRenderer
+    )
+
     init {
         // Register error messages after factories are created
         StructuredCoroutinesErrorRenderer.registerMessages()
@@ -339,6 +356,16 @@ fun DiagnosticReporter.reportUnusedDeferred(call: FirCall, context: CheckerConte
  */
 fun DiagnosticReporter.reportRedundantLaunchInCoroutineScope(call: FirCall, context: CheckerContext) {
     reportOn(call.source, StructuredCoroutinesErrors.REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE, context)
+}
+
+/**
+ * Reports a loop in suspend function without cooperation point warning.
+ */
+fun DiagnosticReporter.reportLoopWithoutYield(
+    expression: org.jetbrains.kotlin.fir.expressions.FirExpression,
+    context: CheckerContext
+) {
+    reportOn(expression.source, StructuredCoroutinesErrors.LOOP_WITHOUT_YIELD, context)
 }
 
 // ============================================================

@@ -117,6 +117,12 @@ interface StructuredCoroutinesExtension {
     val redundantLaunchInCoroutineScope: Property<String>
 
     /**
+     * Severity for loop in suspend function without cooperation point rule (4.1).
+     * Default: "warning"
+     */
+    val loopWithoutYield: Property<String>
+
+    /**
      * Source set (compilation) names to exclude from the compiler plugin.
      * Excluded compilations will not run the Structured Coroutines plugin.
      * Use for legacy modules or test source sets during migration.
@@ -162,10 +168,11 @@ interface StructuredCoroutinesExtension {
         suspendInFinally.set("warning")
         cancellationExceptionSwallowed.set("warning")
         redundantLaunchInCoroutineScope.set("warning")
+        loopWithoutYield.set("warning")
     }
 
     /**
-     * Applies the **gradual** profile: all 11 rules as warning.
+     * Applies the **gradual** profile: all 12 rules as warning.
      * Use when migrating a legacy project so the build does not fail while you fix issues.
      */
     fun useGradualProfile() {
@@ -180,6 +187,7 @@ interface StructuredCoroutinesExtension {
         suspendInFinally.set("warning")
         cancellationExceptionSwallowed.set("warning")
         redundantLaunchInCoroutineScope.set("warning")
+        loopWithoutYield.set("warning")
     }
 
     /**
