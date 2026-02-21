@@ -51,6 +51,13 @@ intellijPlatform {
             </ul>
         """.trimIndent()
         changeNotes = """
+            <p><b>v0.3.0</b></p>
+            <ul>
+                <li>12 inspections: GlobalScope, runBlocking in suspend, async/await, Job in builder, suspend in finally, CancellationException, Dispatchers.Unconfined, ScopeReuseAfterCancel, UnstructuredLaunch, MainDispatcherMisuse</li>
+                <li>9 quick fixes: Replace cancel with cancelChildren, Wrap with NonCancellable, Replace GlobalScope, Add await, and more</li>
+                <li>5 intentions: Migrate to lifecycleScope/viewModelScope, Convert launch to async, Wrap with coroutineScope, Extract suspend function</li>
+                <li>Tool window and gutter icons for scope and dispatcher</li>
+            </ul>
             <p><b>v0.2.0</b></p>
             <ul>
                 <li>IDE compatibility: IntelliJ IDEA 2024.3–2025.x (builds 243–252)</li>
