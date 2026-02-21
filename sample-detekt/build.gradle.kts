@@ -17,7 +17,7 @@ kotlin {
 detekt {
     buildUponDefaultConfig = true
     config.setFrom(files(project.layout.projectDirectory.file("detekt.yml")))
-    // Do not fail build; this module exists to validate that rules report (run detekt to see 14 findings)
+    // Do not fail build; this module exists to validate that rules report (run detekt to see 18 findings)
     ignoreFailures = true
 }
 

@@ -123,6 +123,12 @@ structured-coroutines:
 
   ScopeReuseAfterCancel:
     active: true
+
+  ChannelNotClosed:
+    active: true
+
+  ConsumeEachMultipleConsumers:
+    active: true
 ```
 
 ---
@@ -148,6 +154,8 @@ structured-coroutines:
 | `ExternalScopeLaunch` | Detekt-Only | Warning | Detects launch on external scopes from suspend functions |
 | `LoopWithoutYield` | Detekt-Only | Warning | Detects loops without cooperation points |
 | `ScopeReuseAfterCancel` | Detekt-Only | Warning | Detects scope.cancel() then scope.launch/async |
+| `ChannelNotClosed` | Detekt-Only | Warning | Detects manual Channel() without close() in same function |
+| `ConsumeEachMultipleConsumers` | Detekt-Only | Warning | Detects same channel used with consumeEach from multiple coroutines |
 
 ### Best Practices Reference
 
@@ -168,6 +176,8 @@ structured-coroutines:
 | `ExternalScopeLaunch` | 1.3 - Breaking Structured Concurrency |
 | `LoopWithoutYield` | 4.1 - Ignoring Cancellation in Intensive Loops |
 | `ScopeReuseAfterCancel` | 4.5 - Reusing a Cancelled CoroutineScope |
+| `ChannelNotClosed` | 7.1 - Forgetting to Close Manual Channels |
+| `ConsumeEachMultipleConsumers` | 7.2 - Sharing consumeEach Among Multiple Consumers |
 
 ---
 
@@ -540,6 +550,58 @@ suspend fun processItems(items: List<Item>) {
 ### 15. ScopeReuseAfterCancel
 
 **Detects:** `scope.cancel()` followed by `scope.launch` or `scope.async` in the same function. A cancelled scope does not accept new children.
+
+**Severity:** Warning
+
+---
+
+### 16. ChannelNotClosed (CHANNEL_001 — §7.1)
+
+**Detects:** Manual `Channel()` (or `Channel<T>()`) creation without a corresponding `close()` call in the same function. Consumers using `for (x in channel)` can block forever if the channel is never closed.
+
+**Heuristic:** Only checks within the same function. Channels closed in another function or via structured concurrency may still be reported; use `@Suppress` when appropriate.
+
+```kotlin
+// ❌ BAD
+fun main() {
+    val ch = Channel<Int>()
+    ch.send(1)
+    // ch never closed
+}
+
+// ✅ GOOD - close in same function
+fun main() {
+    val ch = Channel<Int>()
+    try {
+        ch.send(1)
+    } finally {
+        ch.close()
+    }
+}
+
+// ✅ GOOD - use produce (closes automatically)
+suspend fun flow() = produce {
+    send(1)
+}
+```
+
+**Severity:** Warning
+
+---
+
+### 17. ConsumeEachMultipleConsumers (CHANNEL_002 — §7.2)
+
+**Detects:** The same channel variable used with `consumeEach` from multiple coroutines (sibling `launch`/`async` in the same function). `consumeEach` cancels the channel when finished, breaking other consumers.
+
+```kotlin
+// ❌ BAD
+scope.launch { ch.consumeEach { } }
+scope.launch { ch.consumeEach { } }
+
+// ✅ GOOD - use for (value in channel) per consumer
+scope.launch { for (v in ch) { } }
+scope.launch { for (v in ch) { } }
+```
 
 **Severity:** Warning
 
