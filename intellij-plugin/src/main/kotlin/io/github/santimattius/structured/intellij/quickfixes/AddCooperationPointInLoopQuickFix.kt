@@ -19,41 +19,34 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 /**
- * Quick fix that inserts a cooperation point at the start of the loop body.
- *
- * In a suspend function there is no implicit CoroutineScope, so we use
- * `currentCoroutineContext().ensureActive()` (CoroutineContext extension), which works in any
- * suspend context. See ensureActive and yield API docs.
- *
- * @see <a href="https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/ensure-active.html">ensureActive</a>
- * @see <a href="https://kotlinlang.org/api/kotlinx.coroutines/kotlinx-coroutines-core/kotlinx.coroutines/yield.html">yield</a>
+ * Quick fix that inserts a cooperation point (snippet) at the start of the loop body.
+ * Used for CANCEL_001: ensureActive() (in scope), currentCoroutineContext().ensureActive() (suspend),
+ * yield(), or delay(0).
  */
-class AddEnsureActiveInLoopQuickFix : LocalQuickFix {
+class AddCooperationPointInLoopQuickFix(
+    private val snippet: String,
+    private val messageKey: String
+) : LocalQuickFix {
 
-    override fun getName(): String = StructuredCoroutinesBundle.message("quickfix.add.ensure.active.in.loop")
+    override fun getName(): String = StructuredCoroutinesBundle.message(messageKey)
 
-    override fun getFamilyName(): String = name
+    override fun getFamilyName(): String = StructuredCoroutinesBundle.message("quickfix.add.cooperation.point.in.loop.family")
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val element = descriptor.psiElement
-        // descriptor.psiElement is the loop when registered from LoopWithoutYieldInspection
         val loop = element as? KtLoopExpression ?: element.getParentOfType<KtLoopExpression>(strict = false) ?: return
         val body = loop.body ?: return
         val factory = KtPsiFactory(project)
-        // In suspend functions use currentCoroutineContext().ensureActive() (no implicit CoroutineScope)
-        val cooperationPoint = "kotlinx.coroutines.currentCoroutineContext().ensureActive()"
         when (body) {
             is KtBlockExpression -> {
                 val statements = body.statements
-                val lines = mutableListOf(cooperationPoint)
+                val lines = mutableListOf(snippet)
                 statements.forEach { lines.add(it.text) }
                 val newBlock = factory.createBlock(lines.joinToString("\n"))
                 body.replace(newBlock)
             }
             else -> {
-                val newBlock = factory.createBlock(
-                    "$cooperationPoint\n${body.text}"
-                )
+                val newBlock = factory.createBlock("$snippet\n${body.text}")
                 body.replace(newBlock)
             }
         }

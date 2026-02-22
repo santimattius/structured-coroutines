@@ -12,7 +12,7 @@ package io.github.santimattius.structured.intellij.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import io.github.santimattius.structured.intellij.StructuredCoroutinesBundle
 import io.github.santimattius.structured.intellij.inspections.base.CoroutineInspectionBase
-import io.github.santimattius.structured.intellij.quickfixes.AddEnsureActiveInLoopQuickFix
+import io.github.santimattius.structured.intellij.quickfixes.AddCooperationPointInLoopQuickFix
 import io.github.santimattius.structured.intellij.utils.CoroutinePsiUtils
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtForExpression
@@ -54,11 +54,17 @@ class LoopWithoutYieldInspection : CoroutineInspectionBase() {
             call.calleeExpression?.text in CoroutinePsiUtils.COOPERATION_POINTS || CoroutinePsiUtils.isSuspendCall(call)
         }
         if (!hasCooperationPoint) {
-            holder.registerProblem(
-                loop,
-                StructuredCoroutinesBundle.message("error.loop.without.yield"),
-                AddEnsureActiveInLoopQuickFix()
-            )
+            val insideScope = CoroutinePsiUtils.isInsideScopeBuilderBlock(loop)
+            val fixes = buildList {
+                if (insideScope) {
+                    add(AddCooperationPointInLoopQuickFix("kotlinx.coroutines.ensureActive()", "quickfix.add.ensure.active.in.loop"))
+                } else {
+                    add(AddCooperationPointInLoopQuickFix("kotlinx.coroutines.currentCoroutineContext().ensureActive()", "quickfix.add.current.coroutine.context.ensure.active.in.loop"))
+                }
+                add(AddCooperationPointInLoopQuickFix("kotlinx.coroutines.yield()", "quickfix.add.yield.in.loop"))
+                add(AddCooperationPointInLoopQuickFix("kotlinx.coroutines.delay(0)", "quickfix.add.delay.in.loop"))
+            }
+            holder.registerProblem(loop, StructuredCoroutinesBundle.message("error.loop.without.yield"), *fixes.toTypedArray())
         }
     }
 }

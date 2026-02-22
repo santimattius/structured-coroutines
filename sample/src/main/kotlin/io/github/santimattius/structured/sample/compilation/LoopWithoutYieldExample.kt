@@ -1,5 +1,7 @@
 package io.github.santimattius.structured.sample.compilation
 
+import kotlinx.coroutines.ensureActive
+
 /**
  * Compilation WARNING: loopWithoutYield (4.1 — CANCEL_001)
  *
@@ -9,6 +11,7 @@ package io.github.santimattius.structured.sample.compilation
 suspend fun triggerLoopWithoutYieldWarning() {
     var i = 0
     while (i < 100) {
+        kotlinx.coroutines.currentCoroutineContext().ensureActive()
         heavyComputation(i)
         i++
     }
