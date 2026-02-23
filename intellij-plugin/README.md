@@ -83,6 +83,8 @@ The plugin provides four main feature categories:
 | SuspendInFinally | WARNING | Detects suspend calls in finally without NonCancellable |
 | CancellationExceptionSwallowed | WARNING | Detects `catch(Exception)` swallowing cancellation |
 | DispatchersUnconfined | WARNING | Detects `Dispatchers.Unconfined` usage |
+| LifecycleAwareFlowCollection | WARNING | Flow collect in `lifecycleScope` without `repeatOnLifecycle`/`flowWithLifecycle` (§8.2 ARCH_002) |
+| LoopWithoutYield | WARNING | Detects loops in suspend functions without cooperation points |
 
 ### Detailed Inspection Descriptions
 

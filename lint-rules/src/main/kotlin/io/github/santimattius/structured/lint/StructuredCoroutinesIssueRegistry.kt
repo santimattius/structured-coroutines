@@ -34,6 +34,7 @@ class StructuredCoroutinesIssueRegistry : IssueRegistry() {
             MainDispatcherMisuseDetector.ISSUE,
             ViewModelScopeLeakDetector.ISSUE,
             LifecycleAwareScopeDetector.ISSUE,
+            LifecycleAwareFlowCollectionDetector.ISSUE,
             
             // Fase 3.3: Reglas Avanzadas
             JobInBuilderContextDetector.ISSUE,
