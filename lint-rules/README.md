@@ -116,6 +116,7 @@ Configure Android Lint rules in `lint.xml`:
     <issue id="ScopeReuseAfterCancel" severity="warning" />
     <issue id="ChannelNotClosed" severity="warning" />
     <issue id="ConsumeEachMultipleConsumers" severity="warning" />
+    <issue id="FlowBlockingCall" severity="warning" />
 </lint>
 ```
 
@@ -146,6 +147,7 @@ Configure Android Lint rules in `lint.xml`:
 | `ScopeReuseAfterCancel` | Additional | Warning | Detects cancelled scope reuse |
 | `ChannelNotClosed` | Additional | Warning | Detects manual Channel() without close() in same function |
 | `ConsumeEachMultipleConsumers` | Additional | Warning | Detects same channel with consumeEach from multiple coroutines |
+| `FlowBlockingCall` | Additional | Warning | Detects blocking calls inside `flow { }` builder |
 
 ### Rules Count by Category
 
@@ -153,8 +155,8 @@ Configure Android Lint rules in `lint.xml`:
 |----------|-------|
 | Compiler Plugin Rules | 9 |
 | Android-Specific Rules | 3 |
-| Additional Rules | 7 |
-| **Total** | **17** |
+| Additional Rules | 8 |
+| **Total** | **18** |
 
 ---
 
@@ -595,6 +597,12 @@ fun process(scope: CoroutineScope) {
 **Severity:** Warning (configurable)
 
 **Note:** This is a heuristic rule. Only detects obvious cases in the same function. Complex cases requiring flow analysis are not detected.
+
+---
+
+### 19. FlowBlockingCall (FLOW_001 — §9.1) ⚠️ Heuristic
+
+**Detects:** Blocking calls (Thread.sleep, synchronous I/O, JDBC, etc.) inside `flow { }`. The flow block runs in the collector's context. Use `flowOn(Dispatchers.IO)` or suspend APIs.
 
 ---
 

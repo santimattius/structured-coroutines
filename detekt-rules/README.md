@@ -129,6 +129,9 @@ structured-coroutines:
 
   ConsumeEachMultipleConsumers:
     active: true
+
+  FlowBlockingCall:
+    active: true
 ```
 
 ---
@@ -156,6 +159,7 @@ structured-coroutines:
 | `ScopeReuseAfterCancel` | Detekt-Only | Warning | Detects scope.cancel() then scope.launch/async |
 | `ChannelNotClosed` | Detekt-Only | Warning | Detects manual Channel() without close() in same function |
 | `ConsumeEachMultipleConsumers` | Detekt-Only | Warning | Detects same channel used with consumeEach from multiple coroutines |
+| `FlowBlockingCall` | Detekt-Only | Warning | Detects blocking calls inside `flow { }` builder |
 
 ### Best Practices Reference
 
@@ -178,6 +182,7 @@ structured-coroutines:
 | `ScopeReuseAfterCancel` | 4.5 - Reusing a Cancelled CoroutineScope |
 | `ChannelNotClosed` | 7.1 - Forgetting to Close Manual Channels |
 | `ConsumeEachMultipleConsumers` | 7.2 - Sharing consumeEach Among Multiple Consumers |
+| `FlowBlockingCall` | 9.1 - Blocking Code in flow { } Builder |
 
 ---
 
@@ -607,6 +612,30 @@ scope.launch { for (v in ch) { } }
 
 ---
 
+### 18. FlowBlockingCall (FLOW_001 — §9.1)
+
+**Detects:** Blocking calls (e.g. `Thread.sleep`, synchronous I/O, JDBC) inside `flow { }`. The flow block runs in the collector's context; blocking can freeze the wrong thread and cooperate poorly with cancellation.
+
+**Recommended:** Use `flowOn(Dispatchers.IO)` or suspend APIs inside the flow builder.
+
+```kotlin
+// ❌ BAD
+flow {
+    Thread.sleep(100)
+    emit(1)
+}
+
+// ✅ GOOD
+flow {
+    delay(100)
+    emit(1)
+}.flowOn(Dispatchers.IO)
+```
+
+**Severity:** Warning
+
+---
+
 ## Running Detekt
 
 ### Validating rules in this repository
@@ -617,7 +646,7 @@ The **sample-detekt** module contains one intentional violation per rule so you 
 ./gradlew :sample-detekt:detekt
 ```
 
-You should see 15 findings from the `structured-coroutines` rule set. See [sample-detekt/README.md](../sample-detekt/README.md) for the list of example files and expected findings.
+You should see 19 findings from the `structured-coroutines` rule set. See [sample-detekt/README.md](../sample-detekt/README.md) for the list of example files and expected findings.
 
 ### In your own project
 

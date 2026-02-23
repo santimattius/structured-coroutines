@@ -189,6 +189,29 @@ object CoroutineDetektUtils {
     }
 
     /**
+     * Returns true if the element is inside the lambda block of a `flow { }` builder call.
+     */
+    fun isInsideFlowBuilder(element: KtElement): Boolean {
+        var current: KtElement? = element
+        while (current != null) {
+            val lambda = current.getParentOfType<KtLambdaExpression>(strict = true) ?: run {
+                current = current.parent as? KtElement
+                continue
+            }
+            // Nearest call expression above the lambda is the flow() call (trailing or regular arg)
+            val flowCall = lambda.getParentOfType<KtCallExpression>(strict = false)
+            if (flowCall != null && isFlowCall(flowCall)) return true
+            current = lambda.parent as? KtElement
+        }
+        return false
+    }
+
+    private fun isFlowCall(call: KtCallExpression): Boolean {
+        val name = call.calleeExpression?.text ?: return false
+        return name == "flow" || name.endsWith(".flow")
+    }
+
+    /**
      * Checks if a call expression is a coroutine builder call.
      */
     fun isCoroutineBuilderCall(callExpression: KtCallExpression): Boolean {

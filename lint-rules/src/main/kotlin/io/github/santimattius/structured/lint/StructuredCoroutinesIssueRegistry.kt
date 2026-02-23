@@ -49,6 +49,7 @@ class StructuredCoroutinesIssueRegistry : IssueRegistry() {
             ScopeReuseAfterCancelDetector.ISSUE,
             ChannelNotClosedDetector.ISSUE,
             ConsumeEachMultipleConsumersDetector.ISSUE,
+            FlowBlockingCallDetector.ISSUE,
         )
     
     override val api: Int = CURRENT_API

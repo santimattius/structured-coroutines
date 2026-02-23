@@ -15,9 +15,9 @@ From the project root:
 ./gradlew :sample-detekt:detekt
 ```
 
-You should see **18 findings** from the `structured-coroutines` rule set (the build is configured not to fail; see below).
+You should see **19 findings** from the `structured-coroutines` rule set (the build is configured not to fail; see below).
 
-## Expected findings (18)
+## Expected findings (19)
 
 | Rule | File | What triggers it |
 |------|------|------------------|
@@ -38,6 +38,7 @@ You should see **18 findings** from the `structured-coroutines` rule set (the bu
 | ScopeReuseAfterCancel (CANCEL_005) | ScopeReuseAfterCancelExample.kt | `scope.cancel()` then `scope.launch { }` |
 | ChannelNotClosed (CHANNEL_001) | ChannelNotClosedExample.kt | `Channel<Int>()` without `close()` in same function |
 | ConsumeEachMultipleConsumers (CHANNEL_002) | ConsumeEachMultipleConsumersExample.kt | same `ch` with `consumeEach` in two `scope.launch { }` |
+| FlowBlockingCall (FLOW_001) | FlowBlockingCallExample.kt | `Thread.sleep()` inside `flow { }` |
 
 ## Configuration
 
