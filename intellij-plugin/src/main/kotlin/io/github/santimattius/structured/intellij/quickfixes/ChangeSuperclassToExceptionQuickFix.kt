@@ -13,31 +13,26 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
 import io.github.santimattius.structured.intellij.StructuredCoroutinesBundle
-import org.jetbrains.kotlin.psi.KtCatchClause
+import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtTryExpression
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 /**
- * Quick fix to add a CancellationException catch clause before the generic Exception catch.
+ * Quick fix to change a class superclass from CancellationException to Exception.
  */
-class AddCancellationExceptionCatchQuickFix : LocalQuickFix {
+class ChangeSuperclassToExceptionQuickFix : LocalQuickFix {
 
-    override fun getName(): String = StructuredCoroutinesBundle.message("quickfix.add.cancellation.exception.catch")
+    override fun getName(): String = StructuredCoroutinesBundle.message("quickfix.change.superclass.to.exception")
 
     override fun getFamilyName(): String = name
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val element = descriptor.psiElement
-        val catchClause = element as? KtCatchClause ?: element.getParentOfType<KtCatchClause>(strict = false) ?: return
-        val tryExpression = catchClause.getParentOfType<KtTryExpression>(strict = false) ?: return
-
+        val ktClass = element as? KtClass ?: element.getParentOfType<KtClass>(strict = false) ?: return
+        val superTypeList = ktClass.superTypeListEntries.firstOrNull { it.text.contains("CancellationException") }
+            ?: return
         val factory = KtPsiFactory(project)
-        val tempTry = factory.createExpression(
-            "try { } catch (e: kotlinx.coroutines.CancellationException) { throw e }"
-        ) as KtTryExpression
-        val newCatchClause = tempTry.catchClauses.first()
-
-        tryExpression.addBefore(newCatchClause, catchClause)
+        val newEntry = factory.createSuperTypeCallEntry("Exception()")
+        superTypeList.replace(newEntry)
     }
 }

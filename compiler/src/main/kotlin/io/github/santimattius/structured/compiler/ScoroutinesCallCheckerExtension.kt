@@ -12,6 +12,7 @@ package io.github.santimattius.structured.compiler
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.analysis.checkers.declaration.DeclarationCheckers
 import org.jetbrains.kotlin.fir.analysis.checkers.declaration.FirClassChecker
+import org.jetbrains.kotlin.fir.analysis.checkers.declaration.FirSimpleFunctionChecker
 import org.jetbrains.kotlin.fir.analysis.checkers.expression.ExpressionCheckers
 import org.jetbrains.kotlin.fir.analysis.checkers.expression.FirFunctionCallChecker
 import org.jetbrains.kotlin.fir.analysis.checkers.expression.FirTryExpressionChecker
@@ -118,6 +119,14 @@ class ScoroutinesCallCheckerExtension(session: FirSession) : FirAdditionalChecke
      */
     override val declarationCheckers: DeclarationCheckers = object : DeclarationCheckers() {
         
+        /**
+         * Checkers for simple function declarations.
+         */
+        override val simpleFunctionCheckers: Set<FirSimpleFunctionChecker> = setOf(
+            // Rule 12: Loops in suspend functions without cooperation point (Best Practice 4.1)
+            LoopWithoutYieldChecker()
+        )
+
         /**
          * Checkers for class declarations.
          * These detect improper class hierarchies related to coroutines.

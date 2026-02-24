@@ -94,7 +94,8 @@ class LoopWithoutYieldRule(config: Config = Config.empty) : Rule(config) {
         severity = Severity.Warning,
         description = "[CANCEL_001] Loop in suspend function without cooperation point. " +
             "The coroutine cannot be cancelled until the loop completes. " +
-            "Add yield(), ensureActive(), or delay() to allow cancellation. " +
+            "Inside a scope builder (launch/async/coroutineScope/supervisorScope/withContext) use ensureActive(); " +
+            "otherwise use currentCoroutineContext().ensureActive(), yield(), or delay(). " +
             "See: ${DetektDocUrl.buildDocLink("41-cancel_001--ignoring-cancellation-in-intensive-loops")}",
         debt = Debt.TEN_MINS
     )
@@ -128,15 +129,19 @@ class LoopWithoutYieldRule(config: Config = Config.empty) : Rule(config) {
                 is KtWhileExpression -> "while"
                 else -> "loop"
             }
-            
+            val insideScope = CoroutineDetektUtils.isInsideScopeBuilderBlock(loop)
+            val suggestion = if (insideScope) {
+                "Add ensureActive(), yield(), or delay(0) inside the loop to enable cancellation."
+            } else {
+                "Add currentCoroutineContext().ensureActive(), yield(), or delay(0) inside the loop to enable cancellation."
+            }
             report(
                 CodeSmell(
                     issue = issue,
                     entity = Entity.from(loop),
                     message = "[CANCEL_001] '$loopType' loop in suspend function '${containingFunction.name}' " +
                         "without cooperation point. The coroutine cannot be cancelled during iteration. " +
-                        "Add ensureActive() or yield() inside the loop to enable cancellation. " +
-                        "See: ${DetektDocUrl.buildDocLink("41-cancel_001--ignoring-cancellation-in-intensive-loops")}"
+                        "$suggestion See: ${DetektDocUrl.buildDocLink("41-cancel_001--ignoring-cancellation-in-intensive-loops")}"
                 )
             )
         }

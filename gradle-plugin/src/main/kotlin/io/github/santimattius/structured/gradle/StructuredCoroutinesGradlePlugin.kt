@@ -52,6 +52,7 @@ class StructuredCoroutinesGradlePlugin : KotlinCompilerPluginSupportPlugin {
         extension.cancellationExceptionSwallowed.convention("warning")
         extension.unusedDeferred.convention("error")
         extension.redundantLaunchInCoroutineScope.convention("warning")
+        extension.loopWithoutYield.convention("warning")
         extension.excludeSourceSets.convention(emptyList())
         extension.excludeProjects.convention(emptyList())
     }
@@ -97,6 +98,7 @@ class StructuredCoroutinesGradlePlugin : KotlinCompilerPluginSupportPlugin {
                 add(SubpluginOption("cancellationExceptionSwallowed", extension.cancellationExceptionSwallowed.get()))
                 add(SubpluginOption("unusedDeferred", extension.unusedDeferred.get()))
                 add(SubpluginOption("redundantLaunchInCoroutineScope", extension.redundantLaunchInCoroutineScope.get()))
+                add(SubpluginOption("loopWithoutYield", extension.loopWithoutYield.get()))
             }
         }
     }

@@ -6,7 +6,7 @@ lint = "31.4.0"
 junit-jupiter = "5.10.2"
 junit = "4.13.2"
 assertj = "3.25.3"
-kotlinx-coroutines = "1.9.0"
+kotlinx-coroutines = "1.10.2"
 intellij-platform = "2.2.1"
 intellij-ide = "2024.3"
 

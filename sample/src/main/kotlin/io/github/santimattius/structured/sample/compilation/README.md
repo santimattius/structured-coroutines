@@ -27,6 +27,7 @@ Each rule has its own subpackage under `io.github.santimattius.structured.sample
 | `compilation.suspendinfinally`          | Warning  | suspendInFinally                | Suspend call in `finally` without `NonCancellable`      |
 | `compilation.cancellationexceptionswallowed` | Warning | cancellationExceptionSwallowed  | `catch(Exception)` may swallow `CancellationException`  |
 | `compilation.redundantlaunchincoroutinescope` | Warning | redundantLaunchInCoroutineScope | Single `launch` inside `coroutineScope { }`             |
+| `compilation.loopwithoutyield`                 | Warning | loopWithoutYield                | Loop in suspend function without cooperation point (4.1) |
 
 ## How to compile
 
