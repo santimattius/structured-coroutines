@@ -11,6 +11,8 @@ package io.github.santimattius.structured.detekt
 
 import io.github.santimattius.structured.detekt.rules.BlockingCallInCoroutineRule
 import io.github.santimattius.structured.detekt.rules.CancellationExceptionSubclassRule
+import io.github.santimattius.structured.detekt.rules.ChannelNotClosedRule
+import io.github.santimattius.structured.detekt.rules.ConsumeEachMultipleConsumersRule
 import io.github.santimattius.structured.detekt.rules.CancellationExceptionSwallowedRule
 import io.github.santimattius.structured.detekt.rules.DispatchersUnconfinedRule
 import io.github.santimattius.structured.detekt.rules.ExternalScopeLaunchRule
@@ -130,6 +132,8 @@ class StructuredCoroutinesRuleSetProvider : RuleSetProvider {
             ExternalScopeLaunchRule(config),
             LoopWithoutYieldRule(config),
             ScopeReuseAfterCancelRule(config),
+            ChannelNotClosedRule(config),
+            ConsumeEachMultipleConsumersRule(config),
         )
     )
 }
