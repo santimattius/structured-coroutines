@@ -53,3 +53,5 @@ structured-coroutines:
     active: true
   ConsumeEachMultipleConsumers:
     active: true
+  FlowBlockingCall:
+    active: true

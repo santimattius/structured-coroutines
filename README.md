@@ -79,21 +79,6 @@ This toolkit enforces structured concurrency best practices through:
   `./gradlew :sample-detekt:detekt`)
 - 🤖 **Kotlin Coroutines Agent Skill** - consistent AI/agent-driven guidance for coroutine code
 
-### Recent changes (since 0.1.0)
-
-- **Compiler:** `CancellationExceptionSwallowed` now detects `catch(Exception)` inside **suspend
-  lambdas** (e.g. `scope.launch { try { } catch (e: Exception) { } }`), not only in suspend
-  functions.
-- **IntelliJ plugin:** Correct detection of `@StructuredScope` on parameters and properties; new *
-  *Structured Coroutines** tool window (View → Tool Windows) to list and navigate all findings for
-  the current file.
-- **Sample:** New `compilation` package with one subpackage per compiler check (7 errors, 4
-  warnings) for testing and documentation.
-- **New:** `kotlin-coroutines-skill/` package for AI/agent-driven coroutine best practices.
-- **Iteration Week 8 (0.4.0):** **ScopeReuseAfterCancel (CANCEL_005)** reinforced across Detekt, Android Lint, and IntelliJ: consistent messages with rule code and doc link; Lint report message includes `[CANCEL_005]` and link; IDE inspection description and error message guide users to apply the quick fix “Replace cancel() with cancelChildren()”.
-
-See [CHANGES_SINCE_0.1.0.md](docs-local/CHANGES_SINCE_0.1.0.md) and [CHANGELOG_0.4.0.md](docs-local/CHANGELOG_0.4.0.md) for full details.
-
 ---
 
 ## 🚨 Rules Overview

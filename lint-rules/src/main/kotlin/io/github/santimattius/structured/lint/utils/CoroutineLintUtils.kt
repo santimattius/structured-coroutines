@@ -231,6 +231,30 @@ object CoroutineLintUtils {
     }
 
     /**
+     * Returns true if the element is inside the lambda block of a `flow { }` builder call.
+     */
+    fun isInsideFlowBuilder(element: UElement): Boolean {
+        var current: UElement? = element
+        while (current != null) {
+            if (current is ULambdaExpression) {
+                val parent = current.uastParent
+                if (parent is UCallExpression && parent.methodName == "flow") {
+                    return true
+                }
+                var p: UElement? = parent
+                while (p != null) {
+                    if (p is UCallExpression && p.methodName == "flow") {
+                        return true
+                    }
+                    p = p.uastParent
+                }
+            }
+            current = current.uastParent
+        }
+        return false
+    }
+
+    /**
      * Checks if the element is inside a suspend function.
      */
     fun isInSuspendFunction(context: JavaContext, element: UElement): Boolean {

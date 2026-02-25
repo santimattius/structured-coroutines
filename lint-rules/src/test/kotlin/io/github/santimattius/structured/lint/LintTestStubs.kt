@@ -37,6 +37,13 @@ object LintTestStubs {
         fun <E> ReceiveChannel<E>.close(): Unit = error("stub")
     """.trimIndent()
 
+    val kotlinxCoroutinesFlow = """
+        package kotlinx.coroutines.flow
+        interface Flow<out T>
+        interface FlowCollector<in T>
+        fun <T> flow(block: suspend FlowCollector<T>.() -> Unit): Flow<T> = error("stub")
+    """.trimIndent()
+
     val androidxLifecycle = """
         package androidx.lifecycle
         import kotlinx.coroutines.CoroutineScope
@@ -47,7 +54,13 @@ object LintTestStubs {
     fun all() = listOf(
         TestFiles.kotlin(kotlinxCoroutines).indented(),
         TestFiles.kotlin(kotlinxCoroutinesChannels).indented(),
+        TestFiles.kotlin(kotlinxCoroutinesFlow).indented(),
         TestFiles.kotlin(androidxLifecycle).indented()
+    )
+
+    fun coroutinesAndFlow() = listOf(
+        TestFiles.kotlin(kotlinxCoroutines).indented(),
+        TestFiles.kotlin(kotlinxCoroutinesFlow).indented()
     )
 
     fun coroutinesOnly() = listOf(
