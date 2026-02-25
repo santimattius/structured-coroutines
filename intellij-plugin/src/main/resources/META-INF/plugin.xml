@@ -200,6 +200,18 @@
             level="WARNING"
             implementationClass="io.github.santimattius.structured.intellij.inspections.DispatchersUnconfinedInspection"/>
 
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
+            shortName="LifecycleAwareFlowCollection"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.lifecycle.flow.collection.display.name"
+            enabledByDefault="true"
+            level="WARNING"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.LifecycleAwareFlowCollectionInspection"/>
+
         <!-- Intentions -->
         <intentionAction>
             <language>kotlin</language>
@@ -232,6 +244,13 @@
         <intentionAction>
             <language>kotlin</language>
             <className>io.github.santimattius.structured.intellij.intentions.ExtractSuspendFunctionIntention</className>
+            <bundleName>messages.StructuredCoroutinesBundle</bundleName>
+            <categoryKey>intention.category</categoryKey>
+        </intentionAction>
+
+        <intentionAction>
+            <language>kotlin</language>
+            <className>io.github.santimattius.structured.intellij.intentions.ConvertToRunTestIntention</className>
             <bundleName>messages.StructuredCoroutinesBundle</bundleName>
             <categoryKey>intention.category</categoryKey>
         </intentionAction>

@@ -107,6 +107,7 @@ Configure Android Lint rules in `lint.xml`:
     <issue id="MainDispatcherMisuse" severity="error" />
     <issue id="ViewModelScopeLeak" severity="error" />
     <issue id="LifecycleAwareScope" severity="error" />
+    <issue id="LifecycleAwareFlowCollection" severity="warning" />
 
     <!-- Additional Rules -->
     <issue id="UnstructuredLaunch" severity="error" />
@@ -140,6 +141,7 @@ Configure Android Lint rules in `lint.xml`:
 | `MainDispatcherMisuse` | Android-Specific | Error | Detects blocking calls on `Dispatchers.Main` |
 | `ViewModelScopeLeak` | Android-Specific | Error | Detects custom scopes in ViewModels |
 | `LifecycleAwareScope` | Android-Specific | Error | Validates `lifecycleScope` usage |
+| `LifecycleAwareFlowCollection` | Android-Specific | Warning | Flow collect in lifecycleScope without repeatOnLifecycle (§8.2) |
 | `UnstructuredLaunch` | Additional | Error | Detects launch without structured scope |
 | `RedundantLaunchInCoroutineScope` | Additional | Warning | Detects redundant launch in `coroutineScope` |
 | `RunBlockingWithDelayInTest` | Additional | Warning | Detects `runBlocking` + `delay` in tests |
@@ -154,9 +156,9 @@ Configure Android Lint rules in `lint.xml`:
 | Category | Count |
 |----------|-------|
 | Compiler Plugin Rules | 9 |
-| Android-Specific Rules | 3 |
+| Android-Specific Rules | 4 |
 | Additional Rules | 8 |
-| **Total** | **18** |
+| **Total** | **19** |
 
 ---
 
@@ -467,6 +469,32 @@ class MyRepository {
 ```
 
 **Severity:** Error (configurable)
+
+---
+
+### LifecycleAwareFlowCollection (ARCH_002 — §8.2)
+
+**Validates:** Flow collection in Activity/Fragment with `lifecycleScope` must use `repeatOnLifecycle` or `flowWithLifecycle` so collection stops when the UI goes to background.
+
+```kotlin
+// ❌ BAD - Flow keeps collecting in background
+class MainActivity : AppCompatActivity() {
+    fun observe() {
+        lifecycleScope.launch {
+            flow.collect { updateUi(it) }  // Reported
+        }
+    }
+}
+
+// ✅ GOOD - Collection tied to lifecycle
+lifecycleScope.launch {
+    repeatOnLifecycle(Lifecycle.State.STARTED) {
+        flow.collect { updateUi(it) }
+    }
+}
+```
+
+**Severity:** Warning
 
 ---
 
