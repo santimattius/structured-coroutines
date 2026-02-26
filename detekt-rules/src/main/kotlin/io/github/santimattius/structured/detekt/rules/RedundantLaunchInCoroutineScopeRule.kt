@@ -18,8 +18,11 @@ import io.gitlab.arturbosch.detekt.api.Issue
 import io.gitlab.arturbosch.detekt.api.Rule
 import io.gitlab.arturbosch.detekt.api.Severity
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtWhileExpression
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 
 /**
@@ -71,6 +74,10 @@ class RedundantLaunchInCoroutineScopeRule(config: Config = Config.empty) : Rule(
         val totalBuilders = launchCount + asyncCount
 
         if (launchCount == 1 && totalBuilders == 1) {
+            val singleBuilder = allCalls.firstOrNull { it.calleeExpression?.text in builderNames } ?: return
+            // Do not report when the single launch is inside forEach/for/while — it runs multiple times and scope waits for all
+            if (isInsideRepeatingContext(singleBuilder, body)) return
+
             report(
                 CodeSmell(
                     issue = issue,
@@ -81,5 +88,27 @@ class RedundantLaunchInCoroutineScopeRule(config: Config = Config.empty) : Rule(
                 )
             )
         }
+    }
+
+    /**
+     * True when the launch/async is inside a context that runs multiple times (forEach, for, while),
+     * so the "single" builder is intentional parallel handling and the scope correctly waits for all.
+     */
+    private fun isInsideRepeatingContext(builderCall: KtCallExpression, scopeBody: org.jetbrains.kotlin.psi.KtExpression): Boolean {
+        val iterationMethods = setOf("forEach", "onEach", "map", "mapNotNull", "flatMap", "filter", "filterNotNull")
+        var p: KtElement? = builderCall.parent as? KtElement
+        while (p != null && p != scopeBody) {
+            when (p) {
+                is KtLambdaExpression -> {
+                    val arg = p.parent as? KtElement
+                    val call = arg?.parent as? KtCallExpression
+                    if (call?.calleeExpression?.text in iterationMethods) return true
+                }
+                is KtForExpression, is KtWhileExpression -> return true
+                else -> {}
+            }
+            p = p.parent as? KtElement
+        }
+        return false
     }
 }
