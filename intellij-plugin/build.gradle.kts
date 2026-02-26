@@ -51,6 +51,14 @@ intellijPlatform {
             </ul>
         """.trimIndent()
         changeNotes = """
+            <p><b>v0.4.0</b></p>
+            <ul>
+                <li><b>LoopWithoutYield (CANCEL_001)</b> — New inspection for loops in suspend functions without cooperation points; quick fixes to insert ensureActive(), currentCoroutineContext().ensureActive(), yield(), or delay(0)</li>
+                <li><b>ScopeReuseAfterCancel (CANCEL_005)</b> — Reinforced inspection and messages; error text now guides to the quick fix (replace cancel() with cancelChildren())</li>
+                <li><b>LifecycleAwareFlowCollection (ARCH_002)</b> — New inspection: Flow collection in lifecycleScope.launch without repeatOnLifecycle/flowWithLifecycle</li>
+                <li><b>Convert to runTest</b> — New intention: replace runBlocking { } with runTest when the body contains delay() (TEST_001, virtual time for tests)</li>
+                <li><b>CancellationException subclass</b> — New quick fix: change superclass from CancellationException to Exception for domain errors (4.2)</li>
+            </ul>
             <p><b>v0.3.0</b></p>
             <ul>
                 <li>12 inspections: GlobalScope, runBlocking in suspend, async/await, Job in builder, suspend in finally, CancellationException, Dispatchers.Unconfined, ScopeReuseAfterCancel, UnstructuredLaunch, MainDispatcherMisuse</li>
