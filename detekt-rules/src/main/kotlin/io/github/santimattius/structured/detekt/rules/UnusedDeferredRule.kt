@@ -92,16 +92,23 @@ class UnusedDeferredRule(config: Config = Config.empty) : Rule(config) {
                 is KtNameReferenceExpression -> receiver.getReferencedName()
                 else -> receiver.text
             }
-            if (receiverName == varName && dq.selectorExpression?.text?.startsWith("await") == true) return true
+            val selectorStartsAwait = dq.selectorExpression?.text?.startsWith("await") == true
+            val receiverMatches = receiverName == varName || receiverName.endsWith(".$varName")
+            if (receiverMatches && selectorStartsAwait) return true
         }
         val calls = block.collectDescendantsOfType<KtCallExpression>()
         for (call in calls) {
             if (call === excludeCall) continue
             if (call.calleeExpression?.text == "awaitAll") {
+                // awaitAll(varName) or awaitAll(list, ...)
                 for (arg in call.valueArguments) {
                     val argText = arg.getArgumentExpression()?.text ?: continue
                     if (argText == varName || argText.endsWith(".$varName")) return true
                 }
+                // list.awaitAll() — receiver of extension call
+                val parent = call.parent as? KtDotQualifiedExpression ?: continue
+                val receiverText = parent.receiverExpression.text
+                if (receiverText == varName || receiverText.endsWith(".$varName")) return true
             }
         }
         return false

@@ -123,6 +123,15 @@ structured-coroutines:
 
   ScopeReuseAfterCancel:
     active: true
+
+  ChannelNotClosed:
+    active: true
+
+  ConsumeEachMultipleConsumers:
+    active: true
+
+  FlowBlockingCall:
+    active: true
 ```
 
 ---
@@ -148,6 +157,9 @@ structured-coroutines:
 | `ExternalScopeLaunch` | Detekt-Only | Warning | Detects launch on external scopes from suspend functions |
 | `LoopWithoutYield` | Detekt-Only | Warning | Detects loops without cooperation points |
 | `ScopeReuseAfterCancel` | Detekt-Only | Warning | Detects scope.cancel() then scope.launch/async |
+| `ChannelNotClosed` | Detekt-Only | Warning | Detects manual Channel() without close() in same function |
+| `ConsumeEachMultipleConsumers` | Detekt-Only | Warning | Detects same channel used with consumeEach from multiple coroutines |
+| `FlowBlockingCall` | Detekt-Only | Warning | Detects blocking calls inside `flow { }` builder |
 
 ### Best Practices Reference
 
@@ -168,6 +180,9 @@ structured-coroutines:
 | `ExternalScopeLaunch` | 1.3 - Breaking Structured Concurrency |
 | `LoopWithoutYield` | 4.1 - Ignoring Cancellation in Intensive Loops |
 | `ScopeReuseAfterCancel` | 4.5 - Reusing a Cancelled CoroutineScope |
+| `ChannelNotClosed` | 7.1 - Forgetting to Close Manual Channels |
+| `ConsumeEachMultipleConsumers` | 7.2 - Sharing consumeEach Among Multiple Consumers |
+| `FlowBlockingCall` | 9.1 - Blocking Code in flow { } Builder |
 
 ---
 
@@ -545,6 +560,82 @@ suspend fun processItems(items: List<Item>) {
 
 ---
 
+### 16. ChannelNotClosed (CHANNEL_001 — §7.1)
+
+**Detects:** Manual `Channel()` (or `Channel<T>()`) creation without a corresponding `close()` call in the same function. Consumers using `for (x in channel)` can block forever if the channel is never closed.
+
+**Heuristic:** Only checks within the same function. Channels closed in another function or via structured concurrency may still be reported; use `@Suppress` when appropriate.
+
+```kotlin
+// ❌ BAD
+fun main() {
+    val ch = Channel<Int>()
+    ch.send(1)
+    // ch never closed
+}
+
+// ✅ GOOD - close in same function
+fun main() {
+    val ch = Channel<Int>()
+    try {
+        ch.send(1)
+    } finally {
+        ch.close()
+    }
+}
+
+// ✅ GOOD - use produce (closes automatically)
+suspend fun flow() = produce {
+    send(1)
+}
+```
+
+**Severity:** Warning
+
+---
+
+### 17. ConsumeEachMultipleConsumers (CHANNEL_002 — §7.2)
+
+**Detects:** The same channel variable used with `consumeEach` from multiple coroutines (sibling `launch`/`async` in the same function). `consumeEach` cancels the channel when finished, breaking other consumers.
+
+```kotlin
+// ❌ BAD
+scope.launch { ch.consumeEach { } }
+scope.launch { ch.consumeEach { } }
+
+// ✅ GOOD - use for (value in channel) per consumer
+scope.launch { for (v in ch) { } }
+scope.launch { for (v in ch) { } }
+```
+
+**Severity:** Warning
+
+---
+
+### 18. FlowBlockingCall (FLOW_001 — §9.1)
+
+**Detects:** Blocking calls (e.g. `Thread.sleep`, synchronous I/O, JDBC) inside `flow { }`. The flow block runs in the collector's context; blocking can freeze the wrong thread and cooperate poorly with cancellation.
+
+**Recommended:** Use `flowOn(Dispatchers.IO)` or suspend APIs inside the flow builder.
+
+```kotlin
+// ❌ BAD
+flow {
+    Thread.sleep(100)
+    emit(1)
+}
+
+// ✅ GOOD
+flow {
+    delay(100)
+    emit(1)
+}.flowOn(Dispatchers.IO)
+```
+
+**Severity:** Warning
+
+---
+
 ## Running Detekt
 
 ### Validating rules in this repository
@@ -555,7 +646,7 @@ The **sample-detekt** module contains one intentional violation per rule so you 
 ./gradlew :sample-detekt:detekt
 ```
 
-You should see 15 findings from the `structured-coroutines` rule set. See [sample-detekt/README.md](../sample-detekt/README.md) for the list of example files and expected findings.
+You should see 19 findings from the `structured-coroutines` rule set. See [sample-detekt/README.md](../sample-detekt/README.md) for the list of example files and expected findings.
 
 ### In your own project
 

@@ -32,7 +32,9 @@ class StructuredCoroutinesInspectionProvider : InspectionToolProvider {
             SuspendInFinallyInspection::class.java,
             CancellationExceptionSwallowedInspection::class.java,
             CancellationExceptionSubclassInspection::class.java,
-            DispatchersUnconfinedInspection::class.java
+            DispatchersUnconfinedInspection::class.java,
+            LoopWithoutYieldInspection::class.java,
+            LifecycleAwareFlowCollectionInspection::class.java
         )
     }
 }

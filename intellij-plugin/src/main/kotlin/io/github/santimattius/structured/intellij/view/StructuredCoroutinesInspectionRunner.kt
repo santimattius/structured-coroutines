@@ -10,25 +10,19 @@
 package io.github.santimattius.structured.intellij.view
 
 import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
-import io.github.santimattius.structured.intellij.inspections.AsyncWithoutAwaitInspection
-import io.github.santimattius.structured.intellij.inspections.CancellationExceptionSubclassInspection
-import io.github.santimattius.structured.intellij.inspections.CancellationExceptionSwallowedInspection
-import io.github.santimattius.structured.intellij.inspections.DispatchersUnconfinedInspection
-import io.github.santimattius.structured.intellij.inspections.GlobalScopeInspection
-import io.github.santimattius.structured.intellij.inspections.InlineCoroutineScopeInspection
-import io.github.santimattius.structured.intellij.inspections.JobInBuilderContextInspection
-import io.github.santimattius.structured.intellij.inspections.MainDispatcherMisuseInspection
-import io.github.santimattius.structured.intellij.inspections.RunBlockingInSuspendInspection
-import io.github.santimattius.structured.intellij.inspections.ScopeReuseAfterCancelInspection
-import io.github.santimattius.structured.intellij.inspections.SuspendInFinallyInspection
-import io.github.santimattius.structured.intellij.inspections.UnstructuredLaunchInspection
+import io.github.santimattius.structured.intellij.inspections.StructuredCoroutinesInspectionProvider
+import io.github.santimattius.structured.intellij.inspections.base.CoroutineInspectionBase
 import org.jetbrains.kotlin.psi.KtFile
 
 /**
  * Runs all Structured Coroutines inspections on a Kotlin file and returns
  * findings with the inspection display name for the tool window.
+ *
+ * Uses [StructuredCoroutinesInspectionProvider] as single source of truth so any new
+ * inspection registered there is automatically included in the tool window.
  */
 object StructuredCoroutinesInspectionRunner {
 
@@ -38,28 +32,17 @@ object StructuredCoroutinesInspectionRunner {
         val severity: String
     )
 
-    private val inspectionClasses = listOf(
-        GlobalScopeInspection::class.java,
-        MainDispatcherMisuseInspection::class.java,
-        ScopeReuseAfterCancelInspection::class.java,
-        RunBlockingInSuspendInspection::class.java,
-        UnstructuredLaunchInspection::class.java,
-        AsyncWithoutAwaitInspection::class.java,
-        InlineCoroutineScopeInspection::class.java,
-        JobInBuilderContextInspection::class.java,
-        SuspendInFinallyInspection::class.java,
-        CancellationExceptionSwallowedInspection::class.java,
-        CancellationExceptionSubclassInspection::class.java,
-        DispatchersUnconfinedInspection::class.java
-    )
+    private val inspectionClasses: Array<Class<out LocalInspectionTool>> by lazy {
+        StructuredCoroutinesInspectionProvider().getInspectionClasses()
+    }
 
     fun runOnFile(project: Project, file: KtFile): List<Finding> {
         val manager = InspectionManager.getInstance(project)
         val findings = mutableListOf<Finding>()
 
         for (inspectionClass in inspectionClasses) {
-            @Suppress("UNCHECKED_CAST")
-            val inspection = inspectionClass.getDeclaredConstructor().newInstance() as io.github.santimattius.structured.intellij.inspections.base.CoroutineInspectionBase
+            val inspection = inspectionClass.getDeclaredConstructor().newInstance()
+            if (inspection !is CoroutineInspectionBase) continue
             val holder = CollectingProblemsHolder(manager, file, true)
             val visitor = inspection.buildKotlinVisitor(holder, true)
             // KtVisitorVoid is non-recursive; only visitKtFile would be called with file.accept(visitor).

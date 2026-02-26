@@ -118,24 +118,28 @@ class AsyncWithoutAwaitDetector : Detector(), SourceCodeScanner {
     
     /**
      * Finds the variable name from an async call assignment.
+     * Handles direct assignment (val d = async { }) and async inside initializer (val defs = xs.map { async { } }).
      */
     private fun findVariableNameFromAsyncCall(
         asyncCall: UCallExpression,
         block: UExpression
     ): String? {
-        // Check if the async call is directly assigned to a variable
         var current: UElement? = asyncCall
         while (current != null) {
-            // Check for variable declaration: val x = async { }
+            // Check for variable declaration: val x = async { } or val defs = xs.map { async { } }
             if (current is UVariable) {
                 val initializer = current.uastInitializer
-                if (initializer == asyncCall || 
-                    (initializer is UCallExpression && 
+                if (initializer == asyncCall ||
+                    (initializer is UCallExpression &&
                      initializer.sourcePsi == asyncCall.sourcePsi)) {
                     return current.name
                 }
+                // Async is inside initializer (e.g. val defs = xs.map { async { } })
+                if (initializer != null && isDescendantOf(asyncCall, initializer)) {
+                    return current.name
+                }
             }
-            
+
             // Check for binary assignment: x = async { }
             if (current is UBinaryExpression) {
                 val operatorText = current.operator.text
@@ -149,51 +153,62 @@ class AsyncWithoutAwaitDetector : Detector(), SourceCodeScanner {
                     }
                 }
             }
-            
+
             current = current.uastParent
         }
-        
+
         return null
+    }
+
+    private fun isDescendantOf(element: UElement, ancestor: UElement): Boolean {
+        var p: UElement? = element
+        while (p != null) {
+            if (p == ancestor) return true
+            p = p.uastParent
+        }
+        return false
     }
     
     /**
      * Checks if await() or awaitAll() is called on the given variable in the block.
+     * Handles variable.await(), variable.awaitAll(), awaitAll(variable, ...), and list.awaitAll().
      */
     private fun hasAwaitCall(block: UExpression, variableName: String): Boolean {
         var foundAwait = false
-        
+
         block.accept(object : AbstractUastVisitor() {
             override fun visitCallExpression(node: UCallExpression): Boolean {
                 val methodName = node.methodName
-                
-                // Check for .await() call
+
+                // Check for variable.await() or variable.awaitAll() (receiver is our variable)
                 if (methodName == AWAIT_NAME || methodName == AWAIT_ALL_NAME) {
                     val receiver = node.receiver
-                    if (receiver is UQualifiedReferenceExpression) {
-                        val receiverName = receiver.receiver.asSourceString()
-                        if (receiverName == variableName) {
-                            foundAwait = true
-                            return false // Stop traversal
-                        }
+                    val receiverName = when (receiver) {
+                        is UReferenceExpression -> receiver.asSourceString()
+                        is UQualifiedReferenceExpression -> receiver.receiver.asSourceString()
+                        else -> null
+                    }
+                    if (receiverName == variableName || (receiverName != null && receiverName.endsWith(".$variableName"))) {
+                        foundAwait = true
+                        return false
                     }
                 }
-                
+
                 // Check for awaitAll(deferred1, deferred2, ...)
                 if (methodName == AWAIT_ALL_NAME) {
-                    val arguments = node.valueArguments
-                    for (arg in arguments) {
+                    for (arg in node.valueArguments) {
                         val argSource = arg.asSourceString()
-                        if (argSource == variableName || argSource.contains(variableName)) {
+                        if (argSource == variableName || argSource.endsWith(".$variableName")) {
                             foundAwait = true
-                            return false // Stop traversal
+                            return false
                         }
                     }
                 }
-                
+
                 return super.visitCallExpression(node)
             }
         })
-        
+
         return foundAwait
     }
 }

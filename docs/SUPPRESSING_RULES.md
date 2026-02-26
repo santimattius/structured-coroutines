@@ -28,7 +28,8 @@ list of codes and suppression IDs per tool is in [rule-codes.yml](rule-codes.yml
 | CANCEL_001   | 4.1 | —                                                         | `LoopWithoutYield`                            | `LoopWithoutYield`                           | —                                            |
 | EXCEPT_002   | 5.2 | `CANCELLATION_EXCEPTION_SUBCLASS`                         | `CancellationExceptionSubclass`               | `CancellationExceptionSubclass`              | `CancellationExceptionSubclass`              |
 | TEST_001     | 6.1 | —                                                         | `RunBlockingWithDelayInTest`                  | `RunBlockingWithDelayInTest`                 | —                                            |
-| ARCH_002     | 8.2 | —                                                         | —                                             | `LifecycleAwareScope`, `ViewModelScopeLeak`  | —                                            |
+| ARCH_002     | 8.2 | —                                                         | —                                             | `LifecycleAwareScope`, `ViewModelScopeLeak`, `LifecycleAwareFlowCollection` | —                                            |
+| FLOW_001     | 9.1 | —                                                         | `FlowBlockingCall`                            | `FlowBlockingCall`                           | —                                            |
 
 **Note:** “—” means the rule is not implemented in that tool. When the same practice is reported by
 more than one diagnostic (e.g. SCOPE_003), suppress each identifier that applies to the code you’re

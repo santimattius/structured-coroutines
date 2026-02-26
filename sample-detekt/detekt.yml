@@ -49,3 +49,9 @@ structured-coroutines:
     active: true
   ScopeReuseAfterCancel:
     active: true
+  ChannelNotClosed:
+    active: true
+  ConsumeEachMultipleConsumers:
+    active: true
+  FlowBlockingCall:
+    active: true
