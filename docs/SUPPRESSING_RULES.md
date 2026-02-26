@@ -25,10 +25,10 @@ list of codes and suppression IDs per tool is in [rule-codes.yml](rule-codes.yml
 | CANCEL_003   | 4.3 | `CANCELLATION_EXCEPTION_SWALLOWED`                        | `CancellationExceptionSwallowed`              | `CancellationExceptionSwallowed`             | `CancellationExceptionSwallowed`             |
 | CANCEL_004   | 4.4 | `SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE`              | `SuspendInFinally`                            | `SuspendInFinally`                           | `SuspendInFinally`                           |
 | CANCEL_005   | 4.5 | —                                                         | `ScopeReuseAfterCancel`                       | `ScopeReuseAfterCancel`                      | `ScopeReuseAfterCancel`                      |
-| CANCEL_001   | 4.1 | —                                                         | `LoopWithoutYield`                            | `LoopWithoutYield`                           | —                                            |
+| CANCEL_001   | 4.1 | `LOOP_WITHOUT_YIELD`                                      | `LoopWithoutYield`                            | `LoopWithoutYield`                           | `LoopWithoutYield`                            |
 | EXCEPT_002   | 5.2 | `CANCELLATION_EXCEPTION_SUBCLASS`                         | `CancellationExceptionSubclass`               | `CancellationExceptionSubclass`              | `CancellationExceptionSubclass`              |
 | TEST_001     | 6.1 | —                                                         | `RunBlockingWithDelayInTest`                  | `RunBlockingWithDelayInTest`                 | —                                            |
-| ARCH_002     | 8.2 | —                                                         | —                                             | `LifecycleAwareScope`, `ViewModelScopeLeak`, `LifecycleAwareFlowCollection` | —                                            |
+| ARCH_002     | 8.2 | —                                                         | —                                             | `LifecycleAwareScope`, `ViewModelScopeLeak`, `LifecycleAwareFlowCollection` | `LifecycleAwareFlowCollection`                |
 | FLOW_001     | 9.1 | —                                                         | `FlowBlockingCall`                            | `FlowBlockingCall`                           | —                                            |
 
 **Note:** “—” means the rule is not implemented in that tool. When the same practice is reported by

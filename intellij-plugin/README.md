@@ -266,6 +266,8 @@ Each inspection provides one or more quick fixes accessible via Alt+Enter (or th
 | Wrap with withContext(NonCancellable) | SuspendInFinally |
 | Add CancellationException catch clause | CancellationExceptionSwallowed |
 | Replace with supervisorScope { } | JobInBuilderContext |
+| Add cooperation point in loop (ensureActive / yield / delay(0)) | LoopWithoutYield (CANCEL_001) |
+| Change superclass from CancellationException to Exception | CancellationExceptionSubclass (EXCEPT_002) |
 
 ---
 
@@ -358,6 +360,30 @@ private suspend fun performWork() {
     saveResult()
 }
 ```
+
+### Convert to runTest (TEST_001)
+
+**Availability:** Cursor inside a `runBlocking { }` call whose body contains `delay()`
+
+Replaces `runBlocking` with `runTest` so tests use virtual time (kotlinx-coroutines-test) instead of real delays:
+
+```kotlin
+// Before
+@Test
+fun test() = runBlocking {
+    delay(1000)
+    assertEquals(1, result)
+}
+
+// After
+@Test
+fun test() = runTest {
+    delay(1000)  // Virtual time - instant
+    assertEquals(1, result)
+}
+```
+
+Requires dependency: `org.jetbrains.kotlinx:kotlinx-coroutines-test`.
 
 ---
 

@@ -24,10 +24,11 @@ compiler/
     ├── SuspendInFinallyChecker.kt                  # Suspend in finally
     ├── CancellationExceptionSwallowedChecker.kt    # catch(Exception) swallowing
     ├── UnusedDeferredChecker.kt                    # async without await
-    └── RedundantLaunchInCoroutineScopeChecker.kt   # Redundant launch
+    ├── RedundantLaunchInCoroutineScopeChecker.kt   # Redundant launch
+    └── LoopWithoutYieldChecker.kt                  # Loops in suspend without cooperation points (CANCEL_001)
 ```
 
-## Checkers (11 Rules)
+## Checkers (12 Rules)
 
 | Checker | Rule | Default Severity |
 |---------|------|------------------|
@@ -42,6 +43,9 @@ compiler/
 | `CancellationExceptionSwallowedChecker` | catch(Exception) swallowing | Warning |
 | `UnusedDeferredChecker` | async without await | Error |
 | `RedundantLaunchInCoroutineScopeChecker` | Redundant launch | Warning |
+| `LoopWithoutYieldChecker` | Loops in suspend without yield/ensureActive/delay (CANCEL_001) | Warning |
+
+The **LoopWithoutYieldChecker** can be disabled via the Gradle plugin option `loopWithoutYield.set(false)` if you prefer to rely only on Detekt/Lint/IDE for this rule.
 
 ### CancellationExceptionSwallowedChecker — suspend lambdas
 
@@ -64,6 +68,7 @@ All rules support configurable severity via the Gradle Plugin:
 structuredCoroutines {
     globalScopeUsage.set("error")     // or "warning"
     dispatchersUnconfined.set("warning")
+    loopWithoutYield.set("warning")   // CANCEL_001: loops without cooperation points (default: enabled)
     // ... other rules
 }
 ```
