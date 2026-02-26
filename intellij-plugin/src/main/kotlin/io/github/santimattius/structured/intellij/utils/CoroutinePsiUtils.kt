@@ -49,6 +49,17 @@ object CoroutinePsiUtils {
     )
 
     /**
+     * Names of scope builders whose block has CoroutineScope as receiver (so ensureActive() is available).
+     */
+    val SCOPE_BUILDER_NAMES = setOf(
+        "launch",
+        "async",
+        "coroutineScope",
+        "supervisorScope",
+        "withContext"
+    )
+
+    /**
      * Functions that provide cooperation points for cancellation.
      */
     val COOPERATION_POINTS = setOf(
@@ -177,6 +188,31 @@ object CoroutinePsiUtils {
     fun isInSuspendFunction(element: PsiElement): Boolean {
         val function = element.getParentOfType<KtNamedFunction>(strict = true)
         return function?.hasModifier(KtTokens.SUSPEND_KEYWORD) == true
+    }
+
+    /**
+     * Returns true if the element is inside the block lambda of launch/async/coroutineScope/supervisorScope/withContext.
+     * In that case CoroutineScope is the receiver and ensureActive() can be used without currentCoroutineContext().
+     */
+    fun isInsideScopeBuilderBlock(element: PsiElement): Boolean {
+        var current: PsiElement? = element
+        while (current != null) {
+            val lambda = current.getParentOfType<KtLambdaExpression>(strict = true) ?: run {
+                current = current.parent
+                continue
+            }
+            val call = lambda.parent as? KtCallExpression
+            if (call != null && call.calleeExpression?.text in SCOPE_BUILDER_NAMES) {
+                return true
+            }
+            val lambdaArg = lambda.parent as? KtLambdaArgument
+            val callFromArg = lambdaArg?.parent?.parent as? KtCallExpression
+            if (callFromArg != null && callFromArg.calleeExpression?.text in SCOPE_BUILDER_NAMES) {
+                return true
+            }
+            current = lambda.parent
+        }
+        return false
     }
 
     /**

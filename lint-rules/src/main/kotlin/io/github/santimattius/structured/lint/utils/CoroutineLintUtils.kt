@@ -32,6 +32,17 @@ object CoroutineLintUtils {
     )
 
     /**
+     * Names of scope builders whose block has CoroutineScope as receiver (ensureActive() available).
+     */
+    val SCOPE_BUILDER_NAMES = setOf(
+        "launch",
+        "async",
+        "coroutineScope",
+        "supervisorScope",
+        "withContext"
+    )
+
+    /**
      * Framework scope property names (Android/Compose).
      */
     val FRAMEWORK_SCOPE_PROPERTIES = setOf(
@@ -190,6 +201,56 @@ object CoroutineLintUtils {
             return true
         }
 
+        return false
+    }
+
+    /**
+     * Returns true if the element is inside the block lambda of launch/async/coroutineScope/supervisorScope/withContext.
+     * In that case ensureActive() can be used; otherwise use currentCoroutineContext().ensureActive(), yield(), or delay().
+     */
+    fun isInsideScopeBuilderBlock(element: UElement): Boolean {
+        var current: UElement? = element
+        while (current != null) {
+            if (current is ULambdaExpression) {
+                val parent = current.uastParent
+                if (parent is UCallExpression && parent.methodName in SCOPE_BUILDER_NAMES) {
+                    return true
+                }
+                // Lambda as value argument: parent may be argument list, then call
+                var p: UElement? = parent
+                while (p != null) {
+                    if (p is UCallExpression && p.methodName in SCOPE_BUILDER_NAMES) {
+                        return true
+                    }
+                    p = p.uastParent
+                }
+            }
+            current = current.uastParent
+        }
+        return false
+    }
+
+    /**
+     * Returns true if the element is inside the lambda block of a `flow { }` builder call.
+     */
+    fun isInsideFlowBuilder(element: UElement): Boolean {
+        var current: UElement? = element
+        while (current != null) {
+            if (current is ULambdaExpression) {
+                val parent = current.uastParent
+                if (parent is UCallExpression && parent.methodName == "flow") {
+                    return true
+                }
+                var p: UElement? = parent
+                while (p != null) {
+                    if (p is UCallExpression && p.methodName == "flow") {
+                        return true
+                    }
+                    p = p.uastParent
+                }
+            }
+            current = current.uastParent
+        }
         return false
     }
 

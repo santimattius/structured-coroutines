@@ -11,6 +11,7 @@ package io.github.santimattius.structured.intellij.utils
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 /**
@@ -201,28 +202,20 @@ object ScopeAnalyzer {
 
     /**
      * Checks if a deferred is awaited within the same scope.
+     * Handles: direct assignment (val d = async {}; d.await()), and async inside initializer (val defs = xs.map { async {} }; defs.awaitAll()).
      */
     fun isDeferredAwaited(asyncCall: KtCallExpression): Boolean {
         val parent = asyncCall.parent
 
-        // Check if async is assigned to a variable
-        val property = when (parent) {
-            is KtDotQualifiedExpression -> parent.parent as? KtProperty
-            is KtProperty -> parent
-            else -> null
-        }
-
+        // Check if async is assigned to a variable (direct or inside initializer, e.g. val defs = xs.map { async {} })
+        val property = findPropertyContainingAsync(asyncCall)
         if (property != null) {
             val variableName = property.name ?: return false
-            val containingFunction = asyncCall.getParentOfType<KtNamedFunction>(strict = false)
-                ?: return false
-
-            // Check if .await() is called on this variable
-            return containingFunction.bodyExpression?.text?.contains("$variableName.await()") == true ||
-                   containingFunction.bodyExpression?.text?.contains("$variableName.await(") == true
+            val block = property.getParentOfType<KtBlockExpression>(strict = false) ?: return false
+            return blockContainsAwaitOnVariable(block, variableName, asyncCall)
         }
 
-        // Check if async is used directly with await
+        // Check if async is used directly with await: scope.async { }.await()
         if (parent is KtDotQualifiedExpression) {
             val grandParent = parent.parent
             if (grandParent is KtDotQualifiedExpression) {
@@ -233,15 +226,62 @@ object ScopeAnalyzer {
             }
         }
 
-        // Check for awaitAll, awaitFirst, etc.
-        val containingFunction = asyncCall.getParentOfType<KtNamedFunction>(strict = false)
-        if (containingFunction != null) {
-            val bodyText = containingFunction.bodyExpression?.text ?: ""
-            if (bodyText.contains("awaitAll") || bodyText.contains("awaitFirst")) {
-                return true
+        return false
+    }
+
+    private fun findPropertyContainingAsync(asyncCall: KtCallExpression): KtProperty? {
+        val directProperty = when (val p = asyncCall.parent) {
+            is KtDotQualifiedExpression -> p.parent as? KtProperty
+            is KtProperty -> p
+            else -> null
+        }
+        if (directProperty != null) return directProperty
+
+        // Async inside initializer (e.g. val defs = xs.map { async { } })
+        var current: PsiElement? = asyncCall.parent
+        while (current != null) {
+            if (current is KtProperty) {
+                val init = current.initializer ?: break
+                if (isDescendantOf(asyncCall, init)) return current
+            }
+            current = current.parent
+        }
+        return null
+    }
+
+    private fun isDescendantOf(element: PsiElement, ancestor: PsiElement): Boolean {
+        var e: PsiElement? = element
+        while (e != null) {
+            if (e == ancestor) return true
+            e = e.parent
+        }
+        return false
+    }
+
+    private fun blockContainsAwaitOnVariable(block: KtBlockExpression, varName: String, excludeCall: KtCallExpression): Boolean {
+        // variable.await() or variable.awaitAll()
+        for (dq in block.collectDescendantsOfType<KtDotQualifiedExpression>()) {
+            val receiverName = when (val r = dq.receiverExpression) {
+                is KtNameReferenceExpression -> r.getReferencedName()
+                else -> r.text
+            }
+            val selectorStartsAwait = dq.selectorExpression?.text?.startsWith("await") == true
+            val receiverMatches = receiverName == varName || (receiverName != null && receiverName.endsWith(".$varName"))
+            if (receiverMatches && selectorStartsAwait) return true
+        }
+        // awaitAll(varName, ...) or list.awaitAll() where receiver is varName
+        for (call in block.collectDescendantsOfType<KtCallExpression>()) {
+            if (call === excludeCall) continue
+            if (call.calleeExpression?.text == "awaitAll") {
+                for (arg in call.valueArguments) {
+                    val argText = arg.getArgumentExpression()?.text ?: continue
+                    if (argText == varName || argText.endsWith(".$varName")) return true
+                }
+                val parent = call.parent as? KtDotQualifiedExpression ?: continue
+                val receiverText = parent.receiverExpression.text
+                if (receiverText == varName || receiverText.endsWith(".$varName")) return true
             }
         }
-
         return false
     }
 

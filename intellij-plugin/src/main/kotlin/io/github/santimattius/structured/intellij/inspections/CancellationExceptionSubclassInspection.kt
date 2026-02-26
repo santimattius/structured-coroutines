@@ -12,6 +12,7 @@ package io.github.santimattius.structured.intellij.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import io.github.santimattius.structured.intellij.StructuredCoroutinesBundle
 import io.github.santimattius.structured.intellij.inspections.base.CoroutineInspectionBase
+import io.github.santimattius.structured.intellij.quickfixes.ChangeSuperclassToExceptionQuickFix
 import io.github.santimattius.structured.intellij.utils.CoroutinePsiUtils
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -45,7 +46,8 @@ class CancellationExceptionSubclassInspection : CoroutineInspectionBase() {
                 val nameIdentifier = classOrObject.nameIdentifier ?: classOrObject
                 holder.registerProblem(
                     nameIdentifier,
-                    StructuredCoroutinesBundle.message("error.cancellation.subclass")
+                    StructuredCoroutinesBundle.message("error.cancellation.subclass"),
+                    ChangeSuperclassToExceptionQuickFix()
                 )
             }
         }

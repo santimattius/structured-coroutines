@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtLambdaArgument
+import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
@@ -31,6 +32,17 @@ object CoroutineDetektUtils {
         "withContext",
         "coroutineScope",
         "supervisorScope"
+    )
+
+    /**
+     * Names of scope builders whose block has CoroutineScope as receiver (ensureActive() available).
+     */
+    val SCOPE_BUILDER_NAMES = setOf(
+        "launch",
+        "async",
+        "coroutineScope",
+        "supervisorScope",
+        "withContext"
     )
 
     /**
@@ -123,6 +135,31 @@ object CoroutineDetektUtils {
     )
 
     /**
+     * Returns true if the element is inside the block lambda of launch/async/coroutineScope/supervisorScope/withContext.
+     * In that case ensureActive() can be used; otherwise use currentCoroutineContext().ensureActive(), yield(), or delay().
+     */
+    fun isInsideScopeBuilderBlock(element: KtElement): Boolean {
+        var current: KtElement? = element
+        while (current != null) {
+            val lambda = current.getParentOfType<KtLambdaExpression>(strict = true) ?: run {
+                current = current.parent as? KtElement
+                continue
+            }
+            val call = lambda.parent as? KtCallExpression
+            if (call != null && call.calleeExpression?.text in SCOPE_BUILDER_NAMES) {
+                return true
+            }
+            val lambdaArg = lambda.parent as? KtLambdaArgument
+            val callFromArg = lambdaArg?.parent?.parent as? KtCallExpression
+            if (callFromArg != null && callFromArg.calleeExpression?.text in SCOPE_BUILDER_NAMES) {
+                return true
+            }
+            current = lambda.parent as? KtElement
+        }
+        return false
+    }
+
+    /**
      * Checks if the given element is inside a coroutine context.
      * This includes being inside launch, async, withContext, etc.
      */
@@ -149,6 +186,29 @@ object CoroutineDetektUtils {
         }
         
         return false
+    }
+
+    /**
+     * Returns true if the element is inside the lambda block of a `flow { }` builder call.
+     */
+    fun isInsideFlowBuilder(element: KtElement): Boolean {
+        var current: KtElement? = element
+        while (current != null) {
+            val lambda = current.getParentOfType<KtLambdaExpression>(strict = true) ?: run {
+                current = current.parent as? KtElement
+                continue
+            }
+            // Nearest call expression above the lambda is the flow() call (trailing or regular arg)
+            val flowCall = lambda.getParentOfType<KtCallExpression>(strict = false)
+            if (flowCall != null && isFlowCall(flowCall)) return true
+            current = lambda.parent as? KtElement
+        }
+        return false
+    }
+
+    private fun isFlowCall(call: KtCallExpression): Boolean {
+        val name = call.calleeExpression?.text ?: return false
+        return name == "flow" || name.endsWith(".flow")
     }
 
     /**

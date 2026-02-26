@@ -98,6 +98,11 @@ class PluginConfiguration(configuration: CompilerConfiguration) {
     val redundantLaunchInCoroutineScope: Severity = getSeverity(configuration, "redundantLaunchInCoroutineScope", Severity.WARNING)
     
     /**
+     * Severity for loop in suspend function without cooperation point rule (4.1).
+     */
+    val loopWithoutYield: Severity = getSeverity(configuration, "loopWithoutYield", Severity.WARNING)
+    
+    /**
      * Reads a severity option from compiler configuration.
      *
      * Compiler plugin options are passed via SubpluginOption and are stored

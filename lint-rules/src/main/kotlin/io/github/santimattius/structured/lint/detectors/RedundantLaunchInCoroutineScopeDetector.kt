@@ -80,14 +80,19 @@ class RedundantLaunchInCoroutineScopeDetector : Detector(), SourceCodeScanner {
         
         // Get the lambda body
         val lambdaBody = getLambdaBody(node) ?: return
-        
-        // Count launch and async calls in the block
-        val launchCount = countBuilderCalls(lambdaBody, "launch")
-        val asyncCount = countBuilderCalls(lambdaBody, "async")
-        val totalBuilders = launchCount + asyncCount
-        
-        // If there's exactly 1 launch and no other builders, it's redundant
+
+        // Count and find launch/async calls in the block
+        val builderCalls = collectBuilderCalls(lambdaBody)
+        val launchCalls = builderCalls.filter { it.methodName == "launch" }
+        val asyncCalls = builderCalls.filter { it.methodName == "async" }
+        val launchCount = launchCalls.size
+        val totalBuilders = builderCalls.size
+
+        // If there's exactly 1 launch and no other builders, report unless inside forEach/for/while
         if (launchCount == 1 && totalBuilders == 1) {
+            val singleLaunch = launchCalls.single()
+            if (isInsideRepeatingContext(singleLaunch, lambdaBody)) return
+
             context.report(
                 ISSUE,
                 node,
@@ -114,20 +119,41 @@ class RedundantLaunchInCoroutineScopeDetector : Detector(), SourceCodeScanner {
     }
     
     /**
-     * Counts calls to a specific builder (launch or async) in an expression.
+     * Collects all launch and async calls in an expression.
      */
-    private fun countBuilderCalls(expression: UExpression, builderName: String): Int {
-        var count = 0
-        
+    private fun collectBuilderCalls(expression: UExpression): List<UCallExpression> {
+        val calls = mutableListOf<UCallExpression>()
         expression.accept(object : AbstractUastVisitor() {
             override fun visitCallExpression(node: UCallExpression): Boolean {
-                if (node.methodName == builderName) {
-                    count++
+                if (node.methodName == "launch" || node.methodName == "async") {
+                    calls.add(node)
                 }
                 return super.visitCallExpression(node)
             }
         })
-        
-        return count
+        return calls
+    }
+
+    /**
+     * True when the launch is inside forEach/for/while so it runs multiple times; scope correctly waits for all.
+     */
+    private fun isInsideRepeatingContext(builderCall: UCallExpression, scopeBody: UExpression): Boolean {
+        val iterationMethods = setOf("forEach", "onEach", "map", "mapNotNull", "flatMap", "filter", "filterNotNull")
+        var p: UElement? = builderCall
+        while (p != null && p != scopeBody) {
+            when (p) {
+                is ULambdaExpression -> {
+                    var ancestor: UElement? = p.uastParent
+                    while (ancestor != null && ancestor != scopeBody) {
+                        if (ancestor is UCallExpression && ancestor.methodName in iterationMethods) return true
+                        ancestor = ancestor.uastParent
+                    }
+                }
+                is UForExpression, is UWhileExpression -> return true
+                else -> {}
+            }
+            p = p.uastParent
+        }
+        return false
     }
 }

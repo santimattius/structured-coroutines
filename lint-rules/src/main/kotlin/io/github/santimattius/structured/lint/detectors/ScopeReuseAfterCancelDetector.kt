@@ -18,8 +18,8 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 /**
  * Detects obvious cases of scope cancellation followed by reuse.
- * 
- * Best Practice 4.4: Cancelling a CoroutineScope and Continuing to Reuse It (Parcial)
+ *
+ * Best Practice 4.5 (CANCEL_005): Reusing a Cancelled CoroutineScope (partial/heuristic)
  * 
  * Doing scope.cancel() and then trying to launch more coroutines in that same scope
  * doesn't work. A scope with a cancelled Job doesn't accept new children, and 
@@ -95,7 +95,7 @@ class ScopeReuseAfterCancelDetector : Detector(), SourceCodeScanner {
                     ISSUE,
                     node,
                     context.getLocation(node),
-                    "Scope '$scopeName' is cancelled and then reused. Use cancelChildren() instead of cancel() if you need to reuse the scope"
+                    "[CANCEL_005] Scope '$scopeName' is cancelled and then reused. Use cancelChildren() instead of cancel() if you need to reuse the scope. See: ${LintDocUrl.buildDocLink("45-cancel_005--reusing-a-cancelled-coroutinescope")}"
                 )
             }
         }

@@ -16,6 +16,7 @@ import io.github.santimattius.structured.intellij.StructuredCoroutinesBundle
 import org.jetbrains.kotlin.psi.KtCatchClause
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTryExpression
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 /**
  * Quick fix to add a CancellationException catch clause before the generic Exception catch.
@@ -27,27 +28,16 @@ class AddCancellationExceptionCatchQuickFix : LocalQuickFix {
     override fun getFamilyName(): String = name
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val catchClause = descriptor.psiElement.parent as? KtCatchClause
-            ?: descriptor.psiElement as? KtCatchClause
-            ?: return
-
-        val tryExpression = catchClause.parent as? KtTryExpression ?: return
+        val element = descriptor.psiElement
+        val catchClause = element as? KtCatchClause ?: element.getParentOfType<KtCatchClause>(strict = false) ?: return
+        val tryExpression = catchClause.getParentOfType<KtTryExpression>(strict = false) ?: return
 
         val factory = KtPsiFactory(project)
-
-        // Create a new catch clause for CancellationException
-        val cancellationCatch = factory.createExpression(
-            """
-            try {
-            } catch (e: CancellationException) {
-                throw e
-            }
-            """.trimIndent()
+        val tempTry = factory.createExpression(
+            "try { } catch (e: kotlinx.coroutines.CancellationException) { throw e }"
         ) as KtTryExpression
+        val newCatchClause = tempTry.catchClauses.first()
 
-        val newCatchClause = cancellationCatch.catchClauses.first()
-
-        // Insert the CancellationException catch before the generic catch
-        catchClause.parent.addBefore(newCatchClause, catchClause)
+        tryExpression.addBefore(newCatchClause, catchClause)
     }
 }

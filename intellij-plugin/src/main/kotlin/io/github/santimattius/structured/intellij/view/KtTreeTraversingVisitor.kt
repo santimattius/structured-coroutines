@@ -9,13 +9,16 @@
  */
 package io.github.santimattius.structured.intellij.view
 
-import org.jetbrains.kotlin.psi.KtCatchClause
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtCatchClause
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.KtWhileExpression
 
 /**
  * Wraps a [KtVisitorVoid] (non-recursive) so that the entire PSI tree is traversed.
@@ -46,8 +49,23 @@ class KtTreeTraversingVisitor(private val delegate: KtVisitorVoid) : KtTreeVisit
         super.visitNamedFunction(function)
     }
 
+    override fun visitClassOrObject(classOrObject: KtClassOrObject) {
+        delegate.visitClassOrObject(classOrObject)
+        super.visitClassOrObject(classOrObject)
+    }
+
     override fun visitCatchSection(catchClause: KtCatchClause) {
         delegate.visitCatchSection(catchClause)
         super.visitCatchSection(catchClause)
+    }
+
+    override fun visitForExpression(expression: KtForExpression) {
+        delegate.visitForExpression(expression)
+        super.visitForExpression(expression)
+    }
+
+    override fun visitWhileExpression(expression: KtWhileExpression) {
+        delegate.visitWhileExpression(expression)
+        super.visitWhileExpression(expression)
     }
 }

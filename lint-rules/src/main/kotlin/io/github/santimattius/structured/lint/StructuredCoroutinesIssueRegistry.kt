@@ -34,6 +34,7 @@ class StructuredCoroutinesIssueRegistry : IssueRegistry() {
             MainDispatcherMisuseDetector.ISSUE,
             ViewModelScopeLeakDetector.ISSUE,
             LifecycleAwareScopeDetector.ISSUE,
+            LifecycleAwareFlowCollectionDetector.ISSUE,
             
             // Fase 3.3: Reglas Avanzadas
             JobInBuilderContextDetector.ISSUE,
@@ -47,6 +48,9 @@ class StructuredCoroutinesIssueRegistry : IssueRegistry() {
             RunBlockingWithDelayInTestDetector.ISSUE,
             LoopWithoutYieldDetector.ISSUE,
             ScopeReuseAfterCancelDetector.ISSUE,
+            ChannelNotClosedDetector.ISSUE,
+            ConsumeEachMultipleConsumersDetector.ISSUE,
+            FlowBlockingCallDetector.ISSUE,
         )
     
     override val api: Int = CURRENT_API

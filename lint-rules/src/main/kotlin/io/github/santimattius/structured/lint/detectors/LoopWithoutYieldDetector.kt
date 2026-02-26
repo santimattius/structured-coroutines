@@ -66,7 +66,8 @@ class LoopWithoutYieldDetector : Detector(), SourceCodeScanner {
                 [CANCEL_001] Long-running loops in suspend functions without cooperation points
                 (yield, ensureActive, delay) cannot be cancelled until the loop completes.
 
-                Add yield(), ensureActive(), or delay() inside the loop to allow cancellation.
+                - Inside a scope builder (launch/async/coroutineScope/supervisorScope/withContext): use ensureActive().
+                - Only inside a suspend function (no scope builder block): use currentCoroutineContext().ensureActive(), yield(), or delay().
 
                 Note: This is a heuristic rule. False positives may occur if the loop body
                 contains suspend function calls that themselves provide cooperation points.
@@ -127,12 +128,17 @@ class LoopWithoutYieldDetector : Detector(), SourceCodeScanner {
                 is UWhileExpression -> "while"
                 else -> "loop"
             }
-            
+            val insideScope = CoroutineLintUtils.isInsideScopeBuilderBlock(loop)
+            val suggestion = if (insideScope) {
+                "Add ensureActive(), yield(), or delay(0) inside the loop to enable cancellation"
+            } else {
+                "Add currentCoroutineContext().ensureActive(), yield(), or delay(0) inside the loop to enable cancellation"
+            }
             context.report(
                 ISSUE,
                 loop,
                 context.getLocation(loop),
-                "'$loopType' loop in suspend function without cooperation point. Add ensureActive() or yield() inside the loop to enable cancellation"
+                "'$loopType' loop in suspend function without cooperation point. $suggestion"
             )
         }
     }

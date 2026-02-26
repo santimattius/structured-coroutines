@@ -14,9 +14,10 @@ import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.expression.FirFunctionCallChecker
 import org.jetbrains.kotlin.fir.expressions.FirBlock
-import org.jetbrains.kotlin.fir.expressions.FirExpression
+import org.jetbrains.kotlin.fir.expressions.FirDoWhileLoop
 import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
 import org.jetbrains.kotlin.fir.expressions.FirStatement
+import org.jetbrains.kotlin.fir.expressions.FirWhileLoop
 import org.jetbrains.kotlin.name.Name
 
 /**
@@ -70,37 +71,28 @@ import org.jetbrains.kotlin.name.Name
 class RedundantLaunchInCoroutineScopeChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
 
     companion object {
-        /**
-         * Name of the coroutineScope function to detect.
-         */
         private val COROUTINE_SCOPE_NAME = Name.identifier("coroutineScope")
-
-        /**
-         * Name of the launch function to detect.
-         */
         private val LAUNCH_NAME = Name.identifier("launch")
-
-        /**
-         * Name of the async function to detect.
-         */
         private val ASYNC_NAME = Name.identifier("async")
+        private val ITERATION_METHODS = setOf(
+            Name.identifier("forEach"),
+            Name.identifier("onEach"),
+            Name.identifier("map"),
+            Name.identifier("mapNotNull"),
+            Name.identifier("flatMap"),
+            Name.identifier("filter"),
+            Name.identifier("filterNotNull")
+        )
     }
 
     context(context: CheckerContext, reporter: DiagnosticReporter)
     override fun check(expression: FirFunctionCall) {
-        // Check if this is a coroutineScope call
         if (expression.calleeReference.name != COROUTINE_SCOPE_NAME) return
 
-        // Get the lambda block (first argument)
         val lambdaBlock = getLambdaBlock(expression) ?: return
+        val result = countBuildersAndRepeating(lambdaBlock, insideRepeating = false)
 
-        // Count launch and async calls in the block
-        val launchCount = countBuilderCalls(lambdaBlock, LAUNCH_NAME)
-        val asyncCount = countBuilderCalls(lambdaBlock, ASYNC_NAME)
-        val totalBuilders = launchCount + asyncCount
-
-        // If there's exactly 1 launch and no other builders, it's redundant
-        if (launchCount == 1 && totalBuilders == 1) {
+        if (result.launchCount == 1 && result.launchCount + result.asyncCount == 1 && !result.singleLaunchInsideRepeating) {
             reporter.reportRedundantLaunchInCoroutineScope(expression, context)
         }
     }
@@ -124,51 +116,63 @@ class RedundantLaunchInCoroutineScopeChecker : FirFunctionCallChecker(MppChecker
     }
 
     /**
-     * Counts calls to a specific builder (launch or async) in a block.
-     *
-     * @param block The block to analyze
-     * @param builderName The name of the builder to count
-     * @return The count of builder calls
+     * Counts launch/async and whether the single launch (if any) is inside forEach/for/while.
      */
-    private fun countBuilderCalls(block: FirBlock, builderName: Name): Int {
-        var count = 0
+    private fun countBuildersAndRepeating(block: FirBlock, insideRepeating: Boolean): BuilderCountResult {
+        var launchCount = 0
+        var asyncCount = 0
+        var singleLaunchInsideRepeating = false
+
         for (statement in block.statements) {
-            count += countBuilderCallsInStatement(statement, builderName)
+            val r = countBuildersInStatement(statement, insideRepeating)
+            launchCount += r.launchCount
+            asyncCount += r.asyncCount
+            if (r.singleLaunchInsideRepeating) singleLaunchInsideRepeating = true
         }
-        return count
+
+        return BuilderCountResult(launchCount, asyncCount, singleLaunchInsideRepeating)
     }
 
-    /**
-     * Recursively counts builder calls in a statement.
-     *
-     * @param statement The statement to analyze
-     * @param builderName The name of the builder to count
-     * @return The count of builder calls
-     */
-    private fun countBuilderCallsInStatement(statement: FirStatement, builderName: Name): Int {
+    private data class BuilderCountResult(
+        val launchCount: Int,
+        val asyncCount: Int,
+        val singleLaunchInsideRepeating: Boolean
+    )
+
+    private fun countBuildersInStatement(statement: FirStatement, insideRepeating: Boolean): BuilderCountResult {
         when (statement) {
             is FirFunctionCall -> {
-                // Check if this is the builder we're looking for
-                if (statement.calleeReference.name == builderName) {
-                    return 1
+                val name = statement.calleeReference.name
+                if (name == LAUNCH_NAME) {
+                    return BuilderCountResult(1, 0, insideRepeating)
                 }
-                // Recursively check arguments (lambdas)
-                var count = 0
+                if (name == ASYNC_NAME) {
+                    return BuilderCountResult(0, 1, false)
+                }
+                val iterating = name in ITERATION_METHODS
+                var launchCount = 0
+                var asyncCount = 0
+                var singleLaunchInsideRepeating = false
                 for (argument in statement.argumentList.arguments) {
                     if (argument is FirBlock) {
-                        count += countBuilderCalls(argument, builderName)
+                        val r = countBuildersAndRepeating(argument, insideRepeating = insideRepeating || iterating)
+                        launchCount += r.launchCount
+                        asyncCount += r.asyncCount
+                        if (r.singleLaunchInsideRepeating) singleLaunchInsideRepeating = true
                     }
                 }
-                return count
+                return BuilderCountResult(launchCount, asyncCount, singleLaunchInsideRepeating)
             }
-            is FirBlock -> {
-                var count = 0
-                for (innerStatement in statement.statements) {
-                    count += countBuilderCallsInStatement(innerStatement, builderName)
-                }
-                return count
+            is FirBlock -> return countBuildersAndRepeating(statement, insideRepeating)
+            is FirWhileLoop -> {
+                val body = statement.block ?: return BuilderCountResult(0, 0, false)
+                return countBuildersAndRepeating(body, insideRepeating = true)
             }
-            else -> return 0
+            is FirDoWhileLoop -> {
+                val body = statement.block ?: return BuilderCountResult(0, 0, false)
+                return countBuildersAndRepeating(body, insideRepeating = true)
+            }
+            else -> return BuilderCountResult(0, 0, false)
         }
     }
 }

@@ -86,4 +86,42 @@ class RedundantLaunchInCoroutineScopeRuleTest {
         val findings = rule.compileAndLint(code)
         assertThat(findings).isEmpty()
     }
+
+    @Test
+    fun `does not report launch inside forEach in coroutineScope`() {
+        val code = """
+            import kotlinx.coroutines.*
+            
+            suspend fun good(xs: List<Int>) = coroutineScope {
+                xs.forEach {
+                    launch {
+                        doSomething(it)
+                    }
+                }
+            }
+            
+            suspend fun doSomething(x: Int) {}
+        """.trimIndent()
+        val findings = rule.compileAndLint(code)
+        assertThat(findings).isEmpty()
+    }
+
+    @Test
+    fun `does not report launch inside for loop in coroutineScope`() {
+        val code = """
+            import kotlinx.coroutines.*
+            
+            suspend fun good(xs: List<Int>) = coroutineScope {
+                for (x in xs) {
+                    launch {
+                        doSomething(x)
+                    }
+                }
+            }
+            
+            suspend fun doSomething(x: Int) {}
+        """.trimIndent()
+        val findings = rule.compileAndLint(code)
+        assertThat(findings).isEmpty()
+    }
 }

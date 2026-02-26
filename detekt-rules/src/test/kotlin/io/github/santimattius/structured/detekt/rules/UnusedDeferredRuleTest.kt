@@ -62,6 +62,52 @@ class UnusedDeferredRuleTest {
     }
 
     @Test
+    fun `does not report async when List of Deferred is used with awaitAll extension`() {
+        val code = """
+            import kotlinx.coroutines.*
+            
+            suspend fun test(scope: CoroutineScope, xs: List<Int>) {
+                val defs = xs.map { scope.async { it * 2 } }
+                defs.awaitAll()
+            }
+        """.trimIndent()
+        val findings = rule.compileAndLint(code)
+        assertThat(findings).isEmpty()
+    }
+
+    @Test
+    fun `does not report async when map async doSomething and defs awaitAll`() {
+        val code = """
+            import kotlinx.coroutines.*
+            
+            suspend fun doSomething(x: Int): Int = x
+            
+            suspend fun test(scope: CoroutineScope, xs: List<Int>) {
+                val defs = xs.map { scope.async { doSomething(it) } }
+                defs.awaitAll()
+            }
+        """.trimIndent()
+        val findings = rule.compileAndLint(code)
+        assertThat(findings).isEmpty()
+    }
+
+    @Test
+    fun `does not report async when coroutineScope map async and defs awaitAll`() {
+        val code = """
+            import kotlinx.coroutines.*
+            
+            suspend fun doSomething(x: Int): Int = x
+            
+            suspend fun test(xs: List<Int>) = coroutineScope {
+                val defs = xs.map { async { doSomething(it) } }
+                defs.awaitAll()
+            }
+        """.trimIndent()
+        val findings = rule.compileAndLint(code)
+        assertThat(findings).isEmpty()
+    }
+
+    @Test
     fun `does not report launch`() {
         val code = """
             import kotlinx.coroutines.*

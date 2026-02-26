@@ -107,6 +107,7 @@ Configure Android Lint rules in `lint.xml`:
     <issue id="MainDispatcherMisuse" severity="error" />
     <issue id="ViewModelScopeLeak" severity="error" />
     <issue id="LifecycleAwareScope" severity="error" />
+    <issue id="LifecycleAwareFlowCollection" severity="warning" />
 
     <!-- Additional Rules -->
     <issue id="UnstructuredLaunch" severity="error" />
@@ -114,6 +115,9 @@ Configure Android Lint rules in `lint.xml`:
     <issue id="RunBlockingWithDelayInTest" severity="warning" />
     <issue id="LoopWithoutYield" severity="warning" />
     <issue id="ScopeReuseAfterCancel" severity="warning" />
+    <issue id="ChannelNotClosed" severity="warning" />
+    <issue id="ConsumeEachMultipleConsumers" severity="warning" />
+    <issue id="FlowBlockingCall" severity="warning" />
 </lint>
 ```
 
@@ -137,20 +141,24 @@ Configure Android Lint rules in `lint.xml`:
 | `MainDispatcherMisuse` | Android-Specific | Error | Detects blocking calls on `Dispatchers.Main` |
 | `ViewModelScopeLeak` | Android-Specific | Error | Detects custom scopes in ViewModels |
 | `LifecycleAwareScope` | Android-Specific | Error | Validates `lifecycleScope` usage |
+| `LifecycleAwareFlowCollection` | Android-Specific | Warning | Flow collect in lifecycleScope without repeatOnLifecycle (§8.2) |
 | `UnstructuredLaunch` | Additional | Error | Detects launch without structured scope |
 | `RedundantLaunchInCoroutineScope` | Additional | Warning | Detects redundant launch in `coroutineScope` |
 | `RunBlockingWithDelayInTest` | Additional | Warning | Detects `runBlocking` + `delay` in tests |
 | `LoopWithoutYield` | Additional | Warning | Detects loops without cooperation points |
 | `ScopeReuseAfterCancel` | Additional | Warning | Detects cancelled scope reuse |
+| `ChannelNotClosed` | Additional | Warning | Detects manual Channel() without close() in same function |
+| `ConsumeEachMultipleConsumers` | Additional | Warning | Detects same channel with consumeEach from multiple coroutines |
+| `FlowBlockingCall` | Additional | Warning | Detects blocking calls inside `flow { }` builder |
 
 ### Rules Count by Category
 
 | Category | Count |
 |----------|-------|
 | Compiler Plugin Rules | 9 |
-| Android-Specific Rules | 3 |
-| Additional Rules | 5 |
-| **Total** | **17** |
+| Android-Specific Rules | 4 |
+| Additional Rules | 8 |
+| **Total** | **19** |
 
 ---
 
@@ -464,6 +472,32 @@ class MyRepository {
 
 ---
 
+### LifecycleAwareFlowCollection (ARCH_002 — §8.2)
+
+**Validates:** Flow collection in Activity/Fragment with `lifecycleScope` must use `repeatOnLifecycle` or `flowWithLifecycle` so collection stops when the UI goes to background.
+
+```kotlin
+// ❌ BAD - Flow keeps collecting in background
+class MainActivity : AppCompatActivity() {
+    fun observe() {
+        lifecycleScope.launch {
+            flow.collect { updateUi(it) }  // Reported
+        }
+    }
+}
+
+// ✅ GOOD - Collection tied to lifecycle
+lifecycleScope.launch {
+    repeatOnLifecycle(Lifecycle.State.STARTED) {
+        flow.collect { updateUi(it) }
+    }
+}
+```
+
+**Severity:** Warning
+
+---
+
 ## Additional Rules
 
 ### 13. UnstructuredLaunch
@@ -591,6 +625,57 @@ fun process(scope: CoroutineScope) {
 **Severity:** Warning (configurable)
 
 **Note:** This is a heuristic rule. Only detects obvious cases in the same function. Complex cases requiring flow analysis are not detected.
+
+---
+
+### 19. FlowBlockingCall (FLOW_001 — §9.1) ⚠️ Heuristic
+
+**Detects:** Blocking calls (Thread.sleep, synchronous I/O, JDBC, etc.) inside `flow { }`. The flow block runs in the collector's context. Use `flowOn(Dispatchers.IO)` or suspend APIs.
+
+---
+
+### 18. ChannelNotClosed (CHANNEL_001 — §7.1) ⚠️ Heuristic
+
+**Detects:** Manual `Channel()` or `Channel<T>()` creation without a corresponding `close()` call in the same function. Consumers using `for (x in channel)` can block forever.
+
+```kotlin
+// ❌ BAD
+fun main() {
+    val ch = Channel<Int>()
+    ch.trySend(1)
+}
+
+// ✅ GOOD - close in same function
+fun main() {
+    val ch = Channel<Int>()
+    try { ch.trySend(1) } finally { ch.close() }
+}
+
+// ✅ GOOD - use produce (closes automatically)
+suspend fun flow() = produce { send(1) }
+```
+
+**Severity:** Warning
+
+**Note:** Heuristic: only checks within the same function. Use `@Suppress("ChannelNotClosed")` when the channel is closed elsewhere or via structured concurrency.
+
+---
+
+### 19. ConsumeEachMultipleConsumers (CHANNEL_002 — §7.2) ⚠️ Heuristic
+
+**Detects:** The same channel variable used with `consumeEach` from multiple coroutines (sibling `launch`/`async` in the same function). `consumeEach` cancels the channel when finished, breaking other consumers.
+
+```kotlin
+// ❌ BAD
+scope.launch { ch.consumeEach { } }
+scope.launch { ch.consumeEach { } }
+
+// ✅ GOOD - use for (value in channel) per consumer
+scope.launch { for (v in ch) { } }
+scope.launch { for (v in ch) { } }
+```
+
+**Severity:** Warning
 
 ---
 
