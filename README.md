@@ -16,14 +16,14 @@ analysis.
 
 | Module                        | Status                                                  | Documentation                                                                                               |
 |-------------------------------|---------------------------------------------------------|-------------------------------------------------------------------------------------------------------------|
-| Compiler Plugin               | ✅ Complete (11 rules)                                   | [gradle-plugin/README.md](gradle-plugin/README.md)                                                          |
+| Compiler Plugin               | ✅ Complete (12 rules)                                   | [gradle-plugin/README.md](gradle-plugin/README.md)                                                          |
 | Gradle Plugin                 | ✅ Complete                                              | [gradle-plugin/README.md](gradle-plugin/README.md)                                                          |
-| Detekt Rules                  | ✅ Complete (9 rules)                                    | [detekt-rules/README.md](detekt-rules/README.md)                                                            |
-| Android Lint                  | ✅ Complete (17 rules)                                   | [lint-rules/README.md](lint-rules/README.md)                                                                |
-| IntelliJ Plugin               | ✅ Complete (11 inspections, 9 quick fixes, tool window) | [intellij-plugin/README.md](intellij-plugin/README.md)                                                      |
+| Detekt Rules                  | ✅ Complete (18 rules)                                   | [detekt-rules/README.md](detekt-rules/README.md)                                                            |
+| Android Lint                  | ✅ Complete (21 rules)                                   | [lint-rules/README.md](lint-rules/README.md)                                                                |
+| IntelliJ Plugin               | ✅ Complete (13 inspections, 12 quick fixes, 6 intentions, tool window) | [intellij-plugin/README.md](intellij-plugin/README.md)                                                      |
 | Annotations                   | ✅ Complete                                              | [annotations/README.md](annotations/README.md)                                                              |
 | Sample                        | ✅ Compilation examples per rule                         | [compilation/README](sample/src/main/kotlin/io/github/santimattius/structured/sample/compilation/README.md) |
-| Sample (Detekt)               | ✅ Detekt rule validation (10 examples)                  | [sample-detekt/README.md](sample-detekt/README.md)                                                          |
+| Sample (Detekt)               | ✅ Detekt rule validation (19 examples)                  | [sample-detekt/README.md](sample-detekt/README.md)                                                          |
 | Kotlin Coroutines Agent Skill | ✅ AI/agent guidance                                     | [kotlin-coroutines-skill/README.md](kotlin-coroutines-skill/README.md)                                      |
 
 ---
@@ -105,6 +105,7 @@ This toolkit enforces structured concurrency best practices through:
 | `SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE` | Warns about unprotected suspend in finally          |
 | `CANCELLATION_EXCEPTION_SWALLOWED`           | Warns about `catch(Exception)` in suspend           |
 | `REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE`        | Warns about single `launch` in `coroutineScope { }` |
+| `LOOP_WITHOUT_YIELD`                        | Warns about loops in suspend functions without cooperation points (yield/ensureActive/delay) |
 
 ### Detekt Rules (Static Analysis)
 
@@ -126,8 +127,12 @@ This toolkit enforces structured concurrency best practices through:
 | `RunBlockingWithDelayInTest` | Detects `runBlocking` + `delay` in tests              |
 | `ExternalScopeLaunch`        | Detects launch on external scope from suspend         |
 | `LoopWithoutYield`           | Detects loops without cooperation points              |
+| `ScopeReuseAfterCancel`      | Detects scope cancelled then reused                   |
+| `ChannelNotClosed`           | Detects manual `Channel()` without `close()` (CHANNEL_001) |
+| `ConsumeEachMultipleConsumers` | Detects same channel with `consumeEach` from multiple coroutines (CHANNEL_002) |
+| `FlowBlockingCall`           | Detects blocking calls inside `flow { }` (FLOW_001)  |
 
-**Total: 9 Detekt Rules** (5 from Compiler Plugin + 4 Detekt-only)
+**Total: 18 Detekt Rules** (10 from Compiler Plugin + 8 Detekt-only)
 
 ### Android Lint Rules (Static Analysis)
 
@@ -145,31 +150,35 @@ This toolkit enforces structured concurrency best practices through:
 | `CancellationExceptionSwallowed` | Detects `catch(Exception)` that may swallow CancellationException      |
 | `AsyncWithoutAwait`              | Detects `async` without `await()`                                      |
 
-#### Android-Specific Rules (3 rules)
+#### Android-Specific Rules (4 rules)
 
-| Rule                   | Description                                                |
-|------------------------|------------------------------------------------------------|
-| `MainDispatcherMisuse` | Detects blocking code on Dispatchers.Main (can cause ANRs) |
-| `ViewModelScopeLeak`   | Detects incorrect ViewModel scope usage                    |
-| `LifecycleAwareScope`  | Validates correct lifecycle-aware scope usage              |
+| Rule                          | Description                                                |
+|-------------------------------|------------------------------------------------------------|
+| `MainDispatcherMisuse`        | Detects blocking code on Dispatchers.Main (can cause ANRs) |
+| `ViewModelScopeLeak`          | Detects incorrect ViewModel scope usage                    |
+| `LifecycleAwareScope`         | Validates correct lifecycle-aware scope usage               |
+| `LifecycleAwareFlowCollection`| Detects Flow collect in lifecycleScope without repeatOnLifecycle/flowWithLifecycle (ARCH_002) |
 
-#### Additional Rules (5 rules)
+#### Additional Rules (8 rules)
 
 | Rule                              | Description                                        |
 |-----------------------------------|----------------------------------------------------|
 | `UnstructuredLaunch`              | Detects launch/async without structured scope      |
 | `RedundantLaunchInCoroutineScope` | Detects redundant launch in coroutineScope         |
 | `RunBlockingWithDelayInTest`      | Detects `runBlocking` + `delay` in tests           |
-| `LoopWithoutYield`                | Detects loops without cooperation points (partial) |
-| `ScopeReuseAfterCancel`           | Detects scope cancelled and reused (partial)       |
+| `LoopWithoutYield`                | Detects loops without cooperation points           |
+| `ScopeReuseAfterCancel`           | Detects scope cancelled and reused                 |
+| `ChannelNotClosed`                | Detects manual Channel without close (CHANNEL_001) |
+| `ConsumeEachMultipleConsumers`   | Detects same channel with consumeEach in multiple coroutines (CHANNEL_002) |
+| `FlowBlockingCall`                | Detects blocking calls inside `flow { }` (FLOW_001) |
 
-**Total: 17 Android Lint Rules** (9 from Compiler Plugin + 3 Android-specific + 5 additional)
+**Total: 21 Android Lint Rules** (9 from Compiler Plugin + 4 Android-specific + 8 additional)
 
 ### IntelliJ/Android Studio Plugin (Real-time IDE Analysis)
 
 The IDE plugin provides real-time inspections, quick fixes, intentions, and gutter icons.
 
-#### Inspections (11 rules)
+#### Inspections (13 rules)
 
 | Rule                             | Severity | Description                                             |
 |----------------------------------|----------|---------------------------------------------------------|
@@ -183,23 +192,28 @@ The IDE plugin provides real-time inspections, quick fixes, intentions, and gutt
 | `JobInBuilderContext`            | ERROR    | Detects `Job()`/`SupervisorJob()` in builders           |
 | `SuspendInFinally`               | WARNING  | Detects suspend calls in finally without NonCancellable |
 | `CancellationExceptionSwallowed` | WARNING  | Detects `catch(Exception)` swallowing cancellation      |
+| `CancellationExceptionSubclass`  | ERROR    | Detects classes extending `CancellationException`       |
 | `DispatchersUnconfined`          | WARNING  | Detects `Dispatchers.Unconfined` usage                  |
+| `LoopWithoutYield`               | WARNING  | Detects loops in suspend functions without cooperation points (CANCEL_001); quick fixes to add ensureActive/yield/delay |
+| `LifecycleAwareFlowCollection`   | WARNING  | Detects Flow collect in lifecycleScope without repeatOnLifecycle/flowWithLifecycle (ARCH_002) |
 
-#### Quick Fixes (9 fixes)
+#### Quick Fixes (12 fixes)
 
 | Quick Fix                          | Description                                 |
 |------------------------------------|---------------------------------------------|
 | Replace with viewModelScope        | Replace GlobalScope with viewModelScope     |
 | Replace with lifecycleScope        | Replace GlobalScope with lifecycleScope     |
 | Wrap with coroutineScope           | Replace GlobalScope with coroutineScope { } |
-| Wrap with Dispatchers.IO           | Move blocking code to IO dispatcher         |
+| Wrap with Dispatchers.IO           | Move blocking code to IO dispatcher        |
 | Replace cancel with cancelChildren | Allow scope reuse after cancelling children |
-| Remove runBlocking                 | Unwrap runBlocking in suspend functions     |
+| Remove runBlocking                 | Unwrap runBlocking in suspend functions    |
 | Add await                          | Add .await() to async call                  |
-| Convert to launch                  | Convert unused async to launch              |
-| Wrap with NonCancellable           | Protect suspend calls in finally            |
+| Convert to launch                  | Convert unused async to launch             |
+| Wrap with NonCancellable           | Protect suspend calls in finally           |
+| Add cooperation point in loop      | Insert ensureActive(), yield(), or delay(0) in loops (CANCEL_001) |
+| Change superclass to Exception     | Replace CancellationException with Exception for domain errors (EXCEPT_002) |
 
-#### Intentions (5 intentions)
+#### Intentions (6 intentions)
 
 | Intention                 | Description                                             |
 |---------------------------|---------------------------------------------------------|
@@ -207,7 +221,8 @@ The IDE plugin provides real-time inspections, quick fixes, intentions, and gutt
 | Migrate to lifecycleScope | Convert scope to lifecycleScope in Activities/Fragments |
 | Wrap with coroutineScope  | Add coroutineScope builder to suspend function          |
 | Convert launch to async   | Change launch to async for returning Deferred           |
-| Extract suspend function  | Extract coroutine lambda to suspend function            |
+| Extract suspend function  | Extract coroutine lambda to suspend function           |
+| Convert to runTest        | Replace runBlocking with runTest when body contains delay() (TEST_001) |
 
 #### Gutter Icons
 
@@ -604,7 +619,10 @@ structured-coroutines/
 │   ├── DispatchersUnconfinedChecker
 │   ├── CancellationExceptionSubclassChecker
 │   ├── SuspendInFinallyChecker
-│   └── CancellationExceptionSwallowedChecker
+│   ├── CancellationExceptionSwallowedChecker
+│   ├── UnusedDeferredChecker
+│   ├── RedundantLaunchInCoroutineScopeChecker
+│   └── LoopWithoutYieldChecker
 ├── detekt-rules/         # Detekt Custom Rules
 │   ├── GlobalScopeUsageRule
 │   ├── InlineCoroutineScopeRule
@@ -614,16 +632,20 @@ structured-coroutines/
 │   ├── BlockingCallInCoroutineRule
 │   ├── RunBlockingWithDelayInTestRule
 │   ├── ExternalScopeLaunchRule
-│   └── LoopWithoutYieldRule
+│   ├── LoopWithoutYieldRule
+│   ├── ScopeReuseAfterCancelRule
+│   ├── ChannelNotClosedRule
+│   ├── ConsumeEachMultipleConsumersRule
+│   └── FlowBlockingCallRule
 ├── lint-rules/           # Android Lint Rules
 │   ├── GlobalScopeUsageDetector
 │   ├── MainDispatcherMisuseDetector
 │   ├── ViewModelScopeLeakDetector
-│   └── ... (17 rules total)
+│   └── ... (21 rules total)
 ├── intellij-plugin/      # IntelliJ/Android Studio Plugin
-│   ├── inspections/      # 11 real-time inspections
-│   ├── quickfixes/       # 9 automatic quick fixes
-│   ├── intentions/       # 5 refactoring intentions
+│   ├── inspections/      # 13 real-time inspections (incl. LoopWithoutYield, LifecycleAwareFlowCollection)
+│   ├── quickfixes/       # 12 automatic quick fixes
+│   ├── intentions/       # 6 refactoring intentions (incl. Convert to runTest)
 │   ├── guttericons/      # Scope & dispatcher visualization
 │   └── view/             # Tool window (findings list, runner, tree visitor)
 ├── gradle-plugin/        # Gradle Integration
@@ -683,12 +705,10 @@ structured-coroutines/
 
 **Notes:**
 
-- Detekt Rules: 5 from Compiler Plugin + 4 Detekt-only = **9 rules total**
-- Android Lint Rules: 9 from Compiler Plugin + 3 Android-specific + 5 additional = **17 rules total
-  **
+- Detekt Rules: 10 from Compiler Plugin + 8 Detekt-only = **18 rules total**
+- Android Lint Rules: 9 from Compiler Plugin + 4 Android-specific + 8 additional = **21 rules total**
 - Android Lint Rules include **quick fixes** for better developer experience
-- IDE Plugin: **11 inspections** + **9 quick fixes** + **5 intentions** + **gutter icons** for
-  real-time feedback
+- IDE Plugin: **13 inspections** + **12 quick fixes** + **6 intentions** + **gutter icons** for real-time feedback
 
 ---
 
