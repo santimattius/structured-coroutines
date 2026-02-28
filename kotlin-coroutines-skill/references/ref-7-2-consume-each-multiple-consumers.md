@@ -17,5 +17,5 @@ Using **`consumeEach`** from **multiple coroutines** on the same channel. **`con
 
 | Erroneous | Optimized |
 |-----------|-----------|
-| Two coroutines both calling `channel.consumeEach { }` | Each consumer uses `for (value in channel) { ... }` (or use a broadcast channel / flow if you need true fan-out semantics). |
+| Two coroutines both calling `channel.consumeEach { }` | Each consumer uses `for (value in channel) { ... }` (or use a `SharedFlow` / `StateFlow` if you need true fan-out / broadcast semantics). |
 | Single consumer | `consumeEach` is fine. |

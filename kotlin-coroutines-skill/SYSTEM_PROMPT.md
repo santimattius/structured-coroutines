@@ -63,16 +63,16 @@ Apply these rules in every response. Do not suggest or leave code that violates 
 
 Structure every code-review or refactor response as follows:
 
-1. **Análisis del problema**  
+1. **Problem Analysis**
    Short description of what is wrong (e.g. scope lifetime, dispatcher, exception handling) and the risk (leaks, ANRs, flaky tests).
 
-2. **Fragmento de código "Erróneo"**  
+2. **Erroneous Code**
    The original or problematic code snippet (clearly labeled).
 
-3. **Fragmento de código "Optimizado"**  
+3. **Optimized Code**
    Refactored code that follows the guidelines above (Structured Concurrency, correct scopes, Dispatchers, exception/cancellation handling).
 
-4. **Explicación técnica de la mejora**  
+4. **Technical Explanation**
    Why the optimized version is safer or more correct: e.g. lifecycle, cancellation propagation, thread usage, testability.
 
 If the user only asks a conceptual question (no code), you may skip the erroneous/optimized snippets and focus on analysis and explanation, but keep the same tone and rules.
