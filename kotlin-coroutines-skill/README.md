@@ -1,41 +1,38 @@
-# Kotlin Coroutines Agent Skill
+# Kotlin Coroutines Skill
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Version](https://img.shields.io/badge/skill%20version-1.0.0-blue.svg)]()
 
 Expert guidance for any AI coding tool that supports Agent Skills or custom instructions — **safe structured concurrency**, performance, and Kotlin 1.9/2.0+ best practices for Coroutines.
 
-This package is part of the [Structured Coroutines](https://github.com/santimattius/structured-coroutines) project and was added to provide consistent, rule-based AI/agent-driven guidance for reviewing or refactoring Kotlin/Android coroutine code.
+This skill is part of the [Structured Coroutines](https://github.com/santimattius/structured-coroutines) project. It encodes a single set of rules (scopes, dispatchers, exceptions, cancellation, testing, channels) so that Claude, ChatGPT, Cursor, or other agents give **consistent, correct** advice on Kotlin Coroutines.
 
-Inspired by the [Swift Concurrency Agent Skill](https://github.com/AvdLee/Swift-Concurrency-Agent-Skill) model: industry-standard practices, no forced architecture. This skill helps agents give **consistent, correct** advice on Kotlin Coroutines without pushing a specific app structure.
+Inspired by the [Swift Concurrency Agent Skill](https://github.com/AvdLee/Swift-Concurrency-Agent-Skill) model.
 
 ---
 
 ## Why This Skill Exists
 
 - **Structured Concurrency is easy to get wrong:** `GlobalScope`, wrong Dispatchers, swallowed `CancellationException`, and misuse of `SupervisorJob` lead to leaks, ANRs, and flaky behavior. Many AI answers repeat these mistakes.
-- **One source of truth:** This skill encodes a single set of rules (scopes, dispatchers, exceptions, cancellation, testing) so that ChatGPT, Claude, Cursor, or other agents give **aligned** recommendations.
-- **Faster reviews and migrations:** Teams adopting coroutines or moving to strict structured concurrency can point their AI at this skill and get code that follows the same checklist (no GlobalScope, proper scopes, `withContext(IO)`, virtual-time tests, etc.).
+- **One source of truth:** This skill encodes a consistent checklist so every AI tool gives the same aligned recommendations.
+- **Faster reviews and migrations:** Teams can point their AI at this skill and get code that follows the same rules — no GlobalScope, proper scopes, `withContext(IO)`, virtual-time tests, etc.
 
 ---
 
-## What’s Included
+## What's Included
 
 | Asset | Description |
 |-------|-------------|
 | **SYSTEM_PROMPT.md** | Full system prompt: identity, strict rules, tone, and required output format (analysis → erroneous code → optimized code → explanation). |
-| **SKILL.md** | Playbook (triage): maps topic/error to the right reference file so the agent can jump to the relevant practice. |
-| **references/** | One markdown file per best practice (see table below). Each has Bad / Recommended / Why / Quick fix. |
-| **CONFIG.json** | Metadata for the skill: name, description, version, triggers, and reference index. |
-| **EXAMPLES_SUITE.kt** | Three Kotlin examples with intentional anti-patterns (scope leaks, exception handling, Dispatchers) for testing the agent. |
-| **.claude-plugin/** | Claude Code plugin manifest (`plugin.json`, `marketplace.json`) located at the repo root. |
-| **BEST_PRACTICES_COROUTINES.md** | Full guide lives in the parent repo (`docs/BEST_PRACTICES_COROUTINES.md`); this skill is derived from it. |
+| **SKILL.md** | Playbook (triage): maps topic/error to the right reference file so the agent jumps to the relevant practice. |
+| **references/** | One markdown file per best practice (19 files). Each has Bad / Recommended / Why / Quick fix. |
+| **CONFIG.json** | Metadata: name, description, version, triggers, and reference index. |
+| **EXAMPLES_SUITE.kt** | Kotlin examples with intentional anti-patterns (scope leaks, exception handling, Dispatchers) for testing the agent. |
 
 ### References (per practice)
 
-Each practice from the best-practices doc has a dedicated reference file in **references/**:
-
 | # | Topic | File |
-|---|--------|------|
+|---|-------|------|
 | 1.1 | GlobalScope in production | `references/ref-1-1-global-scope.md` |
 | 1.2 | async without await | `references/ref-1-2-async-without-await.md` |
 | 1.3 | Breaking structured concurrency | `references/ref-1-3-breaking-structured-concurrency.md` |
@@ -56,109 +53,126 @@ Each practice from the best-practices doc has a dedicated reference file in **re
 | 7.2 | consumeEach with multiple consumers | `references/ref-7-2-consume-each-multiple-consumers.md` |
 | 8 | Architecture patterns | `references/ref-8-architecture-patterns.md` |
 
-The agent should use **SKILL.md** (playbook) to choose which reference(s) apply, then apply the strict rules from **SYSTEM_PROMPT.md** and the bad/recommended/quick-fix from the reference(s).
+---
+
+## Setup
+
+### Option A: Claude Code (Plugin — Recommended)
+
+Claude Code natively supports this skill as a plugin via the marketplace.
+
+**Requirements:** [Claude Code](https://code.claude.com/docs) installed and authenticated; version **1.0.33 or later** (`claude --version`).
+
+#### Install from the marketplace
+
+```bash
+/plugin marketplace add santimattius/structured-coroutines
+/plugin install kotlin-coroutines-skill
+```
+
+#### Install from a local directory
+
+```bash
+claude --plugin-dir /path/to/structured-coroutines/kotlin-coroutines-skill
+```
+
+Replace the path with the actual location of this `kotlin-coroutines-skill` folder.
+
+#### How it works
+
+Once installed, the skill is available automatically when you work on Kotlin/Android code. Claude Code reads:
+
+- `SKILL.md` — triage playbook (maps your topic/error to the right reference)
+- `SYSTEM_PROMPT.md` — strict rules and output format
+- `references/ref-*.md` — per-practice guidance loaded on demand
+
+**Plugin layout:**
+
+```
+repo root/
+├── .claude-plugin/
+│   ├── plugin.json          ← plugin definition (skills: ["./kotlin-coroutines-skill"])
+│   └── marketplace.json     ← marketplace catalog (owner + plugins)
+└── kotlin-coroutines-skill/
+    ├── SKILL.md
+    ├── SYSTEM_PROMPT.md
+    ├── CONFIG.json
+    ├── EXAMPLES_SUITE.kt
+    └── references/
+```
+
+**Verify installation:** Open a `.kt` file containing `GlobalScope.launch { }` and ask Claude Code to review it for coroutine best practices. The response should follow the format: **Analysis → Erroneous Code → Optimized Code → Technical Explanation**.
 
 ---
 
-## Installation
+### Option B: Claude (Projects — System Prompt)
 
-### Option A: ChatGPT (Custom GPTs)
-
-1. Create a new **Custom GPT** (ChatGPT Plus or Team).
-2. In **Configure** → **Instructions**, paste the full content of **SYSTEM_PROMPT.md** (from this repo).
-3. Optionally add in **Instructions** or **Knowledge**:  
-   *“When the user asks about Kotlin Coroutines, structured concurrency, GlobalScope, Dispatchers, or cancellation, follow the Kotlin Coroutines Agent system prompt and answer in the required format (analysis, erroneous code, optimized code, explanation).”*
-4. Save and name the GPT (e.g. “Kotlin Coroutines Expert”).
-
-**Quick test:** Ask: *“Why shouldn’t I use GlobalScope.launch in an Android ViewModel?”* — You should get analysis, bad snippet, good snippet, and explanation.
-
----
-
-### Option B: Claude (Projects)
+Use this when you want the skill active for a specific Claude project without the Claude Code CLI.
 
 1. In Claude, open **Projects** and create or select a project.
-2. Go to **Project settings** → **Custom instructions** (or the instructions field for that project).
+2. Go to **Project settings → Custom instructions**.
 3. Paste the full content of **SYSTEM_PROMPT.md**.
-4. Add a short line: *“For Kotlin Coroutines questions, always use the structured output format: 1) Analysis, 2) Erroneous code, 3) Optimized code, 4) Technical explanation.”*
+4. Optionally add: *"For Kotlin Coroutines questions, always use the structured output format: 1) Analysis, 2) Erroneous code, 3) Optimized code, 4) Technical explanation."*
 5. Save.
 
-Use this project when working on Kotlin/Android codebases so Claude consistently applies the same rules.
+Use this project when working on Kotlin/Android codebases for consistent advice.
 
 ---
 
-### Option C: Cursor (Rules for AI)
+### Option C: ChatGPT (Custom GPTs)
 
-1. In your repo or user config, open or create the **Cursor rules** directory (e.g. `.cursor/rules/` or the path your Cursor version uses for “Rules for AI”).
-2. Create a rule file, e.g. **kotlin-coroutines-skill.mdc** or **kotlin-coroutines-skill.md**.
-3. Paste the full content of **SYSTEM_PROMPT.md** into that file.
-4. If your setup supports it, add a **globs** or **when** condition so the rule applies to Kotlin files, e.g. `**/*.kt`, or to a specific module (e.g. `**/app/**/*.kt`).
-5. Reload Cursor / rules so the new rule is active.
+1. Create a new **Custom GPT** (ChatGPT Plus or Team).
+2. In **Configure → Instructions**, paste the full content of **SYSTEM_PROMPT.md**.
+3. Optionally upload the `references/` files to **Knowledge** so the GPT can reference them.
+4. Save and name the GPT (e.g. "Kotlin Coroutines Expert").
 
-**Verification:** Open a `.kt` file with `GlobalScope.launch { }` and ask Cursor to refactor it to follow structured concurrency; the answer should match the skill’s format and rules.
-
----
-
-### Option D: Claude Code (Plugin)
-
-Claude Code can load this folder as a **plugin** so the Kotlin Coroutines skill (playbook + references) is available as an Agent Skill.
-
-1. **Prerequisites:** [Claude Code](https://code.claude.com/docs) installed and authenticated; version **1.0.33 or later** (run `claude --version`).
-2. **Install from a local directory (e.g. this repo):**
-   ```bash
-   claude --plugin-dir /path/to/structured-coroutines/kotlin-coroutines-skill
-   ```
-   Replace `/path/to/structured-coroutines/kotlin-coroutines-skill` with the actual path to this `kotlin-coroutines-skill` folder.
-3. After Claude Code starts, the skill **kotlin-coroutines** is loaded. Use it when working on Kotlin/Android code or when you ask about coroutines, GlobalScope, Dispatchers, cancellation, testing, or channels.
-4. **Install from a marketplace (if you publish this plugin):**  
-   See [Discover and install plugins](https://code.claude.com/docs/en/discover-plugins). You can add a marketplace that points at this repo and then run something like:
-   ```bash
-   /plugin marketplace add owner/repo
-   /plugin install kotlin-coroutines-skill
-   ```
-5. **Verify:** Ask Claude Code to “Review this coroutine code for best practices” on a file that uses `GlobalScope.launch` or `runBlocking` in a suspend function. The response should follow the playbook, reference the relevant `references/ref-*.md`, and use the output format (Analysis → Erroneous → Optimized → Explanation).
-
-**Plugin layout:** The plugin manifest (`.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json`) lives at the repo root. The skill content lives in `kotlin-coroutines-skill/`: `SKILL.md` (playbook), `SYSTEM_PROMPT.md`, and `references/*.md`.
+**Quick test:** Ask: *"Why shouldn't I use GlobalScope.launch in an Android ViewModel?"* — You should get analysis, bad snippet, good snippet, and explanation.
 
 ---
 
-## Example Prompts to Try
+### Option D: Cursor (Rules for AI)
+
+1. In your repo, open or create `.cursor/rules/`.
+2. Create a file `kotlin-coroutines.mdc`.
+3. Paste the full content of **SYSTEM_PROMPT.md**.
+4. Add a `globs` condition so the rule applies to Kotlin files: `**/*.kt`.
+5. Reload Cursor rules.
+
+**Verify:** Open a `.kt` file with `GlobalScope.launch { }` and ask Cursor to refactor it. The answer should follow the skill's format and rules.
+
+---
+
+## Example Prompts
 
 Use these to validate that the agent is following the skill:
 
-1. **Scopes & leaks**  
-   *“Refactor this code to avoid GlobalScope and follow structured concurrency.”*  
-   (Use a snippet that uses `GlobalScope.launch` or `GlobalScope.async`.)
-
-2. **Dispatchers**  
-   *“I’m reading a file with `Dispatchers.Default`. Is that correct? Suggest an optimized version.”*
-
-3. **Exceptions**  
-   *“This catch block catches `Exception` and logs it. How should I handle CancellationException?”*
-
-4. **Format check**  
-   *“Review this coroutine code and give me: 1) Analysis, 2) Erroneous snippet, 3) Optimized snippet, 4) Explanation.”*
-
-5. **Testing**  
-   *“Replace runBlocking and real delay() in this test with kotlinx-coroutines-test and virtual time.”*
+| # | Prompt | What it tests |
+|---|--------|---------------|
+| 1 | *"Refactor this code to avoid GlobalScope and follow structured concurrency."* | Scopes & leaks |
+| 2 | *"I'm reading a file with `Dispatchers.Default`. Is that correct?"* | Dispatchers |
+| 3 | *"This catch block catches `Exception` and logs it. How should I handle CancellationException?"* | Exception handling |
+| 4 | *"Replace runBlocking and real delay() in this test with kotlinx-coroutines-test and virtual time."* | Testing |
+| 5 | *"Review this coroutine code: 1) Analysis, 2) Erroneous snippet, 3) Optimized snippet, 4) Explanation."* | Output format |
 
 ---
 
-## Reference: Quick Checklist (from the skill)
+## Quick Checklist
 
-The agent is instructed to enforce (among others):
+The skill enforces these rules in every response:
 
-- No `GlobalScope`; use framework or injected scopes.
-- `async` only when you need a value; otherwise `launch`.
-- No `runBlocking` inside suspend functions.
-- Blocking I/O on `Dispatchers.IO` (e.g. `withContext(Dispatchers.IO)`).
+- No `GlobalScope`; use framework (`viewModelScope`, `lifecycleScope`) or injected/local scopes.
+- `async` only when you need a return value; otherwise `launch`.
+- No `runBlocking` inside suspend functions — use `withContext` or `coroutineScope`.
+- Blocking I/O always on `withContext(Dispatchers.IO)`. Never on `Default` or `Main`.
 - No `Dispatchers.Unconfined` in production.
-- No `Job()` / `SupervisorJob()` passed directly to builders; use `supervisorScope` or a scope with `SupervisorJob()`.
-- Do not swallow `CancellationException`; rethrow it in catch.
-- Suspend cleanup in `finally` inside `withContext(NonCancellable)`.
-- Tests use `runTest` and virtual time where possible.
-- Flow: prefer `flowOn` over `withContext` inside a flow builder; use `shareIn`/`stateIn` for hot streams; always collect on the appropriate scope.
+- No `Job()` / `SupervisorJob()` passed directly to builders; use `supervisorScope { }` or a scope-level `SupervisorJob`.
+- Never swallow `CancellationException`; rethrow it in catch.
+- Suspend cleanup in `finally` → `withContext(NonCancellable) { }`.
+- Do not reuse a scope after `scope.cancel()`; use `cancelChildren()` to stop only children.
+- Tests use `runTest` with virtual time (`advanceTimeBy`, `advanceUntilIdle`). No real `delay()`.
+- Channels: prefer `produce { }`. Use `for (x in channel)` per consumer, not `consumeEach` for fan-out.
 
-Full checklist and rationale are in **SYSTEM_PROMPT.md**, in **SKILL.md** (playbook), in the **references/** files, and in the parent repo’s **docs/BEST_PRACTICES_COROUTINES.md**.
+Full rules are in **SYSTEM_PROMPT.md**, the triage table is in **SKILL.md**, and per-practice detail is in `references/`.
 
 ---
 
@@ -170,4 +184,4 @@ MIT License. See [LICENSE](LICENSE) in this directory or the repo root.
 
 ## Contributing
 
-Improvements to the system prompt, CONFIG, or examples that stay aligned with Kotlin’s structured concurrency and the existing checklist are welcome (e.g. via pull requests to the parent **structured-coroutines** repository).
+Improvements to the system prompt, CONFIG, or reference files that stay aligned with Kotlin's structured concurrency and the existing checklist are welcome via pull requests to the parent [structured-coroutines](https://github.com/santimattius/structured-coroutines) repository.
