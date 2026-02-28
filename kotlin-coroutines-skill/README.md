@@ -27,8 +27,7 @@ Inspired by the [Swift Concurrency Agent Skill](https://github.com/AvdLee/Swift-
 | **references/** | One markdown file per best practice (see table below). Each has Bad / Recommended / Why / Quick fix. |
 | **CONFIG.json** | Metadata for the skill: name, description, version, triggers, and reference index. |
 | **EXAMPLES_SUITE.kt** | Three Kotlin examples with intentional anti-patterns (scope leaks, exception handling, Dispatchers) for testing the agent. |
-| **.claude-plugin/** | Claude Code plugin manifest for use with Claude Code (`/plugin` or `--plugin-dir`). |
-| **skills/kotlin-coroutines/SKILL.md** | Claude Code Agent Skill entry point (playbook + rules + reference paths). |
+| **.claude-plugin/** | Claude Code plugin manifest (`plugin.json`, `marketplace.json`) located at the repo root. |
 | **BEST_PRACTICES_COROUTINES.md** | Full guide lives in the parent repo (`docs/BEST_PRACTICES_COROUTINES.md`); this skill is derived from it. |
 
 ### References (per practice)
@@ -118,7 +117,7 @@ Claude Code can load this folder as a **plugin** so the Kotlin Coroutines skill 
    ```
 5. **Verify:** Ask Claude Code to “Review this coroutine code for best practices” on a file that uses `GlobalScope.launch` or `runBlocking` in a suspend function. The response should follow the playbook, reference the relevant `references/ref-*.md`, and use the output format (Analysis → Erroneous → Optimized → Explanation).
 
-**Plugin layout:** The plugin root is `kotlin-coroutines-skill/`. It contains `.claude-plugin/plugin.json`, `skills/kotlin-coroutines/SKILL.md`, and `references/*.md`. The skill is namespaced (e.g. `kotlin-coroutines-skill:kotlin-coroutines` when listed).
+**Plugin layout:** The plugin manifest (`.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json`) lives at the repo root. The skill content lives in `kotlin-coroutines-skill/`: `SKILL.md` (playbook), `SYSTEM_PROMPT.md`, and `references/*.md`.
 
 ---
 
@@ -157,6 +156,7 @@ The agent is instructed to enforce (among others):
 - Do not swallow `CancellationException`; rethrow it in catch.
 - Suspend cleanup in `finally` inside `withContext(NonCancellable)`.
 - Tests use `runTest` and virtual time where possible.
+- Flow: prefer `flowOn` over `withContext` inside a flow builder; use `shareIn`/`stateIn` for hot streams; always collect on the appropriate scope.
 
 Full checklist and rationale are in **SYSTEM_PROMPT.md**, in **SKILL.md** (playbook), in the **references/** files, and in the parent repo’s **docs/BEST_PRACTICES_COROUTINES.md**.
 

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "kotlin-coroutines-skill",
+  "displayName": "Kotlin Coroutines Skill",
+  "description": "Expert guidance for Kotlin Coroutines: structured concurrency, safe scopes, Dispatchers, cancellation, exception handling, and testing. Use when reviewing or writing Kotlin/Android async code. Includes a playbook and per-practice reference files.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Santiago Mattiauda"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/santimattius/structured-coroutines",
+  "repository": "https://github.com/santimattius/structured-coroutines",
+  "tags": [
+    "kotlin",
+    "coroutines",
+    "android",
+    "concurrency",
+    "async",
+    "structured-concurrency",
+    "kotlinx-coroutines"
+  ],
+  "skill": {
+    "systemPrompt": "kotlin-coroutines-skill/SYSTEM_PROMPT.md",
+    "playbook": "kotlin-coroutines-skill/SKILL.md",
+    "examples": "kotlin-coroutines-skill/EXAMPLES_SUITE.kt",
+    "config": "kotlin-coroutines-skill/CONFIG.json"
+  }
+}
