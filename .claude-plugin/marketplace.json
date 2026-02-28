@@ -1,168 +1,31 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "kotlin-coroutines-skill",
-  "displayName": "Kotlin Coroutines Skill",
-  "description": "Expert guidance for Kotlin Coroutines: structured concurrency, safe scopes, Dispatchers, cancellation, exception handling, and testing. Use when reviewing or writing Kotlin/Android async code. Includes a playbook and per-practice reference files.",
-  "version": "1.0.0",
-  "author": {
+  "name": "structured-coroutines",
+  "owner": {
     "name": "Santiago Mattiauda"
   },
-  "license": "MIT",
-  "homepage": "https://github.com/santimattius/structured-coroutines",
-  "repository": "https://github.com/santimattius/structured-coroutines",
-  "tags": [
-    "kotlin",
-    "coroutines",
-    "android",
-    "concurrency",
-    "async",
-    "structured-concurrency",
-    "kotlinx-coroutines"
-  ],
-  "triggers": [
-    "Kotlin Coroutines",
-    "coroutines",
-    "GlobalScope",
-    "viewModelScope",
-    "lifecycleScope",
-    "Dispatchers",
-    "runBlocking",
-    "suspend function",
-    "CancellationException",
-    "SupervisorJob",
-    "structured concurrency",
-    "kotlinx-coroutines",
-    "async/await",
-    "launch",
-    "withContext",
-    "coroutineScope",
-    "runTest",
-    "kotlinx-coroutines-test"
-  ],
-  "files": {
-    "pluginDefinition": "plugin.json",
-    "marketplaceEntry": "marketplace.json"
-  },
-  "skill": {
-    "systemPrompt": "kotlin-coroutines-skill/SYSTEM_PROMPT.md",
-    "playbook": "kotlin-coroutines-skill/SKILL.md",
-    "examples": "kotlin-coroutines-skill/EXAMPLES_SUITE.kt",
-    "config": "kotlin-coroutines-skill/CONFIG.json"
-  },
-  "references": [
+  "plugins": [
     {
-      "id": "ref-1-1",
-      "file": "kotlin-coroutines-skill/references/ref-1-1-global-scope.md",
-      "title": "Using GlobalScope in Production Code",
-      "description": "GlobalScope breaks the coroutine tree, preventing proper cancellation and exception propagation. Use framework scopes (viewModelScope, lifecycleScope), injected scopes, or local scopes instead."
-    },
-    {
-      "id": "ref-1-2",
-      "file": "kotlin-coroutines-skill/references/ref-1-2-async-without-await.md",
-      "title": "async Without await (Fire-and-Forget with async)",
-      "description": "Using async when the result is never awaited wastes a Deferred allocation and hides exceptions. Use launch for fire-and-forget work; reserve async for when you need a return value."
-    },
-    {
-      "id": "ref-1-3",
-      "file": "kotlin-coroutines-skill/references/ref-1-3-breaking-structured-concurrency.md",
-      "title": "Breaking Structured Concurrency",
-      "description": "Launching coroutines in an external scope from inside a suspend function breaks the parent-child relationship, causing leaks and silenced exceptions. Use coroutineScope { } or withContext { } for local child work."
-    },
-    {
-      "id": "ref-2-1",
-      "file": "kotlin-coroutines-skill/references/ref-2-1-launch-last-line-coroutine-scope.md",
-      "title": "launch as Last Line inside coroutineScope",
-      "description": "Ending a suspend function with coroutineScope { launch { } } as the final statement is misleading: the caller thinks the work is complete but it may still be running. Await explicitly or restructure."
-    },
-    {
-      "id": "ref-2-2",
-      "file": "kotlin-coroutines-skill/references/ref-2-2-runblocking-in-suspend.md",
-      "title": "runBlocking Inside a Suspend Function",
-      "description": "Calling runBlocking inside a suspend function or coroutine blocks the current thread, risking deadlocks on single-threaded dispatchers. Use coroutineScope or withContext instead."
-    },
-    {
-      "id": "ref-3-1",
-      "file": "kotlin-coroutines-skill/references/ref-3-1-blocking-wrong-dispatchers.md",
-      "title": "Blocking I/O on Wrong Dispatchers",
-      "description": "Performing blocking I/O on Dispatchers.Default or Dispatchers.Main starves the thread pool and causes ANRs. Always wrap blocking calls with withContext(Dispatchers.IO)."
-    },
-    {
-      "id": "ref-3-2",
-      "file": "kotlin-coroutines-skill/references/ref-3-2-dispatchers-unconfined.md",
-      "title": "Dispatchers.Unconfined in Production",
-      "description": "Dispatchers.Unconfined resumes on whichever thread triggers resumption, making execution order unpredictable and hard to test. Avoid in production; use explicit Dispatchers instead."
-    },
-    {
-      "id": "ref-3-3",
-      "file": "kotlin-coroutines-skill/references/ref-3-3-job-context-builders.md",
-      "title": "Job() / SupervisorJob() Passed Directly to Builders",
-      "description": "Passing Job() or SupervisorJob() directly to launch/async breaks the parent-child relationship of the new coroutine with its scope. Use supervisorScope { } for supervisor semantics."
-    },
-    {
-      "id": "ref-4-1",
-      "file": "kotlin-coroutines-skill/references/ref-4-1-cancellation-intensive-loops.md",
-      "title": "Cancellation Not Checked in Intensive Loops",
-      "description": "Long CPU-bound loops that never suspend will not respond to cancellation. Insert yield() or ensureActive() / isActive checks so the coroutine can be cancelled promptly."
-    },
-    {
-      "id": "ref-4-2",
-      "file": "kotlin-coroutines-skill/references/ref-4-2-swallowing-cancellation-exception.md",
-      "title": "Swallowing CancellationException",
-      "description": "Catching and not rethrowing CancellationException prevents the coroutine from being cancelled, breaking structured concurrency. Always rethrow CancellationException in catch blocks."
-    },
-    {
-      "id": "ref-4-3",
-      "file": "kotlin-coroutines-skill/references/ref-4-3-suspend-cleanup-noncancellable.md",
-      "title": "Suspend Calls in finally Without NonCancellable",
-      "description": "Suspend functions called inside a finally block may be skipped if the coroutine is already cancelled. Wrap cleanup suspend calls with withContext(NonCancellable) { } to guarantee execution."
-    },
-    {
-      "id": "ref-4-4",
-      "file": "kotlin-coroutines-skill/references/ref-4-4-reusing-cancelled-scope.md",
-      "title": "Reusing a Scope After cancel()",
-      "description": "A cancelled CoroutineScope cannot launch new coroutines. Use coroutineContext.job.cancelChildren() to cancel only children while keeping the scope alive, or create a new scope."
-    },
-    {
-      "id": "ref-5-1",
-      "file": "kotlin-coroutines-skill/references/ref-5-1-supervisor-job-single-builder.md",
-      "title": "SupervisorJob() Passed to a Single Builder",
-      "description": "SupervisorJob() inside a single launch/async call has no effect on sibling coroutines. Use supervisorScope { } to get supervisor semantics for a group of independent child coroutines."
-    },
-    {
-      "id": "ref-5-2",
-      "file": "kotlin-coroutines-skill/references/ref-5-2-cancellation-exception-domain-errors.md",
-      "title": "CancellationException Used for Domain Errors",
-      "description": "Throwing CancellationException to signal domain errors (e.g. UserNotFound) is incorrect because it cancels the coroutine unexpectedly. Use normal domain exceptions instead."
-    },
-    {
-      "id": "ref-6-1",
-      "file": "kotlin-coroutines-skill/references/ref-6-1-slow-tests-real-delays.md",
-      "title": "Slow Tests Using Real delay()",
-      "description": "Tests that call real delay() are slow and fragile. Use runTest with virtual time (advanceTimeBy, advanceUntilIdle) and inject a TestDispatcher to keep tests fast and deterministic."
-    },
-    {
-      "id": "ref-6-2",
-      "file": "kotlin-coroutines-skill/references/ref-6-2-uncontrolled-fire-and-forget-tests.md",
-      "title": "Uncontrolled Fire-and-Forget Coroutines in Tests",
-      "description": "Fire-and-forget coroutines launched inside tests may complete after the test assertion, causing flakiness. Inject a controlled scope or use advanceUntilIdle() to ensure all work finishes before asserting."
-    },
-    {
-      "id": "ref-7-1",
-      "file": "kotlin-coroutines-skill/references/ref-7-1-channel-close.md",
-      "title": "Channel Not Closed (Manual Channel Without close())",
-      "description": "A manually created Channel that is never closed leaves consumers suspended forever. Prefer produce { } which closes the channel automatically, or explicitly call close() in a finally block."
-    },
-    {
-      "id": "ref-7-2",
-      "file": "kotlin-coroutines-skill/references/ref-7-2-consume-each-multiple-consumers.md",
-      "title": "consumeEach with Multiple Consumers",
-      "description": "consumeEach cancels the channel on completion, making it unsafe for multiple consumers. Each consumer should use a for (x in channel) loop independently."
-    },
-    {
-      "id": "ref-8",
-      "file": "kotlin-coroutines-skill/references/ref-8-architecture-patterns.md",
-      "title": "Architecture Patterns: Layers, suspend vs Callbacks",
-      "description": "Guidance on structuring Data/Domain/Presentation layers with coroutines: when to use suspend functions vs callbacks, how to bridge callback APIs with suspendCancellableCoroutine, and testing patterns per layer."
+      "name": "kotlin-coroutines-skill",
+      "source": "./",
+      "displayName": "Kotlin Coroutines Skill",
+      "description": "Expert guidance for Kotlin Coroutines: structured concurrency, safe scopes, Dispatchers, cancellation, exception handling, and testing. Use when reviewing or writing Kotlin/Android async code. Includes a playbook and per-practice reference files.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Santiago Mattiauda"
+      },
+      "license": "MIT",
+      "homepage": "https://github.com/santimattius/structured-coroutines",
+      "repository": "https://github.com/santimattius/structured-coroutines",
+      "tags": [
+        "kotlin",
+        "coroutines",
+        "android",
+        "concurrency",
+        "async",
+        "structured-concurrency",
+        "kotlinx-coroutines"
+      ]
     }
   ]
 }
