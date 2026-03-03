@@ -10,11 +10,11 @@
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
-    id("org.jetbrains.intellij.platform") version "2.2.1"
+    id("org.jetbrains.intellij.platform") version "2.11.0"
 }
 
 group = "io.github.santimattius"
-version = "0.4.0"
+version = "0.4.1"
 
 repositories {
     mavenCentral()
@@ -51,6 +51,10 @@ intellijPlatform {
             </ul>
         """.trimIndent()
         changeNotes = """
+            <p><b>v0.4.1</b></p>
+            <ul>
+                <li>IDE compatibility: extended support for build 253.* (e.g. Android Studio / IntelliJ AI-253.x)</li>
+            </ul>
             <p><b>v0.4.0</b></p>
             <ul>
                 <li><b>LoopWithoutYield (CANCEL_001)</b> — New inspection for loops in suspend functions without cooperation points; quick fixes to insert ensureActive(), currentCoroutineContext().ensureActive(), yield(), or delay(0)</li>
@@ -79,7 +83,7 @@ intellijPlatform {
         """.trimIndent()
         ideaVersion {
             sinceBuild = "243"
-            untilBuild = "252.*"
+            untilBuild = "253.*"
         }
         vendor {
             name = "Santiago Mattiauda"
@@ -90,7 +94,7 @@ intellijPlatform {
 
     pluginVerification {
         ides {
-            recommended()
+            create(org.jetbrains.intellij.platform.gradle.IntelliJPlatformType.IntellijIdeaCommunity, libs.versions.intellij.ide.get())
         }
     }
 
