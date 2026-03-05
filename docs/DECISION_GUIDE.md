@@ -314,6 +314,12 @@ at the start of the loop body.
 An uncaught `TimeoutCancellationException` propagates up and cancels the **parent scope**,
 potentially cancelling sibling coroutines.
 
+> **Enforced by tooling:** `CANCEL_006` is detected as a warning by the **Detekt** rule
+> `WithTimeoutScopeCancellation` and the **IntelliJ** inspection of the same name.
+> Both report `withTimeout` calls that are not wrapped in a `try/catch` covering
+> `TimeoutCancellationException` (or a parent type). A quick fix is available in the IDE
+> to replace `withTimeout` with `withTimeoutOrNull` in one click.
+
 ```kotlin
 // ❌ Anti-pattern: uncaught TimeoutCancellationException cancels parent scope
 scope.launch {
