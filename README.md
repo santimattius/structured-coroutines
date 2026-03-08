@@ -763,6 +763,7 @@ Each module contains its own detailed documentation:
 | **Sample (Detekt)**               | [sample-detekt/README.md](sample-detekt/README.md)                                                             | One example per Detekt rule; run `:sample-detekt:detekt` to validate    |
 | **Kotlin Coroutines Agent Skill** | [kotlin-coroutines-skill/README.md](kotlin-coroutines-skill/README.md)                                         | AI/agent skill for coroutine best practices                             |
 | **Best Practices**                | [docs/BEST_PRACTICES_COROUTINES.md](docs/BEST_PRACTICES_COROUTINES.md)                                         | Canonical guide to coroutine good/bad practices                         |
+| **Decision Guide**                | [docs/DECISION_GUIDE.md](docs/DECISION_GUIDE.md)                                                               | Quick-reference: launch vs async, scope, dispatcher, timeout, Flow      |
 | **Suppressing Rules**             | [docs/SUPPRESSING_RULES.md](docs/SUPPRESSING_RULES.md)                                                         | Unified suppression IDs (Compiler, Detekt, Lint, IntelliJ) by rule code |
 
 ### Internationalization (i18n)
