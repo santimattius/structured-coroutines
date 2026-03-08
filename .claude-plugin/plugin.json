@@ -1,6 +1,6 @@
 {
   "name": "kotlin-coroutines-skill",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Expert guidance for Kotlin Coroutines: structured concurrency, safe scopes, Dispatchers, cancellation, exception handling, and testing. Use when reviewing or writing Kotlin/Android async code. Includes a playbook and per-practice reference files.",
   "author": {
     "name": "Santiago Mattiauda"
