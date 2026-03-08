@@ -23,6 +23,7 @@ import io.github.santimattius.structured.intellij.inspections.RunBlockingInSuspe
 import io.github.santimattius.structured.intellij.inspections.ScopeReuseAfterCancelInspection
 import io.github.santimattius.structured.intellij.inspections.SuspendInFinallyInspection
 import io.github.santimattius.structured.intellij.inspections.UnstructuredLaunchInspection
+import io.github.santimattius.structured.intellij.inspections.WithTimeoutScopeCancellationInspection
 
 /**
  * Registry that maps each inspection class to its "What to do" action summary
@@ -100,6 +101,10 @@ object InspectionGuideRegistry {
         LifecycleAwareFlowCollectionInspection::class.java to GuideEntry(
             whatToDo = "Use repeatOnLifecycle(Lifecycle.State.STARTED) or flowWithLifecycle() so collection stops when the UI goes to background.",
             guideUrl = "$BASE_URL#82-lifecycle-aware-flow-collection-android"
+        ),
+        WithTimeoutScopeCancellationInspection::class.java to GuideEntry(
+            whatToDo = "Replace withTimeout with withTimeoutOrNull to get null on timeout without cancelling the parent scope. Or catch TimeoutCancellationException explicitly.",
+            guideUrl = "$BASE_URL#46-cancel_006--withtimeout-and-scope-cancellation"
         )
     )
 
