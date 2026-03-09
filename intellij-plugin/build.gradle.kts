@@ -14,7 +14,7 @@ plugins {
 }
 
 group = "io.github.santimattius"
-version = "0.5.0-ALPHA01"
+version = "0.5.0"
 
 repositories {
     mavenCentral()
@@ -51,6 +51,13 @@ intellijPlatform {
             </ul>
         """.trimIndent()
         changeNotes = """
+            <p><b>v0.5.0</b></p>
+            <ul>
+                <li><b>WithTimeoutScopeCancellation (CANCEL_006)</b> — New inspection: withTimeout without handling TimeoutCancellationException may cancel the parent scope; quick fix to replace with withTimeoutOrNull</li>
+                <li><b>Tool window — "What to do"</b> — Each finding now shows a 1–2 line action summary and a "See guide" link to the relevant section in BEST_PRACTICES_COROUTINES.md</li>
+                <li><b>async description (SCOPE_002)</b> — Inspection description extended with §5.3 EXCEPT_003 context: exceptions in async are stored in the Deferred and not sent to CoroutineExceptionHandler</li>
+                <li><b>Decision Guide</b> — New public guide (docs/DECISION_GUIDE.md) with decision tables and trees: launch vs async, which scope, viewModelScope vs lifecycleScope, runTest vs runBlocking, dispatchers, withTimeout, loops, cold vs hot Flow</li>
+            </ul>
             <p><b>v0.4.1</b></p>
             <ul>
                 <li>IDE compatibility: extended support for build 253.* (e.g. Android Studio / IntelliJ AI-253.x)</li>
