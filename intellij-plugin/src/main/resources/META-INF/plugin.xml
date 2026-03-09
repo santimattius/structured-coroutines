@@ -205,12 +205,36 @@
             groupPath="Kotlin"
             groupBundle="messages.StructuredCoroutinesBundle"
             groupKey="inspection.group.name"
+            shortName="LoopWithoutYield"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.loop.without.yield.display.name"
+            enabledByDefault="true"
+            level="WARNING"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.LoopWithoutYieldInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
             shortName="LifecycleAwareFlowCollection"
             bundle="messages.StructuredCoroutinesBundle"
             key="inspection.lifecycle.flow.collection.display.name"
             enabledByDefault="true"
             level="WARNING"
             implementationClass="io.github.santimattius.structured.intellij.inspections.LifecycleAwareFlowCollectionInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
+            shortName="WithTimeoutScopeCancellation"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.with.timeout.scope.cancellation.display.name"
+            enabledByDefault="true"
+            level="WARNING"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.WithTimeoutScopeCancellationInspection"/>
 
         <!-- Intentions -->
         <intentionAction>

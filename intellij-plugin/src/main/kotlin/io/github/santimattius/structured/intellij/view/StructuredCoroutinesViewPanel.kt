@@ -10,18 +10,22 @@
 package io.github.santimattius.structured.intellij.view
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.JBUI
+import com.intellij.ui.JBColor
 import io.github.santimattius.structured.intellij.StructuredCoroutinesBundle
 import org.jetbrains.kotlin.psi.KtFile
 import java.awt.BorderLayout
 import java.awt.Component
+import java.awt.FlowLayout
 import javax.swing.JButton
 import javax.swing.JPanel
 import javax.swing.JTable
@@ -31,7 +35,14 @@ import javax.swing.table.DefaultTableModel
 
 /**
  * Tool window panel that lists all Structured Coroutines inspection findings
- * for the current file. Refresh runs inspections and double-click navigates to the issue.
+ * for the current file. Each finding shows a short "What to do" action summary;
+ * selecting a row enables the "See guide" link that opens the corresponding
+ * section in BEST_PRACTICES_COROUTINES.md.
+ *
+ * Layout:
+ * - Toolbar: [Refresh] [See guide (disabled until selection)]
+ * - Table: Severity | Location | Inspection | What to do
+ * - Detail bar: expanded "What to do" text + clickable "See guide →" link
  */
 class StructuredCoroutinesViewPanel(private val project: Project) : JPanel(BorderLayout()) {
 
@@ -41,7 +52,7 @@ class StructuredCoroutinesViewPanel(private val project: Project) : JPanel(Borde
             StructuredCoroutinesBundle.message("view.column.severity"),
             StructuredCoroutinesBundle.message("view.column.location"),
             StructuredCoroutinesBundle.message("view.column.inspection"),
-            StructuredCoroutinesBundle.message("view.column.message")
+            StructuredCoroutinesBundle.message("view.column.what.to.do")
         ),
         0
     ) {
@@ -50,16 +61,30 @@ class StructuredCoroutinesViewPanel(private val project: Project) : JPanel(Borde
 
     private var currentFindings: List<StructuredCoroutinesInspectionRunner.Finding> = emptyList()
 
+    // Detail panel widgets
+    private val seeGuideButton: JButton
+    private val detailLabel: JBLabel
+
     init {
-        val toolbar = JPanel(BorderLayout()).apply {
-            border = JBUI.Borders.empty(4, 4)
+        // — Toolbar —
+        val toolbar = JPanel(FlowLayout(FlowLayout.LEFT, 4, 4)).apply {
+            border = JBUI.Borders.empty(0, 4)
         }
+
         val refreshButton = JButton(StructuredCoroutinesBundle.message("view.refresh")).apply {
             addActionListener { refresh() }
             icon = AllIcons.Actions.Refresh
         }
-        toolbar.add(refreshButton, BorderLayout.WEST)
+        toolbar.add(refreshButton)
 
+        seeGuideButton = JButton(StructuredCoroutinesBundle.message("view.see.guide")).apply {
+            icon = AllIcons.Ide.External_link_arrow
+            isEnabled = false
+            addActionListener { openGuideForSelected() }
+        }
+        toolbar.add(seeGuideButton)
+
+        // — Table —
         table = JBTable(tableModel).apply {
             setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
             rowSelectionAllowed = true
@@ -73,34 +98,60 @@ class StructuredCoroutinesViewPanel(private val project: Project) : JPanel(Borde
             }
             columnModel.getColumn(1).preferredWidth = 120
             columnModel.getColumn(2).preferredWidth = 180
-            columnModel.getColumn(3).preferredWidth = 400
+            columnModel.getColumn(3).preferredWidth = 440
+
             addMouseListener(object : java.awt.event.MouseAdapter() {
                 override fun mouseClicked(e: java.awt.event.MouseEvent) {
-                    if (e.clickCount == 2) {
-                        navigateToSelected()
-                    }
+                    if (e.clickCount == 2) navigateToSelected()
                 }
             })
+
+            selectionModel.addListSelectionListener {
+                onSelectionChanged()
+            }
         }
 
-        add(toolbar, BorderLayout.NORTH)
-        add(JBScrollPane(table), BorderLayout.CENTER)
+        // — Detail bar at the bottom —
+        // JBLabel inherits the correct foreground color from the active theme by default.
+        detailLabel = JBLabel("").apply {
+            border = JBUI.Borders.empty(4, 8)
+        }
 
-        border = JBUI.Borders.empty(8)
+        val detailPanel = JPanel(BorderLayout()).apply {
+            // JBColor.border() is a stable, theme-aware color for divider lines (available since 2020.x).
+            border = JBUI.Borders.customLine(JBColor.border(), 1, 0, 0, 0)
+            add(detailLabel, BorderLayout.CENTER)
+        }
+
+        // — Layout via JSplitPane —
+        val centerPanel = JPanel(BorderLayout())
+        centerPanel.add(JBScrollPane(table), BorderLayout.CENTER)
+        centerPanel.add(detailPanel, BorderLayout.SOUTH)
+
+        add(toolbar, BorderLayout.NORTH)
+        add(centerPanel, BorderLayout.CENTER)
+
+        border = JBUI.Borders.empty(4)
     }
 
     fun refresh() {
         val virtualFile = FileEditorManager.getInstance(project).selectedFiles.firstOrNull()
             ?: run {
                 tableModel.rowCount = 0
-                tableModel.addRow(arrayOf("", "", "", StructuredCoroutinesBundle.message("view.no.file.selected")))
+                tableModel.addRow(
+                    arrayOf("", "", "", StructuredCoroutinesBundle.message("view.no.file.selected"))
+                )
+                clearDetail()
                 return
             }
 
         val psiFile = PsiManager.getInstance(project).findFile(virtualFile)
         if (psiFile !is KtFile) {
             tableModel.rowCount = 0
-            tableModel.addRow(arrayOf("", "", "", StructuredCoroutinesBundle.message("view.not.kotlin.file")))
+            tableModel.addRow(
+                arrayOf("", "", "", StructuredCoroutinesBundle.message("view.not.kotlin.file"))
+            )
+            clearDetail()
             return
         }
 
@@ -110,19 +161,63 @@ class StructuredCoroutinesViewPanel(private val project: Project) : JPanel(Borde
     private fun runFindings(file: KtFile) {
         currentFindings = StructuredCoroutinesInspectionRunner.runOnFile(project, file)
         tableModel.rowCount = 0
+        clearDetail()
+
         if (currentFindings.isEmpty()) {
-            tableModel.addRow(arrayOf("", "", "", StructuredCoroutinesBundle.message("view.no.issues")))
+            tableModel.addRow(
+                arrayOf("", "", "", StructuredCoroutinesBundle.message("view.no.issues"))
+            )
             return
         }
+
         val doc = PsiDocumentManager.getInstance(project).getDocument(file)
         val vf = file.virtualFile ?: return
         for (finding in currentFindings) {
             val element = finding.descriptor.psiElement ?: continue
             val line = doc?.getLineNumber(element.textOffset)?.plus(1) ?: 0
             val location = "${vf.name}:$line"
-            val message = finding.descriptor.descriptionTemplate
-            tableModel.addRow(arrayOf(finding.severity, location, finding.inspectionName, message))
+            tableModel.addRow(
+                arrayOf(finding.severity, location, finding.inspectionName, finding.whatToDo)
+            )
         }
+    }
+
+    // — Selection handling —
+
+    private fun onSelectionChanged() {
+        val row = table.selectedRow
+        if (row < 0 || row >= currentFindings.size) {
+            clearDetail()
+            return
+        }
+        val finding = currentFindings[row]
+        val hasGuide = finding.guideUrl.isNotEmpty()
+        seeGuideButton.isEnabled = hasGuide
+        updateDetailLabel(finding)
+    }
+
+    private fun updateDetailLabel(finding: StructuredCoroutinesInspectionRunner.Finding) {
+        if (finding.whatToDo.isEmpty()) {
+            detailLabel.text = ""
+        } else {
+            val guideHtml = if (finding.guideUrl.isNotEmpty()) {
+                "&nbsp;&nbsp;<a href=\"${finding.guideUrl}\">${StructuredCoroutinesBundle.message("view.see.guide")} →</a>"
+            } else ""
+            detailLabel.text =
+                "<html><b>${StructuredCoroutinesBundle.message("view.detail.what.to.do")}:</b> ${finding.whatToDo}$guideHtml</html>"
+        }
+    }
+
+    private fun clearDetail() {
+        seeGuideButton.isEnabled = false
+        detailLabel.text = ""
+    }
+
+    private fun openGuideForSelected() {
+        val row = table.selectedRow
+        if (row < 0 || row >= currentFindings.size) return
+        val url = currentFindings[row].guideUrl
+        if (url.isNotEmpty()) BrowserUtil.browse(url)
     }
 
     private fun navigateToSelected() {
@@ -133,6 +228,8 @@ class StructuredCoroutinesViewPanel(private val project: Project) : JPanel(Borde
         val vf = element.containingFile?.virtualFile ?: return
         OpenFileDescriptor(project, vf, element.textOffset).navigate(true)
     }
+
+    // — Cell renderers —
 
     private inner class SeverityIconRenderer : DefaultTableCellRenderer() {
         override fun getTableCellRendererComponent(
@@ -145,10 +242,10 @@ class StructuredCoroutinesViewPanel(private val project: Project) : JPanel(Borde
         ): Component {
             val c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column)
             text = ""
-            when (value?.toString()) {
-                "ERROR" -> icon = AllIcons.General.Error
-                "WARNING" -> icon = AllIcons.General.Warning
-                else -> icon = null
+            icon = when (value?.toString()) {
+                "ERROR" -> AllIcons.General.Error
+                "WARNING" -> AllIcons.General.Warning
+                else -> null
             }
             return c
         }

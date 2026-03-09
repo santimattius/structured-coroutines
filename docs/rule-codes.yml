@@ -126,6 +126,17 @@ rules:
     intellij: [ScopeReuseAfterCancel]
     default_severity: warning
 
+  - code: CANCEL_006
+    section: "4.6"
+    title: "withTimeout and Scope Cancellation"
+    doc_anchor: "46-cancel_006--withtimeout-and-scope-cancellation"
+    compiler: []
+    detekt: [WithTimeoutScopeCancellation]
+    lint: []
+    intellij: [WithTimeoutScopeCancellation]
+    default_severity: warning
+    notes: "Heuristic — reports withTimeout not wrapped in try/catch covering TimeoutCancellationException."
+
   - code: EXCEPT_002
     section: "5.2"
     title: "Extending CancellationException for Domain Errors"
@@ -135,6 +146,17 @@ rules:
     lint: [CancellationExceptionSubclass]
     intellij: [CancellationExceptionSubclass]
     default_severity: error
+
+  - code: EXCEPT_003
+    section: "5.3"
+    title: "CoroutineExceptionHandler and launch vs async"
+    doc_anchor: "53-except_003--coroutineexceptionhandler-and-launch-vs-async"
+    compiler: []
+    detekt: []
+    lint: []
+    intellij: []
+    default_severity: warning
+    notes: "No dedicated tooling rule. Referenced in async-without-await inspection description (§5.3 link)."
 
   - code: TEST_001
     section: "6.1"

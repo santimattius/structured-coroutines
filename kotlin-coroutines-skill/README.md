@@ -1,11 +1,11 @@
 # Kotlin Coroutines Skill
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/skill%20version-1.0.0-blue.svg)]()
+[![Version](https://img.shields.io/badge/skill%20version-2.0.0-blue.svg)]()
 
 Expert guidance for any AI coding tool that supports Agent Skills or custom instructions — **safe structured concurrency**, performance, and Kotlin 1.9/2.0+ best practices for Coroutines.
 
-This skill is part of the [Structured Coroutines](https://github.com/santimattius/structured-coroutines) project. It encodes a single set of rules (scopes, dispatchers, exceptions, cancellation, testing, channels) so that Claude, ChatGPT, Cursor, or other agents give **consistent, correct** advice on Kotlin Coroutines.
+This skill is part of the [Structured Coroutines](https://github.com/santimattius/structured-coroutines) project. It encodes a single set of rules (scopes, dispatchers, exceptions, cancellation, testing, channels, Flow, lifecycle-aware collection) so that Claude, ChatGPT, Cursor, or other agents give **consistent, correct** advice on Kotlin Coroutines.
 
 Inspired by the [Swift Concurrency Agent Skill](https://github.com/AvdLee/Swift-Concurrency-Agent-Skill) model.
 
@@ -13,9 +13,9 @@ Inspired by the [Swift Concurrency Agent Skill](https://github.com/AvdLee/Swift-
 
 ## Why This Skill Exists
 
-- **Structured Concurrency is easy to get wrong:** `GlobalScope`, wrong Dispatchers, swallowed `CancellationException`, and misuse of `SupervisorJob` lead to leaks, ANRs, and flaky behavior. Many AI answers repeat these mistakes.
-- **One source of truth:** This skill encodes a consistent checklist so every AI tool gives the same aligned recommendations.
-- **Faster reviews and migrations:** Teams can point their AI at this skill and get code that follows the same rules — no GlobalScope, proper scopes, `withContext(IO)`, virtual-time tests, etc.
+- **Structured Concurrency is easy to get wrong:** `GlobalScope`, wrong Dispatchers, swallowed `CancellationException`, misuse of `SupervisorJob`, missing `withTimeoutOrNull`, or collecting Flow without lifecycle awareness lead to leaks, ANRs, and flaky behavior. Many AI answers repeat these mistakes.
+- **One source of truth:** This skill encodes a consistent checklist (32 practices) so every AI tool gives the same aligned recommendations.
+- **Faster reviews and migrations:** Teams can point their AI at this skill and get code that follows the same rules — no GlobalScope, main-safe suspend functions, injected dispatchers, virtual-time tests, lifecycle-aware Flow collection, and more.
 
 ---
 
@@ -25,33 +25,46 @@ Inspired by the [Swift Concurrency Agent Skill](https://github.com/AvdLee/Swift-
 |-------|-------------|
 | **SYSTEM_PROMPT.md** | Full system prompt: identity, strict rules, tone, and required output format (analysis → erroneous code → optimized code → explanation). |
 | **SKILL.md** | Playbook (triage): maps topic/error to the right reference file so the agent jumps to the relevant practice. |
-| **references/** | One markdown file per best practice (19 files). Each has Bad / Recommended / Why / Quick fix. |
+| **references/** | One markdown file per best practice (32 files). Each has Bad / Recommended / Why / Quick fix. |
 | **CONFIG.json** | Metadata: name, description, version, triggers, and reference index. |
 | **EXAMPLES_SUITE.kt** | Kotlin examples with intentional anti-patterns (scope leaks, exception handling, Dispatchers) for testing the agent. |
 
 ### References (per practice)
 
-| # | Topic | File |
+| § | Topic | File |
 |---|-------|------|
 | 1.1 | GlobalScope in production | `references/ref-1-1-global-scope.md` |
 | 1.2 | async without await | `references/ref-1-2-async-without-await.md` |
 | 1.3 | Breaking structured concurrency | `references/ref-1-3-breaking-structured-concurrency.md` |
+| 1.4 | awaitAll and exception propagation | `references/ref-1-4-awaitall-exception-propagation.md` |
 | 2.1 | launch on last line of coroutineScope | `references/ref-2-1-launch-last-line-coroutine-scope.md` |
 | 2.2 | runBlocking inside suspend | `references/ref-2-2-runblocking-in-suspend.md` |
 | 3.1 | Blocking code with wrong Dispatchers | `references/ref-3-1-blocking-wrong-dispatchers.md` |
-| 3.2 | Dispatchers.Unconfined | `references/ref-3-2-dispatchers-unconfined.md` |
-| 3.3 | Job()/SupervisorJob() as builder context | `references/ref-3-3-job-context-builders.md` |
+| 3.2 | Main-safe suspend functions | `references/ref-3-2-main-safe-suspend.md` |
+| 3.3 | Dispatchers.Unconfined | `references/ref-3-2-dispatchers-unconfined.md` |
+| 3.4 | Job()/SupervisorJob() as builder context | `references/ref-3-3-job-context-builders.md` |
+| 3.5 | Injecting Dispatchers for testability | `references/ref-3-5-inject-dispatchers.md` |
 | 4.1 | Cancellation in intensive loops | `references/ref-4-1-cancellation-intensive-loops.md` |
-| 4.2 | Swallowing CancellationException | `references/ref-4-2-swallowing-cancellation-exception.md` |
-| 4.3 | Suspend cleanup without NonCancellable | `references/ref-4-3-suspend-cleanup-noncancellable.md` |
-| 4.4 | Reusing cancelled scope | `references/ref-4-4-reusing-cancelled-scope.md` |
+| 4.2 | Periodic or repeating work | `references/ref-4-2-periodic-repeating-work.md` |
+| 4.3 | Swallowing CancellationException | `references/ref-4-2-swallowing-cancellation-exception.md` |
+| 4.4 | Suspend cleanup without NonCancellable | `references/ref-4-3-suspend-cleanup-noncancellable.md` |
+| 4.5 | Reusing cancelled scope | `references/ref-4-4-reusing-cancelled-scope.md` |
+| 4.6 | withTimeout and scope cancellation | `references/ref-4-6-withtimeout-scope-cancellation.md` |
+| 4.7 | withTimeout and resource cleanup | `references/ref-4-7-withtimeout-resource-cleanup.md` |
 | 5.1 | SupervisorJob in single builder | `references/ref-5-1-supervisor-job-single-builder.md` |
 | 5.2 | CancellationException for domain errors | `references/ref-5-2-cancellation-exception-domain-errors.md` |
+| 5.3 | CoroutineExceptionHandler: launch vs async | `references/ref-5-3-exception-handler-async.md` |
 | 6.1 | Slow tests with real delays | `references/ref-6-1-slow-tests-real-delays.md` |
 | 6.2 | Uncontrolled fire-and-forget in tests | `references/ref-6-2-uncontrolled-fire-and-forget-tests.md` |
+| 6.3 | Replacing Dispatchers.Main in tests | `references/ref-6-3-setmain-resetmain.md` |
 | 7.1 | Channel not closed | `references/ref-7-1-channel-close.md` |
 | 7.2 | consumeEach with multiple consumers | `references/ref-7-2-consume-each-multiple-consumers.md` |
-| 8 | Architecture patterns | `references/ref-8-architecture-patterns.md` |
+| 8.1 | Architecture patterns | `references/ref-8-architecture-patterns.md` |
+| 8.2 | Lifecycle-aware Flow collection (Android) | `references/ref-8-2-lifecycle-aware-flow.md` |
+| 9.1 | Blocking code in flow { } builder | `references/ref-9-1-flow-blocking-call.md` |
+| 9.2 | Cold vs hot flows (StateFlow / SharedFlow) | `references/ref-9-2-cold-vs-hot-flows.md` |
+| 9.3 | collectLatest cancels previous work | `references/ref-9-3-collect-latest.md` |
+| 9.4 | SharedFlow configuration | `references/ref-9-4-shared-flow-configuration.md` |
 
 ---
 

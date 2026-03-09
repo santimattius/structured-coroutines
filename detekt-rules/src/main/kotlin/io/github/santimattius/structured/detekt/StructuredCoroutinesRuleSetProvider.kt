@@ -27,6 +27,7 @@ import io.github.santimattius.structured.detekt.rules.RunBlockingWithDelayInTest
 import io.github.santimattius.structured.detekt.rules.ScopeReuseAfterCancelRule
 import io.github.santimattius.structured.detekt.rules.SuspendInFinallyRule
 import io.github.santimattius.structured.detekt.rules.UnusedDeferredRule
+import io.github.santimattius.structured.detekt.rules.WithTimeoutScopeCancellationRule
 import io.gitlab.arturbosch.detekt.api.Config
 import io.gitlab.arturbosch.detekt.api.RuleSet
 import io.gitlab.arturbosch.detekt.api.RuleSetProvider
@@ -136,6 +137,7 @@ class StructuredCoroutinesRuleSetProvider : RuleSetProvider {
             ChannelNotClosedRule(config),
             ConsumeEachMultipleConsumersRule(config),
             FlowBlockingCallRule(config),
+            WithTimeoutScopeCancellationRule(config),
         )
     )
 }
