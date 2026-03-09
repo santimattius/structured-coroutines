@@ -26,10 +26,21 @@ import org.jetbrains.kotlin.psi.KtFile
  */
 object StructuredCoroutinesInspectionRunner {
 
+    /**
+     * A single inspection finding for a file.
+     *
+     * @property inspectionName Display name of the inspection that fired.
+     * @property descriptor IntelliJ problem descriptor pointing to the PSI element.
+     * @property severity "ERROR" or "WARNING", derived from the inspection's default level.
+     * @property whatToDo Short actionable summary (1–2 lines) shown in the "What to do" column.
+     * @property guideUrl URL to the relevant section in BEST_PRACTICES_COROUTINES.md.
+     */
     data class Finding(
         val inspectionName: String,
         val descriptor: ProblemDescriptor,
-        val severity: String
+        val severity: String,
+        val whatToDo: String,
+        val guideUrl: String
     )
 
     private val inspectionClasses: Array<Class<out LocalInspectionTool>> by lazy {
@@ -51,8 +62,11 @@ object StructuredCoroutinesInspectionRunner {
             file.accept(treeVisitor)
             val name = inspection.displayName
             val severity = if (inspection.defaultLevel.name == "ERROR") "ERROR" else "WARNING"
+            val guide = InspectionGuideRegistry.getGuide(inspectionClass)
+            val whatToDo = guide?.whatToDo.orEmpty()
+            val guideUrl = guide?.guideUrl.orEmpty()
             for (descriptor in holder.collectedProblems) {
-                findings.add(Finding(name, descriptor, severity))
+                findings.add(Finding(name, descriptor, severity, whatToDo, guideUrl))
             }
         }
 

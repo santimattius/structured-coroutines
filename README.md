@@ -18,9 +18,9 @@ analysis.
 |-------------------------------|---------------------------------------------------------|-------------------------------------------------------------------------------------------------------------|
 | Compiler Plugin               | ✅ Complete (12 rules)                                   | [gradle-plugin/README.md](gradle-plugin/README.md)                                                          |
 | Gradle Plugin                 | ✅ Complete                                              | [gradle-plugin/README.md](gradle-plugin/README.md)                                                          |
-| Detekt Rules                  | ✅ Complete (18 rules)                                   | [detekt-rules/README.md](detekt-rules/README.md)                                                            |
+| Detekt Rules                  | ✅ Complete (19 rules)                                   | [detekt-rules/README.md](detekt-rules/README.md)                                                            |
 | Android Lint                  | ✅ Complete (21 rules)                                   | [lint-rules/README.md](lint-rules/README.md)                                                                |
-| IntelliJ Plugin               | ✅ Complete (13 inspections, 12 quick fixes, 6 intentions, tool window) | [intellij-plugin/README.md](intellij-plugin/README.md)                                                      |
+| IntelliJ Plugin               | ✅ Complete (15 inspections, 13 quick fixes, 6 intentions, tool window) | [intellij-plugin/README.md](intellij-plugin/README.md)                                                      |
 | Annotations                   | ✅ Complete                                              | [annotations/README.md](annotations/README.md)                                                              |
 | Sample                        | ✅ Compilation examples per rule                         | [compilation/README](sample/src/main/kotlin/io/github/santimattius/structured/sample/compilation/README.md) |
 | Sample (Detekt)               | ✅ Detekt rule validation (19 examples)                  | [sample-detekt/README.md](sample-detekt/README.md)                                                          |
@@ -77,7 +77,7 @@ This toolkit enforces structured concurrency best practices through:
 - 📂 **Compilation samples** - one example per compiler rule in the sample project
 - 📂 **Detekt validation samples** - `sample-detekt` module with one example per Detekt rule (
   `./gradlew :sample-detekt:detekt`)
-- 🤖 **Kotlin Coroutines Agent Skill** - consistent AI/agent-driven guidance for coroutine code
+- 🤖 **Kotlin Coroutines Agent Skill** - consistent AI/agent-driven guidance for coroutine code; use it as a **decision resource** to answer "which scope?", "launch vs async?", "withTimeout or withTimeoutOrNull?", "StateFlow or SharedFlow?"
 
 ---
 
@@ -131,8 +131,9 @@ This toolkit enforces structured concurrency best practices through:
 | `ChannelNotClosed`           | Detects manual `Channel()` without `close()` (CHANNEL_001) |
 | `ConsumeEachMultipleConsumers` | Detects same channel with `consumeEach` from multiple coroutines (CHANNEL_002) |
 | `FlowBlockingCall`           | Detects blocking calls inside `flow { }` (FLOW_001)  |
+| `WithTimeoutScopeCancellation` | Detects `withTimeout` without `TimeoutCancellationException` handling (CANCEL_006) |
 
-**Total: 18 Detekt Rules** (10 from Compiler Plugin + 8 Detekt-only)
+**Total: 19 Detekt Rules** (10 from Compiler Plugin + 9 Detekt-only)
 
 ### Android Lint Rules (Static Analysis)
 
@@ -705,10 +706,10 @@ structured-coroutines/
 
 **Notes:**
 
-- Detekt Rules: 10 from Compiler Plugin + 8 Detekt-only = **18 rules total**
+- Detekt Rules: 10 from Compiler Plugin + 9 Detekt-only = **19 rules total**
 - Android Lint Rules: 9 from Compiler Plugin + 4 Android-specific + 8 additional = **21 rules total**
 - Android Lint Rules include **quick fixes** for better developer experience
-- IDE Plugin: **13 inspections** + **12 quick fixes** + **6 intentions** + **gutter icons** for real-time feedback
+- IDE Plugin: **15 inspections** + **13 quick fixes** + **6 intentions** + **gutter icons** for real-time feedback
 
 ---
 
@@ -761,8 +762,9 @@ Each module contains its own detailed documentation:
 | **Compiler**                      | [compiler/README.md](compiler/README.md)                                                                       | K2/FIR checker implementation details                                   |
 | **Sample (compilation)**          | [compilation/README.md](sample/src/main/kotlin/io/github/santimattius/structured/sample/compilation/README.md) | One example per compiler rule (errors and warnings)                     |
 | **Sample (Detekt)**               | [sample-detekt/README.md](sample-detekt/README.md)                                                             | One example per Detekt rule; run `:sample-detekt:detekt` to validate    |
-| **Kotlin Coroutines Agent Skill** | [kotlin-coroutines-skill/README.md](kotlin-coroutines-skill/README.md)                                         | AI/agent skill for coroutine best practices                             |
+| **Kotlin Coroutines Agent Skill** | [kotlin-coroutines-skill/README.md](kotlin-coroutines-skill/README.md)                                         | AI/agent skill and decision resource: 32 practices, strict rules, triage playbook (v2.0.0) |
 | **Best Practices**                | [docs/BEST_PRACTICES_COROUTINES.md](docs/BEST_PRACTICES_COROUTINES.md)                                         | Canonical guide to coroutine good/bad practices                         |
+| **Decision Guide**                | [docs/DECISION_GUIDE.md](docs/DECISION_GUIDE.md)                                                               | Quick-reference: launch vs async, scope, dispatcher, timeout, Flow      |
 | **Suppressing Rules**             | [docs/SUPPRESSING_RULES.md](docs/SUPPRESSING_RULES.md)                                                         | Unified suppression IDs (Compiler, Detekt, Lint, IntelliJ) by rule code |
 
 ### Internationalization (i18n)
