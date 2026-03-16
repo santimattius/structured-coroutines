@@ -9,6 +9,7 @@
  */
 package io.github.santimattius.structured.gradle
 
+import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 
@@ -135,6 +136,26 @@ interface StructuredCoroutinesExtension {
      * All compilations of excluded projects will not run the plugin.
      */
     val excludeProjects: ListProperty<String>
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Report configuration
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Output directory for the [structuredCoroutinesReport] task.
+     * Default: `build/reports/structured-coroutines/`
+     */
+    val reportOutputDir: DirectoryProperty
+
+    /**
+     * Output format for the [structuredCoroutinesReport] task.
+     * Accepted values: `"html"`, `"text"`, or `"all"` (default).
+     */
+    val reportFormat: Property<String>
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Helper functions
+    // ─────────────────────────────────────────────────────────────────────────
 
     /**
      * Excludes the given source set (compilation) names from the plugin.
