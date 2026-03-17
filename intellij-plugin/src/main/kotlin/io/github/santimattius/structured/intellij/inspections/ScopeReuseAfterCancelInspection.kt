@@ -13,6 +13,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import io.github.santimattius.structured.intellij.StructuredCoroutinesBundle
 import io.github.santimattius.structured.intellij.inspections.base.CoroutineInspectionBase
 import io.github.santimattius.structured.intellij.quickfixes.ReplaceCancelWithCancelChildrenQuickFix
+import io.github.santimattius.structured.intellij.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.intellij.utils.ScopeAnalyzer
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtVisitorVoid
@@ -49,6 +50,8 @@ class ScopeReuseAfterCancelInspection : CoroutineInspectionBase() {
         return object : KtVisitorVoid() {
             override fun visitNamedFunction(function: KtNamedFunction) {
                 super.visitNamedFunction(function)
+
+                if (!CoroutinesImportFilter.fileImportsCoroutines(function.containingKtFile)) return
 
                 // Analyze the function for scope reuse after cancel violations
                 val violations = ScopeAnalyzer.findScopeReuseAfterCancel(function)
