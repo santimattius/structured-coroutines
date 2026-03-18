@@ -14,15 +14,29 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.ui.content.ContentFactory
+import java.util.WeakHashMap
 
 /**
- * Creates the "Structured Coroutines" tool window content that shows
- * all inspection findings for the current file.
+ * Creates the "Structured Coroutines" tool window content.
+ *
+ * Holds a [WeakHashMap] of project → panel so that [ScanProjectAction]
+ * can trigger a project-wide scan from outside the tool window hierarchy
+ * without retaining a strong reference that would prevent GC.
  */
 class StructuredCoroutinesToolWindowFactory : ToolWindowFactory, DumbAware {
 
+    companion object {
+        const val TOOL_WINDOW_ID = "StructuredCoroutines"
+
+        private val panels: WeakHashMap<Project, StructuredCoroutinesViewPanel> = WeakHashMap()
+
+        /** Returns the panel for the given [project], or null if the tool window was never opened. */
+        fun getPanel(project: Project): StructuredCoroutinesViewPanel? = panels[project]
+    }
+
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         val panel = StructuredCoroutinesViewPanel(project)
+        panels[project] = panel
         val content = ContentFactory.getInstance().createContent(panel, "", false)
         toolWindow.contentManager.addContent(content)
     }
