@@ -14,7 +14,7 @@ plugins {
 }
 
 group = "io.github.santimattius"
-version = "0.5.0"
+version = "0.6.0"
 
 repositories {
     mavenCentral()
@@ -51,6 +51,11 @@ intellijPlatform {
             </ul>
         """.trimIndent()
         changeNotes = """
+            <p><b>v0.6.0</b></p>
+            <ul>
+                <li><b>structuredCoroutinesReport task</b> — New Gradle task that generates an HTML and text report of the active plugin configuration (rule codes, severities, exclusions)</li>
+                <li><b>CI integration guide</b> — New internal guide (docs-local/CI_INTEGRATION.md) with full GitHub Actions workflow, SARIF upload, artifact archiving, and PR comment automation</li>
+            </ul>
             <p><b>v0.5.0</b></p>
             <ul>
                 <li><b>WithTimeoutScopeCancellation (CANCEL_006)</b> — New inspection: withTimeout without handling TimeoutCancellationException may cancel the parent scope; quick fix to replace with withTimeoutOrNull</li>

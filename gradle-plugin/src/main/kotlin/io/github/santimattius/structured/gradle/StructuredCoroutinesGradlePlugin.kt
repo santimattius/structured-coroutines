@@ -26,11 +26,11 @@ class StructuredCoroutinesGradlePlugin : KotlinCompilerPluginSupportPlugin {
     companion object {
         const val PLUGIN_ID = "io.github.santimattius.structured-coroutines"
         const val COMPILER_PLUGIN_ID = "io.github.santimattius.structured-coroutines"
-        
-        // These should match the published artifact coordinates
+
+        // These must match the published artifact coordinates
         const val GROUP_ID = "io.github.santimattius"
         const val ARTIFACT_ID = "structured-coroutines-compiler"
-        const val VERSION = "0.2.0"
+        const val VERSION = "0.6.0"
     }
 
     override fun apply(target: Project) {
@@ -39,7 +39,7 @@ class StructuredCoroutinesGradlePlugin : KotlinCompilerPluginSupportPlugin {
             "structuredCoroutines",
             StructuredCoroutinesExtension::class.java
         )
-        
+
         // Set default severities
         extension.globalScopeUsage.convention("error")
         extension.inlineCoroutineScope.convention("error")
@@ -55,6 +55,40 @@ class StructuredCoroutinesGradlePlugin : KotlinCompilerPluginSupportPlugin {
         extension.loopWithoutYield.convention("warning")
         extension.excludeSourceSets.convention(emptyList())
         extension.excludeProjects.convention(emptyList())
+
+        // Report defaults
+        extension.reportOutputDir.convention(
+            target.layout.buildDirectory.dir("reports/structured-coroutines")
+        )
+        extension.reportFormat.convention("all")
+
+        // Register the report task
+        target.tasks.register("structuredCoroutinesReport", StructuredCoroutinesReportTask::class.java) { task ->
+            task.group = "reporting"
+            task.description = "Generates an HTML/text report of the Structured Coroutines plugin configuration"
+
+            task.projectName.set(target.name)
+            task.pluginVersion.set(VERSION)
+
+            task.globalScopeUsage.set(extension.globalScopeUsage)
+            task.inlineCoroutineScope.set(extension.inlineCoroutineScope)
+            task.unstructuredLaunch.set(extension.unstructuredLaunch)
+            task.runBlockingInSuspend.set(extension.runBlockingInSuspend)
+            task.jobInBuilderContext.set(extension.jobInBuilderContext)
+            task.dispatchersUnconfined.set(extension.dispatchersUnconfined)
+            task.cancellationExceptionSubclass.set(extension.cancellationExceptionSubclass)
+            task.suspendInFinally.set(extension.suspendInFinally)
+            task.cancellationExceptionSwallowed.set(extension.cancellationExceptionSwallowed)
+            task.unusedDeferred.set(extension.unusedDeferred)
+            task.redundantLaunchInCoroutineScope.set(extension.redundantLaunchInCoroutineScope)
+            task.loopWithoutYield.set(extension.loopWithoutYield)
+
+            task.excludedSourceSets.set(extension.excludeSourceSets)
+            task.excludedProjects.set(extension.excludeProjects)
+
+            task.reportFormat.set(extension.reportFormat)
+            task.outputDir.set(extension.reportOutputDir)
+        }
     }
 
     override fun isApplicable(kotlinCompilation: KotlinCompilation<*>): Boolean {
