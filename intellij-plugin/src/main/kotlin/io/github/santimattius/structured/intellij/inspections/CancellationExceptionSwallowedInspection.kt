@@ -13,6 +13,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import io.github.santimattius.structured.intellij.StructuredCoroutinesBundle
 import io.github.santimattius.structured.intellij.inspections.base.CoroutineInspectionBase
 import io.github.santimattius.structured.intellij.quickfixes.AddCancellationExceptionCatchQuickFix
+import io.github.santimattius.structured.intellij.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.intellij.utils.CoroutinePsiUtils
 import org.jetbrains.kotlin.psi.KtCatchClause
 import org.jetbrains.kotlin.psi.KtTryExpression
@@ -58,6 +59,7 @@ class CancellationExceptionSwallowedInspection : CoroutineInspectionBase() {
         return object : KtVisitorVoid() {
             override fun visitCatchSection(catchClause: KtCatchClause) {
                 super.visitCatchSection(catchClause)
+                if (!CoroutinesImportFilter.fileImportsCoroutines(catchClause.containingKtFile)) return
 
                 // Only check in suspend contexts
                 if (!CoroutinePsiUtils.isInSuspendFunction(catchClause) &&

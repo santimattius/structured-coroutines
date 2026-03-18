@@ -9,6 +9,7 @@
  */
 package io.github.santimattius.structured.detekt.rules
 
+import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
 import io.gitlab.arturbosch.detekt.api.CodeSmell
 import io.gitlab.arturbosch.detekt.api.Config
@@ -56,6 +57,7 @@ class RedundantLaunchInCoroutineScopeRule(config: Config = Config.empty) : Rule(
 
     override fun visitCallExpression(expression: KtCallExpression) {
         super.visitCallExpression(expression)
+        if (!CoroutinesImportFilter.elementIsInCoroutinesFile(expression)) return
         val calleeName = expression.calleeExpression?.text ?: return
         if (calleeName !in scopeNames) return
 

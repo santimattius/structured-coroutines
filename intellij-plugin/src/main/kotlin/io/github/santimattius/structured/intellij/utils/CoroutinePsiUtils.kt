@@ -103,8 +103,10 @@ object CoroutinePsiUtils {
 
     /**
      * Checks if a KtCallExpression is a GlobalScope call.
+     * Guards against files that do not import kotlinx.coroutines to avoid false positives.
      */
     fun isGlobalScopeCall(call: KtCallExpression): Boolean {
+        if (!CoroutinesImportFilter.callIsInCoroutinesFile(call)) return false
         val parent = call.parent as? KtDotQualifiedExpression ?: return false
         val receiver = parent.receiverExpression
         return isGlobalScope(receiver) && call.calleeExpression?.text in COROUTINE_BUILDERS
@@ -170,15 +172,19 @@ object CoroutinePsiUtils {
 
     /**
      * Checks if a KtCallExpression is a runBlocking call.
+     * Guards against files that do not import kotlinx.coroutines.
      */
     fun isRunBlockingCall(call: KtCallExpression): Boolean {
+        if (!CoroutinesImportFilter.callIsInCoroutinesFile(call)) return false
         return call.calleeExpression?.text == "runBlocking"
     }
 
     /**
      * Checks if a KtCallExpression is a coroutine builder call.
+     * Guards against files that do not import kotlinx.coroutines.
      */
     fun isCoroutineBuilderCall(call: KtCallExpression): Boolean {
+        if (!CoroutinesImportFilter.callIsInCoroutinesFile(call)) return false
         return call.calleeExpression?.text in COROUTINE_BUILDERS
     }
 
@@ -410,14 +416,28 @@ object CoroutinePsiUtils {
 
     /**
      * Checks if the expression is a suspend function call.
+     *
+     * Uses PSI resolve as the primary strategy: resolves the callee reference to its
+     * declaration and checks for the `suspend` modifier. Falls back to a conservative
+     * COOPERATION_POINTS name check if resolution is unavailable.
+     * No heuristic name-prefix/suffix matching — avoids false positives on
+     * user-defined functions (e.g. loadAsync(), fetchData()).
      */
     fun isSuspendCall(call: KtCallExpression): Boolean {
-        // This is a heuristic check - full resolution requires resolve context
+        // Fast path: cooperation points are always from kotlinx.coroutines
         val calleeName = call.calleeExpression?.text ?: return false
-        return calleeName in COOPERATION_POINTS ||
-               calleeName.startsWith("suspend") ||
-               calleeName.endsWith("Async") ||
-               calleeName.endsWith("await")
+        if (calleeName in COOPERATION_POINTS) return true
+
+        // PSI resolve: check if the resolved declaration is a suspend function
+        val resolved = call.calleeExpression?.references
+            ?.firstOrNull()
+            ?.resolve()
+        if (resolved is KtNamedFunction) {
+            return resolved.hasModifier(KtTokens.SUSPEND_KEYWORD)
+        }
+
+        // Conservative fallback: do not guess
+        return false
     }
 
     /**

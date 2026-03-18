@@ -9,6 +9,7 @@
  */
 package io.github.santimattius.structured.detekt.rules
 
+import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
 import io.gitlab.arturbosch.detekt.api.CodeSmell
 import io.gitlab.arturbosch.detekt.api.Config
@@ -56,6 +57,7 @@ class SuspendInFinallyRule(config: Config = Config.empty) : Rule(config) {
 
     override fun visitTryExpression(expression: KtTryExpression) {
         super.visitTryExpression(expression)
+        if (!CoroutinesImportFilter.elementIsInCoroutinesFile(expression)) return
         val finallySection = expression.finallyBlock ?: return
         val body = finallySection.finalExpression ?: return
 

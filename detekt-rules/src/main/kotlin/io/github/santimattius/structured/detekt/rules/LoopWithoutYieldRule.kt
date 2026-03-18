@@ -10,6 +10,7 @@
 package io.github.santimattius.structured.detekt.rules
 
 import io.github.santimattius.structured.detekt.utils.CoroutineDetektUtils
+import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
 import io.gitlab.arturbosch.detekt.api.CodeSmell
 import io.gitlab.arturbosch.detekt.api.Config
@@ -102,11 +103,13 @@ class LoopWithoutYieldRule(config: Config = Config.empty) : Rule(config) {
 
     override fun visitForExpression(expression: KtForExpression) {
         super.visitForExpression(expression)
+        if (!CoroutinesImportFilter.elementIsInCoroutinesFile(expression)) return
         checkLoop(expression)
     }
 
     override fun visitWhileExpression(expression: KtWhileExpression) {
         super.visitWhileExpression(expression)
+        if (!CoroutinesImportFilter.elementIsInCoroutinesFile(expression)) return
         checkLoop(expression)
     }
 
