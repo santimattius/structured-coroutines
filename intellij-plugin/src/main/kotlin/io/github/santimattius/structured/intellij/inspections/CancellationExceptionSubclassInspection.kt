@@ -13,6 +13,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import io.github.santimattius.structured.intellij.StructuredCoroutinesBundle
 import io.github.santimattius.structured.intellij.inspections.base.CoroutineInspectionBase
 import io.github.santimattius.structured.intellij.quickfixes.ChangeSuperclassToExceptionQuickFix
+import io.github.santimattius.structured.intellij.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.intellij.utils.CoroutinePsiUtils
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -41,6 +42,7 @@ class CancellationExceptionSubclassInspection : CoroutineInspectionBase() {
         return object : KtVisitorVoid() {
             override fun visitClassOrObject(classOrObject: KtClassOrObject) {
                 super.visitClassOrObject(classOrObject)
+                if (!CoroutinesImportFilter.fileImportsCoroutines(classOrObject.containingKtFile)) return
                 if (classOrObject !is KtClass) return
                 if (!CoroutinePsiUtils.extendsCancellationException(classOrObject)) return
                 val nameIdentifier = classOrObject.nameIdentifier ?: classOrObject

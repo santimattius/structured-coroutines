@@ -9,6 +9,7 @@
  */
 package io.github.santimattius.structured.detekt.rules
 
+import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
 import io.gitlab.arturbosch.detekt.api.CodeSmell
 import io.gitlab.arturbosch.detekt.api.Config
@@ -90,6 +91,7 @@ class DispatchersUnconfinedRule(config: Config = Config.empty) : Rule(config) {
 
     override fun visitDotQualifiedExpression(expression: KtDotQualifiedExpression) {
         super.visitDotQualifiedExpression(expression)
+        if (!CoroutinesImportFilter.elementIsInCoroutinesFile(expression)) return
 
         val receiver = expression.receiverExpression.text
         val selector = expression.selectorExpression?.text

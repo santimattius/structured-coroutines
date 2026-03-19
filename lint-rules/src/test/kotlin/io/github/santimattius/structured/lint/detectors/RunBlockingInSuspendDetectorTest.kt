@@ -39,7 +39,7 @@ class RunBlockingInSuspendDetectorTest {
             .allowMissingSdk()
             .run()
             .expect("""
-                src/test/test.kt:6: Error: Remove runBlocking wrapper. Inside suspend functions, use suspend calls directly or withContext(Dispatchers.IO) for blocking operations [RunBlockingInSuspend]
+                src/test/test.kt:6: Error: [RUNBLOCK_002] Remove runBlocking. Use suspend calls directly or withContext(Dispatchers.IO) for blocking work. See: https://github.com/santimattius/structured-coroutines/blob/main/docs/BEST_PRACTICES_COROUTINES.md#22-runblock_002--using-runblocking-inside-suspend-functions [RunBlockingInSuspend]
                     runBlocking {
                     ^
                 1 errors, 0 warnings

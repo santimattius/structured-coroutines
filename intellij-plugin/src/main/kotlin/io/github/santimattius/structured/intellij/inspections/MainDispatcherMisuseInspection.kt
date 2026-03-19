@@ -13,6 +13,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import io.github.santimattius.structured.intellij.StructuredCoroutinesBundle
 import io.github.santimattius.structured.intellij.inspections.base.CoroutineInspectionBase
 import io.github.santimattius.structured.intellij.quickfixes.WrapWithIODispatcherQuickFix
+import io.github.santimattius.structured.intellij.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.intellij.utils.CoroutinePsiUtils
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
@@ -51,6 +52,7 @@ class MainDispatcherMisuseInspection : CoroutineInspectionBase() {
         return object : KtVisitorVoid() {
             override fun visitCallExpression(expression: KtCallExpression) {
                 super.visitCallExpression(expression)
+                if (!CoroutinesImportFilter.callIsInCoroutinesFile(expression)) return
 
                 // Check if this is a blocking call
                 if (!isBlockingCall(expression)) return

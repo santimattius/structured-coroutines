@@ -13,6 +13,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import io.github.santimattius.structured.intellij.StructuredCoroutinesBundle
 import io.github.santimattius.structured.intellij.inspections.base.CoroutineInspectionBase
 import io.github.santimattius.structured.intellij.quickfixes.WrapWithNonCancellableQuickFix
+import io.github.santimattius.structured.intellij.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.intellij.utils.CoroutinePsiUtils
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
@@ -54,6 +55,7 @@ class SuspendInFinallyInspection : CoroutineInspectionBase() {
         return object : KtVisitorVoid() {
             override fun visitCallExpression(expression: KtCallExpression) {
                 super.visitCallExpression(expression)
+                if (!CoroutinesImportFilter.callIsInCoroutinesFile(expression)) return
 
                 // Only check if we're inside a suspend context
                 if (!CoroutinePsiUtils.isInsideCoroutineContext(expression) &&
@@ -80,25 +82,9 @@ class SuspendInFinallyInspection : CoroutineInspectionBase() {
     }
 
     private fun isPotentiallySuspendCall(call: KtCallExpression): Boolean {
-        val calleeName = call.calleeExpression?.text ?: return false
-
-        // Skip standard non-suspend calls
-        val nonSuspendCalls = setOf(
-            "println", "print", "toString", "hashCode", "equals",
-            "let", "run", "with", "apply", "also",
-            "listOf", "mapOf", "setOf", "arrayOf"
-        )
-        if (calleeName in nonSuspendCalls) return false
-
-        // Check for known suspend patterns
-        if (CoroutinePsiUtils.isSuspendCall(call)) return true
-
-        // Heuristic: methods that look like async operations
-        val suspectPatterns = listOf(
-            "save", "load", "fetch", "send", "receive", "read", "write",
-            "update", "delete", "insert", "query", "execute", "call",
-            "request", "download", "upload", "sync"
-        )
-        return suspectPatterns.any { calleeName.contains(it, ignoreCase = true) }
+        // Delegate entirely to isSuspendCall() which uses PSI resolve + COOPERATION_POINTS.
+        // The previous heuristic (suspectPatterns: save, load, fetch, etc.) produced
+        // false positives on any regular function whose name contained those substrings.
+        return CoroutinePsiUtils.isSuspendCall(call)
     }
 }

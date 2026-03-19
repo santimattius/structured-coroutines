@@ -21,6 +21,8 @@ class LoopWithoutYieldRuleTest {
     @Test
     fun `reports for loop without cooperation point in suspend function`() {
         val code = """
+            import kotlinx.coroutines.*
+
             suspend fun processItems(items: List<Int>) {
                 for (item in items) {
                     println(item * 2)  // No yield, ensureActive, or delay
@@ -38,6 +40,8 @@ class LoopWithoutYieldRuleTest {
     @Test
     fun `reports while loop without cooperation point in suspend function`() {
         val code = """
+            import kotlinx.coroutines.*
+
             suspend fun processItems() {
                 var i = 0
                 while (i < 100) {

@@ -14,6 +14,7 @@ import io.github.santimattius.structured.intellij.StructuredCoroutinesBundle
 import io.github.santimattius.structured.intellij.inspections.base.CoroutineInspectionBase
 import io.github.santimattius.structured.intellij.quickfixes.AddAwaitQuickFix
 import io.github.santimattius.structured.intellij.quickfixes.ConvertAsyncToLaunchQuickFix
+import io.github.santimattius.structured.intellij.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.intellij.utils.ScopeAnalyzer
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
@@ -51,6 +52,8 @@ class AsyncWithoutAwaitInspection : CoroutineInspectionBase() {
         return object : KtVisitorVoid() {
             override fun visitCallExpression(expression: KtCallExpression) {
                 super.visitCallExpression(expression)
+
+                if (!CoroutinesImportFilter.callIsInCoroutinesFile(expression)) return
 
                 val calleeName = expression.calleeExpression?.text ?: return
                 if (calleeName != "async") return

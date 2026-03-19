@@ -9,6 +9,7 @@
  */
 package io.github.santimattius.structured.detekt.rules
 
+import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
 import io.gitlab.arturbosch.detekt.api.CodeSmell
 import io.gitlab.arturbosch.detekt.api.Config
@@ -79,6 +80,7 @@ class WithTimeoutScopeCancellationRule(config: Config = Config.empty) : Rule(con
 
     override fun visitCallExpression(expression: KtCallExpression) {
         super.visitCallExpression(expression)
+        if (!CoroutinesImportFilter.elementIsInCoroutinesFile(expression)) return
 
         val callee = expression.calleeExpression?.text ?: return
         if (callee != "withTimeout") return

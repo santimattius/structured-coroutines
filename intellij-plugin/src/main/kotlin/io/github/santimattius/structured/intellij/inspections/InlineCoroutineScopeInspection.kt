@@ -14,6 +14,7 @@ import com.intellij.psi.PsiElement
 import io.github.santimattius.structured.intellij.StructuredCoroutinesBundle
 import io.github.santimattius.structured.intellij.inspections.base.CoroutineInspectionBase
 import io.github.santimattius.structured.intellij.quickfixes.ReplaceGlobalScopeQuickFix
+import io.github.santimattius.structured.intellij.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.intellij.utils.CoroutinePsiUtils
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
@@ -48,6 +49,8 @@ class InlineCoroutineScopeInspection : CoroutineInspectionBase() {
         return object : KtVisitorVoid() {
             override fun visitCallExpression(expression: KtCallExpression) {
                 super.visitCallExpression(expression)
+
+                if (!CoroutinesImportFilter.callIsInCoroutinesFile(expression)) return
 
                 if (CoroutinePsiUtils.isInlineCoroutineScopeCreation(expression)) {
                     val builderName = expression.calleeExpression?.text ?: "launch"

@@ -13,6 +13,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import io.github.santimattius.structured.intellij.StructuredCoroutinesBundle
 import io.github.santimattius.structured.intellij.inspections.base.CoroutineInspectionBase
 import io.github.santimattius.structured.intellij.quickfixes.ReplaceJobWithSupervisorScopeQuickFix
+import io.github.santimattius.structured.intellij.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.intellij.utils.CoroutinePsiUtils
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
@@ -55,6 +56,8 @@ class JobInBuilderContextInspection : CoroutineInspectionBase() {
         return object : KtVisitorVoid() {
             override fun visitCallExpression(expression: KtCallExpression) {
                 super.visitCallExpression(expression)
+
+                if (!CoroutinesImportFilter.callIsInCoroutinesFile(expression)) return
 
                 val calleeName = expression.calleeExpression?.text ?: return
                 if (calleeName !in coroutineBuilders) return

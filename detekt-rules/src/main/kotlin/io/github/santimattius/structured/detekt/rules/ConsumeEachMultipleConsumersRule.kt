@@ -9,6 +9,7 @@
  */
 package io.github.santimattius.structured.detekt.rules
 
+import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
 import io.gitlab.arturbosch.detekt.api.CodeSmell
 import io.gitlab.arturbosch.detekt.api.Config
@@ -68,6 +69,7 @@ class ConsumeEachMultipleConsumersRule(config: Config = Config.empty) : Rule(con
 
     override fun visitNamedFunction(function: KtNamedFunction) {
         super.visitNamedFunction(function)
+        if (!CoroutinesImportFilter.elementIsInCoroutinesFile(function)) return
         val body = function.bodyExpression ?: return
         val block = body as? KtBlockExpression ?: return
 

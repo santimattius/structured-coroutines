@@ -19,12 +19,18 @@ allprojects {
         }
 
         // Before publishing to Maven Local, remove existing artifacts for this publication in ~/.m2
-        // so the same version is overwritten and consumers always get the latest local build
+        // so the same version is overwritten and consumers always get the latest local build.
+        // Only clean the directory of the specific publication being published by this task to avoid
+        // deleting artifacts from sibling publications (e.g. pluginMaven + marker in gradle-plugin).
         tasks.matching { it.name.endsWith("ToMavenLocal") && it.name != "publishToMavenLocal" }.configureEach {
+            val taskName = this.name
             doFirst {
                 val ext = project.extensions.findByName("publishing") as? org.gradle.api.publish.PublishingExtension ?: return@doFirst
+                // Extract publication name from task: "publish{Name}PublicationToMavenLocal"
+                val taskPubName = taskName.removePrefix("publish").removeSuffix("ToMavenLocal").removeSuffix("Publication")
                 for (pub in ext.publications) {
-                    if (pub is org.gradle.api.publish.maven.MavenPublication) {
+                    if (pub is org.gradle.api.publish.maven.MavenPublication &&
+                        pub.name.equals(taskPubName, ignoreCase = true)) {
                         val repo = file("${System.getProperty("user.home")}/.m2/repository")
                         val path = repo.resolve(pub.groupId.replace('.', '/')).resolve(pub.artifactId).resolve(pub.version)
                         if (path.exists()) {

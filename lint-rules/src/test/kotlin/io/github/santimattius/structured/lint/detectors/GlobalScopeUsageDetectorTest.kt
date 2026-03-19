@@ -39,7 +39,7 @@ class GlobalScopeUsageDetectorTest {
             .allowMissingSdk()
             .run()
             .expect("""
-                src/test/test.kt:6: Error: Use viewModelScope, lifecycleScope, rememberCoroutineScope(), or coroutineScope { } instead of GlobalScope [GlobalScopeUsage]
+                src/test/test.kt:6: Error: [SCOPE_001] Use viewModelScope, lifecycleScope, rememberCoroutineScope(), or coroutineScope { } instead of GlobalScope. See: https://github.com/santimattius/structured-coroutines/blob/main/docs/BEST_PRACTICES_COROUTINES.md#11-scope_001--using-globalscope-in-production-code [GlobalScopeUsage]
                     GlobalScope.launch {
                     ^
                 1 errors, 0 warnings
@@ -69,7 +69,7 @@ class GlobalScopeUsageDetectorTest {
             .allowMissingSdk()
             .run()
             .expect("""
-                src/test/test.kt:6: Error: Use viewModelScope, lifecycleScope, rememberCoroutineScope(), or coroutineScope { } instead of GlobalScope [GlobalScopeUsage]
+                src/test/test.kt:6: Error: [SCOPE_001] Use viewModelScope, lifecycleScope, rememberCoroutineScope(), or coroutineScope { } instead of GlobalScope. See: https://github.com/santimattius/structured-coroutines/blob/main/docs/BEST_PRACTICES_COROUTINES.md#11-scope_001--using-globalscope-in-production-code [GlobalScopeUsage]
                     GlobalScope.async {
                     ^
                 1 errors, 0 warnings

@@ -13,6 +13,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import io.github.santimattius.structured.intellij.StructuredCoroutinesBundle
 import io.github.santimattius.structured.intellij.inspections.base.CoroutineInspectionBase
 import io.github.santimattius.structured.intellij.quickfixes.AddCooperationPointInLoopQuickFix
+import io.github.santimattius.structured.intellij.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.intellij.utils.CoroutinePsiUtils
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtForExpression
@@ -47,6 +48,7 @@ class LoopWithoutYieldInspection : CoroutineInspectionBase() {
     }
 
     private fun checkLoop(loop: KtLoopExpression, holder: ProblemsHolder) {
+        if (!CoroutinesImportFilter.fileImportsCoroutines(loop.containingKtFile)) return
         if (!CoroutinePsiUtils.isInSuspendFunction(loop)) return
         val body = loop.body ?: return
         val calls = body.collectDescendantsOfType<KtCallExpression>()
