@@ -12,7 +12,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 - **`structuredCoroutinesReport` task** — new `@CacheableTask` (group `reporting`) that generates an HTML and a plain-text report of the active compiler-plugin configuration. Reports are written to `build/reports/structured-coroutines/` and list all 12 rule codes with their configured severity and a direct link to the relevant section of the best-practices guide.
 - **`reportOutputDir`** and **`reportFormat`** (`"html"` | `"text"` | `"all"`) extension properties with sensible defaults.
-- **`CI_INTEGRATION.md`** (internal) — full GitHub Actions workflow reference covering SARIF upload, artifact archiving, and PR comment automation.
+- **[`docs/CI_INTEGRATION.md`](docs/CI_INTEGRATION.md)** — full GitHub Actions workflow reference covering SARIF upload, artifact archiving, and PR comment automation.
 
 ### Added — IntelliJ plugin
 

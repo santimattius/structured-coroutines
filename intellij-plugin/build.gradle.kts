@@ -53,8 +53,11 @@ intellijPlatform {
         changeNotes = """
             <p><b>v0.6.0</b></p>
             <ul>
-                <li><b>structuredCoroutinesReport task</b> — New Gradle task that generates an HTML and text report of the active plugin configuration (rule codes, severities, exclusions)</li>
-                <li><b>CI integration guide</b> — New internal guide (docs-local/CI_INTEGRATION.md) with full GitHub Actions workflow, SARIF upload, artifact archiving, and PR comment automation</li>
+                <li><b>Scan Project action</b> — New "Scan Project for Coroutine Issues" action in the Analyze menu and tool window toolbar; runs all 13 inspections across every Kotlin source file in the background with real-time progress</li>
+                <li><b>False-positive guard (CoroutinesImportFilter)</b> — All 13 inspections now exit early when a file does not import kotlinx.coroutines, eliminating false positives from name collisions with non-coroutines APIs (e.g. ActivityScenario.launch)</li>
+                <li><b>SuspendInFinallyInspection</b> — Replaced brittle hard-coded name blocklist with proper suspend-call detection via type resolution</li>
+                <li><b>structuredCoroutinesReport Gradle task</b> — Generates HTML and plain-text reports of the active compiler-plugin configuration (rule codes, severities, exclusions) for CI auditing</li>
+                <li><b>CI integration guide</b> — New public guide (docs/CI_INTEGRATION.md) with full GitHub Actions workflow, SARIF upload, artifact archiving, and PR comment automation</li>
             </ul>
             <p><b>v0.5.0</b></p>
             <ul>
