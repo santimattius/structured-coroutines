@@ -39,6 +39,8 @@ class BlockingCallInCoroutineRuleTest {
     @Test
     fun `reports Thread sleep inside suspend function`() {
         val code = """
+            import kotlinx.coroutines.*
+
             suspend fun doWork() {
                 Thread.sleep(1000)
             }

@@ -12,6 +12,7 @@ package io.github.santimattius.structured.intellij.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import io.github.santimattius.structured.intellij.StructuredCoroutinesBundle
 import io.github.santimattius.structured.intellij.inspections.base.CoroutineInspectionBase
+import io.github.santimattius.structured.intellij.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.intellij.utils.CoroutinePsiUtils
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
@@ -48,6 +49,9 @@ class DispatchersUnconfinedInspection : CoroutineInspectionBase() {
         return object : KtVisitorVoid() {
             override fun visitDotQualifiedExpression(expression: KtDotQualifiedExpression) {
                 super.visitDotQualifiedExpression(expression)
+
+                // Only check files that import kotlinx.coroutines
+                if (!CoroutinesImportFilter.fileImportsCoroutines(expression.containingKtFile)) return
 
                 // Check for Dispatchers.Unconfined
                 val receiver = expression.receiverExpression

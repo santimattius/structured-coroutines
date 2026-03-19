@@ -297,4 +297,16 @@
             anchor="bottom"
             secondary="false"/>
     </extensions>
+
+    <actions>
+        <!-- Scan the entire project for Structured Coroutines violations -->
+        <action
+            id="StructuredCoroutines.ScanProject"
+            class="io.github.santimattius.structured.intellij.actions.ScanProjectAction"
+            text="Scan Project for Coroutine Issues"
+            description="Run all Structured Coroutines inspections on every Kotlin source file in the project"
+            icon="AllIcons.Actions.Find">
+            <add-to-group group-id="AnalyzeActions" anchor="last"/>
+        </action>
+    </actions>
 </idea-plugin>

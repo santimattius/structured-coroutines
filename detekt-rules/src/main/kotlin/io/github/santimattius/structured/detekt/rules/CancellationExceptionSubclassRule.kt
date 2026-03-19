@@ -9,6 +9,7 @@
  */
 package io.github.santimattius.structured.detekt.rules
 
+import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
 import io.gitlab.arturbosch.detekt.api.CodeSmell
 import io.gitlab.arturbosch.detekt.api.Config
@@ -89,6 +90,7 @@ class CancellationExceptionSubclassRule(config: Config = Config.empty) : Rule(co
 
     override fun visitClass(klass: KtClass) {
         super.visitClass(klass)
+        if (!CoroutinesImportFilter.elementIsInCoroutinesFile(klass)) return
 
         // Check supertypes for CancellationException
         val superTypeList = klass.superTypeListEntries

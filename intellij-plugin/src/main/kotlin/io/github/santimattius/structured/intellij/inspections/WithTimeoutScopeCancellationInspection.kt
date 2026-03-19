@@ -14,6 +14,7 @@ import com.intellij.psi.PsiElement
 import io.github.santimattius.structured.intellij.StructuredCoroutinesBundle
 import io.github.santimattius.structured.intellij.inspections.base.CoroutineInspectionBase
 import io.github.santimattius.structured.intellij.quickfixes.ReplaceWithTimeoutOrNullQuickFix
+import io.github.santimattius.structured.intellij.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.intellij.utils.CoroutinePsiUtils
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtTryExpression
@@ -74,6 +75,8 @@ class WithTimeoutScopeCancellationInspection : CoroutineInspectionBase() {
         return object : KtVisitorVoid() {
             override fun visitCallExpression(expression: KtCallExpression) {
                 super.visitCallExpression(expression)
+
+                if (!CoroutinesImportFilter.callIsInCoroutinesFile(expression)) return
 
                 val callee = expression.calleeExpression?.text ?: return
                 if (callee != "withTimeout") return

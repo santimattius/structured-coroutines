@@ -10,6 +10,7 @@
 package io.github.santimattius.structured.detekt.rules
 
 import io.github.santimattius.structured.detekt.utils.CoroutineDetektUtils
+import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
 import io.gitlab.arturbosch.detekt.api.CodeSmell
 import io.gitlab.arturbosch.detekt.api.Config
@@ -83,6 +84,7 @@ class CancellationExceptionSwallowedRule(config: Config = Config.empty) : Rule(c
 
     override fun visitTryExpression(expression: KtTryExpression) {
         super.visitTryExpression(expression)
+        if (!CoroutinesImportFilter.elementIsInCoroutinesFile(expression)) return
         for (catchClause in expression.catchClauses) {
             if (!catchesGenericException(catchClause)) continue
             if (hasCancellationExceptionCatch(expression)) continue
