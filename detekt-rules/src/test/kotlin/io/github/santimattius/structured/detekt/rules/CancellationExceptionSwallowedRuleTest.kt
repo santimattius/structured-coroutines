@@ -44,6 +44,8 @@ class CancellationExceptionSwallowedRuleTest {
     @Test
     fun `reports catch Exception in suspend function`() {
         val code = """
+            import kotlinx.coroutines.*
+
             suspend fun fetch() {
                 try {
                     val x = 1

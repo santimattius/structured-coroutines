@@ -92,7 +92,8 @@ class StructuredCoroutinesPluginFunctionalTest {
             .withProjectDir(projectDir)
             .withArguments("compileKotlin", "--stacktrace", "--info")
             .forwardOutput()
-        val runnerWithEnv = if (env.isEmpty()) runner else runner.withEnvironment(env)
+        // Merge with system environment to keep PATH, JAVA_HOME, etc. intact
+        val runnerWithEnv = if (env.isEmpty()) runner else runner.withEnvironment(System.getenv() + env)
         val result = runnerWithEnv.run { if (expectSuccess) build() else buildAndFail() }
         return result.output
     }
@@ -467,23 +468,26 @@ class StructuredCoroutinesPluginFunctionalTest {
         val sourceCode = """
             import kotlinx.coroutines.GlobalScope
             import kotlinx.coroutines.launch
-            
+
             fun test() {
                 GlobalScope.launch { println("Bad!") }
             }
         """.trimIndent()
 
-        val projectDir = createTestProject(sourceCode)
-        val output = runBuildWithEnv(
-            projectDir,
-            mapOf("JAVA_TOOL_OPTIONS" to "-Dstructured.coroutines.compiler.locale=es"),
-            expectSuccess = false
+        // Set org.gradle.jvmargs so a new Gradle daemon is started with Spanish locale
+        // (the compiler plugin runs in the Gradle daemon's JVM via in-process compilation).
+        // kotlin.daemon.jvmargs is also set for external Kotlin daemon mode.
+        val projectDir = createTestProject(
+            sourceCode,
+            gradlePropertiesExtra = "org.gradle.jvmargs=-Dstructured.coroutines.compiler.locale=es\n" +
+                "kotlin.daemon.jvmargs=-Dstructured.coroutines.compiler.locale=es"
         )
+        val output = runBuild(projectDir, expectSuccess = false)
 
         assertTrue("[SCOPE_001]" in output, "Expected rule code [SCOPE_001] in output")
         assertTrue(
             "El uso de GlobalScope no está permitido" in output,
-            "Expected Spanish message when locale=es (JAVA_TOOL_OPTIONS). Got:\n${output.takeLast(1500)}"
+            "Expected Spanish message when locale=es (kotlin.daemon.jvmargs). Got:\n${output.takeLast(1500)}"
         )
     }
 
