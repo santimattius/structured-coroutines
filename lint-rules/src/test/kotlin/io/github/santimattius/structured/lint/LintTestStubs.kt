@@ -51,6 +51,12 @@ object LintTestStubs {
         val ViewModel.viewModelScope: CoroutineScope get() = error("stub")
     """.trimIndent()
 
+    val composeRuntime = """
+        package androidx.compose.runtime
+        import kotlinx.coroutines.CoroutineScope
+        fun rememberCoroutineScope(): CoroutineScope = error("stub")
+    """.trimIndent()
+
     fun all() = listOf(
         TestFiles.kotlin(kotlinxCoroutines).indented(),
         TestFiles.kotlin(kotlinxCoroutinesChannels).indented(),

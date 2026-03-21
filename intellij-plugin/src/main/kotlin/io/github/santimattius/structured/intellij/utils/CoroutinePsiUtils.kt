@@ -138,6 +138,9 @@ object CoroutinePsiUtils {
             if (receiver.text in FRAMEWORK_SCOPE_PROPERTIES) {
                 return true
             }
+            // Check if it's a local variable initialized from a framework scope function
+            // e.g. val scope = rememberCoroutineScope(); scope.launch { }
+            if (isLocalVarInitializedFromFrameworkScope(receiver)) return true
         }
 
         // Check for qualified access: this.viewModelScope.launch
@@ -148,7 +151,7 @@ object CoroutinePsiUtils {
             }
         }
 
-        // Check function-based scopes (rememberCoroutineScope())
+        // Check function-based scopes (rememberCoroutineScope().launch {})
         if (receiver is KtCallExpression) {
             val receiverCallName = receiver.calleeExpression?.text
             if (receiverCallName in FRAMEWORK_SCOPE_FUNCTIONS) {
@@ -156,6 +159,33 @@ object CoroutinePsiUtils {
             }
         }
 
+        return false
+    }
+
+    /**
+     * Resolves a name reference to a local variable and checks whether that variable was
+     * initialized by a call to a known framework scope function (e.g. rememberCoroutineScope()).
+     *
+     * Traverses up through enclosing block expressions (crossing lambda boundaries) to find the
+     * property declaration, stopping at named function boundaries.
+     */
+    private fun isLocalVarInitializedFromFrameworkScope(reference: KtNameReferenceExpression): Boolean {
+        val name = reference.getReferencedName()
+        var current: com.intellij.psi.PsiElement? = reference.parent
+        while (current != null) {
+            if (current is KtBlockExpression) {
+                val property = current.statements
+                    .filterIsInstance<KtProperty>()
+                    .find { it.name == name }
+                if (property != null) {
+                    val initializer = property.initializer as? KtCallExpression ?: return false
+                    return initializer.calleeExpression?.text in FRAMEWORK_SCOPE_FUNCTIONS
+                }
+            }
+            // Stop at named function boundary — do not look in outer functions
+            if (current is KtNamedFunction) break
+            current = current.parent
+        }
         return false
     }
 
