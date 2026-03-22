@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.fir.references.toResolvedCallableSymbol
 import org.jetbrains.kotlin.fir.references.toResolvedPropertySymbol
 import org.jetbrains.kotlin.fir.references.toResolvedValueParameterSymbol
 import org.jetbrains.kotlin.fir.resolve.toClassSymbol
+import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirValueParameterSymbol
 import org.jetbrains.kotlin.fir.types.resolvedType
@@ -290,6 +291,7 @@ class UnstructuredLaunchChecker : FirFunctionCallChecker(MppCheckerKind.Common) 
      * @param context The checker context for symbol resolution
      * @return true if the receiver is a structured scope
      */
+    @OptIn(SymbolInternals::class)
     private fun isStructuredScope(
         receiver: FirExpression,
         context: CheckerContext
@@ -320,7 +322,12 @@ class UnstructuredLaunchChecker : FirFunctionCallChecker(MppCheckerKind.Common) 
             val propertySymbol = calleeReference.toResolvedPropertySymbol()
             if (propertySymbol != null) {
                 // Check annotation on the property itself
-                return hasStructuredScopeAnnotation(propertySymbol, context)
+                if (hasStructuredScopeAnnotation(propertySymbol, context)) return true
+                // Check if the property is initialized from a framework scope function.
+                // Handles: val scope = rememberCoroutineScope(); scope.launch { }
+                val initializer = propertySymbol.fir.initializer
+                if (initializer is FirFunctionCall && isFrameworkScopeFunction(initializer)) return true
+                return false
             }
         }
 

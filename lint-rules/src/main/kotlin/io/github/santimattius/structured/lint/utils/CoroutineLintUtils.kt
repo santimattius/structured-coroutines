@@ -10,8 +10,15 @@
 package io.github.santimattius.structured.lint.utils
 
 import com.android.tools.lint.detector.api.JavaContext
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParenthesizedExpression
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.uast.*
 
 /**
@@ -62,7 +69,7 @@ object CoroutineLintUtils {
      * Handles both simple names (GlobalScope) and fully qualified names (kotlinx.coroutines.GlobalScope).
      */
     fun isGlobalScopeCall(call: UCallExpression): Boolean {
-        val receiver = call.receiver
+        val receiver = call.receiver?.skipParenthesizedExprDown()
         val receiverName = when (receiver) {
             is UQualifiedReferenceExpression -> receiver.asSourceString()
             is UReferenceExpression -> receiver.asSourceString()
@@ -77,8 +84,12 @@ object CoroutineLintUtils {
      * Checks if a UCallExpression is a framework scope call (viewModelScope, lifecycleScope, etc.).
      */
     fun isFrameworkScopeCall(call: UCallExpression): Boolean {
-        val receiver = call.receiver
-        
+        // Unwrap parenthesized expressions first.
+        // Lint's TestMode.PARENTHESIZED wraps receivers in UParenthesizedExpression, e.g.
+        // `scope.launch` → `(scope).launch`. skipParenthesizedExprDown unwraps these so
+        // that all subsequent type checks work correctly in both production and test modes.
+        val receiver = call.receiver?.skipParenthesizedExprDown()
+
         // Handle UReferenceExpression (direct property access: viewModelScope.launch)
         if (receiver is UReferenceExpression) {
             val receiverName = receiver.asSourceString()
@@ -86,7 +97,7 @@ object CoroutineLintUtils {
                 return true
             }
         }
-        
+
         // Handle UQualifiedReferenceExpression (qualified access: this.viewModelScope.launch)
         if (receiver is UQualifiedReferenceExpression) {
             val receiverName = receiver.receiver.asSourceString()
@@ -94,13 +105,55 @@ object CoroutineLintUtils {
                 return true
             }
         }
-        
-        // Check function-based scopes (rememberCoroutineScope())
-        val methodName = call.methodName
-        if (methodName in FRAMEWORK_SCOPE_FUNCTIONS) {
-            return true
+
+        // Check function-based scopes (rememberCoroutineScope().launch {}) via UAST
+        if (receiver is UCallExpression) {
+            if (receiver.methodName in FRAMEWORK_SCOPE_FUNCTIONS) return true
         }
-        
+
+        // PSI-based fallback via the receiver's underlying PSI element.
+        // More reliable than inspecting call.sourcePsi whose exact type varies across
+        // UAST/Lint versions (it may be KtCallExpression, KtDotQualifiedExpression, etc.).
+        //
+        // Handles:
+        //   rememberCoroutineScope().launch { }      → receiverPsi is KtCallExpression
+        //   val scope = rememberCoroutineScope(); scope.launch { } → receiverPsi is KtNameReferenceExpression
+        val receiverPsi = receiver?.sourcePsi
+        if (receiverPsi is KtCallExpression) {
+            if (receiverPsi.calleeExpression?.text in FRAMEWORK_SCOPE_FUNCTIONS) return true
+        }
+        if (receiverPsi is KtNameReferenceExpression) {
+            if (isLocalVarInitializedFromFrameworkScope(receiverPsi)) return true
+        }
+
+        return false
+    }
+
+    /**
+     * Uses Kotlin PSI to trace a name reference back to its local variable declaration and
+     * checks if the initializer is a call to a known framework scope function
+     * (e.g. rememberCoroutineScope()). Traverses up through block expressions (crossing
+     * lambda boundaries) but stops at named function boundaries.
+     */
+    private fun isLocalVarInitializedFromFrameworkScope(reference: KtNameReferenceExpression): Boolean {
+        val name = reference.getReferencedName()
+        var current: PsiElement? = reference.parent
+        while (current != null) {
+            if (current is KtBlockExpression) {
+                val property = current.statements.filterIsInstance<KtProperty>().find { it.name == name }
+                if (property != null) {
+                    // Unwrap parentheses — in TestMode.PARENTHESIZED the initializer may be
+                    // wrapped as KtParenthesizedExpression (e.g. `val scope = (rememberCoroutineScope())`)
+                    var init = property.initializer
+                    while (init is KtParenthesizedExpression) init = init.expression
+                    val initializer = init as? KtCallExpression ?: return false
+                    return initializer.calleeExpression?.text in FRAMEWORK_SCOPE_FUNCTIONS
+                }
+            }
+            // Stop at named function boundary — do not look in outer functions
+            if (current is KtNamedFunction) break
+            current = current.parent
+        }
         return false
     }
 
@@ -109,7 +162,7 @@ object CoroutineLintUtils {
      * Example: CoroutineScope(Dispatchers.IO).launch { }
      */
     fun isInlineCoroutineScopeCreation(call: UCallExpression): Boolean {
-        val receiver = call.receiver as? UCallExpression
+        val receiver = call.receiver?.skipParenthesizedExprDown() as? UCallExpression
         return receiver?.methodName == "CoroutineScope" &&
             call.methodName in COROUTINE_BUILDERS
     }

@@ -45,6 +45,10 @@ class GlobalScopeInspection : CoroutineInspectionBase() {
     override val displayNameKey = "inspection.global.scope.display.name"
     override val descriptionKey = "inspection.global.scope.description"
 
+    // The class-derived shortName would be "GlobalScope" but the registered id is "GlobalScopeUsage".
+    // Override so that isSuppressedFor() checks @Suppress("GlobalScopeUsage") correctly.
+    override fun getShortName(): String = "GlobalScopeUsage"
+
     override fun buildKotlinVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitorVoid {
         return object : KtVisitorVoid() {
             override fun visitCallExpression(expression: KtCallExpression) {
