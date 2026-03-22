@@ -15,15 +15,14 @@ import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.expression.FirTryExpressionChecker
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirFunction
-import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
+import org.jetbrains.kotlin.fir.declarations.FirNamedFunction
 import org.jetbrains.kotlin.fir.expressions.FirBlock
 import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
 import org.jetbrains.kotlin.fir.expressions.FirStatement
 import org.jetbrains.kotlin.fir.expressions.FirThrowExpression
 import org.jetbrains.kotlin.fir.expressions.FirTryExpression
-import org.jetbrains.kotlin.fir.resolve.toClassSymbol
-import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
+import org.jetbrains.kotlin.fir.types.ConeClassLikeType
 import org.jetbrains.kotlin.fir.types.coneType
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -120,21 +119,24 @@ class CancellationExceptionSwallowedChecker : FirTryExpressionChecker(MppChecker
         val catches = expression.catches
         if (catches.isEmpty()) return
 
-        // Look for catch(CancellationException) - if present, the code is safe
+        // Look for catch(CancellationException) - if present, the code is safe.
+        // Use ConeClassLikeType.lookupTag.classId instead of ConeKotlinType.toClassSymbol()
+        // to avoid a binary-incompatible API change in Kotlin 2.3.20 where the context-receiver
+        // overload of toClassSymbol(FirSessionHolder, ConeKotlinType, FirSession) was removed.
         val hasCancellationExceptionCatch = catches.any { catchClause ->
-            val catchType = catchClause.parameter.returnTypeRef.coneType
-            val classSymbol = catchType.toClassSymbol(context.session)
-            classSymbol?.classId in CANCELLATION_EXCEPTION_CLASS_IDS
+            val classId = (catchClause.parameter.returnTypeRef.coneType as? ConeClassLikeType)
+                ?.lookupTag?.classId
+            classId in CANCELLATION_EXCEPTION_CLASS_IDS
         }
 
         if (hasCancellationExceptionCatch) return
 
         // Look for catch(Exception) or catch(Throwable)
         for (catchClause in catches) {
-            val catchType = catchClause.parameter.returnTypeRef.coneType
-            val classSymbol = catchType.toClassSymbol(context.session) ?: continue
+            val classId = (catchClause.parameter.returnTypeRef.coneType as? ConeClassLikeType)
+                ?.lookupTag?.classId ?: continue
 
-            if (classSymbol.classId in BROAD_EXCEPTION_CLASS_IDS) {
+            if (classId in BROAD_EXCEPTION_CLASS_IDS) {
                 // Check if the catch block properly handles cancellation
                 val catchBlock = catchClause.block
                 if (!handlesCancellationProperly(catchBlock, catchClause.parameter.name)) {
@@ -154,10 +156,9 @@ class CancellationExceptionSwallowedChecker : FirTryExpressionChecker(MppChecker
     @OptIn(SymbolInternals::class)
     private fun isInsideSuspendContext(context: CheckerContext): Boolean {
         for (element in context.containingDeclarations) {
-            val symbol = element as FirBasedSymbol<*>
-            val declaration = symbol.fir
+            val declaration = element.fir
             when (declaration) {
-                is FirSimpleFunction -> if (declaration.status.isSuspend) return true
+                is FirNamedFunction -> if (declaration.status.isSuspend) return true
                 else -> if (isSuspendLambda(declaration)) return true
             }
         }
