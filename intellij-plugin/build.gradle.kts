@@ -14,7 +14,7 @@ plugins {
 }
 
 group = "io.github.santimattius"
-version = "0.6.0"
+version = "0.6.1"
 
 repositories {
     mavenCentral()
@@ -51,6 +51,13 @@ intellijPlatform {
             </ul>
         """.trimIndent()
         changeNotes = """
+            <p><b>v0.6.1</b></p>
+            <ul>
+                <li><b>Local framework scope recognition (compiler + IDE + lint)</b> — Scopes created via framework helpers (e.g. <code>rememberCoroutineScope()</code>) stored in local variables are now treated as structured scopes, eliminating false positives in UnstructuredLaunch across all three layers</li>
+                <li><b>@Suppress / @file:Suppress support</b> — All IntelliJ inspections now honor <code>@Suppress("RuleName")</code> on the flagged element and <code>@file:Suppress</code> at the file level via <code>CoroutineInspectionBase</code></li>
+                <li><b>GlobalScopeInspection short name fix</b> — Overrides <code>getShortName()</code> to align the runtime ID with the registered inspection ID, fixing suppression not working</li>
+                <li><b>Lint parenthesized-receiver fix</b> — <code>CoroutineLintUtils</code> unwraps parenthesized receivers and uses a PSI fallback to detect call- and name-based framework scopes; new helper traces local variable initializers</li>
+            </ul>
             <p><b>v0.6.0</b></p>
             <ul>
                 <li><b>Scan Project action</b> — New "Scan Project for Coroutine Issues" action in the Analyze menu and tool window toolbar; runs all 13 inspections across every Kotlin source file in the background with real-time progress</li>

@@ -6,7 +6,26 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ---
 
-## [Unreleased] — 0.6.0
+## [0.6.1] — 2026-03-22
+
+### Fixed — Compiler
+
+- **`UnstructuredLaunchChecker`** — local variables initialized from framework scope functions (e.g. `rememberCoroutineScope()`) are now recognized as structured scopes and no longer flagged as unstructured launches.
+
+### Fixed — IntelliJ plugin
+
+- **`CoroutineInspectionBase`** — all inspections now honor `@Suppress("RuleName")` on the flagged element and `@file:Suppress` at the file level, eliminating false positives in intentionally suppressed code.
+- **`GlobalScopeInspection`** — `getShortName()` override added to align the runtime ID with the registered inspection ID, fixing suppression not working for this rule.
+- **`CoroutinePsiUtils`** — new PSI utilities to detect local variables initialized from framework scope functions.
+
+### Fixed — Lint rules
+
+- **`CoroutineLintUtils`** — parenthesized receivers are now unwrapped before analysis; PSI fallback added to detect call- and name-based framework scopes (e.g. `rememberCoroutineScope()`); new helper traces local variable initializers for accurate scope detection.
+- **`UnstructuredLaunchDetector`** — inline `CoroutineScope` construction detection improved; new test coverage with a Compose runtime stub verifying true-positive and false-positive guard cases.
+
+---
+
+## [0.6.0] — 2026-03-19
 
 ### Added — Gradle plugin
 
@@ -190,7 +209,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ---
 
-[Unreleased]: https://github.com/santimattius/structured-coroutines/compare/0.5.0...HEAD
+[0.6.1]: https://github.com/santimattius/structured-coroutines/compare/0.6.0...0.6.1
+[0.6.0]: https://github.com/santimattius/structured-coroutines/compare/0.5.0...0.6.0
 [0.5.0]: https://github.com/santimattius/structured-coroutines/compare/0.4.0...0.5.0
 [0.4.0]: https://github.com/santimattius/structured-coroutines/compare/0.3.0...0.4.0
 [0.3.0]: https://github.com/santimattius/structured-coroutines/compare/0.2.0...0.3.0
