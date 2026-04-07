@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  # ──────────────────────────────────────────────
+  # Core modules: compiler, detekt-rules, lint-rules
+  # ──────────────────────────────────────────────
+  test-core:
+    name: Test core modules
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: "21"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+
+      - name: Run tests
+        run: ./gradlew :compiler:test :detekt-rules:test :lint-rules:test --no-daemon
+
+  # ──────────────────────────────────────────────
+  # IntelliJ plugin: compile + instrument
+  # (no test sources; compilation against IJ 2026.1 is the verification)
+  # ──────────────────────────────────────────────
+  build-intellij:
+    name: Build IntelliJ plugin (2026.1)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: "21"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+
+      - name: Compile IntelliJ plugin
+        run: ./gradlew :intellij-plugin:compileKotlin :intellij-plugin:instrumentCode --no-daemon
