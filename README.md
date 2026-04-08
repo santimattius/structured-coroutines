@@ -24,7 +24,7 @@ analysis.
 | Annotations                   | ✅ Complete                                              | [annotations/README.md](annotations/README.md)                                                              |
 | Sample                        | ✅ Compilation examples per rule                         | [compilation/README](sample/src/main/kotlin/io/github/santimattius/structured/sample/compilation/README.md) |
 | Sample (Detekt)               | ✅ Detekt rule validation (19 examples)                  | [sample-detekt/README.md](sample-detekt/README.md)                                                          |
-| Kotlin Coroutines Agent Skill | ✅ AI/agent guidance                                     | [kotlin-coroutines-skill/README.md](kotlin-coroutines-skill/README.md)                                      |
+| Kotlin Coroutines Agent Skill | ✅ AI/agent guidance                                     | [docs/KOTLIN_COROUTINES_SKILL.md](docs/KOTLIN_COROUTINES_SKILL.md)                                          |
 
 ---
 
@@ -762,7 +762,7 @@ Each module contains its own detailed documentation:
 | **Compiler**                      | [compiler/README.md](compiler/README.md)                                                                       | K2/FIR checker implementation details                                   |
 | **Sample (compilation)**          | [compilation/README.md](sample/src/main/kotlin/io/github/santimattius/structured/sample/compilation/README.md) | One example per compiler rule (errors and warnings)                     |
 | **Sample (Detekt)**               | [sample-detekt/README.md](sample-detekt/README.md)                                                             | One example per Detekt rule; run `:sample-detekt:detekt` to validate    |
-| **Kotlin Coroutines Agent Skill** | [kotlin-coroutines-skill/README.md](kotlin-coroutines-skill/README.md)                                         | AI/agent skill and decision resource: 32 practices, strict rules, triage playbook (v2.0.0) |
+| **Kotlin Coroutines Agent Skill** | [docs/KOTLIN_COROUTINES_SKILL.md](docs/KOTLIN_COROUTINES_SKILL.md)                                             | AI/agent skill and decision resource: 32 practices, strict rules, triage playbook (v2.0.0) |
 | **Best Practices**                | [docs/BEST_PRACTICES_COROUTINES.md](docs/BEST_PRACTICES_COROUTINES.md)                                         | Canonical guide to coroutine good/bad practices                         |
 | **Decision Guide**                | [docs/DECISION_GUIDE.md](docs/DECISION_GUIDE.md)                                                               | Quick-reference: launch vs async, scope, dispatcher, timeout, Flow      |
 | **Suppressing Rules**             | [docs/SUPPRESSING_RULES.md](docs/SUPPRESSING_RULES.md)                                                         | Unified suppression IDs (Compiler, Detekt, Lint, IntelliJ) by rule code |

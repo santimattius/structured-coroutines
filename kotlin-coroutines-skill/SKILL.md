@@ -1,6 +1,6 @@
 ---
 name: kotlin-coroutines-skill
-description: 'Expert guidance on Kotlin Coroutines best practices, structured concurrency, and safe async code. Use when developers mention: (1) Kotlin Coroutines, suspend, launch, async, or Flow, (2) "use coroutines" or "structured concurrency" in Kotlin, (3) GlobalScope, viewModelScope, lifecycleScope, or CoroutineScope, (4) Dispatchers (Main, IO, Default, Unconfined), (5) cancellation, CancellationException, or SupervisorJob, (6) runBlocking, blocking in coroutines, or wrong dispatchers, (7) Channels, produce, or consumeEach, (8) testing coroutines, runTest, or TestDispatcher, (9) architecture layers with suspend/Flow vs callbacks.'
+description: "Expert guidance on Kotlin Coroutines and structured concurrency. Use when developers write or review async Kotlin code and need help ensuring correctness, safety, and testability of coroutine-based implementations."
 license: MIT
 metadata:
   version: "2.0.0"
@@ -224,51 +224,6 @@ for (i in list) {
     process(i)
 }
 ```
-
-## Reference Files
-
-Load these files as needed for the specific topic:
-
-- **`references/ref-1-1-global-scope.md`** – GlobalScope, scope lifetime, framework/injected/local scopes
-- **`references/ref-1-2-async-without-await.md`** – async only when result is needed; use launch for
-  fire-and-forget
-- **`references/ref-1-3-breaking-structured-concurrency.md`** – Launching in external scope from suspend
-- **`references/ref-1-4-awaitall-exception-propagation.md`** – awaitAll: coroutineScope vs supervisorScope,
-  independent failure semantics
-- **`references/ref-2-1-launch-last-line-coroutine-scope.md`** – coroutineScope { launch { } } as last line
-- **`references/ref-2-2-runblocking-in-suspend.md`** – runBlocking inside suspend, blocking in coroutines
-- **`references/ref-3-1-blocking-wrong-dispatchers.md`** – Blocking I/O on Default/Main, correct Dispatchers
-- **`references/ref-3-2-main-safe-suspend.md`** – Main-safe suspend functions; withContext(IO) to protect caller
-- **`references/ref-3-2-dispatchers-unconfined.md`** – Dispatchers.Unconfined in production
-- **`references/ref-3-3-job-context-builders.md`** – Job()/SupervisorJob() passed to builders
-- **`references/ref-3-5-inject-dispatchers.md`** – Injecting dispatchers for testability; TestDispatcher
-- **`references/ref-4-1-cancellation-intensive-loops.md`** – Cancellation in loops, yield/ensureActive
-- **`references/ref-4-2-periodic-repeating-work.md`** – Polling/repeating work: while(isActive) + delay
-- **`references/ref-4-2-swallowing-cancellation-exception.md`** – Never swallow CancellationException
-- **`references/ref-4-3-suspend-cleanup-noncancellable.md`** – Suspend in finally, withContext(NonCancellable)
-- **`references/ref-4-4-reusing-cancelled-scope.md`** – Reusing scope after cancel, cancelChildren
-- **`references/ref-4-6-withtimeout-scope-cancellation.md`** – withTimeout: scope cancellation,
-  TimeoutCancellationException, withTimeoutOrNull
-- **`references/ref-4-7-withtimeout-resource-cleanup.md`** – withTimeout: resource cleanup in finally,
-  NonCancellable on timeout
-- **`references/ref-5-1-supervisor-job-single-builder.md`** – SupervisorJob in a single builder
-- **`references/ref-5-2-cancellation-exception-domain-errors.md`** – CancellationException for domain errors
-- **`references/ref-5-3-exception-handler-async.md`** – CoroutineExceptionHandler: launch vs async; exceptions
-  stored in Deferred until await()
-- **`references/ref-6-1-slow-tests-real-delays.md`** – Slow tests, real delay(), runTest/virtual time
-- **`references/ref-6-2-uncontrolled-fire-and-forget-tests.md`** – Fire-and-forget in tests, controlled scope
-- **`references/ref-6-3-setmain-resetmain.md`** – Replacing Dispatchers.Main in tests; setMain/resetMain
-- **`references/ref-7-1-channel-close.md`** – Channel close, produce vs manual Channel
-- **`references/ref-7-2-consume-each-multiple-consumers.md`** – consumeEach vs for (x in channel) per consumer
-- **`references/ref-8-architecture-patterns.md`** – Data/Domain/Presentation, suspend vs callbacks, testing
-- **`references/ref-8-2-lifecycle-aware-flow.md`** – Android: repeatOnLifecycle/flowWithLifecycle; collection
-  tied to lifecycle state
-- **`references/ref-9-1-flow-blocking-call.md`** – Blocking calls in flow { }; flowOn(IO) or suspend APIs
-- **`references/ref-9-2-cold-vs-hot-flows.md`** – Cold vs hot flows; StateFlow for state, SharedFlow for events;
-  shareIn/stateIn
-- **`references/ref-9-3-collect-latest.md`** – collectLatest cancels previous block; when to use vs collect
-- **`references/ref-9-4-shared-flow-configuration.md`** – SharedFlow: replay, extraBufferCapacity,
-  onBufferOverflow
 
 ## Best Practices Summary
 
