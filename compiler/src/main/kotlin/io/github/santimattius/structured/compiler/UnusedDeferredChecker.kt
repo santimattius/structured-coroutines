@@ -13,8 +13,9 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.expression.FirFunctionCallChecker
-import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
+import org.jetbrains.kotlin.fir.declarations.FirNamedFunction
 import org.jetbrains.kotlin.fir.declarations.FirVariable
+import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.expressions.FirBlock
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
@@ -136,13 +137,17 @@ class UnusedDeferredChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
      * @param context The checker context
      * @return The containing block, or null if not found
      */
+    @OptIn(SymbolInternals::class)
     private fun findContainingBlock(
         expression: FirExpression,
         context: CheckerContext
     ): FirBlock? {
-        // Get the function body from context
-        for (declaration in context.containingDeclarations) {
-            if (declaration is FirSimpleFunction) {
+        // Get the function body from context.
+        // In Kotlin 2.3.20+, context.containingDeclarations returns FirBasedSymbol<*> elements;
+        // access .fir to get the underlying FirDeclaration for the is-check.
+        for (element in context.containingDeclarations) {
+            val declaration = element.fir
+            if (declaration is FirNamedFunction) {
                 val body = declaration.body
                 if (body is FirBlock) {
                     return body

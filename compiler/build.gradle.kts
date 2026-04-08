@@ -24,26 +24,15 @@ kotlin {
 tasks.test {
     useJUnitPlatform()
 
-    // Pass plugin JAR location to tests
-    dependsOn(":gradle-plugin:jar", ":compiler:jar", ":annotations:jvmJar")
+    // Publish to Maven Local so functional tests can resolve the plugin via mavenLocal()
+    dependsOn(
+        ":gradle-plugin:publishToMavenLocal",
+        ":compiler:publishToMavenLocal",
+        ":annotations:publishToMavenLocal"
+    )
 
-    doFirst {
-        systemProperty(
-            "plugin.jar",
-            project(":compiler").tasks.jar.get().archiveFile.get().asFile.absolutePath
-        )
-        systemProperty(
-            "annotations.jar",
-            project(":annotations").tasks.named("jvmJar")
-                .get().outputs.files.singleFile.absolutePath
-        )
-        systemProperty(
-            "gradle-plugin.jar",
-            project(":gradle-plugin").tasks.jar.get().archiveFile.get().asFile.absolutePath
-        )
-        systemProperty("structuredCoroutines.version", project.version.toString())
-        systemProperty("structuredCoroutines.rootDir", project.rootProject.projectDir.absolutePath)
-    }
+    systemProperty("structuredCoroutines.version", project.version.toString())
+    systemProperty("structuredCoroutines.rootDir", project.rootProject.projectDir.absolutePath)
 }
 
 // Configure JAR to include the service file

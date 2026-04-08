@@ -21,10 +21,10 @@ import org.jetbrains.kotlin.fir.expressions.FirResolvedQualifier
 import org.jetbrains.kotlin.fir.references.toResolvedCallableSymbol
 import org.jetbrains.kotlin.fir.references.toResolvedPropertySymbol
 import org.jetbrains.kotlin.fir.references.toResolvedValueParameterSymbol
-import org.jetbrains.kotlin.fir.resolve.toClassSymbol
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirValueParameterSymbol
+import org.jetbrains.kotlin.fir.types.ConeClassLikeType
 import org.jetbrains.kotlin.fir.types.resolvedType
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
@@ -251,9 +251,10 @@ class UnstructuredLaunchChecker : FirFunctionCallChecker(MppCheckerKind.Common) 
             return receiver.classId == GLOBAL_SCOPE_CLASS_ID
         }
 
-        // Check the resolved type
-        val classSymbol = receiver.resolvedType.toClassSymbol(context.session) ?: return false
-        return classSymbol.classId == GLOBAL_SCOPE_CLASS_ID
+        // Check the resolved type via ConeClassLikeType.lookupTag to avoid the unstable
+        // ConeKotlinType.toClassSymbol() API that changed signature in Kotlin 2.3.20.
+        val classId = (receiver.resolvedType as? ConeClassLikeType)?.lookupTag?.classId
+        return classId == GLOBAL_SCOPE_CLASS_ID
     }
 
     /**

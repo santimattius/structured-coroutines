@@ -151,7 +151,7 @@ class ChannelNotClosedDetector : Detector(), SourceCodeScanner {
         return when (expr) {
             is UQualifiedReferenceExpression -> getReceiverSourceString(expr.receiver) ?: expr.receiver.asSourceString()
             is UReferenceExpression -> expr.asSourceString()
-            is UParenthesizedExpression -> expr.expression?.let { getReceiverSourceString(it) }
+            is UParenthesizedExpression -> getReceiverSourceString(expr.expression)
             else -> expr.asSourceString()
         }
     }

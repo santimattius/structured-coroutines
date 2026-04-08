@@ -15,8 +15,8 @@ import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.declaration.FirClassChecker
 import org.jetbrains.kotlin.fir.declarations.FirClass
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
-import org.jetbrains.kotlin.fir.resolve.toClassSymbol
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
+import org.jetbrains.kotlin.fir.types.ConeClassLikeType
 import org.jetbrains.kotlin.fir.types.coneType
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -80,13 +80,15 @@ class CancellationExceptionSubclassChecker : FirClassChecker(MppCheckerKind.Comm
 
     context(context: CheckerContext, reporter: DiagnosticReporter)
     override fun check(declaration: FirClass) {
-        // Check all supertypes of this class
+        // Check all supertypes of this class.
+        // Use ConeClassLikeType.lookupTag.classId instead of ConeKotlinType.toClassSymbol()
+        // to avoid a binary-incompatible API change in Kotlin 2.3.20 where the context-receiver
+        // overload of toClassSymbol(FirSessionHolder, ConeKotlinType, FirSession) was removed.
         for (superTypeRef in declaration.superTypeRefs) {
-            val superType = superTypeRef.coneType
-            val superClassSymbol = superType.toClassSymbol(context.session) ?: continue
-            
-            // Check if the supertype is CancellationException (direct or indirect)
-            if (isCancellationExceptionOrSubclass(superClassSymbol.classId, context, mutableSetOf())) {
+            val superClassId = (superTypeRef.coneType as? ConeClassLikeType)
+                ?.lookupTag?.classId ?: continue
+
+            if (isCancellationExceptionOrSubclass(superClassId, context, mutableSetOf())) {
                 reporter.reportCancellationExceptionSubclass(declaration, context)
                 return
             }
@@ -113,15 +115,15 @@ class CancellationExceptionSubclassChecker : FirClassChecker(MppCheckerKind.Comm
         // Direct match
         if (classId in CANCELLATION_EXCEPTION_CLASS_IDS) return true
 
-        // Get the class symbol using toClassSymbol through a type
-        // We need to look up the supertypes of this class
+        // Look up the supertypes of this class via the symbol provider.
         val classSymbol = context.session.symbolProvider.getClassLikeSymbolByClassId(classId)
         if (classSymbol != null) {
             val firClass = classSymbol.fir as? FirClass
             if (firClass != null) {
                 for (superTypeRef in firClass.superTypeRefs) {
-                    val superClassSymbol = superTypeRef.coneType.toClassSymbol(context.session) ?: continue
-                    if (isCancellationExceptionOrSubclass(superClassSymbol.classId, context, visited)) {
+                    val superClassId = (superTypeRef.coneType as? ConeClassLikeType)
+                        ?.lookupTag?.classId ?: continue
+                    if (isCancellationExceptionOrSubclass(superClassId, context, visited)) {
                         return true
                     }
                 }

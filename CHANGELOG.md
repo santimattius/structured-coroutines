@@ -6,6 +6,24 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ---
 
+## [0.7.0] — 2026-04-07
+
+### Changed — Compiler
+
+- **Kotlin 2.3.20** — `libs.versions.toml` bumped from `2.3.0` to `2.3.20`; functional test updated to compile against the new toolchain.
+- **FIR API migration** — all compiler checkers adapted to breaking API changes introduced in Kotlin 2.3.20:
+  - `ConeKotlinType.toClassSymbol` (removed) replaced with `(type as? ConeClassLikeType)?.lookupTag?.classId` across `CancellationExceptionSubclassChecker`, `CancellationExceptionSwallowedChecker`, `RunBlockingInSuspendChecker`, and `UnusedDeferredChecker`.
+  - `context.containingDeclarations` now returns `List<FirBasedSymbol<*>>`; `.fir` access annotated with `@OptIn(SymbolInternals::class)` added where needed.
+  - `FirSimpleFunction` references updated to `FirNamedFunction` (declarations package) where the compiler requires the concrete type.
+  - `LoopWithoutYieldChecker` — minor call-site adjustment for 2.3.20 API shape.
+
+### Fixed — Lint rules
+
+- **`CoroutineLintUtils`** — `UParenthesizedExpression.expression` and `UQualifiedReferenceExpression.selector` usages updated to non-null access following UAST nullable-to-non-null promotions in the new toolchain.
+- **`ChannelNotClosedDetector`** / **`LifecycleAwareFlowCollectionDetector`** — minor utility call updates for compatibility.
+
+---
+
 ## [0.6.1] — 2026-03-22
 
 ### Fixed — Compiler
@@ -209,6 +227,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ---
 
+[0.7.0]: https://github.com/santimattius/structured-coroutines/compare/0.6.1...0.7.0
 [0.6.1]: https://github.com/santimattius/structured-coroutines/compare/0.6.0...0.6.1
 [0.6.0]: https://github.com/santimattius/structured-coroutines/compare/0.5.0...0.6.0
 [0.5.0]: https://github.com/santimattius/structured-coroutines/compare/0.4.0...0.5.0

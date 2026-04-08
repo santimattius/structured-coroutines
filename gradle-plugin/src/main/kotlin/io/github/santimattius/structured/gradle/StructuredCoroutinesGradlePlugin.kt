@@ -30,7 +30,13 @@ class StructuredCoroutinesGradlePlugin : KotlinCompilerPluginSupportPlugin {
         // These must match the published artifact coordinates
         const val GROUP_ID = "io.github.santimattius"
         const val ARTIFACT_ID = "structured-coroutines-compiler"
-        const val VERSION = "0.6.0"
+
+        val VERSION: String by lazy {
+            StructuredCoroutinesGradlePlugin::class.java
+                .getResourceAsStream("/structured-coroutines.properties")
+                ?.use { java.util.Properties().apply { load(it) }.getProperty("version") }
+                ?: error("structured-coroutines.properties not found in plugin JAR")
+        }
     }
 
     override fun apply(target: Project) {

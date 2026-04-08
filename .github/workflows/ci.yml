@@ -33,6 +33,9 @@ jobs:
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
 
+      - name: Publish to Maven Local
+        run: ./gradlew publishToMavenLocal --no-daemon
+
       - name: Run tests
         run: ./gradlew :compiler:test :detekt-rules:test :lint-rules:test --no-daemon
 
