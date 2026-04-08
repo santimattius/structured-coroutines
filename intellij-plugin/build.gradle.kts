@@ -10,11 +10,11 @@
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
-    id("org.jetbrains.intellij.platform") version "2.11.0"
+    id("org.jetbrains.intellij.platform") version libs.versions.intellij.platform.get()
 }
 
 group = "io.github.santimattius"
-version = "0.6.1"
+version = "0.7.0"
 
 repositories {
     mavenCentral()
@@ -25,8 +25,9 @@ repositories {
 
 dependencies {
     intellijPlatform {
-        intellijIdeaCommunity(libs.versions.intellij.ide.get())
+        intellijIdeaUltimate(libs.versions.intellij.ide.get())
         bundledPlugin("org.jetbrains.kotlin")
+        bundledPlugin("com.intellij.java")
         pluginVerifier()
         testFramework(org.jetbrains.intellij.platform.gradle.TestFrameworkType.Platform)
     }
@@ -51,6 +52,10 @@ intellijPlatform {
             </ul>
         """.trimIndent()
         changeNotes = """
+            <p><b>v0.7.0</b></p>
+            <ul>
+                <li><b>IDE compatibility extended</b> — Now supports IntelliJ IDEA 2026.1 (build 261.*) and Android Studio Panda 2025.3.3 (build 253.*)</li>
+            </ul>
             <p><b>v0.6.1</b></p>
             <ul>
                 <li><b>Local framework scope recognition (compiler + IDE + lint)</b> — Scopes created via framework helpers (e.g. <code>rememberCoroutineScope()</code>) stored in local variables are now treated as structured scopes, eliminating false positives in UnstructuredLaunch across all three layers</li>
@@ -105,7 +110,7 @@ intellijPlatform {
         """.trimIndent()
         ideaVersion {
             sinceBuild = "243"
-            untilBuild = "253.*"
+            untilBuild = "261.*"
         }
         vendor {
             name = "Santiago Mattiauda"
@@ -116,7 +121,7 @@ intellijPlatform {
 
     pluginVerification {
         ides {
-            create(org.jetbrains.intellij.platform.gradle.IntelliJPlatformType.IntellijIdeaCommunity, libs.versions.intellij.ide.get())
+            recommended()
         }
     }
 
