@@ -13,8 +13,9 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.expression.FirFunctionCallChecker
-import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
+import org.jetbrains.kotlin.fir.declarations.FirNamedFunction
 import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
+import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.name.Name
 
 /**
@@ -138,14 +139,15 @@ class RunBlockingInSuspendChecker : FirFunctionCallChecker(MppCheckerKind.Common
      * @param context The checker context containing declaration hierarchy
      * @return true if we're inside a suspend function
      */
+    @OptIn(SymbolInternals::class)
     private fun isInsideSuspendFunction(context: CheckerContext): Boolean {
-        // Walk up the containing declarations to find if we're in a suspend function
-        for (declaration in context.containingDeclarations) {
-            if (declaration is FirSimpleFunction) {
-                // Check the status for suspend modifier
-                if (declaration.status.isSuspend) {
-                    return true
-                }
+        // Walk up the containing declarations to find if we're in a suspend function.
+        // In Kotlin 2.3.20+, context.containingDeclarations returns FirBasedSymbol<*> elements;
+        // access .fir to get the underlying FirDeclaration for the is-check.
+        for (element in context.containingDeclarations) {
+            val declaration = element.fir
+            if (declaration is FirNamedFunction && declaration.status.isSuspend) {
+                return true
             }
         }
         return false
