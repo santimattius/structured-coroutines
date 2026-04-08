@@ -35,6 +35,22 @@ mavenPublishing {
     )
 }
 
+// Generate a properties file with the project version so the plugin can resolve it at runtime
+val generateVersionProperties = tasks.register("generateVersionProperties") {
+    val propsFile = layout.buildDirectory.file("resources/main/structured-coroutines.properties")
+    outputs.file(propsFile)
+    inputs.property("version", project.version)
+    doFirst {
+        propsFile.get().asFile.apply {
+            parentFile.mkdirs()
+            writeText("version=${project.version}\n")
+        }
+    }
+}
+tasks.named("processResources") {
+    dependsOn(generateVersionProperties)
+}
+
 // Custom task that runs all checks for the Gradle plugin
 tasks.register("structuredCoroutinesCheck") {
     group = "verification"
