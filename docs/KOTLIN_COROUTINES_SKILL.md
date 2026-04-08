@@ -23,11 +23,8 @@ Inspired by the [Swift Concurrency Agent Skill](https://github.com/AvdLee/Swift-
 
 | Asset | Description |
 |-------|-------------|
-| **SYSTEM_PROMPT.md** | Full system prompt: identity, strict rules, tone, and required output format (analysis → erroneous code → optimized code → explanation). |
-| **SKILL.md** | Playbook (triage): maps topic/error to the right reference file so the agent jumps to the relevant practice. |
+| **SKILL.md** | Playbook (triage): strict rules, agent behavior contract, and a table mapping each topic/error to the right reference file. |
 | **references/** | One markdown file per best practice (32 files). Each has Bad / Recommended / Why / Quick fix. |
-| **CONFIG.json** | Metadata: name, description, version, triggers, and reference index. |
-| **EXAMPLES_SUITE.kt** | Kotlin examples with intentional anti-patterns (scope leaks, exception handling, Dispatchers) for testing the agent. |
 
 ### References (per practice)
 
@@ -89,14 +86,13 @@ Claude Code natively supports this skill as a plugin via the marketplace.
 claude --plugin-dir /path/to/structured-coroutines/kotlin-coroutines-skill
 ```
 
-Replace the path with the actual location of this `kotlin-coroutines-skill` folder.
+Replace the path with the actual location of the `kotlin-coroutines-skill` folder.
 
 #### How it works
 
 Once installed, the skill is available automatically when you work on Kotlin/Android code. Claude Code reads:
 
-- `SKILL.md` — triage playbook (maps your topic/error to the right reference)
-- `SYSTEM_PROMPT.md` — strict rules and output format
+- `SKILL.md` — triage playbook with strict rules (maps your topic/error to the right reference)
 - `references/ref-*.md` — per-practice guidance loaded on demand
 
 **Plugin layout:**
@@ -108,9 +104,6 @@ repo root/
 │   └── marketplace.json     ← marketplace catalog (owner + plugins)
 └── kotlin-coroutines-skill/
     ├── SKILL.md
-    ├── SYSTEM_PROMPT.md
-    ├── CONFIG.json
-    ├── EXAMPLES_SUITE.kt
     └── references/
 ```
 
@@ -124,7 +117,7 @@ Use this when you want the skill active for a specific Claude project without th
 
 1. In Claude, open **Projects** and create or select a project.
 2. Go to **Project settings → Custom instructions**.
-3. Paste the full content of **SYSTEM_PROMPT.md**.
+3. Paste the full content of **SKILL.md** (the Agent Behavior Contract section).
 4. Optionally add: *"For Kotlin Coroutines questions, always use the structured output format: 1) Analysis, 2) Erroneous code, 3) Optimized code, 4) Technical explanation."*
 5. Save.
 
@@ -135,7 +128,7 @@ Use this project when working on Kotlin/Android codebases for consistent advice.
 ### Option C: ChatGPT (Custom GPTs)
 
 1. Create a new **Custom GPT** (ChatGPT Plus or Team).
-2. In **Configure → Instructions**, paste the full content of **SYSTEM_PROMPT.md**.
+2. In **Configure → Instructions**, paste the Agent Behavior Contract from **SKILL.md**.
 3. Optionally upload the `references/` files to **Knowledge** so the GPT can reference them.
 4. Save and name the GPT (e.g. "Kotlin Coroutines Expert").
 
@@ -147,7 +140,7 @@ Use this project when working on Kotlin/Android codebases for consistent advice.
 
 1. In your repo, open or create `.cursor/rules/`.
 2. Create a file `kotlin-coroutines.mdc`.
-3. Paste the full content of **SYSTEM_PROMPT.md**.
+3. Paste the Agent Behavior Contract from **SKILL.md**.
 4. Add a `globs` condition so the rule applies to Kotlin files: `**/*.kt`.
 5. Reload Cursor rules.
 
@@ -185,16 +178,10 @@ The skill enforces these rules in every response:
 - Tests use `runTest` with virtual time (`advanceTimeBy`, `advanceUntilIdle`). No real `delay()`.
 - Channels: prefer `produce { }`. Use `for (x in channel)` per consumer, not `consumeEach` for fan-out.
 
-Full rules are in **SYSTEM_PROMPT.md**, the triage table is in **SKILL.md**, and per-practice detail is in `references/`.
-
----
-
-## License
-
-MIT License. See [LICENSE](LICENSE) in this directory or the repo root.
+Full rules and the triage table are in **SKILL.md**; per-practice detail is in `references/`.
 
 ---
 
 ## Contributing
 
-Improvements to the system prompt, CONFIG, or reference files that stay aligned with Kotlin's structured concurrency and the existing checklist are welcome via pull requests to the parent [structured-coroutines](https://github.com/santimattius/structured-coroutines) repository.
+Improvements to the playbook or reference files that stay aligned with Kotlin's structured concurrency and the existing checklist are welcome via pull requests to the [structured-coroutines](https://github.com/santimattius/structured-coroutines) repository.
