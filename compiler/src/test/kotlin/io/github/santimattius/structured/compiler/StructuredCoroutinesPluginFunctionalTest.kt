@@ -58,7 +58,7 @@ class StructuredCoroutinesPluginFunctionalTest {
         val pluginVersion = System.getProperty("structuredCoroutines.version", "0.3.0")
         File(projectDir, "build.gradle.kts").writeText("""
             plugins {
-                kotlin("jvm") version "2.3.0"
+                kotlin("jvm") version "2.3.20"
                 id("io.github.santimattius.structured-coroutines") version "$pluginVersion"
             }
             

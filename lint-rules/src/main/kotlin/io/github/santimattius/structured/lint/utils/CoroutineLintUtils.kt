@@ -238,7 +238,7 @@ object CoroutineLintUtils {
 
             // Recurse into parts
             if (containsMainDispatcherReference(receiver)) return true
-            if (selector is UExpression && containsMainDispatcherReference(selector)) return true
+            if (containsMainDispatcherReference(selector)) return true
         }
 
         // Check the asSourceString which should contain the expression representation

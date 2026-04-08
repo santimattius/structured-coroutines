@@ -86,7 +86,7 @@ class LifecycleAwareFlowCollectionDetector : Detector(), SourceCodeScanner {
         val receiver = call.receiver ?: return null
         return when (receiver) {
             is UReferenceExpression -> receiver.asSourceString()
-            is UQualifiedReferenceExpression -> receiver.selector?.asSourceString()
+            is UQualifiedReferenceExpression -> receiver.selector.asSourceString()
             else -> null
         }
     }
