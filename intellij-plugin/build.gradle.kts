@@ -139,3 +139,30 @@ kotlin {
 tasks.test {
     useJUnitPlatform()
 }
+
+// ──────────────────────────────────────────────
+// Release pipeline: patch → build → verify → sign
+// Usage:
+//   ./gradlew :intellij-plugin:releasePipeline
+//   ./gradlew :intellij-plugin:releasePipeline -PskipVerify=true  (skip verifyPlugin)
+// ──────────────────────────────────────────────
+val skipVerify = providers.gradleProperty("skipVerify").map { it.toBoolean() }.getOrElse(false)
+
+tasks.register("releasePipeline") {
+    group = "intellij"
+    description = "Runs the full plugin release pipeline: patchPluginXml → buildPlugin → verifyPlugin → signPlugin"
+    if (skipVerify) {
+        dependsOn("patchPluginXml", "buildPlugin", "signPlugin")
+    } else {
+        dependsOn("patchPluginXml", "buildPlugin", "verifyPlugin", "signPlugin")
+    }
+    doLast {
+        println("releasePipeline completed — plugin is patched, built, verified and signed.")
+    }
+}
+
+// Enforce explicit execution order (IntelliJ Platform plugin already wires most deps,
+// but signPlugin and verifyPlugin are independent siblings of buildPlugin).
+tasks.named("buildPlugin") { mustRunAfter("patchPluginXml") }
+tasks.named("verifyPlugin") { mustRunAfter("buildPlugin") }
+tasks.named("signPlugin") { mustRunAfter("verifyPlugin") }
