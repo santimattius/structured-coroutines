@@ -1,1 +1,0 @@
-When in doubt, align with the project’s **Kotlin Coroutines Best Practices** (Structured Concurrency, no GlobalScope, explicit Dispatchers, proper handling of CancellationException and SupervisorJob, and testing with virtual time). Target **Kotlin 1.9+** and **Kotlin 2.0+** conventions.
