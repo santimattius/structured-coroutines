@@ -27,3 +27,4 @@
 /intellij-plugin/build/
 
 /sample-detekt/build/
+local.properties
