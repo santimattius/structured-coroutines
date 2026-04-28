@@ -74,6 +74,8 @@ abstract class StructuredCoroutinesReportTask : DefaultTask() {
         RuleInfo("cancellationExceptionSwallowed","CANCEL_003",   "4.3", "Swallowing CancellationException",                  "43-cancel_003--swallowing-cancellationexception"),
         RuleInfo("suspendInFinally",              "CANCEL_004",   "4.4", "Suspendable Cleanup Without NonCancellable",         "44-cancel_004--suspendable-cleanup-without-noncancellable"),
         RuleInfo("cancellationExceptionSubclass", "EXCEPT_002",   "5.2", "Extending CancellationException for Domain Errors",  "52-except_002--extending-cancellationexception-for-domain-errors"),
+        RuleInfo("suspendCoroutineWithoutCancellation", "INTEROP_001", "10.1", "Wrapping Callbacks Without Cancellation Support", "101-interop_001--wrapping-callbacks-without-cancellation-support"),
+        RuleInfo("callbackFlowWithoutAwaitClose", "INTEROP_002", "10.2", "callbackFlow Without awaitClose", "102-interop_002--callbackflow-without-awaitclose"),
     )
 
     private val docBase =
@@ -97,6 +99,8 @@ abstract class StructuredCoroutinesReportTask : DefaultTask() {
     @get:Input abstract val unusedDeferred: Property<String>
     @get:Input abstract val redundantLaunchInCoroutineScope: Property<String>
     @get:Input abstract val loopWithoutYield: Property<String>
+    @get:Input abstract val suspendCoroutineWithoutCancellation: Property<String>
+    @get:Input abstract val callbackFlowWithoutAwaitClose: Property<String>
 
     // Exclusions
     @get:Input abstract val excludedSourceSets: ListProperty<String>
@@ -129,6 +133,8 @@ abstract class StructuredCoroutinesReportTask : DefaultTask() {
             "unusedDeferred"                 to unusedDeferred.get(),
             "redundantLaunchInCoroutineScope" to redundantLaunchInCoroutineScope.get(),
             "loopWithoutYield"               to loopWithoutYield.get(),
+            "suspendCoroutineWithoutCancellation" to suspendCoroutineWithoutCancellation.get(),
+            "callbackFlowWithoutAwaitClose"  to callbackFlowWithoutAwaitClose.get(),
         )
 
         val format    = reportFormat.getOrElse("all")

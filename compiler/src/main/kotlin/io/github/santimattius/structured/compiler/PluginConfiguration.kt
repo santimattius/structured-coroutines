@@ -32,6 +32,8 @@ import org.jetbrains.kotlin.diagnostics.Severity
  * - `cancellationExceptionSwallowed`
  * - `unusedDeferred`
  * - `redundantLaunchInCoroutineScope`
+ * - `suspendCoroutineWithoutCancellation`
+ * - `callbackFlowWithoutAwaitClose`
  *
  * Values can be `"error"` or `"warning"` (case-insensitive).
  *
@@ -101,6 +103,18 @@ class PluginConfiguration(configuration: CompilerConfiguration) {
      * Severity for loop in suspend function without cooperation point rule (4.1).
      */
     val loopWithoutYield: Severity = getSeverity(configuration, "loopWithoutYield", Severity.WARNING)
+
+    /**
+     * Severity for `suspendCoroutine` without cancellation support (INTEROP_001).
+     */
+    val suspendCoroutineWithoutCancellation: Severity =
+        getSeverity(configuration, "suspendCoroutineWithoutCancellation", Severity.ERROR)
+
+    /**
+     * Severity for `callbackFlow` without `awaitClose` (INTEROP_002).
+     */
+    val callbackFlowWithoutAwaitClose: Severity =
+        getSeverity(configuration, "callbackFlowWithoutAwaitClose", Severity.ERROR)
     
     /**
      * Reads a severity option from compiler configuration.

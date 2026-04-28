@@ -124,6 +124,18 @@ interface StructuredCoroutinesExtension {
     val loopWithoutYield: Property<String>
 
     /**
+     * Severity for `suspendCoroutine` without cancellation support (INTEROP_001).
+     * Default: "error"
+     */
+    val suspendCoroutineWithoutCancellation: Property<String>
+
+    /**
+     * Severity for `callbackFlow` without `awaitClose` (INTEROP_002).
+     * Default: "error"
+     */
+    val callbackFlowWithoutAwaitClose: Property<String>
+
+    /**
      * Source set (compilation) names to exclude from the compiler plugin.
      * Excluded compilations will not run the Structured Coroutines plugin.
      * Use for legacy modules or test source sets during migration.
@@ -190,6 +202,8 @@ interface StructuredCoroutinesExtension {
         cancellationExceptionSwallowed.set("warning")
         redundantLaunchInCoroutineScope.set("warning")
         loopWithoutYield.set("warning")
+        suspendCoroutineWithoutCancellation.set("error")
+        callbackFlowWithoutAwaitClose.set("error")
     }
 
     /**
@@ -209,6 +223,8 @@ interface StructuredCoroutinesExtension {
         cancellationExceptionSwallowed.set("warning")
         redundantLaunchInCoroutineScope.set("warning")
         loopWithoutYield.set("warning")
+        suspendCoroutineWithoutCancellation.set("warning")
+        callbackFlowWithoutAwaitClose.set("warning")
     }
 
     /**
@@ -217,5 +233,24 @@ interface StructuredCoroutinesExtension {
      */
     fun useRelaxedProfile() {
         useGradualProfile()
+    }
+
+    /**
+     * Android Compose–oriented profile per `docs/plan/ITERATION_PLAN_2.md` (v0.8.0 Iteración 1):
+     * strict compiler defaults plus INTEROP_001/002 as errors. Additional Detekt/Lint rules from the
+     * plan are enabled when those tasks land in later phases.
+     */
+    fun useAndroidComposeProfile() {
+        useStrictProfile()
+        suspendCoroutineWithoutCancellation.set("error")
+        callbackFlowWithoutAwaitClose.set("error")
+    }
+
+    /**
+     * Kotlin Multiplatform common-code profile per iteration plan: same baseline as
+     * [useAndroidComposeProfile] (Compose-specific Lint is a no-op on non-Android modules).
+     */
+    fun useKmpCommonProfile() {
+        useAndroidComposeProfile()
     }
 }

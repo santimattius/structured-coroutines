@@ -59,6 +59,8 @@ class StructuredCoroutinesGradlePlugin : KotlinCompilerPluginSupportPlugin {
         extension.unusedDeferred.convention("error")
         extension.redundantLaunchInCoroutineScope.convention("warning")
         extension.loopWithoutYield.convention("warning")
+        extension.suspendCoroutineWithoutCancellation.convention("error")
+        extension.callbackFlowWithoutAwaitClose.convention("error")
         extension.excludeSourceSets.convention(emptyList())
         extension.excludeProjects.convention(emptyList())
 
@@ -88,6 +90,8 @@ class StructuredCoroutinesGradlePlugin : KotlinCompilerPluginSupportPlugin {
             task.unusedDeferred.set(extension.unusedDeferred)
             task.redundantLaunchInCoroutineScope.set(extension.redundantLaunchInCoroutineScope)
             task.loopWithoutYield.set(extension.loopWithoutYield)
+            task.suspendCoroutineWithoutCancellation.set(extension.suspendCoroutineWithoutCancellation)
+            task.callbackFlowWithoutAwaitClose.set(extension.callbackFlowWithoutAwaitClose)
 
             task.excludedSourceSets.set(extension.excludeSourceSets)
             task.excludedProjects.set(extension.excludeProjects)
@@ -139,6 +143,8 @@ class StructuredCoroutinesGradlePlugin : KotlinCompilerPluginSupportPlugin {
                 add(SubpluginOption("unusedDeferred", extension.unusedDeferred.get()))
                 add(SubpluginOption("redundantLaunchInCoroutineScope", extension.redundantLaunchInCoroutineScope.get()))
                 add(SubpluginOption("loopWithoutYield", extension.loopWithoutYield.get()))
+                add(SubpluginOption("suspendCoroutineWithoutCancellation", extension.suspendCoroutineWithoutCancellation.get()))
+                add(SubpluginOption("callbackFlowWithoutAwaitClose", extension.callbackFlowWithoutAwaitClose.get()))
             }
         }
     }
