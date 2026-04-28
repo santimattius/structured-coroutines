@@ -495,17 +495,33 @@ class StructuredCoroutinesPluginFunctionalTest {
     // Sample project validation (real :sample with compiler plugin)
     // ============================================================================
 
+    /**
+     * Runs `:sample:compileKotlin` via the project's Gradle wrapper as a plain OS process,
+     * capturing both stdout and stderr (merged). Using ProcessBuilder instead of GradleRunner
+     * here because the Kotlin Build Tools API (BTAPI) worker writes compiler diagnostics to
+     * the Gradle process's stderr stream, which GradleRunner does not forward into
+     * BuildResult.output.
+     */
     private fun runSampleCompilation(env: Map<String, String> = emptyMap()): String? {
         val rootDir = System.getProperty("structuredCoroutines.rootDir") ?: return null
         val root = File(rootDir)
         if (!File(root, "sample/build.gradle.kts").exists()) return null
-        val runner = GradleRunner.create()
-            .withProjectDir(root)
-            .withArguments(":sample:compileKotlin", "--stacktrace", "-q")
-            .forwardOutput()
-        val runnerWithEnv = if (env.isEmpty()) runner else runner.withEnvironment(env)
-        val result = runnerWithEnv.buildAndFail()
-        return result.output
+
+        val gradlew = if (System.getProperty("os.name", "").startsWith("Windows")) "gradlew.bat" else "gradlew"
+        val pb = ProcessBuilder(File(root, gradlew).absolutePath, ":sample:compileKotlin", "--info")
+            .directory(root)
+            .redirectErrorStream(true)
+
+        pb.environment().apply {
+            clear()
+            putAll(System.getenv())
+            putAll(env)
+        }
+
+        val process = pb.start()
+        val output = process.inputStream.bufferedReader().readText()
+        process.waitFor()
+        return output
     }
 
     private fun skipSampleTest(): Boolean {
