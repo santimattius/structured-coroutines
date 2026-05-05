@@ -18,11 +18,14 @@ import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
 import org.jetbrains.kotlin.fir.expressions.FirPropertyAccessExpression
 import org.jetbrains.kotlin.fir.expressions.FirResolvedQualifier
+import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.references.toResolvedCallableSymbol
 import org.jetbrains.kotlin.fir.references.toResolvedPropertySymbol
 import org.jetbrains.kotlin.fir.references.toResolvedValueParameterSymbol
+import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirValueParameterSymbol
 import org.jetbrains.kotlin.fir.types.ConeClassLikeType
 import org.jetbrains.kotlin.fir.types.resolvedType
@@ -116,6 +119,13 @@ import org.jetbrains.kotlin.name.Name
  *         Text("Click")
  *     }
  * }
+ *
+ * // ✅ GOOD: Compose Modifier.Node coroutineScope (tied to node attach/detach lifecycle)
+ * private class MyNode : Modifier.Node(), DrawModifierNode {
+ *     override fun onAttach() {
+ *         coroutineScope.launch { collectInteractions() }
+ *     }
+ * }
  * ```
  *
  * ## Detection Logic
@@ -170,6 +180,34 @@ class UnstructuredLaunchChecker : FirFunctionCallChecker(MppCheckerKind.Common) 
             CallableId(FqName("androidx.lifecycle"), Name.identifier("lifecycleScope")),
             // org.koin.androidx.viewmodel (KMP Koin)
             CallableId(FqName("org.koin.androidx.viewmodel"), Name.identifier("viewModelScope")),
+            // androidx.compose.ui.Modifier.Node.coroutineScope
+            // Member property of Modifier.Node; tied to node attach/detach lifecycle.
+            CallableId(
+                ClassId(
+                    FqName("androidx.compose.ui"),
+                    FqName("Modifier.Node"),
+                    false,
+                ),
+                Name.identifier("coroutineScope"),
+            ),
+            // com.arkivanov.mvikotlin.extensions.coroutines.CoroutineBootstrapper.scope
+            // Member property of MVIKotlin's CoroutineBootstrapper; cancelled on dispose().
+            CallableId(
+                ClassId(
+                    FqName("com.arkivanov.mvikotlin.extensions.coroutines"),
+                    Name.identifier("CoroutineBootstrapper"),
+                ),
+                Name.identifier("scope"),
+            ),
+            // com.arkivanov.mvikotlin.extensions.coroutines.CoroutineExecutor.scope
+            // Member property of MVIKotlin's CoroutineExecutor; cancelled on dispose().
+            CallableId(
+                ClassId(
+                    FqName("com.arkivanov.mvikotlin.extensions.coroutines"),
+                    Name.identifier("CoroutineExecutor"),
+                ),
+                Name.identifier("scope"),
+            ),
         )
 
         /**
@@ -180,6 +218,12 @@ class UnstructuredLaunchChecker : FirFunctionCallChecker(MppCheckerKind.Common) 
             CallableId(FqName("androidx.compose.runtime"), Name.identifier("rememberCoroutineScope")),
             // Compose Multiplatform (same package in most cases)
             CallableId(FqName("androidx.compose.runtime"), Name.identifier("rememberCoroutineScope")),
+            // Decompose / Essenty: extension on LifecycleOwner returning a CoroutineScope
+            // tied to the component lifecycle (cancelled in onDestroy).
+            CallableId(
+                FqName("com.arkivanov.essenty.lifecycle.coroutines"),
+                Name.identifier("coroutineScope"),
+            ),
         )
 
         /**
@@ -191,6 +235,22 @@ class UnstructuredLaunchChecker : FirFunctionCallChecker(MppCheckerKind.Common) 
             Name.identifier("viewModelScope"),
             Name.identifier("lifecycleScope"),
             Name.identifier("rememberCoroutineScope"),
+        )
+
+        /**
+         * ClassIds whose `scope` member property exposes a structured CoroutineScope.
+         * Used by the inheritance fallback to recognize `scope` access via implicit `this`
+         * in subclasses where FIR resolves the symbol against the subclass (fake override).
+         */
+        private val FRAMEWORK_SCOPE_HOLDER_CLASS_IDS: Set<ClassId> = setOf(
+            ClassId(
+                FqName("com.arkivanov.mvikotlin.extensions.coroutines"),
+                Name.identifier("CoroutineBootstrapper"),
+            ),
+            ClassId(
+                FqName("com.arkivanov.mvikotlin.extensions.coroutines"),
+                Name.identifier("CoroutineExecutor"),
+            ),
         )
     }
 
@@ -221,15 +281,19 @@ class UnstructuredLaunchChecker : FirFunctionCallChecker(MppCheckerKind.Common) 
     }
 
     /**
-     * Checks if the function call is to `launch` or `async`.
+     * Checks if the function call is to `kotlinx.coroutines.launch` or `kotlinx.coroutines.async`.
+     *
+     * Other functions named `launch` (e.g. `ActivityResultLauncher.launch`,
+     * `Intent.launch`) are intentionally **not** matched.
      *
      * @param call The function call to check
-     * @return true if this is a coroutine builder call
+     * @return true if this is a kotlinx.coroutines builder call
      */
     private fun isCoroutineBuilderCall(call: FirFunctionCall): Boolean {
         val calleeReference = call.calleeReference
-        val name = calleeReference.name
-        return name in COROUTINE_BUILDER_NAMES
+        if (calleeReference.name !in COROUTINE_BUILDER_NAMES) return false
+        val callableId = calleeReference.toResolvedCallableSymbol()?.callableId ?: return false
+        return callableId.packageName.asString() == "kotlinx.coroutines"
     }
 
     /**
@@ -309,7 +373,7 @@ class UnstructuredLaunchChecker : FirFunctionCallChecker(MppCheckerKind.Common) 
             val calleeReference = receiver.calleeReference
 
             // Try to verify the property is from a known framework package
-            if (isFrameworkScopeProperty(receiver)) {
+            if (isFrameworkScopeProperty(receiver, context.session)) {
                 return true
             }
 
@@ -369,7 +433,10 @@ class UnstructuredLaunchChecker : FirFunctionCallChecker(MppCheckerKind.Common) 
      * @param propertyAccess The property access expression
      * @return true if it's a verified framework scope property
      */
-    private fun isFrameworkScopeProperty(propertyAccess: FirPropertyAccessExpression): Boolean {
+    private fun isFrameworkScopeProperty(
+        propertyAccess: FirPropertyAccessExpression,
+        session: FirSession,
+    ): Boolean {
         val symbol = propertyAccess.calleeReference.toResolvedCallableSymbol() ?: return false
         val callableId = symbol.callableId ?: return false
 
@@ -392,7 +459,49 @@ class UnstructuredLaunchChecker : FirFunctionCallChecker(MppCheckerKind.Common) 
             return true
         }
 
+        // MVIKotlin coroutine extensions: CoroutineBootstrapper.scope and CoroutineExecutor.scope.
+        // The exposed `scope` is cancelled in dispose(), so launches on it are structured.
+        if (packageName.startsWith("com.arkivanov.mvikotlin.extensions.coroutines") &&
+            callableName == Name.identifier("scope")
+        ) {
+            return true
+        }
+
+        // Inheritance fallback: when a member property is accessed via implicit `this` in a
+        // subclass (e.g., `class BootstrapperImpl : CoroutineBootstrapper<Action>()` accessing
+        // `scope`), FIR resolves the symbol against the subclass (fake override). Walk the
+        // dispatch receiver's super-type chain to detect inheritance from a known framework
+        // scope holder.
+        if (callableName == Name.identifier("scope")) {
+            val dispatchType = symbol.dispatchReceiverType as? ConeClassLikeType
+            if (dispatchType != null &&
+                inheritsFromAny(dispatchType, FRAMEWORK_SCOPE_HOLDER_CLASS_IDS, session)
+            ) {
+                return true
+            }
+        }
+
         return false
+    }
+
+    /**
+     * Recursively checks whether [type] (or any of its super-types) is one of [targetClassIds].
+     */
+    private fun inheritsFromAny(
+        type: ConeClassLikeType,
+        targetClassIds: Set<ClassId>,
+        session: FirSession,
+        visited: MutableSet<ClassId> = mutableSetOf(),
+    ): Boolean {
+        val classId = type.lookupTag.classId
+        if (classId in targetClassIds) return true
+        if (!visited.add(classId)) return false
+        val classSymbol = session.symbolProvider.getClassLikeSymbolByClassId(classId)
+            as? FirRegularClassSymbol ?: return false
+        return classSymbol.resolvedSuperTypes.any { superType ->
+            superType is ConeClassLikeType &&
+                inheritsFromAny(superType, targetClassIds, session, visited)
+        }
     }
 
     /**
