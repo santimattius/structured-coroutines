@@ -269,4 +269,23 @@ object CoroutineDetektUtils {
             fileName.contains("/test/") ||
             fileName.contains("/androidTest/")
     }
+
+    /**
+     * Kotlin Multiplatform: source roots where [Dispatchers.IO] is unsupported on Kotlin/Native/JS.
+     */
+    fun isKotlinCommonLikeSourceVirtualPath(virtualFilePath: String): Boolean {
+        val normalized = virtualFilePath.replace('\\', '/')
+        return normalized.contains("/commonMain/") ||
+            normalized.contains("/commonTest/")
+    }
+
+    /** Nearest enclosing [KtNamedFunction] walking outward from [element]. */
+    fun enclosingNamedFunction(element: KtElement): KtNamedFunction? {
+        var current: KtElement? = element
+        while (current != null) {
+            if (current is KtNamedFunction) return current
+            current = current.parent as? KtElement
+        }
+        return null
+    }
 }

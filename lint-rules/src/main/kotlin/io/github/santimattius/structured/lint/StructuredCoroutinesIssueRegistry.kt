@@ -51,6 +51,10 @@ class StructuredCoroutinesIssueRegistry : IssueRegistry() {
             ChannelNotClosedDetector.ISSUE,
             ConsumeEachMultipleConsumersDetector.ISSUE,
             FlowBlockingCallDetector.ISSUE,
+            MissingCatchInFlowDetector.ISSUE,
+            CollectAsStateWithoutLifecycleDetector.ISSUE,
+            RunBlockingInsteadOfRunTestDetector.ISSUE,
+            DispatchersIOInCommonMainDetector.ISSUE,
         )
     
     override val api: Int = CURRENT_API

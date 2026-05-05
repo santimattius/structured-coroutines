@@ -1,11 +1,15 @@
 package io.github.santimattius.structured.compiler
 
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.config.CompilerConfigurationKey
 import org.jetbrains.kotlin.diagnostics.Severity
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class PluginConfigurationInteropOptionsTest {
+
+    private fun pluginKey(shortKey: String): String =
+        "plugin:io.github.santimattius.structured-coroutines:$shortKey"
 
     @Test
     fun `suspendCoroutineWithoutCancellation defaults to ERROR`() {
@@ -25,11 +29,12 @@ class PluginConfigurationInteropOptionsTest {
     fun `interop severities honor compiler plugin options`() {
         val cfg = CompilerConfiguration()
         cfg.put(
-            PluginConfiguration.OPTIONS_KEY,
-            mapOf(
-                "suspendCoroutineWithoutCancellation" to "warning",
-                "callbackFlowWithoutAwaitClose" to "warning",
-            ),
+            CompilerConfigurationKey.create(pluginKey("suspendCoroutineWithoutCancellation")),
+            "warning",
+        )
+        cfg.put(
+            CompilerConfigurationKey.create(pluginKey("callbackFlowWithoutAwaitClose")),
+            "warning",
         )
         val pc = PluginConfiguration(cfg)
         assertEquals(Severity.WARNING, pc.suspendCoroutineWithoutCancellation)

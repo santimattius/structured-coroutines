@@ -99,7 +99,10 @@ class ScoroutinesCallCheckerExtension(session: FirSession) : FirAdditionalChecke
             // Rule 10: async without await (Best Practice 1.2)
             UnusedDeferredChecker(),
             // Rule 11: redundant launch in coroutineScope (Best Practice 2.1)
-            RedundantLaunchInCoroutineScopeChecker()
+            RedundantLaunchInCoroutineScopeChecker(),
+            // INTEROP (v0.8.0)
+            SuspendCoroutineWithoutCancellationChecker(),
+            CallbackFlowWithoutAwaitCloseChecker(),
         )
 
         /**

@@ -585,4 +585,52 @@ class StructuredCoroutinesPluginFunctionalTest {
             "Expected localized SCOPE_001 message (EN or ES). Got (last 2k):\n${output.takeLast(2000)}"
         )
     }
+
+    @Test
+    fun `suspendCoroutine in suspend function fails compilation`() {
+        val sourceCode = """
+            import kotlinx.coroutines.suspendCoroutine
+            
+            suspend fun bad(): Unit =
+                suspendCoroutine { cont -> cont.resume(Unit) }
+        """.trimIndent()
+
+        val projectDir = createTestProject(sourceCode)
+        val output = runBuild(projectDir, expectSuccess = false)
+        assertTrue(
+            "SUSPEND_COROUTINE_WITHOUT_CANCELLATION" in output || "[INTEROP_001]" in output ||
+                "suspendCoroutine" in output,
+            "Expected INTEROP_001 but got:\n$output"
+        )
+    }
+
+    @Test
+    fun `callbackFlow without awaitClose fails compilation`() {
+        val sourceCode = """
+            import kotlinx.coroutines.flow.callbackFlow
+            
+            fun broken() = callbackFlow<Unit> { }
+        """.trimIndent()
+
+        val projectDir = createTestProject(sourceCode)
+        val output = runBuild(projectDir, expectSuccess = false)
+        assertTrue(
+            "CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE" in output || "[INTEROP_002]" in output ||
+                "awaitClose" in output,
+            "Expected INTEROP_002 but got:\n$output"
+        )
+    }
+
+    @Test
+    fun `channelFlow compiles without awaitClose`() {
+        val sourceCode = """
+            import kotlinx.coroutines.flow.channelFlow
+            
+            fun ok() = channelFlow<Int> { send(42) }
+        """.trimIndent()
+
+        val projectDir = createTestProject(sourceCode)
+        val output = runBuild(projectDir, expectSuccess = true)
+        assertTrue("BUILD SUCCESSFUL" in output || "compileKotlin" in output, output)
+    }
 }

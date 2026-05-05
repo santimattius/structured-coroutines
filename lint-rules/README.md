@@ -118,6 +118,10 @@ Configure Android Lint rules in `lint.xml`:
     <issue id="ChannelNotClosed" severity="warning" />
     <issue id="ConsumeEachMultipleConsumers" severity="warning" />
     <issue id="FlowBlockingCall" severity="warning" />
+    <issue id="MissingCatchInFlow" severity="warning" />
+    <issue id="CollectAsStateWithoutLifecycle" severity="warning" />
+    <issue id="RunBlockingInsteadOfRunTest" severity="warning" />
+    <issue id="DispatchersIOInCommonMain" severity="error" />
 </lint>
 ```
 
@@ -145,6 +149,8 @@ Configure Android Lint rules in `lint.xml`:
 | `UnstructuredLaunch` | Additional | Error | Detects launch without structured scope |
 | `RedundantLaunchInCoroutineScope` | Additional | Warning | Detects redundant launch in `coroutineScope` |
 | `RunBlockingWithDelayInTest` | Additional | Warning | Detects `runBlocking` + `delay` in tests |
+| `RunBlockingInsteadOfRunTest` | Additional | Warning | Detects `@Test … = runBlocking { }` (prefer `runTest`) |
+| `DispatchersIOInCommonMain` | Additional | Error | Detects `Dispatchers.IO` in `commonMain` / `commonTest` |
 | `LoopWithoutYield` | Additional | Warning | Detects loops without cooperation points |
 | `ScopeReuseAfterCancel` | Additional | Warning | Detects cancelled scope reuse |
 | `ChannelNotClosed` | Additional | Warning | Detects manual Channel() without close() in same function |
@@ -157,8 +163,8 @@ Configure Android Lint rules in `lint.xml`:
 |----------|-------|
 | Compiler Plugin Rules | 9 |
 | Android-Specific Rules | 4 |
-| Additional Rules | 8 |
-| **Total** | **19** |
+| Additional Rules | 10 |
+| **Total** | **23** |
 
 ---
 

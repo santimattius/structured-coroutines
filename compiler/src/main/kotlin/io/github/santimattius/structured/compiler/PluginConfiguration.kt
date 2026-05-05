@@ -10,51 +10,145 @@
 package io.github.santimattius.structured.compiler
 
 import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.config.CompilerConfigurationKey
 import org.jetbrains.kotlin.diagnostics.Severity
 
 /**
  * Configuration for the Structured Coroutines compiler plugin.
  *
- * Options are stored in [CompilerConfiguration] as a single [Map]<[String],[String]> under
- * [OPTIONS_KEY]. A [CommandLineProcessor] (or a test) populates that map before constructing
- * this class. Values are `"error"` or `"warning"` (case-insensitive); anything else falls
- * back to the default severity for that rule.
+ * This class reads configuration options from [CompilerConfiguration] and provides
+ * severity levels for each rule. Rules can be configured to report as ERROR or WARNING.
+ *
+ * ## Configuration Keys
+ *
+ * Configuration is passed via compiler plugin options with keys:
+ * - `globalScopeUsage`
+ * - `inlineCoroutineScope`
+ * - `unstructuredLaunch`
+ * - `runBlockingInSuspend`
+ * - `jobInBuilderContext`
+ * - `dispatchersUnconfined`
+ * - `cancellationExceptionSubclass`
+ * - `suspendInFinally`
+ * - `cancellationExceptionSwallowed`
+ * - `unusedDeferred`
+ * - `redundantLaunchInCoroutineScope`
+ * - `suspendCoroutineWithoutCancellation`
+ * - `callbackFlowWithoutAwaitClose`
+ *
+ * Values can be `"error"` or `"warning"` (case-insensitive).
+ *
+ * ## Default Severities
+ *
+ * - Most rules default to ERROR
+ * - Some rules default to WARNING (e.g., `dispatchersUnconfined`, `suspendInFinally`)
  */
 class PluginConfiguration(configuration: CompilerConfiguration) {
+    
+    /**
+     * Severity for GlobalScope usage rule.
+     */
+    val globalScopeUsage: Severity = getSeverity(configuration, "globalScopeUsage", Severity.ERROR)
+    
+    /**
+     * Severity for inline CoroutineScope creation rule.
+     */
+    val inlineCoroutineScope: Severity = getSeverity(configuration, "inlineCoroutineScope", Severity.ERROR)
+    
+    /**
+     * Severity for unstructured launch rule.
+     */
+    val unstructuredLaunch: Severity = getSeverity(configuration, "unstructuredLaunch", Severity.ERROR)
+    
+    /**
+     * Severity for runBlocking in suspend functions rule.
+     */
+    val runBlockingInSuspend: Severity = getSeverity(configuration, "runBlockingInSuspend", Severity.ERROR)
+    
+    /**
+     * Severity for Job()/SupervisorJob() in builder context rule.
+     */
+    val jobInBuilderContext: Severity = getSeverity(configuration, "jobInBuilderContext", Severity.ERROR)
+    
+    /**
+     * Severity for Dispatchers.Unconfined usage rule.
+     */
+    val dispatchersUnconfined: Severity = getSeverity(configuration, "dispatchersUnconfined", Severity.WARNING)
+    
+    /**
+     * Severity for CancellationException subclass rule.
+     */
+    val cancellationExceptionSubclass: Severity = getSeverity(configuration, "cancellationExceptionSubclass", Severity.ERROR)
+    
+    /**
+     * Severity for suspend calls in finally without NonCancellable rule.
+     */
+    val suspendInFinally: Severity = getSeverity(configuration, "suspendInFinally", Severity.WARNING)
+    
+    /**
+     * Severity for catch(Exception) swallowing CancellationException rule.
+     */
+    val cancellationExceptionSwallowed: Severity = getSeverity(configuration, "cancellationExceptionSwallowed", Severity.WARNING)
+    
+    /**
+     * Severity for unused Deferred (async without await) rule.
+     */
+    val unusedDeferred: Severity = getSeverity(configuration, "unusedDeferred", Severity.ERROR)
+    
+    /**
+     * Severity for redundant launch in coroutineScope rule.
+     */
+    val redundantLaunchInCoroutineScope: Severity = getSeverity(configuration, "redundantLaunchInCoroutineScope", Severity.WARNING)
+    
+    /**
+     * Severity for loop in suspend function without cooperation point rule (4.1).
+     */
+    val loopWithoutYield: Severity = getSeverity(configuration, "loopWithoutYield", Severity.WARNING)
 
-    companion object {
-        /**
-         * Single static key used to store all plugin option key→value pairs in
-         * [CompilerConfiguration]. Using one key avoids the [CompilerConfigurationKey]
-         * reference-equality trap (the class does not override equals/hashCode, so two
-         * [CompilerConfigurationKey.create] calls with the same name produce unequal keys).
-         */
-        val OPTIONS_KEY: CompilerConfigurationKey<Map<String, String>> =
-            CompilerConfigurationKey.create("io.github.santimattius.structured-coroutines.options")
-    }
+    /**
+     * Severity for `suspendCoroutine` without cancellation support (INTEROP_001).
+     */
+    val suspendCoroutineWithoutCancellation: Severity =
+        getSeverity(configuration, "suspendCoroutineWithoutCancellation", Severity.ERROR)
 
-    private val options: Map<String, String> = configuration.get(OPTIONS_KEY) ?: emptyMap()
-
-    val globalScopeUsage: Severity = getSeverity("globalScopeUsage", Severity.ERROR)
-    val inlineCoroutineScope: Severity = getSeverity("inlineCoroutineScope", Severity.ERROR)
-    val unstructuredLaunch: Severity = getSeverity("unstructuredLaunch", Severity.ERROR)
-    val runBlockingInSuspend: Severity = getSeverity("runBlockingInSuspend", Severity.ERROR)
-    val jobInBuilderContext: Severity = getSeverity("jobInBuilderContext", Severity.ERROR)
-    val dispatchersUnconfined: Severity = getSeverity("dispatchersUnconfined", Severity.WARNING)
-    val cancellationExceptionSubclass: Severity = getSeverity("cancellationExceptionSubclass", Severity.ERROR)
-    val suspendInFinally: Severity = getSeverity("suspendInFinally", Severity.WARNING)
-    val cancellationExceptionSwallowed: Severity = getSeverity("cancellationExceptionSwallowed", Severity.WARNING)
-    val unusedDeferred: Severity = getSeverity("unusedDeferred", Severity.ERROR)
-    val redundantLaunchInCoroutineScope: Severity = getSeverity("redundantLaunchInCoroutineScope", Severity.WARNING)
-    val loopWithoutYield: Severity = getSeverity("loopWithoutYield", Severity.WARNING)
-    val suspendCoroutineWithoutCancellation: Severity = getSeverity("suspendCoroutineWithoutCancellation", Severity.ERROR)
-    val callbackFlowWithoutAwaitClose: Severity = getSeverity("callbackFlowWithoutAwaitClose", Severity.ERROR)
-
-    private fun getSeverity(key: String, defaultSeverity: Severity): Severity =
-        when (options[key]?.lowercase()) {
+    /**
+     * Severity for `callbackFlow` without `awaitClose` (INTEROP_002).
+     */
+    val callbackFlowWithoutAwaitClose: Severity =
+        getSeverity(configuration, "callbackFlowWithoutAwaitClose", Severity.ERROR)
+    
+    /**
+     * Reads a severity option from compiler configuration.
+     *
+     * Compiler plugin options are passed via SubpluginOption and are stored
+     * in the configuration with the format: "plugin:pluginId:key" -> value
+     *
+     * @param configuration The compiler configuration
+     * @param key The configuration key (without plugin prefix)
+     * @param defaultSeverity The default severity if not configured
+     * @return The configured severity or default
+     */
+    private fun getSeverity(
+        configuration: CompilerConfiguration,
+        key: String,
+        defaultSeverity: Severity
+    ): Severity {
+        // SubpluginOption values are stored with the format: "plugin:pluginId:key"
+        val pluginId = "io.github.santimattius.structured-coroutines"
+        val fullKey = "plugin:$pluginId:$key"
+        
+        // Try to get the option value from configuration
+        // Options are stored as strings
+        val optionValue = try {
+            val configKey = org.jetbrains.kotlin.config.CompilerConfigurationKey.create<String>(fullKey)
+            configuration.get(configKey)
+        } catch (e: Exception) {
+            null
+        } ?: return defaultSeverity
+        
+        return when (optionValue.lowercase()) {
             "error" -> Severity.ERROR
             "warning" -> Severity.WARNING
             else -> defaultSeverity
         }
+    }
 }

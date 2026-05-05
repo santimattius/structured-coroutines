@@ -39,9 +39,23 @@ object LintTestStubs {
 
     val kotlinxCoroutinesFlow = """
         package kotlinx.coroutines.flow
+        import kotlinx.coroutines.CoroutineScope
+        import kotlinx.coroutines.Job
+
         interface Flow<out T>
+        interface StateFlow<out T> : Flow<T>
         interface FlowCollector<in T>
+
         fun <T> flow(block: suspend FlowCollector<T>.() -> Unit): Flow<T> = error("stub")
+
+        fun <T, R> Flow<T>.map(transform: suspend (value: T) -> R): Flow<R> = error("stub")
+        fun <T> Flow<T>.catch(
+            handler: suspend FlowCollector<T>.(cause: Throwable) -> Unit
+        ): Flow<T> = error("stub")
+
+        suspend fun <T> Flow<T>.collect(action: suspend (value: T) -> Unit): Unit = error("stub")
+        suspend fun <T> Flow<T>.collectLatest(action: suspend (value: T) -> Unit): Unit = error("stub")
+        fun <T> Flow<T>.launchIn(scope: CoroutineScope): Job = error("stub")
     """.trimIndent()
 
     val androidxLifecycle = """
@@ -56,6 +70,41 @@ object LintTestStubs {
         import kotlinx.coroutines.CoroutineScope
         fun rememberCoroutineScope(): CoroutineScope = error("stub")
     """.trimIndent()
+
+    /** Composable stubs + Flow.collectAsState extensions for Compose ([COMPOSE_001]) tests */
+    val androidxComposeRuntimeCollect = """
+        package androidx.compose.runtime
+
+        import kotlinx.coroutines.flow.Flow
+        import kotlinx.coroutines.flow.StateFlow
+
+        annotation class Composable
+
+        interface State<out T> {
+            val value: T
+        }
+
+        @Composable
+        fun <T> Flow<T>.collectAsState(initial: T): State<T> = error("stub")
+
+        /** Preferred overload used by `@Composable val x by uiState.collectAsState()` — StateFlow is Flow. */
+        @Composable
+        fun <T : Any> StateFlow<T>.collectAsState(): State<T> = error("stub")
+    """.trimIndent()
+
+    val androidxComposeUiPreview = """
+        package androidx.compose.ui.tooling.preview
+
+        annotation class Preview
+        annotation class MultiPreview
+    """.trimIndent()
+
+    fun composeRuntimeCollectAndFlow(): List<TestFile> = listOf(
+        TestFiles.kotlin(kotlinxCoroutines).indented(),
+        TestFiles.kotlin(kotlinxCoroutinesFlow).indented(),
+        TestFiles.kotlin(androidxComposeRuntimeCollect).indented(),
+        TestFiles.kotlin(androidxComposeUiPreview).indented(),
+    )
 
     fun all() = listOf(
         TestFiles.kotlin(kotlinxCoroutines).indented(),

@@ -38,6 +38,9 @@
             <li>CancellationException swallowed</li>
             <li>CancellationException subclass (domain error)</li>
             <li>Dispatchers.Unconfined usage</li>
+            <li>collectAsState without lifecycle-aware collection (Compose)</li>
+            <li>runBlocking instead of runTest in JUnit bodies (TEST_004)</li>
+            <li>Dispatchers.IO in Kotlin common sources (KMP)</li>
         </ul>
     ]]></description>
 
@@ -223,6 +226,42 @@
             enabledByDefault="true"
             level="WARNING"
             implementationClass="io.github.santimattius.structured.intellij.inspections.LifecycleAwareFlowCollectionInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
+            shortName="CollectAsStateWithoutLifecycle"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.collect.as.state.lifecycle.display.name"
+            enabledByDefault="true"
+            level="WARNING"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.CollectAsStateWithoutLifecycleInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
+            shortName="RunBlockingInsteadOfRunTest"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.runblocking.instead.runtest.display.name"
+            enabledByDefault="true"
+            level="WARNING"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.RunBlockingInsteadOfRunTestInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
+            shortName="DispatchersIOInCommonMain"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.dispatchers.io.common.display.name"
+            enabledByDefault="true"
+            level="ERROR"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.DispatchersIOInCommonMainInspection"/>
 
         <localInspection
             language="kotlin"

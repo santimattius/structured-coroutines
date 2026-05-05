@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.psi.KtFile
 object CoroutinesImportFilter {
 
     private const val KOTLINX_COROUTINES_PREFIX = "kotlinx.coroutines"
+    private const val KOTLINX_FLOW_PREFIX = "kotlinx.coroutines.flow"
 
     /**
      * Returns true if the file contains at least one import from `kotlinx.coroutines`.
@@ -34,9 +35,24 @@ object CoroutinesImportFilter {
     }
 
     /**
+     * Same as [fileImportsCoroutines] plus `kotlinx.coroutines.flow` imports (Flow / callbackFlow /
+     * MutableStateFlow, etc.).
+     */
+    fun fileImportsCoroutinesOrFlow(file: KtFile): Boolean {
+        return fileImportsCoroutines(file) ||
+            file.importDirectives.any { directive ->
+                directive.importedFqName?.asString()?.startsWith(KOTLINX_FLOW_PREFIX) == true
+            }
+    }
+
+    /**
      * Convenience overload: extracts the [KtFile] from any [KtElement].
      */
     fun elementIsInCoroutinesFile(element: KtElement): Boolean {
         return fileImportsCoroutines(element.containingKtFile)
+    }
+
+    fun elementImportsCoroutinesOrFlow(element: KtElement): Boolean {
+        return fileImportsCoroutinesOrFlow(element.containingKtFile)
     }
 }

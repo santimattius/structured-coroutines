@@ -1,18 +1,32 @@
 # Gradual adoption guide
 
-This guide helps you adopt the Structured Coroutines plugin in an existing codebase without breaking the build. It covers **profiles** (relaxed → gradual → strict), **excluding** source sets or projects, and **suppression** best practices.
+This guide helps you adopt the Structured Coroutines plugin in an existing codebase without breaking
+the build. It covers **profiles** (relaxed → gradual → strict), **excluding** source sets or
+projects, and **suppression** best practices.
 
-**Related:** [gradle-plugin README](../gradle-plugin/README.md) (configuration), [SUPPRESSING_RULES.md](SUPPRESSING_RULES.md) (suppression IDs).
+**Related:** [gradle-plugin README](../gradle-plugin/README.md) (
+configuration), [SUPPRESSING_RULES.md](SUPPRESSING_RULES.md) (suppression IDs).
 
 ---
 
-## 1. Step-by-step path: Relaxed → Gradual → Strict
+## 1. Step-by-step path: Relaxed → Gradual → Strict → Platform Profile
 
-| Step | Profile | Goal |
-|------|---------|------|
-| **1. Relaxed / Gradual** | `useGradualProfile()` or `useRelaxedProfile()` | Enable the plugin with **all rules as warnings**. Build succeeds; you see findings in IDE and CI. |
-| **2. Fix and suppress** | Same | Fix violations where possible; use `@Suppress` for justified exceptions (see [Suppression best practices](#3-suppression-best-practices)). |
-| **3. Strict** | `useStrictProfile()` | Once the codebase is clean (or only documented exceptions remain), switch to strict so new violations fail the build. |
+| Step                                 | Profile                                                 | Goal                                                                                                                                       |
+|--------------------------------------|---------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
+| **1. Relaxed / Gradual**             | `useGradualProfile()` or `useRelaxedProfile()`          | Enable the plugin with **all rules as warnings**. Build succeeds; you see findings in IDE and CI.                                          |
+| **2. Fix and suppress**              | Same                                                    | Fix violations where possible; use `@Suppress` for justified exceptions (see [Suppression best practices](#3-suppression-best-practices)). |
+| **3. Strict**                        | `useStrictProfile()`                                    | Once the codebase is clean (or only documented exceptions remain), switch to strict so new violations fail the build.                      |
+| **4. Platform profile** _(optional)_ | `useAndroidComposeProfile()` or `useKmpCommonProfile()` | Add interop-safety rules on top of strict for Android/Compose or KMP codebases.                                                            |
+
+**Available profiles:**
+
+| Profile                      | Use case          | Core rules         | INTEROP rules |
+|------------------------------|-------------------|--------------------|---------------|
+| `useGradualProfile()`        | Legacy migration  | all → warning      | warning       |
+| `useRelaxedProfile()`        | Same as gradual   | all → warning      | warning       |
+| `useStrictProfile()`         | Greenfield        | 7 error, 5 warning | error         |
+| `useAndroidComposeProfile()` | Android / Compose | strict             | error         |
+| `useKmpCommonProfile()`      | KMP common code   | strict             | error         |
 
 **Example: enable without breaking the build**
 
@@ -32,7 +46,15 @@ structuredCoroutines {
 
 ```kotlin
 structuredCoroutines {
-    useStrictProfile()   // 7 rules error, 4 warning; violations block the build
+    useStrictProfile()   // 7 rules error, 5 warning; violations block the build
+}
+```
+
+**Example: Android / Compose project (strict + interop)**
+
+```kotlin
+structuredCoroutines {
+    useAndroidComposeProfile()  // Strict + suspendCoroutine/callbackFlow rules as errors
 }
 ```
 
@@ -40,7 +62,8 @@ structuredCoroutines {
 
 ## 2. Excluding legacy code
 
-Use exclusions when you cannot fix or suppress in a given area yet, so the plugin does not run there.
+Use exclusions when you cannot fix or suppress in a given area yet, so the plugin does not run
+there.
 
 ### Exclude source sets
 
@@ -70,20 +93,24 @@ Use Gradle project paths (e.g. `:subproject`, `:app:feature`).
 
 ### When to exclude
 
-- **Temporary:** Legacy module that you will refactor later; exclude until you can run the plugin there.
-- **Permanent:** Optional; prefer fixing or suppressing so the whole codebase is under the same rules. Document why a module is excluded (e.g. in README or ADR).
+- **Temporary:** Legacy module that you will refactor later; exclude until you can run the plugin
+  there.
+- **Permanent:** Optional; prefer fixing or suppressing so the whole codebase is under the same
+  rules. Document why a module is excluded (e.g. in README or ADR).
 
 ---
 
 ## 3. Suppression best practices
 
-When you have a **justified exception** (e.g. deliberate `GlobalScope` for a process that must outlive the app), suppress the rule locally instead of disabling it globally.
+When you have a **justified exception** (e.g. deliberate `GlobalScope` for a process that must
+outlive the app), suppress the rule locally instead of disabling it globally.
 
 ### Do
 
 - **Suppress at the narrowest scope:** function or file, not whole module.
 - **Document why:** add a short comment next to `@Suppress` explaining the exception.
-- **Use the correct ID per tool:** see [SUPPRESSING_RULES.md](SUPPRESSING_RULES.md) (Compiler vs Detekt vs Lint use different names for the same rule).
+- **Use the correct ID per tool:** see [SUPPRESSING_RULES.md](SUPPRESSING_RULES.md) (Compiler vs
+  Detekt vs Lint use different names for the same rule).
 
 ```kotlin
 // Deliberate: fire-and-forget analytics that must survive activity lifecycle.
@@ -95,13 +122,15 @@ fun sendAnalyticsEvent(event: AnalyticsEvent) {
 
 ### Avoid
 
-- **Blanket suppression:** e.g. `@Suppress` on a whole file or package without fixing or documenting.
+- **Blanket suppression:** e.g. `@Suppress` on a whole file or package without fixing or
+  documenting.
 - **Suppressing multiple rules "just in case":** only suppress the rule that is actually reported.
 - **Disabling the plugin for the whole project** when exclusions or suppressions would be enough.
 
 ### Reference
 
-- **Rule codes and practices:** [BEST_PRACTICES_COROUTINES.md](BEST_PRACTICES_COROUTINES.md#rule-codes-reference)
+- **Rule codes and practices:
+  ** [BEST_PRACTICES_COROUTINES.md](BEST_PRACTICES_COROUTINES.md#rule-codes-reference)
 - **Suppression IDs by tool:** [SUPPRESSING_RULES.md](SUPPRESSING_RULES.md)
 
 ---
