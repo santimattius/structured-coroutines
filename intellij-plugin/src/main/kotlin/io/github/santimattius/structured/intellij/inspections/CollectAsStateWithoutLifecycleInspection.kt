@@ -11,6 +11,8 @@ import com.intellij.codeInspection.ProblemsHolder
 import io.github.santimattius.structured.intellij.StructuredCoroutinesBundle
 import io.github.santimattius.structured.intellij.inspections.base.CoroutineInspectionBase
 import io.github.santimattius.structured.intellij.utils.ComposePsiUtils
+import io.github.santimattius.structured.intellij.utils.importsComposeRuntime
+import io.github.santimattius.structured.intellij.utils.importsKotlinxCoroutinesFlow
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 
@@ -28,9 +30,9 @@ class CollectAsStateWithoutLifecycleInspection : CoroutineInspectionBase() {
                 super.visitCallExpression(expression)
                 if (expression.calleeExpression?.text != "collectAsState") return
 
-                val file = expression.containingKtFile
-                if (!ComposePsiUtils.importsComposeRuntime(file)) return
-                if (!ComposePsiUtils.importsKotlinxCoroutinesFlow(file)) return
+                val ktFile = expression.containingKtFile
+                if (!ktFile.importsComposeRuntime()) return
+                if (!ktFile.importsKotlinxCoroutinesFlow()) return
 
                 if (!ComposePsiUtils.hasComposableAncestor(expression)) return
                 if (ComposePsiUtils.hasPreviewAncestor(expression)) return

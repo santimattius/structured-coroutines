@@ -7,12 +7,13 @@
 
 package io.github.santimattius.structured.lint.utils
 
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtPsiUtil
 import org.jetbrains.kotlin.psi.KtTryExpression
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 /**
  * Mirrors `detekt-rules` [io.github.santimattius.structured.detekt.utils.MissingCatchInFlowHeuristic]
@@ -85,35 +86,28 @@ object MissingCatchInFlowHeuristic {
 
     private fun isInsideCatchAllThrowableOrException(element: KtElement): Boolean {
         var tryExpr: KtTryExpression? =
-            KtPsiUtil.getParentOfType(element, KtTryExpression::class.java, strict = false) ?: return false
+            element.getParentOfType<KtTryExpression>(strict = false) ?: return false
 
         while (tryExpr != null) {
             val inCatch = tryExpr.catchClauses.any { clause ->
                 val body = clause.catchBody
-                body != null && KtPsiUtil.isAncestor(body, element, false)
+                body != null && PsiTreeUtil.isAncestor(body, element, false)
             }
             if (inCatch) {
                 tryExpr =
-                    KtPsiUtil.getParentOfType(
-                        tryExpr.parent as KtElement,
-                        KtTryExpression::class.java,
-                        strict = false,
-                    )
+                    (tryExpr.parent as? KtElement)?.getParentOfType<KtTryExpression>(strict = false)
                 continue
             }
 
             val tryBlock = tryExpr.tryBlock
-            if (tryBlock != null && KtPsiUtil.isAncestor(tryBlock, element, false) &&
+            if (tryBlock != null && PsiTreeUtil.isAncestor(tryBlock, element, false) &&
                 catchesThrowableOrGenericException(tryExpr)
             ) {
                 return true
             }
 
-            tryExpr = KtPsiUtil.getParentOfType(
-                tryExpr.parent as KtElement,
-                KtTryExpression::class.java,
-                strict = false,
-            )
+            tryExpr =
+                (tryExpr.parent as? KtElement)?.getParentOfType<KtTryExpression>(strict = false)
         }
         return false
     }

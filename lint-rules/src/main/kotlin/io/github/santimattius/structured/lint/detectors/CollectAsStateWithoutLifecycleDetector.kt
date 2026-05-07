@@ -18,6 +18,8 @@ import com.android.tools.lint.detector.api.SourceCodeScanner
 import io.github.santimattius.structured.lint.utils.AndroidLintUtils
 import io.github.santimattius.structured.lint.utils.ComposePsiUtils
 import io.github.santimattius.structured.lint.utils.LintDocUrl
+import io.github.santimattius.structured.lint.utils.importsComposeRuntime
+import io.github.santimattius.structured.lint.utils.importsKotlinxCoroutinesFlow
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.uast.UCallExpression
 
@@ -56,8 +58,8 @@ class CollectAsStateWithoutLifecycleDetector : Detector(), SourceCodeScanner {
         val ktCall = node.sourcePsi as? KtCallExpression ?: return
         val ktFile = ktCall.containingKtFile
 
-        if (!ComposePsiUtils.importsComposeRuntime(ktFile)) return
-        if (!ComposePsiUtils.importsKotlinxCoroutinesFlow(ktFile)) return
+        if (!ktFile.importsComposeRuntime()) return
+        if (!ktFile.importsKotlinxCoroutinesFlow()) return
 
         if (!ComposePsiUtils.hasComposableAncestor(ktCall)) return
         if (ComposePsiUtils.hasPreviewAncestor(ktCall)) return

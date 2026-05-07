@@ -13,23 +13,25 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
+fun KtFile.importsComposeRuntime(): Boolean =
+    importDirectives.any {
+        val fq = it.importedFqName?.asString().orEmpty()
+        fq.startsWith("androidx.compose.runtime")
+    }
+
+fun KtFile.importsKotlinxCoroutinesFlow(): Boolean =
+    importDirectives.any {
+        val fq = it.importedFqName?.asString().orEmpty()
+        fq.startsWith("kotlinx.coroutines.flow")
+    }
+
 /**
  * Kotlin PSI helpers for Jetpack Compose ([COMPOSE_001]).
  * Keep aligned with `lint-rules/.../ComposePsiUtils.kt`.
+ *
+ * Import checks live as top-level [KtFile] extensions so callers use `file.importsComposeRuntime()`.
  */
 object ComposePsiUtils {
-
-    fun KtFile.importsComposeRuntime(): Boolean =
-        importDirectives.any {
-            val fq = it.importedFqName?.asString().orEmpty()
-            fq.startsWith("androidx.compose.runtime")
-        }
-
-    fun KtFile.importsKotlinxCoroutinesFlow(): Boolean =
-        importDirectives.any {
-            val fq = it.importedFqName?.asString().orEmpty()
-            fq.startsWith("kotlinx.coroutines.flow")
-        }
 
     fun hasPreviewAncestor(element: KtElement): Boolean =
         enclosingAnnotatedElements(element).any { annotated ->
