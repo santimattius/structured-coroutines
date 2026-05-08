@@ -24,7 +24,6 @@ import io.github.santimattius.structured.detekt.rules.InlineCoroutineScopeRule
 import io.github.santimattius.structured.detekt.rules.JobInBuilderContextRule
 import io.github.santimattius.structured.detekt.rules.LoopWithoutYieldRule
 import io.github.santimattius.structured.detekt.rules.MissingCatchInFlowRule
-import io.github.santimattius.structured.detekt.rules.MissingCatchInFlowRule
 import io.github.santimattius.structured.detekt.rules.MutableFlowExposedRule
 import io.github.santimattius.structured.detekt.rules.RedundantLaunchInCoroutineScopeRule
 import io.github.santimattius.structured.detekt.rules.RunBlockingInsteadOfRunTestRule
@@ -152,7 +151,6 @@ class StructuredCoroutinesRuleSetProvider : RuleSetProvider {
             SuspendCoroutineWithoutCancellationRule(config),
             CallbackFlowWithoutAwaitCloseRule(config),
             MutableFlowExposedRule(config),
-            MissingCatchInFlowRule(config),
             SequentialAsyncAwaitRule(config),
             RunBlockingInsteadOfRunTestRule(config),
             DispatchersIOInCommonMainRule(config),
