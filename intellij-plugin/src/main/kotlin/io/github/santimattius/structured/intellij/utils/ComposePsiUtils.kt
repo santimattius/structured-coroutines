@@ -33,19 +33,38 @@ fun KtFile.importsKotlinxCoroutinesFlow(): Boolean =
  */
 object ComposePsiUtils {
 
-    fun hasPreviewAncestor(element: KtElement): Boolean =
-        enclosingAnnotatedElements(element).any { annotated ->
-            annotated.annotationEntries.any { entry ->
-                when (entry.shortName?.asString()) {
-                    "Preview", "MultiPreview" -> true
-                    else -> false
-                }
-            }
-        }
+    private const val COMPOSABLE_FQN = "androidx.compose.runtime.Composable"
+    private const val PREVIEW_FQN = "androidx.compose.ui.tooling.preview.Preview"
+    private const val MULTI_PREVIEW_FQN = "androidx.compose.ui.tooling.preview.MultiPreview"
 
-    fun hasComposableAncestor(element: KtElement): Boolean =
-        enclosingAnnotatedElements(element).any { annotated ->
-            annotated.annotationEntries.any { it.shortName?.asString() == "Composable" }
+    fun hasPreviewAncestor(element: KtElement): Boolean {
+        val ktFile = element.containingFile as? KtFile ?: return false
+        val previewNames = buildSet {
+            add("Preview")
+            add("MultiPreview")
+            addAll(ktFile.aliasNamesFor(PREVIEW_FQN))
+            addAll(ktFile.aliasNamesFor(MULTI_PREVIEW_FQN))
+        }
+        return enclosingAnnotatedElements(element).any { annotated ->
+            annotated.annotationEntries.any { it.shortName?.asString() in previewNames }
+        }
+    }
+
+    fun hasComposableAncestor(element: KtElement): Boolean {
+        val ktFile = element.containingFile as? KtFile ?: return false
+        val composableNames = buildSet {
+            add("Composable")
+            addAll(ktFile.aliasNamesFor(COMPOSABLE_FQN))
+        }
+        return enclosingAnnotatedElements(element).any { annotated ->
+            annotated.annotationEntries.any { it.shortName?.asString() in composableNames }
+        }
+    }
+
+    private fun KtFile.aliasNamesFor(fqName: String): List<String> =
+        importDirectives.mapNotNull { directive ->
+            if (directive.importedFqName?.asString() != fqName) return@mapNotNull null
+            directive.alias?.name
         }
 
     private fun enclosingAnnotatedElements(element: KtElement): List<KtAnnotated> {

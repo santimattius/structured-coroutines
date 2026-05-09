@@ -45,9 +45,13 @@ object LintTestStubs {
 
         interface Flow<out T>
         interface StateFlow<out T> : Flow<T>
-        interface FlowCollector<in T>
+        interface FlowCollector<in T> {
+            suspend fun emit(value: T)
+        }
 
         fun <T> flow(block: suspend FlowCollector<T>.() -> Unit): Flow<T> = error("stub")
+        fun <T> flowOf(value: T): Flow<T> = error("stub")
+        fun <T> flowOf(vararg values: T): Flow<T> = error("stub")
 
         fun <T, R> Flow<T>.map(transform: suspend (value: T) -> R): Flow<R> = error("stub")
         fun <T> Flow<T>.catch(

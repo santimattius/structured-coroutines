@@ -19,12 +19,14 @@ class MissingCatchInFlowDetectorTest {
     fun warnsOnMapCollectWithoutCatch() {
         val code = """
             package test
-            import kotlinx.coroutines.flow.flow
+            import kotlinx.coroutines.flow.flowOf
+            import kotlinx.coroutines.flow.map
+            import kotlinx.coroutines.flow.collect
             import kotlinx.coroutines.runBlocking
 
             fun demo() {
                 runBlocking {
-                    flow { emit(1) }
+                    flowOf(1)
                         .map { it }
                         .collect { }
                 }
@@ -48,12 +50,15 @@ class MissingCatchInFlowDetectorTest {
     fun cleanWhenCatchPresent() {
         val code = """
             package test
-            import kotlinx.coroutines.flow.flow
+            import kotlinx.coroutines.flow.flowOf
+            import kotlinx.coroutines.flow.map
+            import kotlinx.coroutines.flow.catch
+            import kotlinx.coroutines.flow.collect
             import kotlinx.coroutines.runBlocking
 
             fun demo() {
                 runBlocking {
-                    flow { emit(1) }
+                    flowOf(1)
                         .map { it }
                         .catch { _: Throwable ->
                         }
