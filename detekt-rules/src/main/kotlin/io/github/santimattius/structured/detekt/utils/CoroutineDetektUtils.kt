@@ -260,14 +260,19 @@ object CoroutineDetektUtils {
     }
 
     /**
-     * Checks if the file is a test file based on naming convention.
+     * Checks whether a virtual path points at conventional test source roots.
+     *
+     * Avoid filename suffix heuristics (`*Test.kt`): Detekt `compileAndLint` often names snippet
+     * files after the test class (e.g. `MissingCatchInFlowRuleTest.kt`), which would be skipped
+     * incorrectly. Avoid naive `contains("/test/")`: Gradle temp dirs like `.../kotlin-classes/test/`
+     * are not application tests.
      */
-    fun isTestFile(fileName: String): Boolean {
-        return fileName.endsWith("Test.kt") ||
-            fileName.endsWith("Tests.kt") ||
-            fileName.endsWith("Spec.kt") ||
-            fileName.contains("/test/") ||
-            fileName.contains("/androidTest/")
+    fun isTestFile(virtualFilePathOrName: String): Boolean {
+        val normalized = virtualFilePathOrName.replace('\\', '/')
+        if (!normalized.contains('/')) return false
+        return normalized.contains("/src/test/") ||
+            normalized.contains("/src/androidTest/") ||
+            normalized.contains("/src/commonTest/")
     }
 
     /**

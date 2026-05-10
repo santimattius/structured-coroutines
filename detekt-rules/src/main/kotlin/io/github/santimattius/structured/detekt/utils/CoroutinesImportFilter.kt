@@ -11,6 +11,7 @@ package io.github.santimattius.structured.detekt.utils
 
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtImportDirective
 
 /**
  * Fast import-based guard to determine whether a file uses kotlinx.coroutines APIs.
@@ -27,11 +28,12 @@ object CoroutinesImportFilter {
 
     /**
      * Returns true if the file contains at least one import from `kotlinx.coroutines`.
+     *
+     * Star imports such as `import kotlinx.coroutines.*` or `import kotlinx.coroutines.flow.*`
+     * often leave [KtImportDirective.importedFqName] unset; those are matched via [KtImportDirective.importPath].
      */
     fun fileImportsCoroutines(file: KtFile): Boolean {
-        return file.importDirectives.any { directive ->
-            directive.importedFqName?.asString()?.startsWith(KOTLINX_COROUTINES_PREFIX) == true
-        }
+        return file.importDirectives.any { matchesKotlinxCoroutinesImport(it) }
     }
 
     /**
@@ -40,9 +42,21 @@ object CoroutinesImportFilter {
      */
     fun fileImportsCoroutinesOrFlow(file: KtFile): Boolean {
         return fileImportsCoroutines(file) ||
-            file.importDirectives.any { directive ->
-                directive.importedFqName?.asString()?.startsWith(KOTLINX_FLOW_PREFIX) == true
-            }
+            file.importDirectives.any { matchesKotlinxFlowImport(it) }
+    }
+
+    private fun matchesKotlinxCoroutinesImport(directive: KtImportDirective): Boolean {
+        val fq = directive.importedFqName?.asString()
+        if (fq != null && fq.startsWith(KOTLINX_COROUTINES_PREFIX)) return true
+        val pathStr = directive.importPath?.pathStr ?: return false
+        return pathStr.startsWith("$KOTLINX_COROUTINES_PREFIX.")
+    }
+
+    private fun matchesKotlinxFlowImport(directive: KtImportDirective): Boolean {
+        val fq = directive.importedFqName?.asString()
+        if (fq != null && fq.startsWith(KOTLINX_FLOW_PREFIX)) return true
+        val pathStr = directive.importPath?.pathStr ?: return false
+        return pathStr.startsWith("$KOTLINX_FLOW_PREFIX.")
     }
 
     /**
