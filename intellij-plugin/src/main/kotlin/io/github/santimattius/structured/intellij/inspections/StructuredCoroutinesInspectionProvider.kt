@@ -38,7 +38,12 @@ class StructuredCoroutinesInspectionProvider : InspectionToolProvider {
             WithTimeoutScopeCancellationInspection::class.java,
             CollectAsStateWithoutLifecycleInspection::class.java,
             RunBlockingInsteadOfRunTestInspection::class.java,
-            DispatchersIOInCommonMainInspection::class.java
+            DispatchersIOInCommonMainInspection::class.java,
+            SuspendCoroutineWithoutCancellationInspection::class.java,
+            CallbackFlowWithoutAwaitCloseInspection::class.java,
+            MutableFlowExposedInspection::class.java,
+            MissingCatchInFlowInspection::class.java,
+            SequentialAsyncAwaitInspection::class.java
         )
     }
 }

@@ -78,4 +78,36 @@ class MissingCatchInFlowDetectorTest {
 
         issues.expectClean()
     }
+
+    @Test
+    fun cleanWhenCatchPresentBeforeCollectLatest() {
+        // FP guard: Flow chain with .catch {} already present before collectLatest
+        val code = """
+            package test
+            import kotlinx.coroutines.flow.flowOf
+            import kotlinx.coroutines.flow.map
+            import kotlinx.coroutines.flow.catch
+            import kotlinx.coroutines.flow.collectLatest
+            import kotlinx.coroutines.runBlocking
+
+            fun demo() {
+                runBlocking {
+                    flowOf(1)
+                        .map { it * 2 }
+                        .catch { _: Throwable -> }
+                        .collectLatest { }
+                }
+            }
+        """.trimIndent()
+
+        TestLintTask.lint()
+            .files(
+                *LintTestStubs.coroutinesAndFlow().toTypedArray(),
+                TestFiles.kotlin(code).indented(),
+            )
+            .issues(MissingCatchInFlowDetector.ISSUE)
+            .allowMissingSdk()
+            .run()
+            .expectClean()
+    }
 }

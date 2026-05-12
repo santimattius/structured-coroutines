@@ -39,4 +39,60 @@ class DispatchersIOInCommonMainDetectorTest {
             .run()
             .expectClean()
     }
+
+    @JUnitTest
+    fun noReportInAndroidMainSourceLayout() {
+        // FP guard: Dispatchers.IO in androidMain is legitimate
+        // Lint's synthetic test tree does not embed /androidMain/ in the path,
+        // so this verifies the rule does not fire in a standard Android source tree.
+        val code =
+            """
+            package test
+
+            import kotlinx.coroutines.*
+
+            suspend fun readDb() = withContext(Dispatchers.IO) { 42 }
+            """.trimIndent()
+
+        TestLintTask.lint()
+            .files(
+                *LintTestStubs.coroutinesOnly().toTypedArray(),
+                TestFiles.kotlin(code).indented(),
+            )
+            .issues(DispatchersIOInCommonMainDetector.ISSUE)
+            .allowMissingSdk()
+            .run()
+            .expectClean()
+    }
+
+    @JUnitTest
+    fun noReportWhenSuppressLintPresent() {
+        // Suppression guard: @SuppressLint("DispatchersIOInCommonMain") silences the issue
+        val code =
+            """
+            package test
+
+            import android.annotation.SuppressLint
+            import kotlinx.coroutines.*
+
+            @SuppressLint("DispatchersIOInCommonMain")
+            suspend fun readDb() = withContext(Dispatchers.IO) { 42 }
+            """.trimIndent()
+
+        val androidAnnotation = """
+            package android.annotation
+            annotation class SuppressLint(vararg val value: String)
+        """.trimIndent()
+
+        TestLintTask.lint()
+            .files(
+                *LintTestStubs.coroutinesOnly().toTypedArray(),
+                TestFiles.kotlin(androidAnnotation).indented(),
+                TestFiles.kotlin(code).indented(),
+            )
+            .issues(DispatchersIOInCommonMainDetector.ISSUE)
+            .allowMissingSdk()
+            .run()
+            .expectClean()
+    }
 }

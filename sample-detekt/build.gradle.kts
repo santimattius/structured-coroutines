@@ -8,6 +8,8 @@ dependencies {
     // Test source set used for RunBlockingWithDelayInTest rule example
     testImplementation(libs.kotlin.test)
     testImplementation(libs.junit.jupiter)
+    // Test source set used for RunBlockingInsteadOfRunTest rule example (TEST_004)
+    testImplementation(libs.kotlinx.coroutines.test)
 }
 
 kotlin {

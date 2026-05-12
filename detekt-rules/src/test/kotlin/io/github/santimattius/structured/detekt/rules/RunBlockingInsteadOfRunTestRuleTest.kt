@@ -9,33 +9,21 @@ package io.github.santimattius.structured.detekt.rules
 
 import io.gitlab.arturbosch.detekt.api.Config
 import io.gitlab.arturbosch.detekt.test.compileAndLint
+import io.gitlab.arturbosch.detekt.test.lint
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.nio.file.Paths
 
 class RunBlockingInsteadOfRunTestRuleTest {
 
     private val rule = RunBlockingInsteadOfRunTestRule(Config.empty)
 
     @Test
-    fun `documents runTest preference for expression-body test`() {
-        val code =
-            """
-            import kotlinx.coroutines.*
-            import org.junit.jupiter.api.Test
-
-            class SampleTest {
-                @Test
-                fun `smoke`() = runBlocking {
-                    println("x")
-                }
-            }
-            """.trimIndent()
-
-        val findings = rule.compileAndLint(code)
-        // File name in compileAndLint is synthetic — may not match *Test.kt; rule may not fire.
-        if (findings.isNotEmpty()) {
-            assertThat(findings[0].message).contains("[TEST_004]")
-        }
+    fun `reports runBlocking as JUnit expression body under src test path`() {
+        val uri = javaClass.getResource("/detekt-junit-src-test/src/test/kotlin/ExpressionBodyTest.kt")!!
+        val findings = rule.lint(Paths.get(uri.toURI()))
+        assertThat(findings).hasSize(1)
+        assertThat(findings.single().message).contains("[TEST_004]")
     }
 
     @Test
@@ -47,6 +35,28 @@ class RunBlockingInsteadOfRunTestRuleTest {
             fun main() = runBlocking { }
             """.trimIndent()
 
+        val findings = rule.compileAndLint(code)
+        assertThat(findings).isEmpty()
+    }
+
+    @Test
+    fun `does not report when suppressed with Suppress annotation`() {
+        val code =
+            """
+            import kotlinx.coroutines.*
+            import org.junit.jupiter.api.Test
+
+            class SampleTest {
+                @Suppress("RunBlockingInsteadOfRunTest")
+                @Test
+                fun `suppressed`() = runBlocking {
+                    println("x")
+                }
+            }
+            """.trimIndent()
+
+        // Rule checks file/function name for test file heuristic — compileAndLint uses synthetic name;
+        // even if rule would otherwise fire, @Suppress prevents the finding
         val findings = rule.compileAndLint(code)
         assertThat(findings).isEmpty()
     }

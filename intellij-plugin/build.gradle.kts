@@ -8,6 +8,9 @@
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
 
+import org.gradle.jvm.toolchain.JavaLanguageVersion
+import org.gradle.jvm.toolchain.JavaToolchainService
+
 plugins {
     alias(libs.plugins.kotlin.jvm)
     id("org.jetbrains.intellij.platform") version libs.versions.intellij.platform.get()
@@ -32,8 +35,24 @@ dependencies {
         testFramework(org.jetbrains.intellij.platform.gradle.TestFrameworkType.Platform)
     }
 
-    testImplementation(libs.junit.jupiter)
+    // Jupiter 5.11+ / Platform 1.11+ — Gradle 9's JUnitPlatform worker expects newer platform APIs
+    // (e.g. CloseAction.closeAutoCloseables); pinning avoids NoSuchMethodError with mixed transitive versions.
+    testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.11.4")
     testImplementation(libs.assertj.core)
+}
+
+configurations.named("testRuntimeClasspath") {
+    resolutionStrategy {
+        force(
+            "org.junit.jupiter:junit-jupiter-api:5.11.4",
+            "org.junit.jupiter:junit-jupiter-engine:5.11.4",
+            "org.junit.jupiter:junit-jupiter-params:5.11.4",
+            "org.junit.platform:junit-platform-commons:1.11.4",
+            "org.junit.platform:junit-platform-engine:1.11.4",
+            "org.junit.platform:junit-platform-launcher:1.11.4",
+        )
+    }
 }
 
 intellijPlatform {
@@ -138,6 +157,12 @@ kotlin {
 
 tasks.test {
     useJUnitPlatform()
+    val toolchains = extensions.getByType(JavaToolchainService::class.java)
+    javaLauncher.set(
+        toolchains.launcherFor {
+            languageVersion.set(JavaLanguageVersion.of(21))
+        },
+    )
 }
 
 // ──────────────────────────────────────────────

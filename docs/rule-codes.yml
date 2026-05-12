@@ -186,7 +186,7 @@ rules:
     compiler: [SUSPEND_COROUTINE_WITHOUT_CANCELLATION]
     detekt: [SuspendCoroutineWithoutCancellation]
     lint: []
-    intellij: []
+    intellij: [SuspendCoroutineWithoutCancellation]
     default_severity: error
 
   - code: INTEROP_002
@@ -196,7 +196,7 @@ rules:
     compiler: [CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE]
     detekt: [CallbackFlowWithoutAwaitClose]
     lint: []
-    intellij: []
+    intellij: [CallbackFlowWithoutAwaitClose]
     default_severity: error
 
   - code: FLOW_005
@@ -206,7 +206,7 @@ rules:
     compiler: []
     detekt: [MissingCatchInFlow]
     lint: [MissingCatchInFlow]
-    intellij: []
+    intellij: [MissingCatchInFlow]
     default_severity: warning
 
   - code: FLOW_010
@@ -216,7 +216,7 @@ rules:
     compiler: []
     detekt: [MutableFlowExposed]
     lint: []
-    intellij: []
+    intellij: [MutableFlowExposed]
     default_severity: warning
 
   - code: CONCUR_003
@@ -226,7 +226,7 @@ rules:
     compiler: []
     detekt: [SequentialAsyncAwait]
     lint: []
-    intellij: []
+    intellij: [SequentialAsyncAwait]
     default_severity: warning
 
   - code: TEST_004
