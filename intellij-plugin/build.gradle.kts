@@ -157,7 +157,7 @@ kotlin {
 
 tasks.test {
     useJUnitPlatform()
-    val toolchains = extensions.getByType(JavaToolchainService::class.java)
+    val toolchains = project.extensions.getByType(JavaToolchainService::class.java)
     javaLauncher.set(
         toolchains.launcherFor {
             languageVersion.set(JavaLanguageVersion.of(21))
