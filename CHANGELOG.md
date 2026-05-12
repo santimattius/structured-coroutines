@@ -24,7 +24,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - `docs/BEST_PRACTICES_COROUTINES.md`: new sections §6.4, §9.5, §9.6, §10 (Interoperability), §11 (Kotlin Multiplatform).
 - `sample-detekt`: seven new fixture files covering all six Detekt-backed rules from this iteration.
 
----
+## [0.7.1] — 2026-05-07
+
+### Fixed — Compiler
+
+- **`UnstructuredLaunchChecker`** — multiple false-positive cases for `[SCOPE_003]`:
+  - `kotlinx.coroutines` package gating: `launch` / `async` are now matched only when resolved to `kotlinx.coroutines.launch` / `kotlinx.coroutines.async`. Other functions named `launch` (e.g. `androidx.activity.result.ActivityResultLauncher.launch`) are no longer flagged.
+  - **Compose UI** `androidx.compose.ui.Modifier.Node.coroutineScope` is now recognized as a structured scope. Launches inside `onAttach()` / other node callbacks no longer trigger `[SCOPE_003]`.
+  - **Decompose / Essenty** `com.arkivanov.essenty.lifecycle.coroutines.coroutineScope()` (extension on `LifecycleOwner`) is now treated like `rememberCoroutineScope()` — both as a direct call and when stored in a local `val`.
+  - **MVIKotlin** `CoroutineBootstrapper.scope` and `CoroutineExecutor.scope` are now recognized. The checker walks the dispatch-receiver type's super-type chain so inherited (fake-override) accesses from user subclasses are also detected.
 
 ## [0.7.0] — 2026-04-07
 
