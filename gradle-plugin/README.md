@@ -104,6 +104,11 @@ structuredCoroutines {
     suspendInFinally.set("warning")                    // Default: "warning"
     cancellationExceptionSwallowed.set("warning")      // Default: "warning"
     redundantLaunchInCoroutineScope.set("warning")     // Default: "warning"
+    loopWithoutYield.set("warning")                    // Default: "warning"
+
+    // Interop rules — v0.8.0 (enforcement active in Phase 2; configurable now)
+    suspendCoroutineWithoutCancellation.set("error")   // Default: "error"
+    callbackFlowWithoutAwaitClose.set("error")         // Default: "error"
 }
 ```
 
@@ -120,33 +125,42 @@ You can apply a preset instead of configuring each rule:
 
 ```kotlin
 structuredCoroutines {
-    useStrictProfile()   // Default: 7 error, 4 warning (greenfield)
-    // useGradualProfile()  // All rules warning (migration)
-    // useRelaxedProfile()   // Same as gradual
+    useStrictProfile()           // Default: 7 error, 5 warning (greenfield)
+    // useGradualProfile()       // All rules warning (migration)
+    // useRelaxedProfile()       // Same as gradual
+    // useAndroidComposeProfile()// Strict + INTEROP rules as errors (Android / Compose)
+    // useKmpCommonProfile()     // Same as AndroidCompose (KMP common code)
 }
 ```
 
-| Profile   | When to use | Effect |
-|-----------|--------------|--------|
-| **Strict**  | New projects or when you want the build to fail on violations | 7 rules → error, 4 rules → warning (defaults) |
-| **Gradual** | Migrating legacy code; build must not fail while you fix issues | All 11 rules → **warning** |
-| **Relaxed** | Same as gradual; see findings without blocking the build | All 11 rules → **warning** |
+| Profile              | When to use | Effect |
+|----------------------|-------------|--------|
+| **Strict**           | Greenfield projects; fail the build on any violation | 7 rules → error, 5 rules → warning |
+| **Gradual**          | Migrating legacy code; build must not fail while you fix issues | All 12 rules → **warning** |
+| **Relaxed**          | Same as Gradual | All 12 rules → **warning** |
+| **AndroidCompose**   | Android / Jetpack Compose projects; adds INTEROP rules as errors | Strict + INTEROP_001/002 → error |
+| **KmpCommon**        | KMP common-code modules | Same as AndroidCompose |
 
 **Severity per rule by profile:**
 
-| Rule                              | Strict | Gradual / Relaxed |
-|-----------------------------------|--------|-------------------|
-| `globalScopeUsage`                | error  | warning           |
-| `inlineCoroutineScope`            | error  | warning           |
-| `unstructuredLaunch`              | error  | warning           |
-| `runBlockingInSuspend`            | error  | warning           |
-| `jobInBuilderContext`             | error  | warning           |
-| `cancellationExceptionSubclass`   | error  | warning           |
-| `unusedDeferred`                  | error  | warning           |
-| `dispatchersUnconfined`           | warning| warning           |
-| `suspendInFinally`                | warning| warning           |
-| `cancellationExceptionSwallowed`  | warning| warning           |
-| `redundantLaunchInCoroutineScope` | warning| warning           |
+| Rule                                    | Strict  | Gradual / Relaxed | AndroidCompose / KmpCommon |
+|-----------------------------------------|---------|-------------------|----------------------------|
+| `globalScopeUsage`                      | error   | warning           | error                      |
+| `inlineCoroutineScope`                  | error   | warning           | error                      |
+| `unstructuredLaunch`                    | error   | warning           | error                      |
+| `runBlockingInSuspend`                  | error   | warning           | error                      |
+| `jobInBuilderContext`                   | error   | warning           | error                      |
+| `cancellationExceptionSubclass`         | error   | warning           | error                      |
+| `unusedDeferred`                        | error   | warning           | error                      |
+| `dispatchersUnconfined`                 | warning | warning           | warning                    |
+| `suspendInFinally`                      | warning | warning           | warning                    |
+| `cancellationExceptionSwallowed`        | warning | warning           | warning                    |
+| `redundantLaunchInCoroutineScope`       | warning | warning           | warning                    |
+| `loopWithoutYield`                      | warning | warning           | warning                    |
+| `suspendCoroutineWithoutCancellation` ¹ | error   | warning           | error                      |
+| `callbackFlowWithoutAwaitClose` ¹       | error   | warning           | error                      |
+
+¹ Configuration available now; rule enforcement lands in v0.8.0 Phase 2.
 
 ### Excluding source sets and projects
 
@@ -185,27 +199,33 @@ This plugin is the **recommended single entry point** for structured-coroutines:
 
 ### Summary Table
 
-| Rule                              | Default Severity | Description                                         |
-|-----------------------------------|------------------|-----------------------------------------------------|
-| `globalScopeUsage`                | Error            | Detects `GlobalScope.launch/async`                  |
-| `inlineCoroutineScope`            | Error            | Detects `CoroutineScope(...).launch/async`          |
-| `unstructuredLaunch`              | Error            | Detects launch on non-annotated scopes              |
-| `runBlockingInSuspend`            | Error            | Detects `runBlocking` in suspend functions          |
-| `jobInBuilderContext`             | Error            | Detects `Job()`/`SupervisorJob()` in builders       |
-| `cancellationExceptionSubclass`   | Error            | Detects classes extending `CancellationException`   |
-| `unusedDeferred`                  | Error            | Detects `async` without `await()`                   |
-| `dispatchersUnconfined`           | Warning          | Detects `Dispatchers.Unconfined` usage              |
-| `suspendInFinally`                | Warning          | Detects suspend in finally without `NonCancellable` |
-| `cancellationExceptionSwallowed`  | Warning          | Detects `catch(Exception)` swallowing cancellation  |
-| `redundantLaunchInCoroutineScope` | Warning          | Detects redundant launch in `coroutineScope`        |
+| Rule                                    | Default Severity | Description                                              |
+|-----------------------------------------|------------------|----------------------------------------------------------|
+| `globalScopeUsage`                      | Error            | Detects `GlobalScope.launch/async`                       |
+| `inlineCoroutineScope`                  | Error            | Detects `CoroutineScope(...).launch/async`               |
+| `unstructuredLaunch`                    | Error            | Detects launch on non-annotated scopes                   |
+| `runBlockingInSuspend`                  | Error            | Detects `runBlocking` in suspend functions               |
+| `jobInBuilderContext`                   | Error            | Detects `Job()`/`SupervisorJob()` in builders            |
+| `cancellationExceptionSubclass`         | Error            | Detects classes extending `CancellationException`        |
+| `unusedDeferred`                        | Error            | Detects `async` without `await()`                        |
+| `dispatchersUnconfined`                 | Warning          | Detects `Dispatchers.Unconfined` usage                   |
+| `suspendInFinally`                      | Warning          | Detects suspend in `finally` without `NonCancellable`    |
+| `cancellationExceptionSwallowed`        | Warning          | Detects `catch(Exception)` swallowing cancellation       |
+| `redundantLaunchInCoroutineScope`       | Warning          | Detects redundant `launch` inside `coroutineScope`       |
+| `loopWithoutYield`                      | Warning          | Detects loops in suspend functions with no yield point   |
+| `suspendCoroutineWithoutCancellation` ¹ | Error            | Detects `suspendCoroutine` without cancellation support  |
+| `callbackFlowWithoutAwaitClose` ¹       | Error            | Detects `callbackFlow` without `awaitClose`              |
+
+¹ Configuration available now; rule enforcement lands in v0.8.0 Phase 2.
 
 ### Rules Count
 
-| Severity          | Count  |
-|-------------------|--------|
-| Error (default)   | 7      |
-| Warning (default) | 4      |
-| **Total**         | **11** |
+| Severity                          | Count  |
+|-----------------------------------|--------|
+| Error (default, active)           | 7      |
+| Warning (default, active)         | 5      |
+| Error (default, v0.8.0 Phase 2) ¹ | 2      |
+| **Total configurable**            | **14** |
 
 ---
 
@@ -231,6 +251,24 @@ structuredCoroutines {
 ```kotlin
 structuredCoroutines {
     useGradualProfile()
+}
+```
+
+**Android / Compose project:** strict defaults plus INTEROP rules (suspendCoroutine, callbackFlow)
+as errors — the right choice for Compose-heavy codebases.
+
+```kotlin
+structuredCoroutines {
+    useAndroidComposeProfile()
+}
+```
+
+**Kotlin Multiplatform (common code):** same as AndroidCompose; Compose-specific Lint checks are
+a no-op on non-Android targets so this profile is safe everywhere.
+
+```kotlin
+structuredCoroutines {
+    useKmpCommonProfile()
 }
 ```
 

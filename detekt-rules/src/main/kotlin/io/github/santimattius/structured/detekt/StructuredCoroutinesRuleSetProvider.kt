@@ -11,8 +11,10 @@ package io.github.santimattius.structured.detekt
 
 import io.github.santimattius.structured.detekt.rules.BlockingCallInCoroutineRule
 import io.github.santimattius.structured.detekt.rules.CancellationExceptionSubclassRule
+import io.github.santimattius.structured.detekt.rules.CallbackFlowWithoutAwaitCloseRule
 import io.github.santimattius.structured.detekt.rules.ChannelNotClosedRule
 import io.github.santimattius.structured.detekt.rules.ConsumeEachMultipleConsumersRule
+import io.github.santimattius.structured.detekt.rules.DispatchersIOInCommonMainRule
 import io.github.santimattius.structured.detekt.rules.CancellationExceptionSwallowedRule
 import io.github.santimattius.structured.detekt.rules.DispatchersUnconfinedRule
 import io.github.santimattius.structured.detekt.rules.ExternalScopeLaunchRule
@@ -21,10 +23,15 @@ import io.github.santimattius.structured.detekt.rules.GlobalScopeUsageRule
 import io.github.santimattius.structured.detekt.rules.InlineCoroutineScopeRule
 import io.github.santimattius.structured.detekt.rules.JobInBuilderContextRule
 import io.github.santimattius.structured.detekt.rules.LoopWithoutYieldRule
+import io.github.santimattius.structured.detekt.rules.MissingCatchInFlowRule
+import io.github.santimattius.structured.detekt.rules.MutableFlowExposedRule
 import io.github.santimattius.structured.detekt.rules.RedundantLaunchInCoroutineScopeRule
+import io.github.santimattius.structured.detekt.rules.RunBlockingInsteadOfRunTestRule
+import io.github.santimattius.structured.detekt.rules.SequentialAsyncAwaitRule
 import io.github.santimattius.structured.detekt.rules.RunBlockingInSuspendRule
 import io.github.santimattius.structured.detekt.rules.RunBlockingWithDelayInTestRule
 import io.github.santimattius.structured.detekt.rules.ScopeReuseAfterCancelRule
+import io.github.santimattius.structured.detekt.rules.SuspendCoroutineWithoutCancellationRule
 import io.github.santimattius.structured.detekt.rules.SuspendInFinallyRule
 import io.github.santimattius.structured.detekt.rules.UnusedDeferredRule
 import io.github.santimattius.structured.detekt.rules.WithTimeoutScopeCancellationRule
@@ -138,6 +145,15 @@ class StructuredCoroutinesRuleSetProvider : RuleSetProvider {
             ConsumeEachMultipleConsumersRule(config),
             FlowBlockingCallRule(config),
             WithTimeoutScopeCancellationRule(config),
+            MissingCatchInFlowRule(config),
+
+            // Iteration 1 (v0.8.0 plan) — INTEROP, Flow, Concurrency, Testing, KMP
+            SuspendCoroutineWithoutCancellationRule(config),
+            CallbackFlowWithoutAwaitCloseRule(config),
+            MutableFlowExposedRule(config),
+            SequentialAsyncAwaitRule(config),
+            RunBlockingInsteadOfRunTestRule(config),
+            DispatchersIOInCommonMainRule(config),
         )
     )
 }

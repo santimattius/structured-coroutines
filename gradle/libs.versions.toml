@@ -7,6 +7,7 @@ junit-jupiter = "5.10.2"
 junit = "4.13.2"
 assertj = "3.25.3"
 kotlinx-coroutines = "1.10.2"
+lifecycle-runtime-compose = "2.8.0"
 intellij-platform = "2.11.0"
 intellij-ide = "2026.1"
 
@@ -33,6 +34,8 @@ assertj-core = { group = "org.assertj", name = "assertj-core", version.ref = "as
 
 # Coroutines
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
+lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle-runtime-compose" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

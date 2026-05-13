@@ -25,6 +25,12 @@ import java.util.WeakHashMap
  */
 class StructuredCoroutinesToolWindowFactory : ToolWindowFactory, DumbAware {
 
+    /**
+     * Avoids the default [ToolWindowFactory.isApplicableAsync] implementation, which delegates
+     * to deprecated [ToolWindowFactory.isApplicable] and is flagged by the Plugin Verifier.
+     */
+    override suspend fun isApplicableAsync(project: Project): Boolean = true
+
     companion object {
         const val TOOL_WINDOW_ID = "StructuredCoroutines"
 

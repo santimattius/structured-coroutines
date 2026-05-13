@@ -16,6 +16,8 @@ tools and messages; links can point to the anchor of the corresponding section.
 - [7. Channels and Actors](#7-channels-and-actors)
 - [8. Architecture Patterns](#8-architecture-patterns)
 - [9. Flow](#9-flow)
+- [10. Interoperability (Callbacks to Coroutines)](#10-interoperability-callbacks-to-coroutines)
+- [11. Kotlin Multiplatform](#11-kotlin-multiplatform)
 - [Quick Reference Checklist](#quick-reference-checklist)
 - [Tool Implementation Matrix](#tool-implementation-matrix)
 
@@ -61,6 +63,12 @@ hyphens, e.g. `#11-using-globalscope-in-production-code`).
 | `FLOW_002`     | 9.2 | [Cold vs Hot Flows (StateFlow / SharedFlow)](#92-cold-vs-hot-flows-stateflow--sharedflow)                            |
 | `FLOW_003`     | 9.3 | [collectLatest Cancels Previous Work](#93-collectlatest-cancels-previous-work)                                       |
 | `FLOW_004`     | 9.4 | [SharedFlow Configuration](#94-sharedflow-configuration)                                                             |
+| `FLOW_010`     | 9.5 | [MutableStateFlow/MutableSharedFlow Exposed as Public](#95-flow_010--mutablestateflowmutablesharedflow-exposed-as-public) |
+| `FLOW_005`     | 9.6 | [Missing catch in Flow Chain](#96-flow_005--missing-catch-in-flow-chain)                                             |
+| `TEST_004`     | 6.4 | [runBlocking Instead of runTest](#64-test_004--runblocking-instead-of-runtest)                                        |
+| `INTEROP_001`  | 10.1 | [Wrapping Callbacks Without Cancellation Support](#101-interop_001--wrapping-callbacks-without-cancellation-support) |
+| `INTEROP_002`  | 10.2 | [callbackFlow Without awaitClose](#102-interop_002--callbackflow-without-awaitclose)                                 |
+| `KMP_001`      | 11.1 | [Dispatchers.IO in commonMain](#111-kmp_001--dispatchersio-in-commonmain)                                            |
 
 **Convention:** prefix by category (SCOPE, RUNBLOCK, DISPATCH, CANCEL, EXCEPT, TEST, CHANNEL, ARCH,
 FLOW) + 3-digit number. Use the code in diagnostic messages and link to this document with the
@@ -259,6 +267,33 @@ anchor above (e.g.
 | **Bad Practice** | Running tests that use `Dispatchers.Main` without replacing it. Behavior depends on the real main thread and can be flaky in CI.                                                                |
 | **Recommended**  | Use `Dispatchers.setMain(StandardTestDispatcher())` (or similar) before tests and `Dispatchers.resetMain()` in tearDown so code that uses Main runs deterministically under the test scheduler. |
 
+### 6.4 TEST_004 — runBlocking Instead of runTest
+
+|                  | Description                                                                                                                                                                                                                      |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Bad Practice** | Using `runBlocking` in `@Test` functions that contain `delay()` or other coroutine-test patterns. Real time passes, making tests slow and flaky. `delay(5_000)` in `runBlocking` waits 5 real seconds.                          |
+| **Recommended**  | Use `runTest` from `kotlinx-coroutines-test`. It runs coroutines with virtual time: `delay(5_000)` completes instantly. Use `advanceTimeBy()`, `advanceUntilIdle()`, and `runCurrent()` for precise time control in tests. |
+
+**Example:**
+
+```kotlin
+// [TEST_004] runBlocking with delay — 5 real seconds per test run
+@Test
+fun badSlowTest() = runBlocking {
+    delay(5_000)
+    assertEquals(expected, result)
+}
+
+// runTest — delay completes in microseconds using virtual time
+@Test
+fun goodFastTest() = runTest {
+    delay(5_000) // instant
+    assertEquals(expected, result)
+}
+```
+
+Tool support: Detekt, Android Lint, IntelliJ — rule `RunBlockingInsteadOfRunTest`.
+
 ---
 
 ## 7. Channels and Actors
@@ -328,6 +363,159 @@ anchor above (e.g.
 |------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **Bad Practice** | Creating `SharedFlow` with default configuration without considering slow subscribers, replay needs, or backpressure. This can lead to dropped events or blocking.                                                                                              |
 | **Recommended**  | Configure `replay`, `extraBufferCapacity`, and `onBufferOverflow` (e.g. `DROP_OLDEST`, `DROP_LATEST`, `SUSPEND`) according to whether you need recent values for new subscribers and how to handle overflow. StateFlow is effectively SharedFlow with replay=1. |
+
+### 9.5 FLOW_010 — MutableStateFlow/MutableSharedFlow Exposed as Public
+
+|                  | Description                                                                                                                                                                                                                                                     |
+|------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Bad Practice** | Declaring `MutableStateFlow` or `MutableSharedFlow` as a `public val`. External components can emit values, breaking Unidirectional Data Flow (UDF). Any caller outside the class can mutate state without going through intended business logic.               |
+| **Recommended**  | Use a private backing property (`_state`) of type `MutableStateFlow` and expose a read-only `StateFlow` via `.asStateFlow()`. Apply the same pattern for `MutableSharedFlow` / `.asSharedFlow()`.                                                              |
+
+**Example:**
+
+```kotlin
+// [FLOW_010] Mutable flow exposed publicly
+val uiState = MutableStateFlow<UiState>(UiState.Loading)
+
+// Backing property with read-only exposure
+private val _uiState = MutableStateFlow<UiState>(UiState.Loading)
+val uiState: StateFlow<UiState> = _uiState.asStateFlow()
+```
+
+Tool support: Detekt, IntelliJ — rule `MutableFlowExposed`.
+
+### 9.6 FLOW_005 — Missing catch in Flow Chain
+
+|                  | Description                                                                                                                                                                                                                                                                         |
+|------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Bad Practice** | A `.collect {}` or `.launchIn(scope)` call on a Flow chain with intermediate operators but no `.catch {}`. Exceptions from any upstream operator propagate to the parent scope and cancel it, causing silent crashes in production that are difficult to trace.                       |
+| **Recommended**  | Add `.catch { e -> }` before the terminal operator to handle errors locally. Avoid wrapping the entire chain in a generic `try/catch` — it does not compose well with Flow cancellation semantics. Exclude test source roots where propagation to the test scope is intentional. |
+
+**Example:**
+
+```kotlin
+// [FLOW_005] Uncaught exception cancels viewModelScope
+repository.getItems()
+    .map { it.toUiModel() }
+    .collect { _state.value = it }
+
+// catch before collect
+repository.getItems()
+    .map { it.toUiModel() }
+    .catch { e -> _error.value = e.message }
+    .collect { _state.value = it }
+```
+
+Tool support: Detekt, Android Lint, IntelliJ — rule `MissingCatchInFlow`.
+
+---
+
+## 10. Interoperability (Callbacks to Coroutines)
+
+### 10.1 INTEROP_001 — Wrapping Callbacks Without Cancellation Support
+
+|                  | Description                                                                                                                                                                                                                                                                   |
+|------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Bad Practice** | Using `suspendCoroutine` to wrap async callbacks. When the parent coroutine is cancelled the callback remains registered, leaking memory and resuming a dead continuation. The callback may call `resume` on a continuation that was already discarded, causing undefined behavior. |
+| **Recommended**  | Use `suspendCancellableCoroutine` and register cleanup in `invokeOnCancellation`. This ensures that when the parent coroutine cancels, the callback is unregistered and resources are released properly.                                                                         |
+
+**Example:**
+
+```kotlin
+// [INTEROP_001] suspendCoroutine does not support cancellation
+suspend fun fetchUser(id: String): User = suspendCoroutine { cont ->
+    api.getUser(id,
+        onSuccess = { cont.resume(it) },
+        onError = { cont.resumeWithException(it) }
+    )
+    // if parent cancels, the listener stays active
+}
+
+// suspendCancellableCoroutine + invokeOnCancellation for proper cleanup
+suspend fun fetchUser(id: String): User = suspendCancellableCoroutine { cont ->
+    val call = api.getUser(id,
+        onSuccess = { cont.resume(it) },
+        onError = { cont.resumeWithException(it) }
+    )
+    cont.invokeOnCancellation { call.cancel() }
+}
+```
+
+Tool support: Compiler Plugin, Detekt, IntelliJ — rule `SuspendCoroutineWithoutCancellation`.
+
+### 10.2 INTEROP_002 — callbackFlow Without awaitClose
+
+|                  | Description                                                                                                                                                                                                                                                     |
+|------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Bad Practice** | Using `callbackFlow { }` without `awaitClose { }`. Starting from kotlinx-coroutines 1.6, a `callbackFlow` without `awaitClose` throws `IllegalStateException` at runtime when the flow is cancelled. Additionally, registered listeners are never unregistered, causing memory leaks. |
+| **Recommended**  | Always include `awaitClose { /* unregister listener */ }` at the end of every `callbackFlow` block. `awaitClose` suspends until the collector cancels or completes, giving you the lifecycle hook to clean up. Note: this rule does NOT apply to `channelFlow`.   |
+
+**Example:**
+
+```kotlin
+// [INTEROP_002] callbackFlow without awaitClose — IllegalStateException + listener leak
+fun locationFlow(): Flow<Location> = callbackFlow {
+    val cb = LocationCallback { trySend(it) }
+    manager.register(cb)
+    // Missing awaitClose!
+}
+
+// callbackFlow with awaitClose ensures listener cleanup
+fun locationFlow(): Flow<Location> = callbackFlow {
+    val cb = LocationCallback { trySend(it) }
+    manager.register(cb)
+    awaitClose { manager.unregister(cb) }
+}
+```
+
+Tool support: Compiler Plugin, Detekt, IntelliJ — rule `CallbackFlowWithoutAwaitClose`.
+
+---
+
+## 11. Kotlin Multiplatform
+
+### 11.1 KMP_001 — Dispatchers.IO in commonMain
+
+|                  | Description                                                                                                                                                                                                                                                                                      |
+|------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Bad Practice** | Using `Dispatchers.IO` in `commonMain` source sets. `Dispatchers.IO` does not exist on Kotlin/Native (iOS, macOS) or Kotlin/JS. Code that uses it in shared sources crashes at runtime with `IllegalStateException: Dispatchers.IO is not supported` on those targets.                          |
+| **Recommended**  | Option A: Inject the dispatcher as a constructor parameter (default to `Dispatchers.Default` in common, `Dispatchers.IO` in JVM/Android). Option B: Use `expect`/`actual` declarations to provide the correct dispatcher per platform. Either approach keeps `commonMain` code platform-neutral. |
+
+**Example:**
+
+```kotlin
+// [KMP_001] Dispatchers.IO in commonMain — crash on iOS/JS
+// File: commonMain/src/.../Repository.kt
+suspend fun fetchData(): Data = withContext(Dispatchers.IO) {
+    httpClient.get(url)
+}
+
+// Option A: inject dispatcher (testable and KMP-safe)
+class Repository(private val ioDispatcher: CoroutineDispatcher = Dispatchers.Default) {
+    suspend fun fetchData(): Data = withContext(ioDispatcher) {
+        httpClient.get(url)
+    }
+}
+
+// Option B: expect/actual per platform
+// In commonMain:
+expect val ioDispatcher: CoroutineDispatcher
+// In jvmMain/androidMain:
+actual val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+// In iosMain:
+actual val ioDispatcher: CoroutineDispatcher = Dispatchers.Default
+```
+
+**Dispatcher availability by platform (kotlinx-coroutines 1.10.2):**
+
+| Platform                 | Dispatchers.Main            | Dispatchers.IO     | Dispatchers.Default |
+|--------------------------|:---------------------------:|:------------------:|:-------------------:|
+| JVM / Android            | yes (coroutines-android)    | yes                | yes                 |
+| iOS / macOS (Native)     | yes (main thread)           | **does not exist** | yes                 |
+| JS / WASM                | yes (microtask queue)       | **does not exist** | yes                 |
+| Linux / Windows (Native) | requires impl               | **does not exist** | yes                 |
+
+Tool support: Detekt, Android Lint — rule `DispatchersIOInCommonMain`.
 
 ---
 

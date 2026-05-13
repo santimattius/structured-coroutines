@@ -28,8 +28,16 @@ list of codes and suppression IDs per tool is in [rule-codes.yml](rule-codes.yml
 | CANCEL_001   | 4.1 | `LOOP_WITHOUT_YIELD`                                      | `LoopWithoutYield`                            | `LoopWithoutYield`                           | `LoopWithoutYield`                            |
 | EXCEPT_002   | 5.2 | `CANCELLATION_EXCEPTION_SUBCLASS`                         | `CancellationExceptionSubclass`               | `CancellationExceptionSubclass`              | `CancellationExceptionSubclass`              |
 | TEST_001     | 6.1 | —                                                         | `RunBlockingWithDelayInTest`                  | `RunBlockingWithDelayInTest`                 | —                                            |
+| TEST_004     | 6.4 | —                                                         | `RunBlockingInsteadOfRunTest`                 | `RunBlockingInsteadOfRunTest`                | `RunBlockingInsteadOfRunTest`                |
 | ARCH_002     | 8.2 | —                                                         | —                                             | `LifecycleAwareScope`, `ViewModelScopeLeak`, `LifecycleAwareFlowCollection` | `LifecycleAwareFlowCollection`                |
-| FLOW_001     | 9.1 | —                                                         | `FlowBlockingCall`                            | `FlowBlockingCall`                           | —                                            |
+| COMPOSE_001  | 8.3 | —                                                         | —                                             | `CollectAsStateWithoutLifecycle`             | `CollectAsStateWithoutLifecycle`              |
+| FLOW_001     | 9.1  | —                                                         | `FlowBlockingCall`                            | `FlowBlockingCall`                           | —                                            |
+| FLOW_005     | 9.6  | —                                                         | `MissingCatchInFlow`                          | `MissingCatchInFlow`                         | `MissingCatchInFlow`                         |
+| FLOW_010     | 9.5  | —                                                         | `MutableFlowExposed`                          | —                                            | `MutableFlowExposed`                         |
+| CONCUR_003   | 1.5  | —                                                         | `SequentialAsyncAwait`                        | —                                            | `SequentialAsyncAwait`                       |
+| INTEROP_001  | 10.1 | `SUSPEND_COROUTINE_WITHOUT_CANCELLATION` (Compiler only; cannot suppress FIR this way — use Detekt/IDE instead) | `SuspendCoroutineWithoutCancellation` | —        | `SuspendCoroutineWithoutCancellation`        |
+| INTEROP_002  | 10.2 | `CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE` (Compiler only; cannot suppress FIR this way — use Detekt/IDE instead)     | `CallbackFlowWithoutAwaitClose`       | —        | `CallbackFlowWithoutAwaitClose`              |
+| KMP_001      | 11.1 | —                                                         | `DispatchersIOInCommonMain`                  | `DispatchersIOInCommonMain`                   | `DispatchersIOInCommonMain`                   |
 
 **Note:** “—” means the rule is not implemented in that tool. When the same practice is reported by
 more than one diagnostic (e.g. SCOPE_003), suppress each identifier that applies to the code you’re

@@ -8,6 +8,7 @@ dependencies {
     compileOnly(libs.kotlin.compiler.embeddable)
 
     // Test dependencies - using Gradle TestKit for functional testing
+    testImplementation(libs.kotlin.compiler.embeddable)
     testImplementation(libs.kotlin.test)
     testImplementation(gradleTestKit())
 }

@@ -10,8 +10,11 @@
 package io.github.santimattius.structured.intellij.view
 
 import io.github.santimattius.structured.intellij.inspections.AsyncWithoutAwaitInspection
+import io.github.santimattius.structured.intellij.inspections.CallbackFlowWithoutAwaitCloseInspection
 import io.github.santimattius.structured.intellij.inspections.CancellationExceptionSubclassInspection
 import io.github.santimattius.structured.intellij.inspections.CancellationExceptionSwallowedInspection
+import io.github.santimattius.structured.intellij.inspections.CollectAsStateWithoutLifecycleInspection
+import io.github.santimattius.structured.intellij.inspections.DispatchersIOInCommonMainInspection
 import io.github.santimattius.structured.intellij.inspections.DispatchersUnconfinedInspection
 import io.github.santimattius.structured.intellij.inspections.GlobalScopeInspection
 import io.github.santimattius.structured.intellij.inspections.InlineCoroutineScopeInspection
@@ -19,8 +22,13 @@ import io.github.santimattius.structured.intellij.inspections.JobInBuilderContex
 import io.github.santimattius.structured.intellij.inspections.LifecycleAwareFlowCollectionInspection
 import io.github.santimattius.structured.intellij.inspections.LoopWithoutYieldInspection
 import io.github.santimattius.structured.intellij.inspections.MainDispatcherMisuseInspection
+import io.github.santimattius.structured.intellij.inspections.MissingCatchInFlowInspection
+import io.github.santimattius.structured.intellij.inspections.MutableFlowExposedInspection
 import io.github.santimattius.structured.intellij.inspections.RunBlockingInSuspendInspection
+import io.github.santimattius.structured.intellij.inspections.RunBlockingInsteadOfRunTestInspection
 import io.github.santimattius.structured.intellij.inspections.ScopeReuseAfterCancelInspection
+import io.github.santimattius.structured.intellij.inspections.SequentialAsyncAwaitInspection
+import io.github.santimattius.structured.intellij.inspections.SuspendCoroutineWithoutCancellationInspection
 import io.github.santimattius.structured.intellij.inspections.SuspendInFinallyInspection
 import io.github.santimattius.structured.intellij.inspections.UnstructuredLaunchInspection
 import io.github.santimattius.structured.intellij.inspections.WithTimeoutScopeCancellationInspection
@@ -105,6 +113,38 @@ object InspectionGuideRegistry {
         WithTimeoutScopeCancellationInspection::class.java to GuideEntry(
             whatToDo = "Replace withTimeout with withTimeoutOrNull to get null on timeout without cancelling the parent scope. Or catch TimeoutCancellationException explicitly.",
             guideUrl = "$BASE_URL#46-cancel_006--withtimeout-and-scope-cancellation"
+        ),
+        CollectAsStateWithoutLifecycleInspection::class.java to GuideEntry(
+            whatToDo = "Use collectAsStateWithLifecycle() from lifecycle-runtime-compose so collection pauses when the lifecycle is not at least STARTED.",
+            guideUrl = "$BASE_URL#83-compose_001--collectasstate-without-lifecycle-awareness"
+        ),
+        RunBlockingInsteadOfRunTestInspection::class.java to GuideEntry(
+            whatToDo = "Replace runBlocking with runTest from kotlinx-coroutines-test for virtual time and structured TestScope.",
+            guideUrl = "$BASE_URL#64-test_004--runblocking-instead-of-runtest"
+        ),
+        DispatchersIOInCommonMainInspection::class.java to GuideEntry(
+            whatToDo = "Inject CoroutineDispatcher from platform code or use expect/actual — Dispatchers.IO is not available in Kotlin/Common on Native/JS.",
+            guideUrl = "$BASE_URL#111-kmp_001--dispatchersio-in-commonmain"
+        ),
+        SuspendCoroutineWithoutCancellationInspection::class.java to GuideEntry(
+            whatToDo = "Replace suspendCoroutine with suspendCancellableCoroutine and use invokeOnCancellation for cleanup.",
+            guideUrl = "$BASE_URL#101-interop_001--wrapping-callbacks-without-cancellation-support"
+        ),
+        CallbackFlowWithoutAwaitCloseInspection::class.java to GuideEntry(
+            whatToDo = "Add awaitClose { } inside callbackFlow to unregister listeners when the collector leaves.",
+            guideUrl = "$BASE_URL#102-interop_002--callbackflow-without-awaitclose"
+        ),
+        MutableFlowExposedInspection::class.java to GuideEntry(
+            whatToDo = "Use a private MutableStateFlow/MutableSharedFlow with a public read-only asStateFlow()/asSharedFlow() property.",
+            guideUrl = "$BASE_URL#95-flow_010--mutablestateflow-exposed"
+        ),
+        MissingCatchInFlowInspection::class.java to GuideEntry(
+            whatToDo = "Add .catch { } before collect/collectLatest/launchIn so upstream operator failures are handled.",
+            guideUrl = "$BASE_URL#96-flow_005--missing-catch-in-flow-chain"
+        ),
+        SequentialAsyncAwaitInspection::class.java to GuideEntry(
+            whatToDo = "Use withContext(coroutineContext) { } for sequential work, or start multiple async calls without awaiting between them.",
+            guideUrl = "$BASE_URL#15-concur_003--sequential-asyncawait"
         )
     )
 

@@ -6,7 +6,25 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ---
 
-## [Unreleased]
+## [0.8.0] — 2026-05-11
+
+### Added
+
+- **INTEROP_001** `SuspendCoroutineWithoutCancellation` — Compiler (FIR), Detekt, IntelliJ: detects `suspendCoroutine` usage which does not support coroutine cancellation. Use `suspendCancellableCoroutine` instead.
+- **INTEROP_002** `CallbackFlowWithoutAwaitClose` — Compiler (FIR), Detekt, IntelliJ: detects `callbackFlow { }` without `awaitClose { }`, which causes `IllegalStateException` at runtime (kotlinx-coroutines >= 1.6) and leaks listeners.
+- **FLOW_010** `MutableFlowExposed` — Detekt, IntelliJ: detects `MutableStateFlow`/`MutableSharedFlow` exposed as public. Use backing property with `asStateFlow()`/`asSharedFlow()`.
+- **FLOW_005** `MissingCatchInFlow` — Detekt, Android Lint, IntelliJ: detects Flow chains missing a `.catch {}` operator before the terminal operator.
+- **CONCUR_003** `SequentialAsyncAwait` — Detekt, IntelliJ: detects `async { }.await()` patterns that are equivalent to `withContext` but create unnecessary overhead without parallelism.
+- **TEST_004** `RunBlockingInsteadOfRunTest` — Detekt, Android Lint, IntelliJ: detects `runBlocking` in test functions. Use `runTest` from `kotlinx-coroutines-test` for virtual time control.
+- **COMPOSE_001** `CollectAsStateWithoutLifecycle` — Android Lint, IntelliJ: detects `collectAsState()` in Composables; use `collectAsStateWithLifecycle()` for lifecycle-aware collection.
+- **KMP_001** `DispatchersIOInCommonMain` — Detekt, Android Lint: detects `Dispatchers.IO` usage in `commonMain` source sets, which crashes on iOS/JS.
+- Annotations: `@IoDispatcher`, `@MainDispatcher`, `@DefaultDispatcher` qualifier annotations in `:annotations` module.
+- Gradle plugin: `useAndroidComposeProfile()` and `useKmpCommonProfile()` extension functions.
+- Version catalog: `kotlinx-coroutines-test` and `lifecycle-runtime-compose` library coordinates.
+- `docs/BEST_PRACTICES_COROUTINES.md`: new sections §6.4, §9.5, §9.6, §10 (Interoperability), §11 (Kotlin Multiplatform).
+- `sample-detekt`: seven new fixture files covering all six Detekt-backed rules from this iteration.
+
+## [0.7.1] — 2026-05-07
 
 ### Fixed — Compiler
 
@@ -15,8 +33,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
   - **Compose UI** `androidx.compose.ui.Modifier.Node.coroutineScope` is now recognized as a structured scope. Launches inside `onAttach()` / other node callbacks no longer trigger `[SCOPE_003]`.
   - **Decompose / Essenty** `com.arkivanov.essenty.lifecycle.coroutines.coroutineScope()` (extension on `LifecycleOwner`) is now treated like `rememberCoroutineScope()` — both as a direct call and when stored in a local `val`.
   - **MVIKotlin** `CoroutineBootstrapper.scope` and `CoroutineExecutor.scope` are now recognized. The checker walks the dispatch-receiver type's super-type chain so inherited (fake-override) accesses from user subclasses are also detected.
-
----
 
 ## [0.7.0] — 2026-04-07
 
@@ -239,6 +255,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ---
 
+[0.8.0]: https://github.com/santimattius/structured-coroutines/compare/0.7.0...0.8.0
 [0.7.0]: https://github.com/santimattius/structured-coroutines/compare/0.6.1...0.7.0
 [0.6.1]: https://github.com/santimattius/structured-coroutines/compare/0.6.0...0.6.1
 [0.6.0]: https://github.com/santimattius/structured-coroutines/compare/0.5.0...0.6.0
