@@ -1,6 +1,7 @@
 # Annotations for Structured Coroutines
 
-Multiplatform annotations for marking structured coroutine scopes.
+Multiplatform annotations for structured concurrency: marking coroutine scopes and qualifying
+dispatcher dependencies for testable code.
 
 ## Installation
 
@@ -55,6 +56,113 @@ class Repository {
     }
 }
 ```
+
+---
+
+## Dispatcher Qualifier Annotations
+
+Use these annotations to qualify `CoroutineDispatcher` dependencies so production code stays
+decoupled from concrete dispatchers and test code can substitute an unconfined or test dispatcher.
+
+### @IoDispatcher
+
+Qualifies a dispatcher intended for blocking I/O work (maps to `Dispatchers.IO` in production).
+
+```kotlin
+import io.github.santimattius.structured.annotations.IoDispatcher
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
+class UserRepository(
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+) {
+    suspend fun fetchUser(id: String): User = withContext(ioDispatcher) {
+        api.getUser(id)
+    }
+}
+```
+
+### @MainDispatcher
+
+Qualifies a dispatcher bound to the UI / main thread (maps to `Dispatchers.Main` in production).
+
+```kotlin
+import io.github.santimattius.structured.annotations.MainDispatcher
+import kotlinx.coroutines.CoroutineDispatcher
+
+class UiViewModel(
+    @MainDispatcher private val mainDispatcher: CoroutineDispatcher
+) { /* ... */ }
+```
+
+### @DefaultDispatcher
+
+Qualifies a dispatcher for CPU-bound default work (maps to `Dispatchers.Default` in production).
+
+```kotlin
+import io.github.santimattius.structured.annotations.DefaultDispatcher
+import kotlinx.coroutines.CoroutineDispatcher
+
+class ImageProcessor(
+    @DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher
+) { /* ... */ }
+```
+
+### Testing with dispatcher qualifiers
+
+Inject `UnconfinedTestDispatcher` (or `StandardTestDispatcher`) in tests so suspending code runs
+predictably without the real dispatcher:
+
+```kotlin
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlin.test.Test
+
+class UserRepositoryTest {
+    private val testDispatcher = UnconfinedTestDispatcher()
+    private val repository = UserRepository(ioDispatcher = testDispatcher)
+
+    @Test
+    fun `fetchUser returns expected user`() = runTest(testDispatcher) {
+        val user = repository.fetchUser("42")
+        // assert ...
+    }
+}
+```
+
+### DI wiring example (Hilt / Koin)
+
+The annotations work with any DI framework. Example with Hilt:
+
+```kotlin
+// Module
+@Module @InstallIn(SingletonComponent::class)
+object DispatcherModule {
+    @Provides @IoDispatcher
+    fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
+
+    @Provides @MainDispatcher
+    fun provideMainDispatcher(): CoroutineDispatcher = Dispatchers.Main
+
+    @Provides @DefaultDispatcher
+    fun provideDefaultDispatcher(): CoroutineDispatcher = Dispatchers.Default
+}
+```
+
+### Annotation targets and retention
+
+All three qualifier annotations share the same configuration:
+
+| Target | Supported |
+|--------|-----------|
+| Value parameter | ✅ |
+| Field / property | ✅ |
+| Function | ✅ |
+
+**Retention:** `BINARY` — present in the compiled `.class` / `.klib` for DI frameworks but not
+available at runtime reflection.
+
+---
 
 ## Supported Platforms
 

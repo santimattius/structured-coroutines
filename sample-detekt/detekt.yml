@@ -55,3 +55,15 @@ structured-coroutines:
     active: true
   FlowBlockingCall:
     active: true
+  SuspendCoroutineWithoutCancellation:
+    active: true
+  CallbackFlowWithoutAwaitClose:
+    active: true
+  MutableFlowExposed:
+    active: true
+  MissingCatchInFlow:
+    active: true
+  SequentialAsyncAwait:
+    active: true
+  RunBlockingInsteadOfRunTest:
+    active: true

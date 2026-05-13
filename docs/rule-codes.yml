@@ -178,3 +178,83 @@ rules:
     intellij: []
     default_severity: warning
     notes: "Android-only; not implemented in Detekt or Compiler."
+
+  - code: INTEROP_001
+    section: "10.1"
+    title: "Wrapping Callbacks Without Cancellation Support"
+    doc_anchor: "101-interop_001--wrapping-callbacks-without-cancellation-support"
+    compiler: [SUSPEND_COROUTINE_WITHOUT_CANCELLATION]
+    detekt: [SuspendCoroutineWithoutCancellation]
+    lint: []
+    intellij: [SuspendCoroutineWithoutCancellation]
+    default_severity: error
+
+  - code: INTEROP_002
+    section: "10.2"
+    title: "callbackFlow Without awaitClose"
+    doc_anchor: "102-interop_002--callbackflow-without-awaitclose"
+    compiler: [CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE]
+    detekt: [CallbackFlowWithoutAwaitClose]
+    lint: []
+    intellij: [CallbackFlowWithoutAwaitClose]
+    default_severity: error
+
+  - code: FLOW_005
+    section: "9.6"
+    title: "Missing catch in Flow Chain"
+    doc_anchor: "96-flow_005--missing-catch-in-flow-chain"
+    compiler: []
+    detekt: [MissingCatchInFlow]
+    lint: [MissingCatchInFlow]
+    intellij: [MissingCatchInFlow]
+    default_severity: warning
+
+  - code: FLOW_010
+    section: "9.5"
+    title: "MutableStateFlow/MutableSharedFlow Exposed as Public"
+    doc_anchor: "95-flow_010--mutablestateflow-exposed"
+    compiler: []
+    detekt: [MutableFlowExposed]
+    lint: []
+    intellij: [MutableFlowExposed]
+    default_severity: warning
+
+  - code: CONCUR_003
+    section: "1.5"
+    title: "Sequential async/await (wasted parallelism)"
+    doc_anchor: "15-concur_003--sequential-asyncawait"
+    compiler: []
+    detekt: [SequentialAsyncAwait]
+    lint: []
+    intellij: [SequentialAsyncAwait]
+    default_severity: warning
+
+  - code: TEST_004
+    section: "6.4"
+    title: "runBlocking Instead of runTest"
+    doc_anchor: "64-test_004--runblocking-instead-of-runtest"
+    compiler: []
+    detekt: [RunBlockingInsteadOfRunTest]
+    lint: [RunBlockingInsteadOfRunTest]
+    intellij: [RunBlockingInsteadOfRunTest]
+    default_severity: warning
+
+  - code: KMP_001
+    section: "11.1"
+    title: "Dispatchers.IO in commonMain"
+    doc_anchor: "111-kmp_001--dispatchersio-in-commonmain"
+    compiler: []
+    detekt: [DispatchersIOInCommonMain]
+    lint: [DispatchersIOInCommonMain]
+    intellij: [DispatchersIOInCommonMain]
+    default_severity: error
+
+  - code: COMPOSE_001
+    section: "8.3"
+    title: "collectAsState Without Lifecycle Awareness"
+    doc_anchor: "83-compose_001--collectasstate-without-lifecycle-awareness"
+    compiler: []
+    detekt: []
+    lint: [CollectAsStateWithoutLifecycle]
+    intellij: [CollectAsStateWithoutLifecycle]
+    default_severity: warning

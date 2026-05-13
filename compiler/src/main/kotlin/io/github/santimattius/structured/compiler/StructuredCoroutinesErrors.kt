@@ -51,6 +51,8 @@ object StructuredCoroutinesErrorRenderer : BaseDiagnosticRendererFactory() {
         MAP.put(StructuredCoroutinesErrors.UNUSED_DEFERRED, CompilerMessages.message("UNUSED_DEFERRED"))
         MAP.put(StructuredCoroutinesErrors.REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE, CompilerMessages.message("REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE"))
         MAP.put(StructuredCoroutinesErrors.LOOP_WITHOUT_YIELD, CompilerMessages.message("LOOP_WITHOUT_YIELD"))
+        MAP.put(StructuredCoroutinesErrors.SUSPEND_COROUTINE_WITHOUT_CANCELLATION, CompilerMessages.message("SUSPEND_COROUTINE_WITHOUT_CANCELLATION"))
+        MAP.put(StructuredCoroutinesErrors.CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE, CompilerMessages.message("CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE"))
     }
 }
 
@@ -250,6 +252,24 @@ object StructuredCoroutinesErrors {
         rendererFactory = StructuredCoroutinesErrorRenderer
     )
 
+    /** INTEROP_001 — `suspendCoroutine` does not propagate cancellation (use suspendCancellableCoroutine). */
+    val SUSPEND_COROUTINE_WITHOUT_CANCELLATION: KtDiagnosticFactory0 = KtDiagnosticFactory0(
+        name = "SUSPEND_COROUTINE_WITHOUT_CANCELLATION",
+        severity = Severity.ERROR,
+        defaultPositioningStrategy = SourceElementPositioningStrategies.CALL_ELEMENT_WITH_DOT,
+        psiType = KtElement::class,
+        rendererFactory = StructuredCoroutinesErrorRenderer
+    )
+
+    /** INTEROP_002 — `callbackFlow` must include `awaitClose` for lifecycle cleanup. */
+    val CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE: KtDiagnosticFactory0 = KtDiagnosticFactory0(
+        name = "CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE",
+        severity = Severity.ERROR,
+        defaultPositioningStrategy = SourceElementPositioningStrategies.CALL_ELEMENT_WITH_DOT,
+        psiType = KtElement::class,
+        rendererFactory = StructuredCoroutinesErrorRenderer
+    )
+
     init {
         // Register error messages after factories are created
         StructuredCoroutinesErrorRenderer.registerMessages()
@@ -366,6 +386,16 @@ fun DiagnosticReporter.reportLoopWithoutYield(
     context: CheckerContext
 ) {
     reportOn(expression.source, StructuredCoroutinesErrors.LOOP_WITHOUT_YIELD, context)
+}
+
+/** INTEROP_001 — report suspendCoroutine usage in suspend contexts. */
+fun DiagnosticReporter.reportSuspendCoroutineWithoutCancellation(call: FirCall, context: CheckerContext) {
+    reportOn(call.source, StructuredCoroutinesErrors.SUSPEND_COROUTINE_WITHOUT_CANCELLATION, context)
+}
+
+/** INTEROP_002 — report callbackFlow without awaitClose. */
+fun DiagnosticReporter.reportCallbackFlowWithoutAwaitClose(call: FirCall, context: CheckerContext) {
+    reportOn(call.source, StructuredCoroutinesErrors.CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE, context)
 }
 
 // ============================================================

@@ -1,0 +1,113 @@
+/**
+ * Copyright 2026 Santiago Mattiauda
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ */
+
+package io.github.santimattius.structured.lint.detectors
+
+import com.android.tools.lint.checks.infrastructure.TestFiles
+import com.android.tools.lint.checks.infrastructure.TestLintTask
+import com.android.tools.lint.checks.infrastructure.TestMode
+import io.github.santimattius.structured.lint.LintTestStubs
+import org.junit.Test
+
+class MissingCatchInFlowDetectorTest {
+
+    @Test
+    fun warnsOnMapCollectWithoutCatch() {
+        val code = """
+            package test
+            import kotlinx.coroutines.flow.flowOf
+            import kotlinx.coroutines.flow.map
+            import kotlinx.coroutines.flow.collect
+            import kotlinx.coroutines.runBlocking
+
+            fun demo() {
+                runBlocking {
+                    flowOf(1)
+                        .map { it }
+                        .collect { }
+                }
+            }
+        """.trimIndent()
+
+        TestLintTask.lint()
+            .files(
+                *LintTestStubs.coroutinesAndFlow().toTypedArray(),
+                TestFiles.kotlin(code).indented(),
+            )
+            .issues(MissingCatchInFlowDetector.ISSUE)
+            .allowMissingSdk()
+            .skipTestModes(TestMode.PARENTHESIZED)
+            .run()
+            .expectWarningCount(1)
+            .expectContains("[FLOW_005]")
+    }
+
+    @Test
+    fun cleanWhenCatchPresent() {
+        val code = """
+            package test
+            import kotlinx.coroutines.flow.flowOf
+            import kotlinx.coroutines.flow.map
+            import kotlinx.coroutines.flow.catch
+            import kotlinx.coroutines.flow.collect
+            import kotlinx.coroutines.runBlocking
+
+            fun demo() {
+                runBlocking {
+                    flowOf(1)
+                        .map { it }
+                        .catch { _: Throwable ->
+                        }
+                        .collect { }
+                }
+            }
+        """.trimIndent()
+
+        val issues = TestLintTask.lint()
+            .files(
+                *LintTestStubs.coroutinesAndFlow().toTypedArray(),
+                TestFiles.kotlin(code).indented(),
+            )
+            .issues(MissingCatchInFlowDetector.ISSUE)
+            .allowMissingSdk()
+            .run()
+
+        issues.expectClean()
+    }
+
+    @Test
+    fun cleanWhenCatchPresentBeforeCollectLatest() {
+        // FP guard: Flow chain with .catch {} already present before collectLatest
+        val code = """
+            package test
+            import kotlinx.coroutines.flow.flowOf
+            import kotlinx.coroutines.flow.map
+            import kotlinx.coroutines.flow.catch
+            import kotlinx.coroutines.flow.collectLatest
+            import kotlinx.coroutines.runBlocking
+
+            fun demo() {
+                runBlocking {
+                    flowOf(1)
+                        .map { it * 2 }
+                        .catch { _: Throwable -> }
+                        .collectLatest { }
+                }
+            }
+        """.trimIndent()
+
+        TestLintTask.lint()
+            .files(
+                *LintTestStubs.coroutinesAndFlow().toTypedArray(),
+                TestFiles.kotlin(code).indented(),
+            )
+            .issues(MissingCatchInFlowDetector.ISSUE)
+            .allowMissingSdk()
+            .run()
+            .expectClean()
+    }
+}

@@ -38,6 +38,14 @@
             <li>CancellationException swallowed</li>
             <li>CancellationException subclass (domain error)</li>
             <li>Dispatchers.Unconfined usage</li>
+            <li>collectAsState without lifecycle-aware collection (Compose)</li>
+            <li>runBlocking instead of runTest in JUnit bodies (TEST_004)</li>
+            <li>Dispatchers.IO in Kotlin common sources (KMP)</li>
+            <li>suspendCoroutine without cancellation (INTEROP_001)</li>
+            <li>callbackFlow without awaitClose (INTEROP_002)</li>
+            <li>MutableStateFlow/MutableSharedFlow exposed publicly (FLOW_010)</li>
+            <li>Flow chains missing .catch before collect (FLOW_005)</li>
+            <li>Sequential async/await (CONCUR_003)</li>
         </ul>
     ]]></description>
 
@@ -229,6 +237,102 @@
             groupPath="Kotlin"
             groupBundle="messages.StructuredCoroutinesBundle"
             groupKey="inspection.group.name"
+            shortName="CollectAsStateWithoutLifecycle"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.collect.as.state.lifecycle.display.name"
+            enabledByDefault="true"
+            level="WARNING"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.CollectAsStateWithoutLifecycleInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
+            shortName="RunBlockingInsteadOfRunTest"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.runblocking.instead.runtest.display.name"
+            enabledByDefault="true"
+            level="WARNING"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.RunBlockingInsteadOfRunTestInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
+            shortName="DispatchersIOInCommonMain"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.dispatchers.io.common.display.name"
+            enabledByDefault="true"
+            level="ERROR"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.DispatchersIOInCommonMainInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
+            shortName="SuspendCoroutineWithoutCancellation"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.suspend.coroutine.without.cancellation.display.name"
+            enabledByDefault="true"
+            level="ERROR"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.SuspendCoroutineWithoutCancellationInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
+            shortName="CallbackFlowWithoutAwaitClose"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.callback.flow.without.await.close.display.name"
+            enabledByDefault="true"
+            level="ERROR"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.CallbackFlowWithoutAwaitCloseInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
+            shortName="MutableFlowExposed"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.mutable.flow.exposed.display.name"
+            enabledByDefault="true"
+            level="WARNING"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.MutableFlowExposedInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
+            shortName="MissingCatchInFlow"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.missing.catch.in.flow.display.name"
+            enabledByDefault="true"
+            level="WARNING"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.MissingCatchInFlowInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
+            shortName="SequentialAsyncAwait"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.sequential.async.await.display.name"
+            enabledByDefault="true"
+            level="WARNING"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.SequentialAsyncAwaitInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
             shortName="WithTimeoutScopeCancellation"
             bundle="messages.StructuredCoroutinesBundle"
             key="inspection.with.timeout.scope.cancellation.display.name"
@@ -295,7 +399,8 @@
             id="StructuredCoroutines"
             factoryClass="io.github.santimattius.structured.intellij.view.StructuredCoroutinesToolWindowFactory"
             anchor="bottom"
-            secondary="false"/>
+            secondary="false"
+            doNotActivateOnStart="false"/>
     </extensions>
 
     <actions>

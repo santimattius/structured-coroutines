@@ -517,4 +517,16 @@ object CoroutinePsiUtils {
         })
         return result
     }
+
+    /**
+     * Gradle/JVM test-ish source heuristic (JUnit-style names or files under conventional test dirs).
+     */
+    fun looksLikeJvmTestKotlinFile(file: KtFile): Boolean {
+        val path = file.virtualFilePath.replace('\\', '/')
+        return file.name.endsWith("Test.kt") ||
+            file.name.endsWith("Tests.kt") ||
+            file.name.endsWith("Spec.kt") ||
+            path.contains("/test/") ||
+            path.contains("/androidTest/")
+    }
 }

@@ -495,17 +495,33 @@ class StructuredCoroutinesPluginFunctionalTest {
     // Sample project validation (real :sample with compiler plugin)
     // ============================================================================
 
+    /**
+     * Runs `:sample:compileKotlin` via the project's Gradle wrapper as a plain OS process,
+     * capturing both stdout and stderr (merged). Using ProcessBuilder instead of GradleRunner
+     * here because the Kotlin Build Tools API (BTAPI) worker writes compiler diagnostics to
+     * the Gradle process's stderr stream, which GradleRunner does not forward into
+     * BuildResult.output.
+     */
     private fun runSampleCompilation(env: Map<String, String> = emptyMap()): String? {
         val rootDir = System.getProperty("structuredCoroutines.rootDir") ?: return null
         val root = File(rootDir)
         if (!File(root, "sample/build.gradle.kts").exists()) return null
-        val runner = GradleRunner.create()
-            .withProjectDir(root)
-            .withArguments(":sample:compileKotlin", "--stacktrace", "-q")
-            .forwardOutput()
-        val runnerWithEnv = if (env.isEmpty()) runner else runner.withEnvironment(env)
-        val result = runnerWithEnv.buildAndFail()
-        return result.output
+
+        val gradlew = if (System.getProperty("os.name", "").startsWith("Windows")) "gradlew.bat" else "gradlew"
+        val pb = ProcessBuilder(File(root, gradlew).absolutePath, ":sample:compileKotlin", "--info")
+            .directory(root)
+            .redirectErrorStream(true)
+
+        pb.environment().apply {
+            clear()
+            putAll(System.getenv())
+            putAll(env)
+        }
+
+        val process = pb.start()
+        val output = process.inputStream.bufferedReader().readText()
+        process.waitFor()
+        return output
     }
 
     private fun skipSampleTest(): Boolean {
@@ -568,5 +584,53 @@ class StructuredCoroutinesPluginFunctionalTest {
             hasEnglish || hasSpanish,
             "Expected localized SCOPE_001 message (EN or ES). Got (last 2k):\n${output.takeLast(2000)}"
         )
+    }
+
+    @Test
+    fun `suspendCoroutine in suspend function fails compilation`() {
+        val sourceCode = """
+            import kotlinx.coroutines.suspendCoroutine
+            
+            suspend fun bad(): Unit =
+                suspendCoroutine { cont -> cont.resume(Unit) }
+        """.trimIndent()
+
+        val projectDir = createTestProject(sourceCode)
+        val output = runBuild(projectDir, expectSuccess = false)
+        assertTrue(
+            "SUSPEND_COROUTINE_WITHOUT_CANCELLATION" in output || "[INTEROP_001]" in output ||
+                "suspendCoroutine" in output,
+            "Expected INTEROP_001 but got:\n$output"
+        )
+    }
+
+    @Test
+    fun `callbackFlow without awaitClose fails compilation`() {
+        val sourceCode = """
+            import kotlinx.coroutines.flow.callbackFlow
+            
+            fun broken() = callbackFlow<Unit> { }
+        """.trimIndent()
+
+        val projectDir = createTestProject(sourceCode)
+        val output = runBuild(projectDir, expectSuccess = false)
+        assertTrue(
+            "CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE" in output || "[INTEROP_002]" in output ||
+                "awaitClose" in output,
+            "Expected INTEROP_002 but got:\n$output"
+        )
+    }
+
+    @Test
+    fun `channelFlow compiles without awaitClose`() {
+        val sourceCode = """
+            import kotlinx.coroutines.flow.channelFlow
+            
+            fun ok() = channelFlow<Int> { send(42) }
+        """.trimIndent()
+
+        val projectDir = createTestProject(sourceCode)
+        val output = runBuild(projectDir, expectSuccess = true)
+        assertTrue("BUILD SUCCESSFUL" in output || "compileKotlin" in output, output)
     }
 }
