@@ -399,7 +399,8 @@
             id="StructuredCoroutines"
             factoryClass="io.github.santimattius.structured.intellij.view.StructuredCoroutinesToolWindowFactory"
             anchor="bottom"
-            secondary="false"/>
+            secondary="false"
+            doNotActivateOnStart="false"/>
     </extensions>
 
     <actions>

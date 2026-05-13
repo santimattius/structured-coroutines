@@ -60,14 +60,16 @@ object StructuredCoroutinesInspectionRunner {
      *
      * This method is intended to be called from a background thread
      * (e.g. inside a [com.intellij.openapi.progress.Task.Backgroundable]).
-     * PSI access is wrapped in [ReadAction.compute] automatically by [runOnFile];
-     * file collection here runs inside a single read action for efficiency.
+     * File collection uses [ReadAction.compute] for read-lock sections (older IDEs lack
+     * [ReadAction.computeBlocking]; the Plugin Verifier treats that as a compatibility error).
+     * Per-file work is done in [runOnFile].
      *
      * @param project The project to scan.
      * @param indicator Optional progress indicator — updated with fraction and current file name.
      *                  The scan stops early if the indicator is cancelled.
      * @return Aggregated findings across all Kotlin source files, sorted by file path then line.
      */
+    @Suppress("DEPRECATION")
     fun runOnProject(project: Project, indicator: ProgressIndicator? = null): List<Finding> {
         val ktFiles: Collection<VirtualFile> = ReadAction.compute<Collection<VirtualFile>, Throwable> {
             FileTypeIndex.getFiles(KotlinFileType.INSTANCE, GlobalSearchScope.projectScope(project))
