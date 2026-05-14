@@ -17,7 +17,7 @@ plugins {
 }
 
 group = "io.github.santimattius"
-version = "0.8.0-ALPHA01"
+version = "0.8.0"
 
 repositories {
     mavenCentral()
@@ -71,6 +71,21 @@ intellijPlatform {
             </ul>
         """.trimIndent()
         changeNotes = """
+            <p><b>v0.8.0</b></p>
+            <ul>
+                <li><b>7 new inspections (22 total)</b> — Interop, Flow, concurrency, testing, Compose, and KMP coverage aligned with toolkit v0.8.0</li>
+                <li><b>SuspendCoroutineWithoutCancellation (INTEROP_001, ERROR)</b> — Detects <code>suspendCoroutine</code> in suspend functions; quick fix replaces with <code>suspendCancellableCoroutine</code> and adds <code>invokeOnCancellation { }</code></li>
+                <li><b>CallbackFlowWithoutAwaitClose (INTEROP_002, ERROR)</b> — Detects <code>callbackFlow { }</code> without <code>awaitClose</code>; quick fix inserts <code>awaitClose { }</code> at the end of the lambda</li>
+                <li><b>MutableFlowExposed (FLOW_010, WARNING)</b> — Detects public <code>MutableStateFlow</code> / <code>MutableSharedFlow</code>; quick fix converts to backing-property pattern with <code>asStateFlow()</code> / <code>asSharedFlow()</code></li>
+                <li><b>MissingCatchInFlow (FLOW_005, WARNING)</b> — Detects Flow chains with intermediate operators but no <code>.catch { }</code> before <code>collect</code>, <code>collectLatest</code>, or <code>launchIn</code>; quick fix inserts <code>.catch { }</code> before the terminal operator</li>
+                <li><b>SequentialAsyncAwait (CONCUR_003, WARNING)</b> — Detects inline <code>async { }.await()</code> with no parallelism benefit; quick fix suggests <code>withContext</code> or parallel <code>coroutineScope</code></li>
+                <li><b>RunBlockingInsteadOfRunTest (TEST_004, WARNING)</b> — Detects <code>runBlocking</code> in <code>@Test</code> functions; <b>Convert to runTest</b> intention replaces with <code>runTest</code> and adds the <code>kotlinx.coroutines.test</code> import</li>
+                <li><b>CollectAsStateWithoutLifecycle (COMPOSE_001, WARNING)</b> — Detects <code>collectAsState()</code> in Composables; recommends <code>collectAsStateWithLifecycle()</code> (excludes <code>@Preview</code> and non-Compose files)</li>
+                <li><b>DispatchersIOInCommonMain (KMP_001, ERROR)</b> — Detects <code>Dispatchers.IO</code> in KMP <code>commonMain</code> / <code>commonTest</code> source sets</li>
+                <li><b>5 new quick fixes</b> — ReplaceSuspendCoroutine, AddAwaitClose, AddCatchOperator, ReplaceWithBackingProperty, ReplaceSequentialAsyncAwaitWithContext (18 quick fixes total)</li>
+                <li><b>Tool window &amp; Scan Project</b> — All new inspections are registered in <code>StructuredCoroutinesInspectionProvider</code> and picked up automatically by the tool window and <b>Scan Project for Coroutine Issues</b></li>
+                <li><b>Inspection guide links</b> — <code>InspectionGuideRegistry</code> entries for each new rule with links to BEST_PRACTICES sections</li>
+            </ul>
             <p><b>v0.7.0</b></p>
             <ul>
                 <li><b>IDE compatibility extended</b> — Now supports IntelliJ IDEA 2026.1 (build 261.*) and Android Studio Panda 2025.3.3 (build 253.*)</li>
