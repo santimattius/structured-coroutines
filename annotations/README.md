@@ -178,9 +178,30 @@ available at runtime reflection.
 | Windows | `annotations-mingwx64` |
 | WASM | `annotations-wasmjs`, `annotations-wasmwasi` |
 
+## Meta-annotations (DI qualifiers)
+
+Mark your own scope qualifier once with `@StructuredScope` so injection sites do not need the annotation repeated:
+
+```kotlin
+import io.github.santimattius.structured.annotations.StructuredScope
+
+@StructuredScope
+@Retention(AnnotationRetention.BINARY)
+@Target(AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.PROPERTY)
+annotation class AppCoroutineScope
+
+class UserRepository(@AppCoroutineScope private val scope: CoroutineScope) {
+    fun load() {
+        scope.launch { fetch() }  // recognized as structured
+    }
+}
+```
+
+The compiler plugin and IntelliJ inspection resolve `@AppCoroutineScope` to its annotation class and treat it like a direct `@StructuredScope` on the parameter or property.
+
 ## Recognition by compiler and IDE
 
-The **Structured Coroutines compiler plugin** and **IntelliJ plugin** both recognize `@StructuredScope` on function parameters and class properties. For example, `fun foo(@StructuredScope scope: CoroutineScope) { scope.launch { } }` is not reported as an unstructured launch. The IDE resolves the scope name to the parameter or property declaration and checks for the annotation.
+The **Structured Coroutines compiler plugin** and **IntelliJ plugin** both recognize `@StructuredScope` on function parameters, class properties, and **annotation types** (meta-annotations). For example, `fun foo(@StructuredScope scope: CoroutineScope) { scope.launch { } }` is not reported as an unstructured launch. The IDE resolves the scope name to the parameter or property declaration and checks for the annotation (direct or via a meta-annotated qualifier).
 
 ## Framework Scopes (Auto-recognized)
 
