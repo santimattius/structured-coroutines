@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.expression.FirFunctionCallChecker
-import org.jetbrains.kotlin.fir.declarations.hasAnnotation
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
 import org.jetbrains.kotlin.fir.expressions.FirPropertyAccessExpression
@@ -26,7 +25,6 @@ import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
-import org.jetbrains.kotlin.fir.symbols.impl.FirValueParameterSymbol
 import org.jetbrains.kotlin.fir.types.ConeClassLikeType
 import org.jetbrains.kotlin.fir.types.resolvedType
 import org.jetbrains.kotlin.name.CallableId
@@ -156,14 +154,6 @@ class UnstructuredLaunchChecker : FirFunctionCallChecker(MppCheckerKind.Common) 
         private val GLOBAL_SCOPE_CLASS_ID = ClassId(
             FqName("kotlinx.coroutines"),
             Name.identifier("GlobalScope")
-        )
-
-        /**
-         * ClassId for the @StructuredScope annotation.
-         */
-        private val STRUCTURED_SCOPE_ANNOTATION_CLASS_ID = ClassId(
-            FqName("io.github.santimattius.structured.annotations"),
-            Name.identifier("StructuredScope")
         )
 
         /**
@@ -380,14 +370,14 @@ class UnstructuredLaunchChecker : FirFunctionCallChecker(MppCheckerKind.Common) 
             // Check if it's a value parameter (function parameter)
             val parameterSymbol = calleeReference.toResolvedValueParameterSymbol()
             if (parameterSymbol != null) {
-                return hasStructuredScopeAnnotation(parameterSymbol, context)
+                return parameterSymbol.hasStructuredScope(context.session)
             }
 
             // Check if it's a property (including properties from constructor parameters)
             val propertySymbol = calleeReference.toResolvedPropertySymbol()
             if (propertySymbol != null) {
                 // Check annotation on the property itself
-                if (hasStructuredScopeAnnotation(propertySymbol, context)) return true
+                if (propertySymbol.hasStructuredScope(context.session)) return true
                 // Check if the property is initialized from a framework scope function.
                 // Handles: val scope = rememberCoroutineScope(); scope.launch { }
                 val initializer = propertySymbol.fir.initializer
@@ -504,31 +494,4 @@ class UnstructuredLaunchChecker : FirFunctionCallChecker(MppCheckerKind.Common) 
         }
     }
 
-    /**
-     * Checks if a value parameter symbol has @StructuredScope annotation.
-     *
-     * @param symbol The value parameter symbol to check
-     * @param context The checker context for session access
-     * @return true if the parameter has the annotation
-     */
-    private fun hasStructuredScopeAnnotation(
-        symbol: FirValueParameterSymbol,
-        context: CheckerContext
-    ): Boolean {
-        return symbol.hasAnnotation(STRUCTURED_SCOPE_ANNOTATION_CLASS_ID, context.session)
-    }
-
-    /**
-     * Checks if a property symbol has @StructuredScope annotation.
-     *
-     * @param symbol The property symbol to check
-     * @param context The checker context for session access
-     * @return true if the property has the annotation
-     */
-    private fun hasStructuredScopeAnnotation(
-        symbol: FirPropertySymbol,
-        context: CheckerContext
-    ): Boolean {
-        return symbol.hasAnnotation(STRUCTURED_SCOPE_ANNOTATION_CLASS_ID, context.session)
-    }
 }

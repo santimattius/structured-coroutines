@@ -144,6 +144,55 @@ class StructuredCoroutinesPluginFunctionalTest {
     }
 
     @Test
+    fun `meta-annotated DI qualifier on scope compiles successfully`() {
+        val sourceCode = """
+            import kotlinx.coroutines.CoroutineScope
+            import kotlinx.coroutines.launch
+            import io.github.santimattius.structured.annotations.StructuredScope
+
+            @StructuredScope
+            @Target(AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.PROPERTY)
+            annotation class TestAppScope
+
+            class Service(@property:TestAppScope private val scope: CoroutineScope) {
+                fun run() {
+                    scope.launch { println("Running") }
+                }
+            }
+        """.trimIndent()
+
+        val projectDir = createTestProject(sourceCode)
+        val output = runBuild(projectDir, expectSuccess = true)
+
+        assertTrue("BUILD SUCCESSFUL" in output || "compileKotlin" in output, "Expected success:\n$output")
+    }
+
+    @Test
+    fun `DI qualifier without meta StructuredScope fails compilation`() {
+        val sourceCode = """
+            import kotlinx.coroutines.CoroutineScope
+            import kotlinx.coroutines.launch
+
+            @Target(AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.PROPERTY)
+            annotation class TestAppScope
+
+            class Service(@property:TestAppScope private val scope: CoroutineScope) {
+                fun run() {
+                    scope.launch { println("Running") }
+                }
+            }
+        """.trimIndent()
+
+        val projectDir = createTestProject(sourceCode)
+        val output = runBuild(projectDir, expectSuccess = false)
+
+        assertTrue(
+            "UNSTRUCTURED_COROUTINE_LAUNCH" in output || "SCOPE_003" in output,
+            "Expected SCOPE_003 error but got:\n$output",
+        )
+    }
+
+    @Test
     fun `supervisorScope usage compiles successfully`() {
         val sourceCode = """
             import kotlinx.coroutines.launch

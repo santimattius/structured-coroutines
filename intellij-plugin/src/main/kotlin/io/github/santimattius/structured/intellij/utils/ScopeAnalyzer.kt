@@ -285,23 +285,39 @@ object ScopeAnalyzer {
         return false
     }
 
+    private const val STRUCTURED_SCOPE_FQ_NAME =
+        "io.github.santimattius.structured.annotations.StructuredScope"
+
     /**
-     * Checks if a scope has the @StructuredScope annotation.
+     * Checks if a scope has @StructuredScope directly, or a meta-annotated qualifier
+     * (e.g. @AppCoroutineScope on an annotation type also marked with @StructuredScope).
      */
     fun hasStructuredScopeAnnotation(element: PsiElement): Boolean {
         return when (element) {
-            is KtParameter -> {
-                element.annotationEntries.any {
-                    it.shortName?.asString() == "StructuredScope"
-                }
-            }
-            is KtProperty -> {
-                element.annotationEntries.any {
-                    it.shortName?.asString() == "StructuredScope"
-                }
-            }
+            is KtParameter -> element.annotationEntries.any { annotationEntryIsStructuredScope(it) }
+            is KtProperty -> element.annotationEntries.any { annotationEntryIsStructuredScope(it) }
             else -> false
         }
+    }
+
+    private fun annotationEntryIsStructuredScope(entry: KtAnnotationEntry): Boolean {
+        if (entry.isStructuredScopeAnnotation()) return true
+        val annotationClass = entry.resolveAnnotationClass() ?: return false
+        return annotationClass.annotationEntries.any { it.isStructuredScopeAnnotation() }
+    }
+
+    private fun KtAnnotationEntry.isStructuredScopeAnnotation(): Boolean {
+        val shortName = shortName?.asString()
+        if (shortName == "StructuredScope") return true
+        return resolveAnnotationClass()?.fqName?.asString() == STRUCTURED_SCOPE_FQ_NAME
+    }
+
+    private fun KtAnnotationEntry.resolveAnnotationClass(): KtClass? {
+        val refExpr = (typeReference as? KtUserType)?.referenceExpression
+        val resolved = refExpr?.references?.firstOrNull()?.resolve()
+        if (resolved is KtClass) return resolved
+        val name = shortName?.asString() ?: return null
+        return containingKtFile.declarations.filterIsInstance<KtClass>().find { it.name == name }
     }
 
     /**
