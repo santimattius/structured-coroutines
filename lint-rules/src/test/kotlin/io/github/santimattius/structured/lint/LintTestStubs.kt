@@ -61,13 +61,28 @@ object LintTestStubs {
         suspend fun <T> Flow<T>.collect(action: suspend (value: T) -> Unit): Unit = error("stub")
         suspend fun <T> Flow<T>.collectLatest(action: suspend (value: T) -> Unit): Unit = error("stub")
         fun <T> Flow<T>.launchIn(scope: CoroutineScope): Job = error("stub")
+
+        sealed class SharingStarted {
+            object Eagerly : SharingStarted()
+            companion object {
+                fun WhileSubscribed(stopTimeoutMillis: Long): SharingStarted = error("stub")
+            }
+        }
+
+        fun <T> Flow<T>.stateIn(
+            scope: CoroutineScope,
+            started: SharingStarted,
+            initialValue: T,
+        ): StateFlow<T> = error("stub")
     """.trimIndent()
 
     val androidxLifecycle = """
         package androidx.lifecycle
         import kotlinx.coroutines.CoroutineScope
         open class ViewModel
+        open class LifecycleOwner
         val ViewModel.viewModelScope: CoroutineScope get() = error("stub")
+        val LifecycleOwner.lifecycleScope: CoroutineScope get() = error("stub")
     """.trimIndent()
 
     val composeRuntime = """

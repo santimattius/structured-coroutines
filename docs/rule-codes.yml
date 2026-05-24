@@ -258,3 +258,113 @@ rules:
     lint: [CollectAsStateWithoutLifecycle]
     intellij: [CollectAsStateWithoutLifecycle]
     default_severity: warning
+
+  - code: CONCUR_001
+    section: "12.1"
+    title: "SynchronizedInCoroutine"
+    doc_anchor: "121-concur_001--synchronizedincoroutine"
+    compiler: []
+    detekt: [SynchronizedInCoroutine]
+    lint: [SynchronizedInCoroutine]
+    intellij: [SynchronizedInCoroutine]
+    default_severity: warning
+    learning_path: { tier: High, impact_score: 8, fix_minutes: 15 }
+
+  - code: CONCUR_002
+    section: "12.2"
+    title: "SharedMutableStateInCoroutine"
+    doc_anchor: "122-concur_002--sharedmutablestateincoroutine"
+    compiler: []
+    detekt: [SharedMutableStateInCoroutine]
+    lint: []
+    intellij: []
+    default_severity: info
+    learning_path: { tier: Low, impact_score: 4, fix_minutes: 25 }
+
+  - code: CONCUR_004
+    section: "3.6"
+    title: "RedundantWithContext"
+    doc_anchor: "36-concur_004--redundantwithcontext"
+    compiler: []
+    detekt: [RedundantWithContext]
+    lint: []
+    intellij: [RedundantWithContext]
+    default_severity: warning
+    learning_path: { tier: Low, impact_score: 3, fix_minutes: 10 }
+
+  - code: FLOW_006
+    section: "9.7"
+    title: "StateInWithEagerlyStrategy"
+    doc_anchor: "97-flow_006--stateinwitheagerlystrategy"
+    compiler: []
+    detekt: [StateInWithEagerlyStrategy]
+    lint: [StateInWithEagerlyStrategy]
+    intellij: [StateInWithEagerlyStrategy]
+    default_severity: warning
+    learning_path: { tier: Medium, impact_score: 6, fix_minutes: 10 }
+
+  - code: FLOW_007
+    section: "9.8"
+    title: "LaunchInWithUnstructuredScope"
+    doc_anchor: "98-flow_007--launchinwithunstructuredscope"
+    compiler: []
+    detekt: []
+    lint: [LaunchInWithUnstructuredScope]
+    intellij: [LaunchInWithUnstructuredScope]
+    default_severity: warning
+    learning_path: { tier: Medium, impact_score: 7, fix_minutes: 12 }
+
+  - code: FLOW_008
+    section: "9.9"
+    title: "SideEffectInMapOperator"
+    doc_anchor: "99-flow_008--sideeffectinmapoperator"
+    compiler: []
+    detekt: [SideEffectInMapOperator]
+    lint: []
+    intellij: [SideEffectInMapOperator]
+    default_severity: info
+    learning_path: { tier: Low, impact_score: 3, fix_minutes: 15 }
+
+  - code: KMP_002
+    section: "11.2"
+    title: "RunBlockingInCommonMain"
+    doc_anchor: "112-kmp_002--runblockingincommonmain"
+    compiler: []
+    detekt: [RunBlockingInCommonMain]
+    lint: [RunBlockingInCommonMain]
+    intellij: []
+    default_severity: error
+    learning_path: { tier: Critical, impact_score: 10, fix_minutes: 20 }
+
+  - code: KMP_003
+    section: "11.3"
+    title: "MainScopeWithoutCancel"
+    doc_anchor: "113-kmp_003--mainscopewithoutcancel"
+    compiler: []
+    detekt: [MainScopeWithoutCancel]
+    lint: []
+    intellij: []
+    default_severity: warning
+    learning_path: { tier: Medium, impact_score: 6, fix_minutes: 15 }
+
+  - code: BACKEND_001
+    section: "13.1"
+    title: "BlockingCallInCoroutineBackend"
+    doc_anchor: "131-backend_001--blockingcallincoroutinebackend"
+    compiler: []
+    detekt: [BlockingCallInCoroutineBackend]
+    lint: []
+    intellij: []
+    default_severity: warning
+    learning_path: { tier: High, impact_score: 9, fix_minutes: 20 }
+
+  - code: BACKEND_002
+    section: "3.7"
+    title: "ThreadLocalNotPropagated"
+    doc_anchor: "37-backend_002--threadlocalnotpropagated"
+    compiler: []
+    detekt: [ThreadLocalNotPropagated]
+    lint: []
+    intellij: []
+    default_severity: warning
+    learning_path: { tier: High, impact_score: 8, fix_minutes: 15 }
