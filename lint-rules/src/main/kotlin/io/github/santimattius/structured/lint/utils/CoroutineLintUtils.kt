@@ -168,6 +168,36 @@ object CoroutineLintUtils {
     }
 
     /**
+     * [FLOW_007] — `.launchIn(GlobalScope)` or `.launchIn(CoroutineScope(...))`.
+     */
+    fun isLaunchInUnstructuredScope(call: UCallExpression): Boolean {
+        if (call.methodName != "launchIn") return false
+        val scopeArg = call.valueArguments.firstOrNull()?.skipParenthesizedExprDown() ?: return false
+        return when (scopeArg) {
+            is UReferenceExpression -> {
+                val name = scopeArg.asSourceString()
+                name == "GlobalScope" || name.endsWith(".GlobalScope")
+            }
+            is UQualifiedReferenceExpression -> {
+                scopeArg.selector.asSourceString() == "GlobalScope"
+            }
+            is UCallExpression -> scopeArg.methodName == "CoroutineScope"
+            else -> false
+        }
+    }
+
+    /**
+     * [FLOW_006] — `stateIn(lifecycleScope|viewModelScope, SharingStarted.Eagerly, ...)`.
+     */
+    fun isStateInWithEagerlyOnLifecycleScope(call: UCallExpression): Boolean {
+        if (call.methodName != "stateIn") return false
+        val args = call.valueArguments.map { it.asSourceString() }
+        val eagerly = args.any { it.contains("SharingStarted.Eagerly") || it.contains("Eagerly") }
+        if (!eagerly) return false
+        return args.any { arg -> FRAMEWORK_SCOPE_PROPERTIES.any { arg.contains(it) } }
+    }
+
+    /**
      * Checks if a UCallExpression is a runBlocking call.
      */
     fun isRunBlockingCall(call: UCallExpression): Boolean {
