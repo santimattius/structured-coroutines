@@ -69,6 +69,16 @@ hyphens, e.g. `#11-using-globalscope-in-production-code`).
 | `INTEROP_001`  | 10.1 | [Wrapping Callbacks Without Cancellation Support](#101-interop_001--wrapping-callbacks-without-cancellation-support) |
 | `INTEROP_002`  | 10.2 | [callbackFlow Without awaitClose](#102-interop_002--callbackflow-without-awaitclose)                                 |
 | `KMP_001`      | 11.1 | [Dispatchers.IO in commonMain](#111-kmp_001--dispatchersio-in-commonmain)                                            |
+| `CONCUR_001`   | 12.1 | [Synchronized in Coroutine](#121-concur_001--synchronizedincoroutine)                                              |
+| `CONCUR_002`   | 12.2 | [Shared Mutable State in Coroutine](#122-concur_002--sharedmutablestateincoroutine)                                |
+| `CONCUR_004`   | 3.6  | [Redundant withContext](#36-concur_004--redundantwithcontext)                                                        |
+| `FLOW_006`     | 9.7  | [stateIn with Eagerly on Lifecycle Scope](#97-flow_006--stateinwitheagerlystrategy)                                  |
+| `FLOW_007`     | 9.8  | [launchIn with Unstructured Scope](#98-flow_007--launchinwithunstructuredscope)                                    |
+| `FLOW_008`     | 9.9  | [Side Effect in map Operator](#99-flow_008--sideeffectinmapoperator)                                               |
+| `KMP_002`      | 11.2 | [runBlocking in commonMain](#112-kmp_002--runblockingincommonmain)                                                |
+| `KMP_003`      | 11.3 | [MainScope Without Cancel](#113-kmp_003--mainscopewithoutcancel)                                                   |
+| `BACKEND_001`  | 13.1 | [Blocking Call in Coroutine (Backend)](#131-backend_001--blockingcallincoroutinebackend)                             |
+| `BACKEND_002`  | 3.7  | [ThreadLocal / MDC Not Propagated](#37-backend_002--threadlocalnotpropagated)                                      |
 
 **Convention:** prefix by category (SCOPE, RUNBLOCK, DISPATCH, CANCEL, EXCEPT, TEST, CHANNEL, ARCH,
 FLOW) + 3-digit number. Use the code in diagnostic messages and link to this document with the
@@ -163,6 +173,24 @@ anchor above (e.g.
 |------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **Bad Practice** | Hardcoding `Dispatchers.Main`, `Dispatchers.IO`, or `Dispatchers.Default` inside classes or suspend functions, making tests dependent on real threads and timing.                                                                |
 | **Recommended**  | Inject `CoroutineDispatcher` (e.g. `IoDispatcher`, `MainDispatcher`) with sensible production defaults. In tests, replace with `StandardTestDispatcher` or `UnconfinedTestDispatcher` for deterministic, virtual-time execution. |
+
+### 3.6 CONCUR_004 — Redundant withContext
+
+|                  | Description                                                                                                                                                                      |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Bad Practice** | Nested `withContext(sameDispatcher) { withContext(sameDispatcher) { } }` when both use the **same variable reference** (not literal `Dispatchers.IO` twice).                    |
+| **Recommended**  | Remove the inner `withContext` — you are already on that dispatcher. Rule is **inactive by default**.                                                                            |
+
+Tool support: Detekt, IntelliJ — rule `RedundantWithContext`.
+
+### 3.7 BACKEND_002 — ThreadLocal / MDC Not Propagated
+
+|                  | Description                                                                                                                                                                      |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Bad Practice** | `MDC.put` / `MDC.get` in `suspend` code with `withContext(Dispatchers.IO)` (or `Default`) without `MDCContext()` from `kotlinx-coroutines-slf4j`.                               |
+| **Recommended**  | `withContext(Dispatchers.IO + MDCContext()) { … }` so trace/user context survives dispatcher switches. Active only when SLF4J MDC is on the classpath.                          |
+
+Tool support: Detekt — rule `ThreadLocalNotPropagated`.
 
 ---
 
@@ -408,6 +436,33 @@ repository.getItems()
 
 Tool support: Detekt, Android Lint, IntelliJ — rule `MissingCatchInFlow`.
 
+### 9.7 FLOW_006 — stateIn with Eagerly on Lifecycle Scope
+
+|                  | Description                                                                                                                                                                      |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Bad Practice** | `.stateIn(viewModelScope, SharingStarted.Eagerly, …)` or `lifecycleScope` with `Eagerly`. Upstream runs even with zero collectors.                                                |
+| **Recommended**  | `SharingStarted.WhileSubscribed(5_000)` keeps work active while subscribed plus a short buffer for configuration changes.                                                        |
+
+Tool support: Detekt, Android Lint, IntelliJ — rule `StateInWithEagerlyStrategy`.
+
+### 9.8 FLOW_007 — launchIn with Unstructured Scope
+
+|                  | Description                                                                                                                                                                      |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Bad Practice** | `.launchIn(GlobalScope)` or `.launchIn(CoroutineScope(…))` — orphan collection, same as unstructured `launch`.                                                                  |
+| **Recommended**  | `.launchIn(viewModelScope)` / `lifecycleScope` or a scope tied to structured concurrency.                                                                                          |
+
+Tool support: Android Lint, IntelliJ — rule `LaunchInWithUnstructuredScope`.
+
+### 9.9 FLOW_008 — Side Effect in map Operator
+
+|                  | Description                                                                                                                                                                      |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Bad Practice** | Logging, analytics, or I/O inside `.map { }` instead of a pure transform.                                                                                                       |
+| **Recommended**  | Use `.onEach { }` for side effects; keep `map` pure. Rule is **inactive by default** (opt-in / info).                                                                             |
+
+Tool support: Detekt, IntelliJ — rule `SideEffectInMapOperator`.
+
 ---
 
 ## 10. Interoperability (Callbacks to Coroutines)
@@ -516,6 +571,59 @@ actual val ioDispatcher: CoroutineDispatcher = Dispatchers.Default
 | Linux / Windows (Native) | requires impl               | **does not exist** | yes                 |
 
 Tool support: Detekt, Android Lint — rule `DispatchersIOInCommonMain`.
+
+### 11.2 KMP_002 — runBlocking in commonMain
+
+|                  | Description                                                                                                                                                                      |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Bad Practice** | `runBlocking` in `commonMain` / `commonTest`. Not supported on JS; can deadlock on Kotlin/Native main thread.                                                                    |
+| **Recommended**  | Expose `suspend` APIs from shared code; use platform `actual` entry points only where blocking bridges are unavoidable.                                                          |
+
+Tool support: Detekt, Android Lint — rule `RunBlockingInCommonMain`.
+
+### 11.3 KMP_003 — MainScope Without Cancel
+
+|                  | Description                                                                                                                                                                      |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Bad Practice** | `MainScope()` in a shared presenter without `scope.cancel()` in `onDestroy` / `onCleared` / `dispose`.                                                                          |
+| **Recommended**  | Cancel the scope in an explicit cleanup method called from platform lifecycle (Swift `deinit`, Android `onCleared`, etc.).                                                      |
+
+Tool support: Detekt — rule `MainScopeWithoutCancel`.
+
+---
+
+## 12. Shared Concurrency
+
+### 12.1 CONCUR_001 — Synchronized in Coroutine
+
+|                  | Description                                                                                                                                                                      |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Bad Practice** | `synchronized(lock) { }` inside `suspend` functions or coroutine builders. Blocks the dispatcher thread; deadlock risk on `Dispatchers.Main`.                                  |
+| **Recommended**  | Use `Mutex.withLock { }` so the coroutine suspends instead of blocking the thread.                                                                                               |
+
+Tool support: Detekt, Android Lint, IntelliJ — rule `SynchronizedInCoroutine`.
+
+### 12.2 CONCUR_002 — Shared Mutable State in Coroutine
+
+|                  | Description                                                                                                                                                                      |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Bad Practice** | Shared `var` or mutable collections updated from multiple `launch { }` in the same scope without synchronization.                                                               |
+| **Recommended**  | Prefer `async` + `awaitAll()`, channels, or protect access with `Mutex.withLock`. Default severity is **info** (high false-positive rate).                                      |
+
+Tool support: Detekt — rule `SharedMutableStateInCoroutine`.
+
+---
+
+## 13. Backend (JVM)
+
+### 13.1 BACKEND_001 — Blocking Call in Coroutine (Backend)
+
+|                  | Description                                                                                                                                                                      |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Bad Practice** | Blocking JVM calls (`Thread.sleep`, JDBC, `CountDownLatch.await`, etc.) in coroutines without `withContext(Dispatchers.IO)` (or injected IO dispatcher).                          |
+| **Recommended**  | Wrap blocking work in `withContext(Dispatchers.IO) { }` or use non-blocking drivers (e.g. R2DBC for Spring).                                                                     |
+
+Tool support: Detekt — rule `BlockingCallInCoroutineBackend` (extends `BlockingCallInCoroutine` with an IO-context gate).
 
 ---
 
