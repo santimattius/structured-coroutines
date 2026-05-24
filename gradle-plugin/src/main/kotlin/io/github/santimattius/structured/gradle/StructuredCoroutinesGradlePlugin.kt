@@ -43,8 +43,12 @@ class StructuredCoroutinesGradlePlugin : KotlinCompilerPluginSupportPlugin {
         // Register the extension with default values
         val extension = target.extensions.create(
             "structuredCoroutines",
-            StructuredCoroutinesExtension::class.java
+            StructuredCoroutinesExtension::class.java,
         )
+        extension.baselineFile.convention(target.layout.projectDirectory.file("coroutines-baseline.xml"))
+        extension.baselineEnabled.convention(false)
+        extension.baselineMode.convention(BaselineMode.REPORT_NEW_ONLY.name)
+        extension.baselineAutoUpdate.convention(false)
 
         // Set default severities
         extension.globalScopeUsage.convention("error")
@@ -98,6 +102,14 @@ class StructuredCoroutinesGradlePlugin : KotlinCompilerPluginSupportPlugin {
 
             task.reportFormat.set(extension.reportFormat)
             task.outputDir.set(extension.reportOutputDir)
+        }
+
+        target.tasks.register("generateCoroutinesBaseline", GenerateCoroutinesBaselineTask::class.java) { task ->
+            task.group = "structured coroutines"
+            task.description = "Generates or updates coroutines-baseline.xml (MVP Detekt XML merge)"
+            task.baselineFile.set(extension.baselineFile)
+            task.autoUpdate.set(extension.baselineAutoUpdate)
+            task.detektReportXmlPaths.set(emptyList())
         }
     }
 

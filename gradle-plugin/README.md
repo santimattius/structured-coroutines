@@ -272,6 +272,29 @@ structuredCoroutines {
 }
 ```
 
+**Ktor/JVM backend (v0.9.0):** strict compiler defaults; pair with the bundled Detekt preset
+`ktor-backend-detekt.yml` from the plugin JAR resources.
+
+```kotlin
+structuredCoroutines {
+    useKtorBackendProfile()
+}
+```
+
+**Gradual Detekt adoption (v0.9.0 MVP):** baseline file + `generateCoroutinesBaseline` task.
+
+```kotlin
+structuredCoroutines {
+    baselineFile.set(rootProject.file("coroutines-baseline.xml"))
+    baselineEnabled.set(true)
+    baselineMode.set(BaselineMode.REPORT_NEW_ONLY.name)
+    baselineAutoUpdate.set(false)
+}
+```
+
+Run `./gradlew generateCoroutinesBaseline` to refresh the baseline template (wire Detekt XML paths
+on the task for multi-module merge in a follow-up).
+
 ### Using @StructuredScope
 
 ```kotlin
