@@ -292,8 +292,10 @@ structuredCoroutines {
 }
 ```
 
-Run `./gradlew generateCoroutinesBaseline` to refresh the baseline template (wire Detekt XML paths
-on the task for multi-module merge in a follow-up).
+Run `./gradlew generateCoroutinesBaseline` to refresh the baseline template (reads `build/reports/detekt/detekt.xml`
+when the Detekt plugin is applied). With `baselineEnabled.set(true)`, Detekt tasks finalize with
+`applyCoroutinesBaseline`, which writes `baseline-apply-summary.txt` under the report output dir
+(REPORT_NEW_ONLY → `info` for fingerprints in `coroutines-baseline.xml`).
 
 ### Using @StructuredScope
 

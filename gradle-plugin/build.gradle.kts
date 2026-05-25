@@ -10,10 +10,17 @@ dependencies {
     // NO compiler dependencies here
     implementation(gradleApi())
     implementation(libs.kotlin.gradle.plugin.api)
+
+    testImplementation(libs.kotlin.test)
+    testImplementation(libs.junit.jupiter)
 }
 
 kotlin {
     jvmToolchain(17)
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 gradlePlugin {

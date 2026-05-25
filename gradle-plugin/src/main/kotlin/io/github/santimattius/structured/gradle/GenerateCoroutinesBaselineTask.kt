@@ -34,7 +34,7 @@ abstract class GenerateCoroutinesBaselineTask : DefaultTask() {
             )
         }
         val fromXml = detektReportXmlPaths.getOrElse(emptyList())
-            .flatMap { path -> parseDetektXml(java.io.File(path)) }
+            .flatMap { path -> DetektBaselineReportParser.toFingerprints(DetektBaselineReportParser.parseReport(java.io.File(path))) }
         if (fromXml.isEmpty()) {
             logger.lifecycle(
                 "No Detekt XML inputs configured. Wrote empty baseline template to ${out.absolutePath}. " +
@@ -45,21 +45,5 @@ abstract class GenerateCoroutinesBaselineTask : DefaultTask() {
             BaselineProcessor.writeBaseline(out, fromXml)
             logger.lifecycle("Wrote ${fromXml.size} baseline entries to ${out.absolutePath}")
         }
-    }
-
-    private fun parseDetektXml(file: java.io.File): List<BaselineProcessor.Fingerprint> {
-        if (!file.exists()) return emptyList()
-        val text = file.readText()
-        val regex = Regex("""<error[^>]*source="([^"]+)"[^>]*line="(\d+)"[^>]*>""")
-        return regex.findAll(text).mapNotNull { m ->
-            val path = m.groupValues[1]
-            val line = m.groupValues[2].toIntOrNull() ?: return@mapNotNull null
-            BaselineProcessor.Fingerprint(
-                ruleId = "Unknown",
-                relativePath = path,
-                line = line,
-                messageHash = BaselineProcessor.messageHash(""),
-            )
-        }.toList()
     }
 }
