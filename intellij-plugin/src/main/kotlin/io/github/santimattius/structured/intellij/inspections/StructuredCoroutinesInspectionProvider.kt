@@ -47,6 +47,8 @@ class StructuredCoroutinesInspectionProvider : InspectionToolProvider {
             SynchronizedInCoroutineInspection::class.java,
             StateInWithEagerlyStrategyInspection::class.java,
             LaunchInWithUnstructuredScopeInspection::class.java,
+            RedundantWithContextInspection::class.java,
+            SideEffectInMapOperatorInspection::class.java,
         )
     }
 }
