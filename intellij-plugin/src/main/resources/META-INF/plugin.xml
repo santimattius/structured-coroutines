@@ -374,6 +374,30 @@
             groupPath="Kotlin"
             groupBundle="messages.StructuredCoroutinesBundle"
             groupKey="inspection.group.name"
+            shortName="RedundantWithContext"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.redundant.withcontext.display.name"
+            enabledByDefault="false"
+            level="WARNING"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.RedundantWithContextInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
+            shortName="SideEffectInMapOperator"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.sideeffect.in.map.display.name"
+            enabledByDefault="false"
+            level="WARNING"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.SideEffectInMapOperatorInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
             shortName="WithTimeoutScopeCancellation"
             bundle="messages.StructuredCoroutinesBundle"
             key="inspection.with.timeout.scope.cancellation.display.name"

@@ -67,3 +67,23 @@ structured-coroutines:
     active: true
   RunBlockingInsteadOfRunTest:
     active: true
+  SynchronizedInCoroutine:
+    active: true
+  SharedMutableStateInCoroutine:
+    active: true
+    severity: info
+  StateInWithEagerlyStrategy:
+    active: true
+  RunBlockingInCommonMain:
+    active: true
+  BlockingCallInCoroutineBackend:
+    active: true
+  ThreadLocalNotPropagated:
+    active: true
+  MainScopeWithoutCancel:
+    active: true
+  RedundantWithContext:
+    active: true
+  SideEffectInMapOperator:
+    active: true
+    severity: info

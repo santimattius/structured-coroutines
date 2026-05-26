@@ -38,6 +38,16 @@ list of codes and suppression IDs per tool is in [rule-codes.yml](rule-codes.yml
 | INTEROP_001  | 10.1 | `SUSPEND_COROUTINE_WITHOUT_CANCELLATION` (Compiler only; cannot suppress FIR this way — use Detekt/IDE instead) | `SuspendCoroutineWithoutCancellation` | —        | `SuspendCoroutineWithoutCancellation`        |
 | INTEROP_002  | 10.2 | `CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE` (Compiler only; cannot suppress FIR this way — use Detekt/IDE instead)     | `CallbackFlowWithoutAwaitClose`       | —        | `CallbackFlowWithoutAwaitClose`              |
 | KMP_001      | 11.1 | —                                                         | `DispatchersIOInCommonMain`                  | `DispatchersIOInCommonMain`                   | `DispatchersIOInCommonMain`                   |
+| CONCUR_001   | 12.1 | —                                                         | `SynchronizedInCoroutine`                      | `SynchronizedInCoroutine`                     | `SynchronizedInCoroutine`                     |
+| CONCUR_002   | 12.2 | —                                                         | `SharedMutableStateInCoroutine`              | —                                             | —                                             |
+| CONCUR_004   | 3.6  | —                                                         | `RedundantWithContext`                       | —                                             | `RedundantWithContext`                        |
+| FLOW_006     | 9.7  | —                                                         | `StateInWithEagerlyStrategy`                 | `StateInWithEagerlyStrategy`                  | `StateInWithEagerlyStrategy`                  |
+| FLOW_007     | 9.8  | —                                                         | —                                            | `LaunchInWithUnstructuredScope`               | `LaunchInWithUnstructuredScope`               |
+| FLOW_008     | 9.9  | —                                                         | `SideEffectInMapOperator`                    | —                                             | `SideEffectInMapOperator`                     |
+| KMP_002      | 11.2 | —                                                         | `RunBlockingInCommonMain`                    | `RunBlockingInCommonMain`                     | —                                             |
+| KMP_003      | 11.3 | —                                                         | `MainScopeWithoutCancel`                     | —                                             | —                                             |
+| BACKEND_001  | 13.1 | —                                                         | `BlockingCallInCoroutineBackend`             | —                                             | —                                             |
+| BACKEND_002  | 3.7  | —                                                         | `ThreadLocalNotPropagated`                   | —                                             | —                                             |
 
 **Note:** “—” means the rule is not implemented in that tool. When the same practice is reported by
 more than one diagnostic (e.g. SCOPE_003), suppress each identifier that applies to the code you’re

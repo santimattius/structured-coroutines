@@ -19,20 +19,22 @@ import io.github.santimattius.structured.intellij.inspections.DispatchersUnconfi
 import io.github.santimattius.structured.intellij.inspections.GlobalScopeInspection
 import io.github.santimattius.structured.intellij.inspections.InlineCoroutineScopeInspection
 import io.github.santimattius.structured.intellij.inspections.JobInBuilderContextInspection
+import io.github.santimattius.structured.intellij.inspections.LaunchInWithUnstructuredScopeInspection
 import io.github.santimattius.structured.intellij.inspections.LifecycleAwareFlowCollectionInspection
 import io.github.santimattius.structured.intellij.inspections.LoopWithoutYieldInspection
 import io.github.santimattius.structured.intellij.inspections.MainDispatcherMisuseInspection
 import io.github.santimattius.structured.intellij.inspections.MissingCatchInFlowInspection
 import io.github.santimattius.structured.intellij.inspections.MutableFlowExposedInspection
+import io.github.santimattius.structured.intellij.inspections.RedundantWithContextInspection
 import io.github.santimattius.structured.intellij.inspections.RunBlockingInSuspendInspection
 import io.github.santimattius.structured.intellij.inspections.RunBlockingInsteadOfRunTestInspection
 import io.github.santimattius.structured.intellij.inspections.ScopeReuseAfterCancelInspection
-import io.github.santimattius.structured.intellij.inspections.LaunchInWithUnstructuredScopeInspection
 import io.github.santimattius.structured.intellij.inspections.SequentialAsyncAwaitInspection
+import io.github.santimattius.structured.intellij.inspections.SideEffectInMapOperatorInspection
 import io.github.santimattius.structured.intellij.inspections.StateInWithEagerlyStrategyInspection
-import io.github.santimattius.structured.intellij.inspections.SynchronizedInCoroutineInspection
 import io.github.santimattius.structured.intellij.inspections.SuspendCoroutineWithoutCancellationInspection
 import io.github.santimattius.structured.intellij.inspections.SuspendInFinallyInspection
+import io.github.santimattius.structured.intellij.inspections.SynchronizedInCoroutineInspection
 import io.github.santimattius.structured.intellij.inspections.UnstructuredLaunchInspection
 import io.github.santimattius.structured.intellij.inspections.WithTimeoutScopeCancellationInspection
 
@@ -160,6 +162,14 @@ object InspectionGuideRegistry {
         LaunchInWithUnstructuredScopeInspection::class.java to GuideEntry(
             whatToDo = "Pass a structured scope to launchIn: viewModelScope, lifecycleScope, or a scope from coroutineScope { }.",
             guideUrl = "$BASE_URL#98-flow_007--launchinwithunstructuredscope"
+        ),
+        RedundantWithContextInspection::class.java to GuideEntry(
+            whatToDo = "Remove the inner withContext when it uses the same dispatcher reference as the outer block.",
+            guideUrl = "$BASE_URL#36-concur_004--redundantwithcontext"
+        ),
+        SideEffectInMapOperatorInspection::class.java to GuideEntry(
+            whatToDo = "Move logging/analytics/IO side effects to onEach { } and keep map { } as a pure transform.",
+            guideUrl = "$BASE_URL#99-flow_008--sideeffectinmapoperator"
         ),
     )
 

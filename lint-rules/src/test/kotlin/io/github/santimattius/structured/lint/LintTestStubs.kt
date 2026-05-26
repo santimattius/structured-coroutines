@@ -80,7 +80,9 @@ object LintTestStubs {
         package androidx.lifecycle
         import kotlinx.coroutines.CoroutineScope
         open class ViewModel
+        open class LifecycleOwner
         val ViewModel.viewModelScope: CoroutineScope get() = error("stub")
+        val LifecycleOwner.lifecycleScope: CoroutineScope get() = error("stub")
     """.trimIndent()
 
     val composeRuntime = """
