@@ -308,6 +308,7 @@ abstract class StructuredCoroutinesReportTask : DefaultTask() {
 
   <div class="content">
     $exclusionsHtml
+    ${LearningPathGenerator.renderHtml()}
     <table>
       <thead>
         <tr>

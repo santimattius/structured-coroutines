@@ -272,6 +272,31 @@ structuredCoroutines {
 }
 ```
 
+**Ktor/JVM backend (v0.9.0):** strict compiler defaults; pair with the bundled Detekt preset
+`ktor-backend-detekt.yml` from the plugin JAR resources.
+
+```kotlin
+structuredCoroutines {
+    useKtorBackendProfile()
+}
+```
+
+**Gradual Detekt adoption (v0.9.0 MVP):** baseline file + `generateCoroutinesBaseline` task.
+
+```kotlin
+structuredCoroutines {
+    baselineFile.set(rootProject.file("coroutines-baseline.xml"))
+    baselineEnabled.set(true)
+    baselineMode.set(BaselineMode.REPORT_NEW_ONLY.name)
+    baselineAutoUpdate.set(false)
+}
+```
+
+Run `./gradlew generateCoroutinesBaseline` to refresh the baseline template (reads `build/reports/detekt/detekt.xml`
+when the Detekt plugin is applied). With `baselineEnabled.set(true)`, Detekt tasks finalize with
+`applyCoroutinesBaseline`, which writes `baseline-apply-summary.txt` under the report output dir
+(REPORT_NEW_ONLY → `info` for fingerprints in `coroutines-baseline.xml`).
+
 ### Using @StructuredScope
 
 ```kotlin

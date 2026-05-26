@@ -1,0 +1,35 @@
+# Preset for Ktor/JVM backend services (v0.9.0). Copy or apply from useKtorBackendProfile() docs.
+structured-coroutines:
+  GlobalScopeUsage:
+    active: true
+  InlineCoroutineScope:
+    active: true
+  UnstructuredLaunch:
+    active: true
+  RunBlockingInSuspend:
+    active: true
+  BlockingCallInCoroutine:
+    active: true
+  BlockingCallInCoroutineBackend:
+    active: true
+  ThreadLocalNotPropagated:
+    active: true
+  MissingCatchInFlow:
+    active: true
+  MutableFlowExposed:
+    active: true
+  SynchronizedInCoroutine:
+    active: true
+  RunBlockingInCommonMain:
+    active: true
+  SharedMutableStateInCoroutine:
+    active: true
+    severity: info
+  RedundantWithContext:
+    active: false
+  SideEffectInMapOperator:
+    active: false
+  MainScopeWithoutCancel:
+    active: true
+  RunBlockingInsteadOfRunTest:
+    active: true
