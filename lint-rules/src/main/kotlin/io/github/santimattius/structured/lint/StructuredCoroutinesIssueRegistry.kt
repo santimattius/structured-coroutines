@@ -55,6 +55,12 @@ class StructuredCoroutinesIssueRegistry : IssueRegistry() {
             CollectAsStateWithoutLifecycleDetector.ISSUE,
             RunBlockingInsteadOfRunTestDetector.ISSUE,
             DispatchersIOInCommonMainDetector.ISSUE,
+
+            // Iteration 2 (v0.9.0 plan)
+            SynchronizedInCoroutineDetector.ISSUE,
+            StateInWithEagerlyStrategyDetector.ISSUE,
+            LaunchInWithUnstructuredScopeDetector.ISSUE,
+            RunBlockingInCommonMainDetector.ISSUE,
         )
     
     override val api: Int = CURRENT_API

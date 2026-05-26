@@ -46,6 +46,11 @@
             <li>MutableStateFlow/MutableSharedFlow exposed publicly (FLOW_010)</li>
             <li>Flow chains missing .catch before collect (FLOW_005)</li>
             <li>Sequential async/await (CONCUR_003)</li>
+            <li>synchronized in coroutines (CONCUR_001)</li>
+            <li>stateIn with Eagerly strategy (FLOW_006)</li>
+            <li>Flow.launchIn unstructured scope (FLOW_007)</li>
+            <li>Redundant nested withContext (CONCUR_004)</li>
+            <li>Side effects in Flow.map (FLOW_008)</li>
         </ul>
     ]]></description>
 
@@ -327,6 +332,42 @@
             enabledByDefault="true"
             level="WARNING"
             implementationClass="io.github.santimattius.structured.intellij.inspections.SequentialAsyncAwaitInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
+            shortName="SynchronizedInCoroutine"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.synchronized.in.coroutine.display.name"
+            enabledByDefault="true"
+            level="WARNING"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.SynchronizedInCoroutineInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
+            shortName="StateInWithEagerlyStrategy"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.statein.eagerly.display.name"
+            enabledByDefault="true"
+            level="WARNING"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.StateInWithEagerlyStrategyInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
+            shortName="LaunchInWithUnstructuredScope"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.launchin.unstructured.display.name"
+            enabledByDefault="true"
+            level="WARNING"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.LaunchInWithUnstructuredScopeInspection"/>
 
         <localInspection
             language="kotlin"

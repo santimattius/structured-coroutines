@@ -43,7 +43,10 @@ class StructuredCoroutinesInspectionProvider : InspectionToolProvider {
             CallbackFlowWithoutAwaitCloseInspection::class.java,
             MutableFlowExposedInspection::class.java,
             MissingCatchInFlowInspection::class.java,
-            SequentialAsyncAwaitInspection::class.java
+            SequentialAsyncAwaitInspection::class.java,
+            SynchronizedInCoroutineInspection::class.java,
+            StateInWithEagerlyStrategyInspection::class.java,
+            LaunchInWithUnstructuredScopeInspection::class.java,
         )
     }
 }
