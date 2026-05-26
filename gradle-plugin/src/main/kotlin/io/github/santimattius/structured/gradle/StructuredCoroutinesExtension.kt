@@ -50,7 +50,17 @@ import org.gradle.api.provider.Property
  * - Some rules default to `"warning"` (e.g., `dispatchersUnconfined`, `suspendInFinally`)
  */
 interface StructuredCoroutinesExtension {
-    
+
+    /** Baseline file (e.g. rootProject.file("coroutines-baseline.xml")). */
+    val baselineFile: org.gradle.api.file.RegularFileProperty
+
+    /** [BaselineMode] name, default REPORT_NEW_ONLY. */
+    val baselineMode: Property<String>
+
+    val baselineEnabled: Property<Boolean>
+
+    val baselineAutoUpdate: Property<Boolean>
+
     /**
      * Severity for GlobalScope usage rule.
      * Default: "error"
@@ -252,5 +262,15 @@ interface StructuredCoroutinesExtension {
      */
     fun useKmpCommonProfile() {
         useAndroidComposeProfile()
+    }
+
+    /**
+     * Ktor/JVM backend profile (v0.9.0): strict compiler rules; Detekt/Lint presets live in
+     * `ktor-backend-detekt.yml` on the consumer project.
+     */
+    fun useKtorBackendProfile() {
+        useStrictProfile()
+        suspendCoroutineWithoutCancellation.set("error")
+        callbackFlowWithoutAwaitClose.set("error")
     }
 }
