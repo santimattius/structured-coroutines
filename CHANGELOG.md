@@ -8,6 +8,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [0.9.0] — Unreleased
 
+### Changed
+
+- Bumped **kotlinx-coroutines** (core + test) from **1.10.2** to **1.11.0** in the version catalog (`gradle/libs.versions.toml`).
+
 ### Added
 
 - **CONCUR_001** `SynchronizedInCoroutine` — Detekt, Lint, IntelliJ

@@ -190,6 +190,8 @@ Tool support: Detekt, IntelliJ — rule `RedundantWithContext`.
 | **Bad Practice** | `MDC.put` / `MDC.get` in `suspend` code with `withContext(Dispatchers.IO)` (or `Default`) without `MDCContext()` from `kotlinx-coroutines-slf4j`.                               |
 | **Recommended**  | `withContext(Dispatchers.IO + MDCContext()) { … }` so trace/user context survives dispatcher switches. Active only when SLF4J MDC is on the classpath.                          |
 
+With **kotlinx-coroutines ≥ 1.11.0**, `flowOn` correctly propagates `ThreadContextElement` updates (#4403), so MDC/thread-local patterns in Flow chains are more reliable when combined with `flowOn`.
+
 Tool support: Detekt — rule `ThreadLocalNotPropagated`.
 
 ---
@@ -442,6 +444,8 @@ Tool support: Detekt, Android Lint, IntelliJ — rule `MissingCatchInFlow`.
 |------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **Bad Practice** | `.stateIn(viewModelScope, SharingStarted.Eagerly, …)` or `lifecycleScope` with `Eagerly`. Upstream runs even with zero collectors.                                                |
 | **Recommended**  | `SharingStarted.WhileSubscribed(5_000)` keeps work active while subscribed plus a short buffer for configuration changes.                                                        |
+
+On Android release builds, **kotlinx-coroutines ≥ 1.11.0** fixes an R8 issue where `stateIn`/`shareIn` jobs could be garbage-collected incorrectly (#4646).
 
 Tool support: Detekt, Android Lint, IntelliJ — rule `StateInWithEagerlyStrategy`.
 
