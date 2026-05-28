@@ -24,6 +24,8 @@
 
 # Local documentation (not for public repo)
 /docs-local/
+/docs/plan/ITERATION_PLAN_2.md
+/docs/releases/v0.9.0.md
 /detekt-rules/build/
 /lint-rules/build/
 /.intellijPlatform/
