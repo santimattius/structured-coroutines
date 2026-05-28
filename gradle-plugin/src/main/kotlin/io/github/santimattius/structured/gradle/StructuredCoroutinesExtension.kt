@@ -246,7 +246,7 @@ interface StructuredCoroutinesExtension {
     }
 
     /**
-     * Android Compose–oriented profile per `docs/plan/ITERATION_PLAN_2.md` (v0.8.0 Iteración 1):
+     * Android Compose–oriented profile (v0.8.0 iteration 1):
      * strict compiler defaults plus INTEROP_001/002 as errors. Additional Detekt/Lint rules from the
      * plan are enabled when those tasks land in later phases.
      */
