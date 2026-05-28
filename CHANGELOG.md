@@ -6,6 +6,28 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ---
 
+## [0.9.0] — Unreleased
+
+### Changed
+
+- Bumped **kotlinx-coroutines** (core + test) from **1.10.2** to **1.11.0** in the version catalog (`gradle/libs.versions.toml`).
+
+### Added
+
+- **CONCUR_001** `SynchronizedInCoroutine` — Detekt, Lint, IntelliJ
+- **CONCUR_002** `SharedMutableStateInCoroutine` — Detekt (default info)
+- **CONCUR_004** `RedundantWithContext` — Detekt (inactive by default), IntelliJ
+- **FLOW_006** `StateInWithEagerlyStrategy` — Detekt, Lint, IntelliJ
+- **FLOW_007** `LaunchInWithUnstructuredScope` — Lint, IntelliJ
+- **FLOW_008** `SideEffectInMapOperator` — Detekt (inactive by default), IntelliJ
+- **KMP_002** `RunBlockingInCommonMain` — Detekt, Lint
+- **KMP_003** `MainScopeWithoutCancel` — Detekt
+- **BACKEND_001** `BlockingCallInCoroutineBackend` — Detekt
+- **BACKEND_002** `ThreadLocalNotPropagated` — Detekt (MDC classpath gate)
+- Gradle: `useKtorBackendProfile()`, `baseline { }` DSL, `generateCoroutinesBaseline` task (MVP)
+- Gradle: HTML report **Suggested Learning Path**; `ktor-backend-detekt.yml` preset
+- `docs/rule-codes.yml`: 10 new entries with `learning_path` metadata
+
 ## [0.8.0] — 2026-05-11
 
 ### Added

@@ -1,6 +1,7 @@
 package io.github.santimattius.structured.gradle
 
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.api.provider.Provider
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilerPluginSupportPlugin
@@ -43,8 +44,12 @@ class StructuredCoroutinesGradlePlugin : KotlinCompilerPluginSupportPlugin {
         // Register the extension with default values
         val extension = target.extensions.create(
             "structuredCoroutines",
-            StructuredCoroutinesExtension::class.java
+            StructuredCoroutinesExtension::class.java,
         )
+        extension.baselineFile.convention(target.layout.projectDirectory.file("coroutines-baseline.xml"))
+        extension.baselineEnabled.convention(false)
+        extension.baselineMode.convention(BaselineMode.REPORT_NEW_ONLY.name)
+        extension.baselineAutoUpdate.convention(false)
 
         // Set default severities
         extension.globalScopeUsage.convention("error")
@@ -98,6 +103,51 @@ class StructuredCoroutinesGradlePlugin : KotlinCompilerPluginSupportPlugin {
 
             task.reportFormat.set(extension.reportFormat)
             task.outputDir.set(extension.reportOutputDir)
+        }
+
+        val generateBaseline = target.tasks.register(
+            "generateCoroutinesBaseline",
+            GenerateCoroutinesBaselineTask::class.java,
+        ) { task ->
+            task.group = "structured coroutines"
+            task.description = "Generates or updates coroutines-baseline.xml (MVP Detekt XML merge)"
+            task.baselineFile.set(extension.baselineFile)
+            task.autoUpdate.set(extension.baselineAutoUpdate)
+            task.detektReportXmlPaths.set(emptyList())
+        }
+
+        val applyBaseline = target.tasks.register(
+            "applyCoroutinesBaseline",
+            ApplyCoroutinesBaselineTask::class.java,
+        ) { task ->
+            task.group = "structured coroutines"
+            task.description = "Applies coroutines-baseline.xml to Detekt XML (REPORT_NEW_ONLY demotion)"
+            task.baselineFile.set(extension.baselineFile)
+            task.detektReportXml.set(target.layout.buildDirectory.file("reports/detekt/detekt.xml"))
+            task.baselineMode.set(extension.baselineMode)
+            task.baselineEnabled.set(extension.baselineEnabled)
+            task.summaryReport.set(
+                extension.reportOutputDir.map { dir -> dir.file("baseline-apply-summary.txt") },
+            )
+        }
+
+        target.afterEvaluate {
+            val detektReportPath = target.layout.buildDirectory.file("reports/detekt/detekt.xml")
+                .get().asFile.absolutePath
+            generateBaseline.configure { it.detektReportXmlPaths.set(listOf(detektReportPath)) }
+
+            if (!extension.baselineEnabled.get()) return@afterEvaluate
+            target.plugins.withId("io.gitlab.arturbosch.detekt") {
+                target.tasks.names
+                    .filter { name ->
+                        name == "detekt" || (name.startsWith("detekt") && name != "detektGenerateConfig")
+                    }
+                    .forEach { taskName ->
+                        target.tasks.named(taskName).configure {
+                            (this as Task).finalizedBy(applyBaseline)
+                        }
+                    }
+            }
         }
     }
 

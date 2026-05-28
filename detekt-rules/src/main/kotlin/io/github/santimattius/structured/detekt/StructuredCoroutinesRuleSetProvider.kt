@@ -9,12 +9,21 @@
  */
 package io.github.santimattius.structured.detekt
 
+import io.github.santimattius.structured.detekt.rules.BlockingCallInCoroutineBackendRule
 import io.github.santimattius.structured.detekt.rules.BlockingCallInCoroutineRule
 import io.github.santimattius.structured.detekt.rules.CancellationExceptionSubclassRule
 import io.github.santimattius.structured.detekt.rules.CallbackFlowWithoutAwaitCloseRule
 import io.github.santimattius.structured.detekt.rules.ChannelNotClosedRule
 import io.github.santimattius.structured.detekt.rules.ConsumeEachMultipleConsumersRule
 import io.github.santimattius.structured.detekt.rules.DispatchersIOInCommonMainRule
+import io.github.santimattius.structured.detekt.rules.MainScopeWithoutCancelRule
+import io.github.santimattius.structured.detekt.rules.RedundantWithContextRule
+import io.github.santimattius.structured.detekt.rules.RunBlockingInCommonMainRule
+import io.github.santimattius.structured.detekt.rules.SharedMutableStateInCoroutineRule
+import io.github.santimattius.structured.detekt.rules.SideEffectInMapOperatorRule
+import io.github.santimattius.structured.detekt.rules.StateInWithEagerlyStrategyRule
+import io.github.santimattius.structured.detekt.rules.SynchronizedInCoroutineRule
+import io.github.santimattius.structured.detekt.rules.ThreadLocalNotPropagatedRule
 import io.github.santimattius.structured.detekt.rules.CancellationExceptionSwallowedRule
 import io.github.santimattius.structured.detekt.rules.DispatchersUnconfinedRule
 import io.github.santimattius.structured.detekt.rules.ExternalScopeLaunchRule
@@ -154,6 +163,19 @@ class StructuredCoroutinesRuleSetProvider : RuleSetProvider {
             SequentialAsyncAwaitRule(config),
             RunBlockingInsteadOfRunTestRule(config),
             DispatchersIOInCommonMainRule(config),
+
+            // Iteration 2 (v0.9.0) — Phase 1: core rules
+            SynchronizedInCoroutineRule(config),
+            StateInWithEagerlyStrategyRule(config),
+            RunBlockingInCommonMainRule(config),
+            BlockingCallInCoroutineBackendRule(config),
+
+            // Phase 2: heuristic / opt-in rules
+            SharedMutableStateInCoroutineRule(config),
+            RedundantWithContextRule(config),
+            SideEffectInMapOperatorRule(config),
+            MainScopeWithoutCancelRule(config),
+            ThreadLocalNotPropagatedRule(config),
         )
     )
 }

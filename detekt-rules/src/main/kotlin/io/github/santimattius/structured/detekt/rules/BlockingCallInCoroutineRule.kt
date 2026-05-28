@@ -9,6 +9,7 @@
  */
 package io.github.santimattius.structured.detekt.rules
 
+import io.github.santimattius.structured.detekt.utils.BlockingCallHeuristic
 import io.github.santimattius.structured.detekt.utils.CoroutineDetektUtils
 import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
@@ -94,11 +95,7 @@ class BlockingCallInCoroutineRule(config: Config = Config.empty) : Rule(config) 
         super.visitCallExpression(expression)
         if (!CoroutinesImportFilter.elementIsInCoroutinesFile(expression)) return
 
-        // Check if this is a blocking call
-        if (!CoroutineDetektUtils.isBlockingCall(expression)) return
-
-        // Check if we're inside a coroutine context
-        if (!CoroutineDetektUtils.isInsideCoroutine(expression)) return
+        if (!BlockingCallHeuristic.isBlockingCallInCoroutine(expression)) return
 
         // Report the issue
         val callName = CoroutineDetektUtils.getFullyQualifiedCallName(expression)

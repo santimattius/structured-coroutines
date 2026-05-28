@@ -5,6 +5,7 @@ plugins {
 
 dependencies {
     implementation(libs.kotlinx.coroutines.core)
+    implementation("org.slf4j:slf4j-api:2.0.16")
     // Test source set used for RunBlockingWithDelayInTest rule example
     testImplementation(libs.kotlin.test)
     testImplementation(libs.junit.jupiter)

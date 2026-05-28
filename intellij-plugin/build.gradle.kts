@@ -17,7 +17,7 @@ plugins {
 }
 
 group = "io.github.santimattius"
-version = "0.8.0"
+version = "0.9.0"
 
 repositories {
     mavenCentral()
@@ -71,6 +71,17 @@ intellijPlatform {
             </ul>
         """.trimIndent()
         changeNotes = """
+            <p><b>v0.9.0</b></p>
+            <ul>
+                <li><b>5 new inspections (26 total)</b> — Shared-state concurrency and Flow patterns aligned with toolkit v0.9.0 (Concurrency, KMP &amp; Backend iteration)</li>
+                <li><b>SynchronizedInCoroutine (CONCUR_001, WARNING)</b> — Detects <code>synchronized { }</code> inside suspend functions or coroutine builders; quick fix replaces with <code>mutex.withLock { }</code></li>
+                <li><b>StateInWithEagerlyStrategy (FLOW_006, WARNING)</b> — Detects <code>stateIn(..., SharingStarted.Eagerly, ...)</code> on <code>viewModelScope</code> / <code>lifecycleScope</code>; quick fix replaces with <code>SharingStarted.WhileSubscribed(5_000)</code></li>
+                <li><b>LaunchInWithUnstructuredScope (FLOW_007, WARNING)</b> — Detects <code>Flow.launchIn(GlobalScope)</code> or <code>launchIn(CoroutineScope(...))</code>; offers structured-scope quick fixes (<code>viewModelScope</code>, <code>lifecycleScope</code>, <code>coroutineScope</code>)</li>
+                <li><b>RedundantWithContext (CONCUR_004, WARNING, opt-in)</b> — Detects nested <code>withContext</code> with the same dispatcher reference; quick fix removes the inner call (disabled by default)</li>
+                <li><b>SideEffectInMapOperator (FLOW_008, WARNING, opt-in)</b> — Detects side effects (logging, analytics, etc.) before the return in <code>.map { }</code>; recommends <code>onEach { }</code> (disabled by default)</li>
+                <li><b>3 new quick fixes (21 total)</b> — ReplaceSynchronizedWithMutex, ReplaceEagerlyWithWhileSubscribed, RemoveRedundantWithContext</li>
+                <li><b>Tool window &amp; Scan Project</b> — All new inspections registered in <code>StructuredCoroutinesInspectionProvider</code> with <code>InspectionGuideRegistry</code> entries and BEST_PRACTICES links</li>
+            </ul>
             <p><b>v0.8.0</b></p>
             <ul>
                 <li><b>7 new inspections (22 total)</b> — Interop, Flow, concurrency, testing, Compose, and KMP coverage aligned with toolkit v0.8.0</li>
