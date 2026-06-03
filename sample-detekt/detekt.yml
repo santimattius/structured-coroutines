@@ -87,3 +87,14 @@ structured-coroutines:
   SideEffectInMapOperator:
     active: true
     severity: info
+  HardcodedDispatcherInClass:
+    active: true
+  SharedFlowForOneshotEvents:
+    active: true
+  ChannelFlowVsCallbackFlow:
+    active: true
+  BlockingFutureGet:
+    active: true
+  MissingCoroutineName:
+    active: false
+    severity: info
