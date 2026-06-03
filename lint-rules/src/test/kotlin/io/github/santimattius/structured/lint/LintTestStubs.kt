@@ -19,6 +19,7 @@ object LintTestStubs {
         object GlobalScope : CoroutineScope
         fun CoroutineScope.launch(context: CoroutineContext = error("stub"), block: suspend CoroutineScope.() -> Unit): Job = error("stub")
         fun CoroutineScope.async(context: CoroutineContext = error("stub"), block: suspend CoroutineScope.() -> Any): Any = error("stub")
+        suspend fun <T> withContext(context: CoroutineContext, block: suspend CoroutineScope.() -> T): T = error("stub")
         fun Job(parent: Job? = null): Job = error("stub")
         fun SupervisorJob(parent: Job? = null): Job = error("stub")
         object Dispatchers {
@@ -119,11 +120,37 @@ object LintTestStubs {
         annotation class MultiPreview
     """.trimIndent()
 
+    val androidxComposeEffects = """
+        package androidx.compose.runtime
+
+        import kotlinx.coroutines.CoroutineScope
+
+        @Composable
+        fun LaunchedEffect(key1: Any?, block: suspend CoroutineScope.() -> Unit): Unit = error("stub")
+
+        @Composable
+        fun SideEffect(effect: () -> Unit): Unit = error("stub")
+
+        @Composable
+        fun DisposableEffect(key1: Any?, effect: DisposableEffectScope.() -> DisposableEffectResult): Unit = error("stub")
+
+        interface DisposableEffectScope
+        interface DisposableEffectResult
+    """.trimIndent()
+
     fun composeRuntimeCollectAndFlow(): List<TestFile> = listOf(
         TestFiles.kotlin(kotlinxCoroutines).indented(),
         TestFiles.kotlin(kotlinxCoroutinesFlow).indented(),
         TestFiles.kotlin(androidxComposeRuntimeCollect).indented(),
         TestFiles.kotlin(androidxComposeUiPreview).indented(),
+    )
+
+    fun composeScopeAndEffects(): List<TestFile> = listOf(
+        TestFiles.kotlin(kotlinxCoroutines).indented(),
+        TestFiles.kotlin(kotlinxCoroutinesFlow).indented(),
+        TestFiles.kotlin(composeRuntime).indented(),
+        TestFiles.kotlin(androidxComposeRuntimeCollect).indented(),
+        TestFiles.kotlin(androidxComposeEffects).indented(),
     )
 
     fun all() = listOf(

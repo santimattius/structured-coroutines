@@ -418,3 +418,33 @@ rules:
     lint: []
     intellij: []
     default_severity: info
+
+  - code: COMPOSE_002
+    section: "8.4"
+    title: "rememberCoroutineScope Used For Initialization"
+    doc_anchor: "84-compose_002--rememberscopeforinit"
+    compiler: []
+    detekt: []
+    lint: [RememberScopeForInit]
+    intellij: [RememberScopeForInit]
+    default_severity: warning
+
+  - code: COMPOSE_003
+    section: "8.5"
+    title: "Side Effect In Composable Body"
+    doc_anchor: "85-compose_003--sideeffectincomposable"
+    compiler: []
+    detekt: []
+    lint: [SideEffectInComposable]
+    intellij: []
+    default_severity: warning
+
+  - code: INTEROP_004
+    section: "10.4"
+    title: "Blocking Future get()"
+    doc_anchor: "104-interop_004--blocking-future-get"
+    compiler: []
+    detekt: [BlockingFutureGet]
+    lint: [BlockingFutureGet]
+    intellij: [BlockingFutureGet]
+    default_severity: warning
