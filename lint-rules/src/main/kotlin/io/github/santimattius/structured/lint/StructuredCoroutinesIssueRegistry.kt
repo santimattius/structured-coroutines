@@ -61,6 +61,11 @@ class StructuredCoroutinesIssueRegistry : IssueRegistry() {
             StateInWithEagerlyStrategyDetector.ISSUE,
             LaunchInWithUnstructuredScopeDetector.ISSUE,
             RunBlockingInCommonMainDetector.ISSUE,
+
+            // Iteration 3 (v1.0.0) — Phase 2 Lint
+            RememberScopeForInitDetector.ISSUE,
+            SideEffectInComposableDetector.ISSUE,
+            BlockingFutureGetDetector.ISSUE,
         )
     
     override val api: Int = CURRENT_API
