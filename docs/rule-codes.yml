@@ -369,6 +369,7 @@ rules:
     default_severity: warning
     learning_path: { tier: High, impact_score: 8, fix_minutes: 15 }
 
+<<<<<<< HEAD
   - code: TEST_005
     section: "6.5"
     title: "Hardcoded Dispatcher In Class"
@@ -397,6 +398,26 @@ rules:
     detekt: [ChannelFlowVsCallbackFlow]
     lint: []
     intellij: [ChannelFlowVsCallbackFlow]
+=======
+  - code: COMPOSE_002
+    section: "8.4"
+    title: "rememberCoroutineScope Used For Initialization"
+    doc_anchor: "84-compose_002--rememberscopeforinit"
+    compiler: []
+    detekt: []
+    lint: [RememberScopeForInit]
+    intellij: [RememberScopeForInit]
+    default_severity: warning
+
+  - code: COMPOSE_003
+    section: "8.5"
+    title: "Side Effect In Composable Body"
+    doc_anchor: "85-compose_003--sideeffectincomposable"
+    compiler: []
+    detekt: []
+    lint: [SideEffectInComposable]
+    intellij: []
+>>>>>>> 8fde8f9 (feat(lint): add COMPOSE_002/003 and INTEROP_004 detectors (iter3 P2))
     default_severity: warning
 
   - code: INTEROP_004
@@ -408,6 +429,7 @@ rules:
     lint: [BlockingFutureGet]
     intellij: [BlockingFutureGet]
     default_severity: warning
+<<<<<<< HEAD
 
   - code: DEBUG_001
     section: "14.1"
@@ -418,3 +440,5 @@ rules:
     lint: []
     intellij: []
     default_severity: info
+=======
+>>>>>>> 8fde8f9 (feat(lint): add COMPOSE_002/003 and INTEROP_004 detectors (iter3 P2))
