@@ -368,3 +368,53 @@ rules:
     intellij: []
     default_severity: warning
     learning_path: { tier: High, impact_score: 8, fix_minutes: 15 }
+
+  - code: TEST_005
+    section: "6.5"
+    title: "Hardcoded Dispatcher In Class"
+    doc_anchor: "65-test_005--hardcoded-dispatcher-in-class"
+    compiler: []
+    detekt: [HardcodedDispatcherInClass]
+    lint: []
+    intellij: [HardcodedDispatcherInClass]
+    default_severity: warning
+
+  - code: FLOW_011
+    section: "9.11"
+    title: "SharedFlow For One-shot Events"
+    doc_anchor: "911-flow_011--sharedflow-for-oneshot-events"
+    compiler: []
+    detekt: [SharedFlowForOneshotEvents]
+    lint: []
+    intellij: [SharedFlowForOneshotEvents]
+    default_severity: warning
+
+  - code: INTEROP_003
+    section: "10.3"
+    title: "ChannelFlow vs callbackFlow"
+    doc_anchor: "103-interop_003--channelflow-vs-callbackflow"
+    compiler: []
+    detekt: [ChannelFlowVsCallbackFlow]
+    lint: []
+    intellij: [ChannelFlowVsCallbackFlow]
+    default_severity: warning
+
+  - code: INTEROP_004
+    section: "10.4"
+    title: "Blocking Future get()"
+    doc_anchor: "104-interop_004--blocking-future-get"
+    compiler: []
+    detekt: [BlockingFutureGet]
+    lint: [BlockingFutureGet]
+    intellij: [BlockingFutureGet]
+    default_severity: warning
+
+  - code: DEBUG_001
+    section: "14.1"
+    title: "Missing CoroutineName"
+    doc_anchor: "141-debug_001--missing-coroutine-name"
+    compiler: []
+    detekt: [MissingCoroutineName]
+    lint: []
+    intellij: []
+    default_severity: info

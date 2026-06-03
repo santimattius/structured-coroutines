@@ -10,12 +10,16 @@
 package io.github.santimattius.structured.detekt
 
 import io.github.santimattius.structured.detekt.rules.BlockingCallInCoroutineBackendRule
+import io.github.santimattius.structured.detekt.rules.BlockingFutureGetRule
+import io.github.santimattius.structured.detekt.rules.ChannelFlowVsCallbackFlowRule
 import io.github.santimattius.structured.detekt.rules.BlockingCallInCoroutineRule
 import io.github.santimattius.structured.detekt.rules.CancellationExceptionSubclassRule
 import io.github.santimattius.structured.detekt.rules.CallbackFlowWithoutAwaitCloseRule
 import io.github.santimattius.structured.detekt.rules.ChannelNotClosedRule
 import io.github.santimattius.structured.detekt.rules.ConsumeEachMultipleConsumersRule
 import io.github.santimattius.structured.detekt.rules.DispatchersIOInCommonMainRule
+import io.github.santimattius.structured.detekt.rules.HardcodedDispatcherInClassRule
+import io.github.santimattius.structured.detekt.rules.MissingCoroutineNameRule
 import io.github.santimattius.structured.detekt.rules.MainScopeWithoutCancelRule
 import io.github.santimattius.structured.detekt.rules.RedundantWithContextRule
 import io.github.santimattius.structured.detekt.rules.RunBlockingInCommonMainRule
@@ -34,6 +38,7 @@ import io.github.santimattius.structured.detekt.rules.JobInBuilderContextRule
 import io.github.santimattius.structured.detekt.rules.LoopWithoutYieldRule
 import io.github.santimattius.structured.detekt.rules.MissingCatchInFlowRule
 import io.github.santimattius.structured.detekt.rules.MutableFlowExposedRule
+import io.github.santimattius.structured.detekt.rules.SharedFlowForOneshotEventsRule
 import io.github.santimattius.structured.detekt.rules.RedundantLaunchInCoroutineScopeRule
 import io.github.santimattius.structured.detekt.rules.RunBlockingInsteadOfRunTestRule
 import io.github.santimattius.structured.detekt.rules.SequentialAsyncAwaitRule
@@ -176,6 +181,13 @@ class StructuredCoroutinesRuleSetProvider : RuleSetProvider {
             SideEffectInMapOperatorRule(config),
             MainScopeWithoutCancelRule(config),
             ThreadLocalNotPropagatedRule(config),
+
+            // Iteration 3 (v1.0.0) — Phase 1 Detekt
+            HardcodedDispatcherInClassRule(config),
+            SharedFlowForOneshotEventsRule(config),
+            ChannelFlowVsCallbackFlowRule(config),
+            BlockingFutureGetRule(config),
+            MissingCoroutineNameRule(config),
         )
     )
 }
