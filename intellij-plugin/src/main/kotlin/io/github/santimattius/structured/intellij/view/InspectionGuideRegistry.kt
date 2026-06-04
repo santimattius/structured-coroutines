@@ -10,11 +10,16 @@
 package io.github.santimattius.structured.intellij.view
 
 import io.github.santimattius.structured.intellij.inspections.AsyncWithoutAwaitInspection
+import io.github.santimattius.structured.intellij.inspections.BlockingFutureGetInspection
 import io.github.santimattius.structured.intellij.inspections.CallbackFlowWithoutAwaitCloseInspection
+import io.github.santimattius.structured.intellij.inspections.ChannelFlowVsCallbackFlowInspection
+import io.github.santimattius.structured.intellij.inspections.CoroutineNotCompletedInTestInspection
 import io.github.santimattius.structured.intellij.inspections.CancellationExceptionSubclassInspection
 import io.github.santimattius.structured.intellij.inspections.CancellationExceptionSwallowedInspection
 import io.github.santimattius.structured.intellij.inspections.CollectAsStateWithoutLifecycleInspection
 import io.github.santimattius.structured.intellij.inspections.DispatchersIOInCommonMainInspection
+import io.github.santimattius.structured.intellij.inspections.FlatMapOperatorChoiceInspection
+import io.github.santimattius.structured.intellij.inspections.HardcodedDispatcherInClassInspection
 import io.github.santimattius.structured.intellij.inspections.DispatchersUnconfinedInspection
 import io.github.santimattius.structured.intellij.inspections.GlobalScopeInspection
 import io.github.santimattius.structured.intellij.inspections.InlineCoroutineScopeInspection
@@ -26,6 +31,8 @@ import io.github.santimattius.structured.intellij.inspections.MainDispatcherMisu
 import io.github.santimattius.structured.intellij.inspections.MissingCatchInFlowInspection
 import io.github.santimattius.structured.intellij.inspections.MutableFlowExposedInspection
 import io.github.santimattius.structured.intellij.inspections.RedundantWithContextInspection
+import io.github.santimattius.structured.intellij.inspections.RememberScopeForInitInspection
+import io.github.santimattius.structured.intellij.inspections.SharedFlowForOneshotEventsInspection
 import io.github.santimattius.structured.intellij.inspections.RunBlockingInSuspendInspection
 import io.github.santimattius.structured.intellij.inspections.RunBlockingInsteadOfRunTestInspection
 import io.github.santimattius.structured.intellij.inspections.ScopeReuseAfterCancelInspection
@@ -170,6 +177,34 @@ object InspectionGuideRegistry {
         SideEffectInMapOperatorInspection::class.java to GuideEntry(
             whatToDo = "Move logging/analytics/IO side effects to onEach { } and keep map { } as a pure transform.",
             guideUrl = "$BASE_URL#99-flow_008--sideeffectinmapoperator"
+        ),
+        RememberScopeForInitInspection::class.java to GuideEntry(
+            whatToDo = "Replace rememberCoroutineScope().launch { } with LaunchedEffect(Unit) { } for composable init work.",
+            guideUrl = "$BASE_URL#84-compose_002--rememberscopeforinit"
+        ),
+        HardcodedDispatcherInClassInspection::class.java to GuideEntry(
+            whatToDo = "Inject @IoDispatcher / @MainDispatcher or a CoroutineDispatcher parameter instead of Dispatchers.IO/Main in the class body.",
+            guideUrl = "$BASE_URL#65-test_005--hardcodeddispatcherinclass"
+        ),
+        CoroutineNotCompletedInTestInspection::class.java to GuideEntry(
+            whatToDo = "Call advanceUntilIdle() or advanceTimeBy() in runTest before assert/verify when work uses launch/async.",
+            guideUrl = "$BASE_URL#66-test_006--coroutinenotcompletedintest"
+        ),
+        FlatMapOperatorChoiceInspection::class.java to GuideEntry(
+            whatToDo = "Use flatMapLatest for debounced search; flatMapMerge/flatMapConcat for downloads or ordered pipelines.",
+            guideUrl = "$BASE_URL#910-flow_009--flatmapoperatorchoice"
+        ),
+        SharedFlowForOneshotEventsInspection::class.java to GuideEntry(
+            whatToDo = "Use Channel(BUFFERED) and receiveAsFlow() for one-shot navigation/snackbar/command events.",
+            guideUrl = "$BASE_URL#911-flow_011--sharedflow-for-oneshot-events"
+        ),
+        ChannelFlowVsCallbackFlowInspection::class.java to GuideEntry(
+            whatToDo = "Use callbackFlow + awaitClose for external listeners; channelFlow for internal coroutine producers.",
+            guideUrl = "$BASE_URL#103-interop_003--channelflow-vs-callbackflow"
+        ),
+        BlockingFutureGetInspection::class.java to GuideEntry(
+            whatToDo = "Replace Future.get() with await() from kotlinx-coroutines-jdk8 or kotlinx-coroutines-guava.",
+            guideUrl = "$BASE_URL#104-interop_004--blocking-future-get"
         ),
     )
 
