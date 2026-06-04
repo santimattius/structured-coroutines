@@ -8,10 +8,13 @@
 package io.github.santimattius.structured.intellij.utils
 
 import org.jetbrains.kotlin.psi.KtAnnotated
+import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 fun KtFile.importsComposeRuntime(): Boolean =
     importDirectives.any {
@@ -79,5 +82,33 @@ object ComposePsiUtils {
             p = p.parent as? KtElement
         }
         return result
+    }
+
+    private val composeEffectCalls = setOf("SideEffect", "LaunchedEffect", "DisposableEffect")
+    private val eventHandlerParamSuffixes = listOf("onClick", "onValueChange", "onDismiss", "Listener", "Handler")
+
+    fun isInsideComposeEffectOrEventHandler(element: KtElement): Boolean =
+        isInsideComposeEffectBlock(element) || isInsideEventHandlerLambda(element)
+
+    fun isInsideComposeEffectBlock(element: KtElement): Boolean {
+        var current: KtElement? = element
+        while (current != null) {
+            val lambda = current.getParentOfType<KtLambdaExpression>(strict = true)
+            if (lambda != null) {
+                val call = lambda.getParentOfType<KtCallExpression>(strict = false)
+                if (call?.calleeExpression?.text in composeEffectCalls) return true
+            }
+            current = current.parent as? KtElement
+        }
+        return false
+    }
+
+    fun isInsideEventHandlerLambda(element: KtElement): Boolean {
+        val lambda = element.getParentOfType<KtLambdaExpression>(strict = true) ?: return false
+        val valueArg = lambda.getParentOfType<KtValueArgument>(strict = true) ?: return false
+        val name = valueArg.getArgumentName()?.asName?.asString()
+            ?: valueArg.getArgumentName()?.text
+            ?: return false
+        return eventHandlerParamSuffixes.any { suffix -> name == suffix || name.endsWith(suffix) }
     }
 }

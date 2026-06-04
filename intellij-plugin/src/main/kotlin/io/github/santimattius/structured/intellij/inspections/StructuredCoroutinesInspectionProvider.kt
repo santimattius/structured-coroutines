@@ -49,6 +49,13 @@ class StructuredCoroutinesInspectionProvider : InspectionToolProvider {
             LaunchInWithUnstructuredScopeInspection::class.java,
             RedundantWithContextInspection::class.java,
             SideEffectInMapOperatorInspection::class.java,
+            RememberScopeForInitInspection::class.java,
+            HardcodedDispatcherInClassInspection::class.java,
+            CoroutineNotCompletedInTestInspection::class.java,
+            FlatMapOperatorChoiceInspection::class.java,
+            SharedFlowForOneshotEventsInspection::class.java,
+            ChannelFlowVsCallbackFlowInspection::class.java,
+            BlockingFutureGetInspection::class.java,
         )
     }
 }

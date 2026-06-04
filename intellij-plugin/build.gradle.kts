@@ -39,6 +39,8 @@ dependencies {
     // (e.g. CloseAction.closeAutoCloseables); pinning avoids NoSuchMethodError with mixed transitive versions.
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.11.4")
+    // IntelliJ Platform testFramework still loads JUnit5TestSessionListener (needs JUnit 4 TestCase).
+    testRuntimeOnly("junit:junit:4.13.2")
     testImplementation(libs.assertj.core)
 }
 

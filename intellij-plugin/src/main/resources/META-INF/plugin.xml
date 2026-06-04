@@ -398,6 +398,90 @@
             groupPath="Kotlin"
             groupBundle="messages.StructuredCoroutinesBundle"
             groupKey="inspection.group.name"
+            shortName="RememberScopeForInit"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.remember.scope.for.init.display.name"
+            enabledByDefault="true"
+            level="WARNING"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.RememberScopeForInitInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
+            shortName="HardcodedDispatcherInClass"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.hardcoded.dispatcher.display.name"
+            enabledByDefault="true"
+            level="WARNING"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.HardcodedDispatcherInClassInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
+            shortName="CoroutineNotCompletedInTest"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.coroutine.not.completed.in.test.display.name"
+            enabledByDefault="true"
+            level="WARNING"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.CoroutineNotCompletedInTestInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
+            shortName="FlatMapOperatorChoice"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.flatmap.operator.choice.display.name"
+            enabledByDefault="true"
+            level="INFO"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.FlatMapOperatorChoiceInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
+            shortName="SharedFlowForOneshotEvents"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.sharedflow.oneshot.display.name"
+            enabledByDefault="true"
+            level="WARNING"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.SharedFlowForOneshotEventsInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
+            shortName="ChannelFlowVsCallbackFlow"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.channelflow.vs.callbackflow.display.name"
+            enabledByDefault="true"
+            level="WARNING"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.ChannelFlowVsCallbackFlowInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
+            shortName="BlockingFutureGet"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.blocking.future.get.display.name"
+            enabledByDefault="true"
+            level="WARNING"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.BlockingFutureGetInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
             shortName="WithTimeoutScopeCancellation"
             bundle="messages.StructuredCoroutinesBundle"
             key="inspection.with.timeout.scope.cancellation.display.name"
@@ -444,6 +528,13 @@
         <intentionAction>
             <language>kotlin</language>
             <className>io.github.santimattius.structured.intellij.intentions.ConvertToRunTestIntention</className>
+            <bundleName>messages.StructuredCoroutinesBundle</bundleName>
+            <categoryKey>intention.category</categoryKey>
+        </intentionAction>
+
+        <intentionAction>
+            <language>kotlin</language>
+            <className>io.github.santimattius.structured.intellij.intentions.AnalyzeFlowChainIntention</className>
             <bundleName>messages.StructuredCoroutinesBundle</bundleName>
             <categoryKey>intention.category</categoryKey>
         </intentionAction>
