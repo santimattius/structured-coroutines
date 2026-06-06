@@ -18,6 +18,10 @@ concurrency practices.
 8. [Loops in suspend functions](#8-loops-in-suspend-functions)
 9. [`withTimeout` vs `withTimeoutOrNull`](#9-withtimeout-vs-withtimeoutornull)
 10. [Cold vs Hot Flow (StateFlow / SharedFlow)](#10-cold-vs-hot-flow-stateflow--sharedflow)
+11. [Kotlin Multiplatform dispatchers](#11-kotlin-multiplatform-dispatchers)
+12. [Mutex vs synchronized](#12-mutex-vs-synchronized)
+13. [Backend blocking in coroutines](#13-backend-blocking-in-coroutines)
+14. [Interop: callbacks, flows, and futures](#14-interop-callbacks-flows-and-futures)
 
 ---
 
@@ -398,6 +402,50 @@ val orders: Flow<List<Order>> = flow { emit(api.fetchOrders()) }
 **`collectLatest` note (`FLOW_003`):** Use `collectLatest` only when cancelling in-flight work is
 acceptable (e.g. a search that is superseded by the next query). If the work inside the collector
 must run to completion, use `collect` instead.
+
+---
+
+## 11. Kotlin Multiplatform dispatchers
+
+| Situation | Use | Why |
+|-----------|-----|-----|
+| Blocking I/O in `commonMain` | Injected `CoroutineDispatcher` or `expect/actual` | `Dispatchers.IO` is missing on Native/JS (`KMP_001`) |
+| Sync bridge on iOS main | Avoid `runBlocking` in `commonMain` | Deadlock / unsupported on JS (`KMP_002`) |
+| Shared presenter with `MainScope()` | `onDestroy` / `dispose` calls `scope.cancel()` | Not tied to platform lifecycle (`KMP_003`) |
+
+See [BEST_PRACTICES §11](BEST_PRACTICES_COROUTINES.md#11-kotlin-multiplatform).
+
+---
+
+## 12. Mutex vs synchronized
+
+| Situation | Use | Why |
+|-----------|-----|-----|
+| Protect shared state in `suspend` code | `Mutex.withLock { }` | Does not block dispatcher threads (`CONCUR_001`) |
+| Legacy Java lock from non-suspend API | `synchronized` only outside coroutines | `synchronized` in suspend blocks threads |
+
+---
+
+## 13. Backend blocking in coroutines
+
+| Situation | Use | Why |
+|-----------|-----|-----|
+| JDBC / `Thread.sleep` in Ktor/Spring handler | `withContext(Dispatchers.IO) { }` | Avoid blocking event loop (`BACKEND_001`) |
+| MDC / `ThreadLocal` after dispatcher switch | `withContext(Dispatchers.IO + MDCContext())` | Context does not propagate automatically (`BACKEND_002`) |
+| Spring `@Transactional` + `suspend` | R2DBC or blocking bridge documented | JDBC blocks the coroutine thread |
+
+Gradle: `useKtorBackendProfile()` or `useSpringBackendProfile()` presets.
+
+---
+
+## 14. Interop: callbacks, flows, and futures
+
+| Situation | Use | Why |
+|-----------|-----|-----|
+| Callback → suspend | `suspendCancellableCoroutine` + `invokeOnCancellation` | `suspendCoroutine` ignores cancel (`INTEROP_001`) |
+| Listener → Flow | `callbackFlow` + `awaitClose { unregister }` | Required since kotlinx-coroutines 1.6 (`INTEROP_002`) |
+| Multi-coroutine emission | `channelFlow` | Wrong tool if you only wrap one callback (`INTEROP_003`) |
+| `CompletableFuture` in suspend | `.await()` (jdk8/guava) | `.get()` blocks (`INTEROP_004`) |
 
 ---
 

@@ -17,7 +17,7 @@ plugins {
 }
 
 group = "io.github.santimattius"
-version = "0.9.0"
+version = "1.0.0"
 
 repositories {
     mavenCentral()
@@ -73,6 +73,20 @@ intellijPlatform {
             </ul>
         """.trimIndent()
         changeNotes = """
+            <p><b>v1.0.0</b></p>
+            <ul>
+                <li><b>9 new inspections (35 total)</b> — Production-ready iteration: Compose lifecycle, test dispatchers, Flow guidance, interop, and debug opt-in aligned with toolkit v1.0.0</li>
+                <li><b>RememberScopeForInit (COMPOSE_002, WARNING)</b> — Detects <code>rememberCoroutineScope().launch { }</code> for one-shot init; quick fix replaces with <code>LaunchedEffect</code></li>
+                <li><b>HardcodedDispatcherInClass (TEST_005, WARNING)</b> — Detects hardcoded <code>Dispatchers.IO/Default/Main</code> in classes; recommends constructor injection</li>
+                <li><b>CoroutineNotCompletedInTest (TEST_006, WARNING)</b> — Detects <code>runTest</code> without <code>advanceUntilIdle()</code> when coroutines may still be pending</li>
+                <li><b>FlatMapOperatorChoice (FLOW_009, INFO)</b> — Informational guidance on <code>flatMapConcat</code> vs <code>flatMapMerge</code> vs <code>flatMapLatest</code></li>
+                <li><b>SharedFlowForOneshotEvents (FLOW_011, WARNING)</b> — Detects <code>MutableSharedFlow</code> for one-shot events; quick fix replaces with <code>Channel</code></li>
+                <li><b>ChannelFlowVsCallbackFlow (INTEROP_003, WARNING)</b> — Detects wrong Flow builder for callback APIs</li>
+                <li><b>BlockingFutureGet (INTEROP_004, WARNING)</b> — Detects <code>Future.get()</code> / <code>CompletableFuture.get()</code>; quick fix replaces with <code>await()</code></li>
+                <li><b>Flow Chain Analyzer intention</b> — <code>AnalyzeFlowChainIntention</code> summarizes operator chain semantics from the caret</li>
+                <li><b>COMPOSE_001 quick-fix</b> — <code>collectAsState()</code> → <code>collectAsStateWithLifecycle()</code></li>
+                <li><b>Tool window &amp; Scan Project</b> — All inspections registered with <code>InspectionGuideRegistry</code> entries and BEST_PRACTICES links</li>
+            </ul>
             <p><b>v0.9.0</b></p>
             <ul>
                 <li><b>5 new inspections (26 total)</b> — Shared-state concurrency and Flow patterns aligned with toolkit v0.9.0 (Concurrency, KMP &amp; Backend iteration)</li>

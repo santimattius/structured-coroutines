@@ -10,6 +10,7 @@ package io.github.santimattius.structured.intellij.inspections
 import com.intellij.codeInspection.ProblemsHolder
 import io.github.santimattius.structured.intellij.StructuredCoroutinesBundle
 import io.github.santimattius.structured.intellij.inspections.base.CoroutineInspectionBase
+import io.github.santimattius.structured.intellij.quickfixes.ReplaceCollectAsStateWithLifecycleQuickFix
 import io.github.santimattius.structured.intellij.utils.ComposePsiUtils
 import io.github.santimattius.structured.intellij.utils.importsComposeRuntime
 import io.github.santimattius.structured.intellij.utils.importsKotlinxCoroutinesFlow
@@ -40,6 +41,7 @@ class CollectAsStateWithoutLifecycleInspection : CoroutineInspectionBase() {
                 holder.registerProblem(
                     expression,
                     StructuredCoroutinesBundle.message("error.compose.collect.as.state"),
+                    ReplaceCollectAsStateWithLifecycleQuickFix(),
                 )
             }
         }

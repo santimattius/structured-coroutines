@@ -35,6 +35,7 @@ hyphens, e.g. `#11-using-globalscope-in-production-code`).
 | `SCOPE_002`    | 1.2 | [Using async Without Calling await](#12-using-async-without-calling-await)                                           |
 | `SCOPE_003`    | 1.3 | [Breaking Structured Concurrency](#13-breaking-structured-concurrency)                                               |
 | `SCOPE_004`    | 1.4 | [awaitAll and Exception Propagation](#14-awaitall-and-exception-propagation)                                         |
+| `CONCUR_003`   | 1.5 | [Sequential async/await](#15-concur_003--sequential-asyncawait)                                                     |
 | `RUNBLOCK_001` | 2.1 | [Using launch on the Last Line of coroutineScope](#21-using-launch-on-the-last-line-of-coroutinescope)               |
 | `RUNBLOCK_002` | 2.2 | [Using runBlocking Inside Suspend Functions](#22-using-runblocking-inside-suspend-functions)                         |
 | `DISPATCH_001` | 3.1 | [Mixing Blocking Code with Wrong Dispatchers](#31-mixing-blocking-code-with-wrong-dispatchers)                       |
@@ -59,6 +60,7 @@ hyphens, e.g. `#11-using-globalscope-in-production-code`).
 | `CHANNEL_002`  | 7.2 | [Sharing consumeEach Among Multiple Consumers](#72-sharing-consumeeach-among-multiple-consumers)                     |
 | `ARCH_001`     | 8.1 | [General Recommendations](#81-general-recommendations)                                                               |
 | `ARCH_002`     | 8.2 | [Lifecycle-Aware Flow Collection (Android)](#82-lifecycle-aware-flow-collection-android)                             |
+| `COMPOSE_001`  | 8.3 | [collectAsState Without Lifecycle](#83-compose_001--collectasstate-without-lifecycle-awareness)                      |
 | `FLOW_001`     | 9.1 | [Blocking Code in flow { } Builder](#91-blocking-code-in-flow--builder)                                              |
 | `FLOW_002`     | 9.2 | [Cold vs Hot Flows (StateFlow / SharedFlow)](#92-cold-vs-hot-flows-stateflow--sharedflow)                            |
 | `FLOW_003`     | 9.3 | [collectLatest Cancels Previous Work](#93-collectlatest-cancels-previous-work)                                       |
@@ -79,6 +81,15 @@ hyphens, e.g. `#11-using-globalscope-in-production-code`).
 | `KMP_003`      | 11.3 | [MainScope Without Cancel](#113-kmp_003--mainscopewithoutcancel)                                                   |
 | `BACKEND_001`  | 13.1 | [Blocking Call in Coroutine (Backend)](#131-backend_001--blockingcallincoroutinebackend)                             |
 | `BACKEND_002`  | 3.7  | [ThreadLocal / MDC Not Propagated](#37-backend_002--threadlocalnotpropagated)                                      |
+| `TEST_005`     | 6.5  | [Hardcoded Dispatcher In Class](#65-test_005--hardcoded-dispatcher-in-class)                                       |
+| `TEST_006`     | 6.6  | [Coroutine Not Completed In Test](#66-test_006--coroutine-not-completed-in-test)                                   |
+| `COMPOSE_002`  | 8.4  | [rememberCoroutineScope For Init](#84-compose_002--rememberscopeforinit)                                           |
+| `COMPOSE_003`  | 8.5  | [Side Effect In Composable](#85-compose_003--sideeffectincomposable)                                               |
+| `FLOW_009`     | 9.10 | [FlatMap Operator Choice](#910-flow_009--flatmap-operator-choice)                                                 |
+| `FLOW_011`     | 9.11 | [SharedFlow For One-Shot Events](#911-flow_011--sharedflow-for-oneshot-events)                                       |
+| `INTEROP_003`  | 10.3 | [ChannelFlow vs callbackFlow](#103-interop_003--channelflow-vs-callbackflow)                                       |
+| `INTEROP_004`  | 10.4 | [Blocking Future get()](#104-interop_004--blocking-future-get)                                                     |
+| `DEBUG_001`    | 14.1 | [Missing CoroutineName](#141-debug_001--missing-coroutine-name)                                                    |
 
 **Convention:** prefix by category (SCOPE, RUNBLOCK, DISPATCH, CANCEL, EXCEPT, TEST, CHANNEL, ARCH,
 FLOW) + 3-digit number. Use the code in diagnostic messages and link to this document with the
@@ -116,6 +127,33 @@ anchor above (e.g.
 |------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **Bad Practice** | Assuming that `coroutineScope { awaitAll(deferred1, deferred2, ...) }` runs tasks independently. The first exception cancels all other deferreds (structured concurrency).                      |
 | **Recommended**  | Use `supervisorScope { awaitAll(...) }` and handle each `Deferred`'s exception separately when you need independent failure semantics. In `coroutineScope`, the first failure cancels the rest. |
+
+### 1.5 CONCUR_003 — Sequential async/await
+
+|                  | Description                                                                                                                                                                                                                                      |
+|------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Bad Practice** | `async { work() }.await()` on the same statement, or starting one `async` and awaiting it before launching the next when both could run in parallel. Creates an extra `Deferred`/`Job` without concurrency benefit and reads like parallelism. |
+| **Recommended**  | For sequential work, use `withContext(coroutineContext) { }` or plain suspend calls. For real parallelism, launch all `async` jobs first inside `coroutineScope { }`, then `await()` each deferred.                                              |
+
+**Example:**
+
+```kotlin
+// [CONCUR_003] Sequential async — no parallelism
+suspend fun loadDashboard(): Dashboard {
+    val user = async { userRepo.getUser() }.await()
+    val metrics = async { metricsRepo.get() }.await()
+    return Dashboard(user, metrics)
+}
+
+// Parallel async inside coroutineScope
+suspend fun loadDashboard(): Dashboard = coroutineScope {
+    val user = async { userRepo.getUser() }
+    val metrics = async { metricsRepo.get() }
+    Dashboard(user.await(), metrics.await())
+}
+```
+
+Tool support: Detekt, IntelliJ — rule `SequentialAsyncAwait`.
 
 ---
 
@@ -361,6 +399,31 @@ Tool support: Detekt, Android Lint, IntelliJ — rule `RunBlockingInsteadOfRunTe
 |------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **Bad Practice** | Collecting a Flow in Activity/Fragment with `lifecycleScope.launch { flow.collect { } }` without tying collection to lifecycle state. The flow keeps running when the UI goes to background.                              |
 | **Recommended**  | Use `repeatOnLifecycle(Lifecycle.State.STARTED)` (or `flowWithLifecycle`) so collection starts when the UI is started and cancels when it stops. This avoids unnecessary work and updates when the screen is not visible. |
+
+### 8.3 COMPOSE_001 — collectAsState Without Lifecycle Awareness
+
+|                  | Description                                                                                                                                                                                                                                      |
+|------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Bad Practice** | Using `Flow.collectAsState()` (or `StateFlow.collectAsState()`) in a `@Composable` on Android. Collection continues while the composition is inactive (screen off, app in background), wasting work and updating UI that is not visible.       |
+| **Recommended**  | On Android screens, use `collectAsStateWithLifecycle()` from `androidx.lifecycle:lifecycle-runtime-compose`. Add the dependency first. `@Preview` composables and non-Android Compose targets may keep `collectAsState()` when intentional.      |
+
+**Example:**
+
+```kotlin
+// [COMPOSE_001] Collects while lifecycle is STOPPED
+@Composable
+fun HomeScreen(viewModel: HomeViewModel) {
+    val state by viewModel.uiState.collectAsState()
+}
+
+// Lifecycle-aware collection (Android)
+@Composable
+fun HomeScreen(viewModel: HomeViewModel) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+}
+```
+
+Tool support: Android Lint, IntelliJ — rule `CollectAsStateWithoutLifecycle`.
 
 ---
 
@@ -629,6 +692,87 @@ Tool support: Detekt — rule `SharedMutableStateInCoroutine`.
 
 Tool support: Detekt — rule `BlockingCallInCoroutineBackend` (extends `BlockingCallInCoroutine` with an IO-context gate).
 
+### 6.5 TEST_005 — Hardcoded Dispatcher In Class
+
+|                  | Description                                                                                                                                                                      |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Bad Practice** | Production classes using literal `Dispatchers.IO` or `Dispatchers.Main` in bodies instead of an injected `CoroutineDispatcher`.                                                |
+| **Recommended**  | Constructor parameter `@IoDispatcher` / `@MainDispatcher` or `CoroutineDispatcher` with production default; use `UnconfinedTestDispatcher` / `StandardTestDispatcher` in tests.   |
+
+Tool support: Detekt, IntelliJ — rule `HardcodedDispatcherInClass`.
+
+### 6.6 TEST_006 — Coroutine Not Completed In Test
+
+|                  | Description                                                                                                                                                                      |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Bad Practice** | Inside `runTest { }`, calling code that launches work (e.g. `viewModelScope.launch`) then asserting immediately without `advanceUntilIdle()` or `advanceTimeBy`.               |
+| **Recommended**  | After triggering async work under test, call `advanceUntilIdle()` (or advance virtual time) before assertions.                                                                   |
+
+Tool support: IntelliJ — rule `CoroutineNotCompletedInTest`.
+
+### 8.4 COMPOSE_002 — rememberCoroutineScope For Initialization
+
+|                  | Description                                                                                                                                                                      |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Bad Practice** | `rememberCoroutineScope().launch { }` in the Composable body for init/load work (runs again on recomposition).                                                                  |
+| **Recommended**  | Use `LaunchedEffect(key) { }` for one-shot or key-driven effects; reserve `rememberCoroutineScope` for user handlers (`onClick`, etc.).                                          |
+
+Tool support: Android Lint, IntelliJ — rule `RememberScopeForInit`.
+
+### 8.5 COMPOSE_003 — Side Effect In Composable Body
+
+|                  | Description                                                                                                                                                                      |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Bad Practice** | Analytics, logging, or state mutation called directly in the Composable body (runs every recomposition).                                                                       |
+| **Recommended**  | Move side effects to `SideEffect`, `LaunchedEffect`, or `DisposableEffect`, or event handlers.                                                                                  |
+
+Tool support: Android Lint — rule `SideEffectInComposable`.
+
+### 9.10 FLOW_009 — FlatMap Operator Choice
+
+|                  | Description                                                                                                                                                                      |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Bad Practice** | `flatMapLatest` for downloads (cancels in-flight work); `flatMapConcat` for live search (stale results queue).                                                                  |
+| **Recommended**  | `flatMapLatest` for search/last-wins; `flatMapMerge` for parallel unordered work; `flatMapConcat` for ordered pipelines.                                                         |
+
+Tool support: IntelliJ (info) — rule `FlatMapOperatorChoice`.
+
+### 9.11 FLOW_011 — SharedFlow For One-Shot Events
+
+|                  | Description                                                                                                                                                                      |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Bad Practice** | Default `MutableSharedFlow` (replay=0) for navigation/snackbar events — events can be lost before collector attaches.                                                          |
+| **Recommended**  | `Channel(BUFFERED).receiveAsFlow()` or SharedFlow with explicit replay/buffer for your delivery semantics.                                                                      |
+
+Tool support: Detekt, IntelliJ — rule `SharedFlowForOneshotEvents`.
+
+### 10.3 INTEROP_003 — ChannelFlow vs callbackFlow
+
+|                  | Description                                                                                                                                                                      |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Bad Practice** | `channelFlow` wrapping external callbacks without `awaitClose`; `callbackFlow` used only for internal coroutine emission.                                                        |
+| **Recommended**  | `callbackFlow` + `awaitClose` for external listeners; `channelFlow` for multi-coroutine emission inside the builder.                                                              |
+
+Tool support: Detekt, IntelliJ — rule `ChannelFlowVsCallbackFlow`.
+
+### 10.4 INTEROP_004 — Blocking Future get()
+
+|                  | Description                                                                                                                                                                      |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Bad Practice** | `Future.get()` / `CompletableFuture.get()` inside coroutines — blocks the dispatcher thread.                                                                                     |
+| **Recommended**  | `await()` from `kotlinx-coroutines-jdk8` or `kotlinx-coroutines-guava`.                                                                                                          |
+
+Tool support: Detekt, Android Lint, IntelliJ — rule `BlockingFutureGet`.
+
+### 14.1 DEBUG_001 — Missing CoroutineName
+
+|                  | Description                                                                                                                                                                      |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Bad Practice** | `launch` / `async` without `CoroutineName` in context — hard to debug in logs and Coroutines Debugger.                                                                           |
+| **Recommended**  | `launch(CoroutineName("load-user-${id}")) { }` for non-trivial work (opt-in Detekt rule).                                                                                        |
+
+Tool support: Detekt (opt-in, off by default) — rule `MissingCoroutineName`.
+
 ---
 
 ## Quick Reference Checklist
@@ -700,6 +844,14 @@ severity, false positives, platform scope, or analysis limits).
 | 9.2 | Cold vs hot (StateFlow/SharedFlow)          | ❌                 | ❌                                             | ❌                       | ⚠️ Doc                 | Decision guide; hard to automate “should be StateFlow”.                                                                                     |
 | 9.3 | collectLatest semantics                     | ❌                 | ❌                                             | ❌                       | ⚠️ Doc                 | Documentation; no automatic rule.                                                                                                           |
 | 9.4 | SharedFlow configuration                    | ❌                 | ⚠️ Optional                                   | ❌                       | ❌                      | SharedFlow() without params or with defaults; optional suggestion in Detekt.                                                                |
+| 1.5 | Sequential async/await                      | ❌                 | ✅ SequentialAsyncAwait                        | ❌                       | ✅ + Quick fix          | CONCUR_003; inline `async { }.await()` or sequential pattern.                                                                               |
+| 8.3 | collectAsState without lifecycle (Compose)    | ❌                 | ❌                                             | ✅ CollectAsStateWithoutLifecycle | ✅ + Quick fix | COMPOSE_001; Android Compose; excludes `@Preview`.                                                                                        |
+| 9.5 | Mutable flow exposed                        | ❌                 | ✅ MutableFlowExposed                          | ❌                       | ✅ + Quick fix          | FLOW_010 backing property pattern.                                                                                                          |
+| 9.6 | Missing catch in Flow chain                 | ❌                 | ✅ MissingCatchInFlow                          | ✅ MissingCatchInFlow     | ✅ + Quick fix          | FLOW_005; terminal collect/launchIn without upstream catch.                                                                                 |
+| 6.4 | runBlocking instead of runTest              | ❌                 | ✅ RunBlockingInsteadOfRunTest                 | ✅                       | ✅ Intention            | TEST_004 virtual time in tests.                                                                                                             |
+| 10.1 | suspendCoroutine without cancellation      | ✅ Error           | ✅ SuspendCoroutineWithoutCancellation         | ❌                       | ✅ + Quick fix          | INTEROP_001.                                                                                                                                |
+| 10.2 | callbackFlow without awaitClose            | ✅ Error           | ✅ CallbackFlowWithoutAwaitClose               | ❌                       | ✅ + Quick fix          | INTEROP_002.                                                                                                                                |
+| 11.1 | Dispatchers.IO in commonMain               | ❌                 | ✅ DispatchersIOInCommonMain                   | ✅                       | ✅                      | KMP_001 Error on KMP common source sets.                                                                                                      |
 
 ### Legend
 

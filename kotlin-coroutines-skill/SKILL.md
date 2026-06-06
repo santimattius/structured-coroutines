@@ -3,7 +3,7 @@ name: kotlin-coroutines-skill
 description: "Expert guidance on Kotlin Coroutines and structured concurrency. Use when developers write or review async Kotlin code and need help ensuring correctness, safety, and testability of coroutine-based implementations."
 license: MIT
 metadata:
-  version: "2.0.0"
+  version: "3.0.0"
 ---
 
 # Kotlin Coroutines
@@ -98,6 +98,8 @@ When analyzing Kotlin projects for coroutine issues:
 
 ## Triage-First Playbook (Topic / Error → Reference)
 
+Each `references/ref-*.md` file is **self-contained** (Bad Practice, Recommended, Why, Quick fix). Open the linked file directly — no dependency on repo docs when the skill is installed standalone.
+
 | Topic / Error / Question                                                                      | Reference file                                                                                                            |
 |-----------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------|
 | **GlobalScope**, scope lifetime, "where should I launch?"                                     | [ref-1-1-global-scope.md](references/ref-1-1-global-scope.md)                                                             |
@@ -132,6 +134,39 @@ When analyzing Kotlin projects for coroutine issues:
 | **Cold vs hot flows**, StateFlow, SharedFlow, shareIn, stateIn, collect                       | [ref-9-2-cold-vs-hot-flows.md](references/ref-9-2-cold-vs-hot-flows.md)                                                   |
 | **collectLatest semantics**, cancels previous block, search vs complete work                  | [ref-9-3-collect-latest.md](references/ref-9-3-collect-latest.md)                                                         |
 | **SharedFlow configuration**, replay, extraBufferCapacity, onBufferOverflow, backpressure     | [ref-9-4-shared-flow-configuration.md](references/ref-9-4-shared-flow-configuration.md)                                   |
+| **suspendCoroutine without cancellation**, callback bridge                                     | [ref-101-interop-suspend-cancellable.md](references/ref-101-interop-suspend-cancellable.md)                               |
+| **callbackFlow without awaitClose**, listener leak                                             | [ref-102-interop-callbackflow-awaitclose.md](references/ref-102-interop-callbackflow-awaitclose.md)                         |
+| **channelFlow vs callbackFlow**, wrong flow builder                                            | [ref-103-interop-channelflow-callbackflow.md](references/ref-103-interop-channelflow-callbackflow.md)                       |
+| **Future.get in coroutine**, CompletableFuture blocking                                        | [ref-104-interop-future-get.md](references/ref-104-interop-future-get.md)                                                 |
+| **MutableStateFlow exposed publicly**, UDF violation                                           | [ref-95-flow-mutable-exposed.md](references/ref-95-flow-mutable-exposed.md)                                                |
+| **Flow chain missing catch**, launchIn/collect without catch                                   | [ref-96-flow-missing-catch.md](references/ref-96-flow-missing-catch.md)                                                     |
+| **runBlocking in tests**, runTest virtual time                                                 | [ref-64-test-runtest.md](references/ref-64-test-runtest.md)                                                                 |
+| **Dispatchers.IO in commonMain**, KMP crash                                                    | [ref-111-kmp-dispatchers-io.md](references/ref-111-kmp-dispatchers-io.md)                                                   |
+| **runBlocking in commonMain**, KMP deadlock                                                    | [ref-112-kmp-runblocking.md](references/ref-112-kmp-runblocking.md)                                                         |
+| **collectAsState without lifecycle**, Compose background collection                            | [ref-83-compose-collect-lifecycle.md](references/ref-83-compose-collect-lifecycle.md)                                       |
+| **rememberCoroutineScope for init**, LaunchedEffect                                            | [ref-84-compose-remember-scope-init.md](references/ref-84-compose-remember-scope-init.md)                                 |
+| **Side effect in composable body**, recomposition                                              | [ref-85-compose-side-effect.md](references/ref-85-compose-side-effect.md)                                                 |
+| **Hardcoded Dispatchers in class**, testability                                                | [ref-65-test-hardcoded-dispatcher.md](references/ref-65-test-hardcoded-dispatcher.md)                                       |
+| **advanceUntilIdle missing in runTest**, flaky test                                            | [ref-66-test-not-completed.md](references/ref-66-test-not-completed.md)                                                     |
+| **flatMapLatest vs merge vs concat**, Flow operator choice                                     | [ref-910-flow-flatmap-choice.md](references/ref-910-flow-flatmap-choice.md)                                             |
+| **SharedFlow one-shot events**, Channel for navigation                                         | [ref-911-flow-oneshot-events.md](references/ref-911-flow-oneshot-events.md)                                               |
+| **synchronized in coroutine**, Mutex                                                             | [ref-121-concur-synchronized.md](references/ref-121-concur-synchronized.md)                                                 |
+| **Sequential async await**, wasted Deferred                                                    | [ref-15-concur-sequential-async.md](references/ref-15-concur-sequential-async.md)                                           |
+| **stateIn Eagerly on ViewModel**, WhileSubscribed                                              | [ref-97-flow-statein-eagerly.md](references/ref-97-flow-statein-eagerly.md)                                               |
+| **launchIn GlobalScope**, unstructured Flow collection                                       | [ref-98-flow-launchin-unstructured.md](references/ref-98-flow-launchin-unstructured.md)                                     |
+| **Side effect in map operator**, onEach for effects                                            | [ref-99-flow-sideeffect-map.md](references/ref-99-flow-sideeffect-map.md)                                                   |
+| **MDC not propagated**, MDCContext                                                             | [ref-37-backend-mdc.md](references/ref-37-backend-mdc.md)                                                                   |
+| **Blocking JDBC in backend coroutine**, Dispatchers.IO                                         | [ref-131-backend-blocking.md](references/ref-131-backend-blocking.md)                                                     |
+| **Missing CoroutineName**, debugging                                                           | [ref-141-debug-coroutine-name.md](references/ref-141-debug-coroutine-name.md)                                               |
+| **Redundant nested withContext**, same dispatcher twice                                        | [ref-36-concur-redundant-withcontext.md](references/ref-36-concur-redundant-withcontext.md)                               |
+| **MainScope without cancel**, KMP presenter leak                                               | [ref-113-kmp-mainscope-without-cancel.md](references/ref-113-kmp-mainscope-without-cancel.md)                             |
+| **Shared mutable state in launch**, race on ArrayList                                          | [ref-122-concur-shared-mutable-state.md](references/ref-122-concur-shared-mutable-state.md)                               |
+| **withTimeout cancels parent scope**, use withTimeoutOrNull                                    | [ref-4-6-withtimeout-scope-cancellation.md](references/ref-4-6-withtimeout-scope-cancellation.md)                         |
+| **Job in builder**, SupervisorJob as argument                                                  | [ref-3-3-job-context-builders.md](references/ref-3-3-job-context-builders.md)                                             |
+| **External scope launch from suspend**, structured concurrency break                           | [ref-1-3-breaking-structured-concurrency.md](references/ref-1-3-breaking-structured-concurrency.md)                       |
+| **Inline CoroutineScope**, scope(CoroutineScope(...))                                          | [ref-1-3-breaking-structured-concurrency.md](references/ref-1-3-breaking-structured-concurrency.md)                        |
+| **Scope reuse after cancel**, launch after scope.cancel()                                      | [ref-4-4-reusing-cancelled-scope.md](references/ref-4-4-reusing-cancelled-scope.md)                                       |
+| **ViewModelScope leak**, collect without lifecycle                                             | [ref-8-2-lifecycle-aware-flow.md](references/ref-8-2-lifecycle-aware-flow.md)                                               |
 
 ## Core Patterns Reference
 

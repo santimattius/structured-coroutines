@@ -1,0 +1,58 @@
+# Maps skill reference files to BEST_PRACTICES rule codes.
+# Run: python3 kotlin-coroutines-skill/scripts/generate_refs.py
+
+refs:
+  - file: ref-15-concur-sequential-async.md
+    rule: CONCUR_003
+  - file: ref-36-concur-redundant-withcontext.md
+    rule: CONCUR_004
+  - file: ref-37-backend-mdc.md
+    rule: BACKEND_002
+  - file: ref-64-test-runtest.md
+    rule: TEST_004
+  - file: ref-65-test-hardcoded-dispatcher.md
+    rule: TEST_005
+  - file: ref-66-test-not-completed.md
+    rule: TEST_006
+  - file: ref-83-compose-collect-lifecycle.md
+    rule: COMPOSE_001
+  - file: ref-84-compose-remember-scope-init.md
+    rule: COMPOSE_002
+  - file: ref-85-compose-side-effect.md
+    rule: COMPOSE_003
+  - file: ref-95-flow-mutable-exposed.md
+    rule: FLOW_010
+  - file: ref-96-flow-missing-catch.md
+    rule: FLOW_005
+  - file: ref-97-flow-statein-eagerly.md
+    rule: FLOW_006
+  - file: ref-98-flow-launchin-unstructured.md
+    rule: FLOW_007
+  - file: ref-99-flow-sideeffect-map.md
+    rule: FLOW_008
+  - file: ref-910-flow-flatmap-choice.md
+    rule: FLOW_009
+  - file: ref-911-flow-oneshot-events.md
+    rule: FLOW_011
+  - file: ref-101-interop-suspend-cancellable.md
+    rule: INTEROP_001
+  - file: ref-102-interop-callbackflow-awaitclose.md
+    rule: INTEROP_002
+  - file: ref-103-interop-channelflow-callbackflow.md
+    rule: INTEROP_003
+  - file: ref-104-interop-future-get.md
+    rule: INTEROP_004
+  - file: ref-111-kmp-dispatchers-io.md
+    rule: KMP_001
+  - file: ref-112-kmp-runblocking.md
+    rule: KMP_002
+  - file: ref-113-kmp-mainscope-without-cancel.md
+    rule: KMP_003
+  - file: ref-121-concur-synchronized.md
+    rule: CONCUR_001
+  - file: ref-122-concur-shared-mutable-state.md
+    rule: CONCUR_002
+  - file: ref-131-backend-blocking.md
+    rule: BACKEND_001
+  - file: ref-141-debug-coroutine-name.md
+    rule: DEBUG_001

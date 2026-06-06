@@ -281,6 +281,16 @@ structuredCoroutines {
 }
 ```
 
+**Spring / JVM backend (v1.0.0):** same compiler strictness as Ktor; apply `spring-backend-detekt.yml` from plugin resources.
+
+```kotlin
+structuredCoroutines {
+    useSpringBackendProfile()
+}
+```
+
+**Note:** `@Transactional suspend fun` with JDBC blocks a thread. For non-blocking stacks use **R2DBC** (or keep blocking work inside `withContext(Dispatchers.IO)`).
+
 **Gradual Detekt adoption (v0.9.0 MVP):** baseline file + `generateCoroutinesBaseline` task.
 
 ```kotlin
