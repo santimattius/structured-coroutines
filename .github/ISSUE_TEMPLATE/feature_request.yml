@@ -1,0 +1,68 @@
+name: Feature request
+description: Suggest a new rule, inspection, or improvement
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the coroutine pattern or tooling gap you want addressed.
+
+  - type: dropdown
+    name: component
+    attributes:
+      label: Target layer
+      description: Where should this live?
+      options:
+        - Compiler plugin
+        - Detekt rules
+        - Android Lint rules
+        - IntelliJ plugin
+        - Gradle plugin / profile
+        - Documentation / skill only
+        - Unsure
+    validations:
+      required: true
+
+  - type: textarea
+    name: problem
+    attributes:
+      label: Problem
+      description: What unsafe or confusing coroutine pattern does this address?
+    validations:
+      required: true
+
+  - type: textarea
+    name: proposal
+    attributes:
+      label: Proposed solution
+      description: How should the toolkit detect or fix it?
+    validations:
+      required: true
+
+  - type: textarea
+    name: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other approaches you thought about
+    validations:
+      required: false
+
+  - type: textarea
+    name: example
+    attributes:
+      label: Code example
+      description: Bad pattern and preferred alternative
+      render: kotlin
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Checklist
+      options:
+        - label: This aligns with structured concurrency best practices
+          required: true
+        - label: I checked docs/BEST_PRACTICES_COROUTINES.md and rule-codes.yml for overlap
+          required: true
