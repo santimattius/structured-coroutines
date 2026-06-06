@@ -68,6 +68,9 @@ The plugin provides four main feature categories:
 
 ## Inspections
 
+> **v1.0.0:** **35 inspections** aligned with [`docs/rule-codes.yml`](../docs/rule-codes.yml).  
+> Includes Flow Chain Analyzer intention, Compose/KMP/interop rules from v0.8–v1.0.
+
 ### Overview
 
 | Inspection | Severity | Description |

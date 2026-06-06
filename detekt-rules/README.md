@@ -138,6 +138,9 @@ structured-coroutines:
 
 ## Rules Overview
 
+> **v1.0.0:** **40 Detekt rules** covering **51 documented patterns** (not every pattern has a Detekt rule).  
+> Canonical manifest: [`docs/rule-codes.yml`](../docs/rule-codes.yml) · suppressions: [`docs/SUPPRESSING_RULES.md`](../docs/SUPPRESSING_RULES.md).
+
 ### Summary Table
 
 | Rule | Category | Severity | Description |

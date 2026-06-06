@@ -273,4 +273,14 @@ interface StructuredCoroutinesExtension {
         suspendCoroutineWithoutCancellation.set("error")
         callbackFlowWithoutAwaitClose.set("error")
     }
+
+    /**
+     * Spring/JVM backend profile (v1.0.0): same compiler strictness as [useKtorBackendProfile];
+     * Detekt preset in `spring-backend-detekt.yml` on the consumer project.
+     *
+     * Note: `@Transactional` + `suspend fun` requires a non-blocking driver (e.g. R2DBC), not JDBC.
+     */
+    fun useSpringBackendProfile() {
+        useKtorBackendProfile()
+    }
 }

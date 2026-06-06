@@ -129,6 +129,9 @@ Configure Android Lint rules in `lint.xml`:
 
 ## Rules Overview
 
+> **v1.0.0:** **35 Android Lint detectors** aligned with [`docs/rule-codes.yml`](../docs/rule-codes.yml).  
+> Includes Compose (COMPOSE_001–003), KMP, and interop rules from v0.8–v1.0.
+
 ### Summary Table
 
 | Rule | Category | Severity | Description |

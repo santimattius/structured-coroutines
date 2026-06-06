@@ -48,6 +48,15 @@ list of codes and suppression IDs per tool is in [rule-codes.yml](rule-codes.yml
 | KMP_003      | 11.3 | —                                                         | `MainScopeWithoutCancel`                     | —                                             | —                                             |
 | BACKEND_001  | 13.1 | —                                                         | `BlockingCallInCoroutineBackend`             | —                                             | —                                             |
 | BACKEND_002  | 3.7  | —                                                         | `ThreadLocalNotPropagated`                   | —                                             | —                                             |
+| TEST_005     | 6.5  | —                                                         | `HardcodedDispatcherInClass`               | —                                             | `HardcodedDispatcherInClass`                  |
+| TEST_006     | 6.6  | —                                                         | —                                            | —                                             | `CoroutineNotCompletedInTest`                 |
+| COMPOSE_002  | 8.4  | —                                                         | —                                            | `RememberScopeForInit`                       | `RememberScopeForInit`                        |
+| COMPOSE_003  | 8.5  | —                                                         | —                                            | `SideEffectInComposable`                     | —                                             |
+| FLOW_009     | 9.10 | —                                                         | —                                            | —                                             | `FlatMapOperatorChoice`                       |
+| FLOW_011     | 9.11 | —                                                         | `SharedFlowForOneshotEvents`                 | —                                             | `SharedFlowForOneshotEvents`                  |
+| INTEROP_003  | 10.3 | —                                                         | `ChannelFlowVsCallbackFlow`                  | —                                             | `ChannelFlowVsCallbackFlow`                   |
+| INTEROP_004  | 10.4 | —                                                         | `BlockingFutureGet`                          | `BlockingFutureGet`                          | `BlockingFutureGet`                           |
+| DEBUG_001    | 14.1 | —                                                         | `MissingCoroutineName`                       | —                                             | —                                             |
 
 **Note:** “—” means the rule is not implemented in that tool. When the same practice is reported by
 more than one diagnostic (e.g. SCOPE_003), suppress each identifier that applies to the code you’re

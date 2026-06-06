@@ -1,0 +1,334 @@
+# Kotlin examples and optional Why overrides for generated skill refs.
+# Prose (Bad Practice / Recommended) comes from docs/BEST_PRACTICES_COROUTINES.md.
+
+CONCUR_003:
+  why: |
+    Sequential `async`/`await` adds scheduling overhead without speedup. Parallel `async` inside
+    `coroutineScope` preserves structured concurrency: if one child fails, siblings are cancelled
+    unless you use `supervisorScope`.
+  quick_fix:
+    erroneous: "`val u = async { getUser() }.await(); val m = async { getMetrics() }.await()`"
+    optimized: "`coroutineScope { val u = async { getUser() }; val m = async { getMetrics() }; … }`"
+
+CONCUR_004:
+  bad: |
+    // BAD: nested withContext on the same dispatcher binding
+    suspend fun load(io: CoroutineDispatcher) = withContext(io) {
+        withContext(io) { repository.fetch() }
+    }
+  good: |
+    // GOOD: single context switch
+    suspend fun load(io: CoroutineDispatcher) = withContext(io) {
+        repository.fetch()
+    }
+  why: |
+    Redundant context switches add overhead and obscure intent. Remove the inner `withContext`
+    when you are already on that dispatcher.
+
+CONCUR_001:
+  bad: |
+    // BAD: synchronized blocks the dispatcher thread inside a coroutine
+    suspend fun increment() = synchronized(lock) { counter++ }
+  good: |
+    // GOOD: Mutex suspends instead of blocking
+    suspend fun increment() = mutex.withLock { counter++ }
+  why: |
+    `synchronized` is JVM thread blocking. Coroutines multiplex many tasks on few threads;
+    blocking a dispatcher thread stalls all coroutines scheduled on it.
+
+CONCUR_002:
+  bad: |
+    // BAD: unsynchronized mutations from parallel launch
+    val results = mutableListOf<Int>()
+    coroutineScope {
+        repeat(10) { i -> launch { results.add(i) } }
+    }
+  good: |
+    // GOOD: aggregate with async/awaitAll
+    coroutineScope {
+        val parts = (1..10).map { i -> async { compute(i) } }
+        parts.awaitAll()
+    }
+  why: |
+    Concurrent unsynchronized mutations cause lost updates and rare crashes. Coroutines
+    interleave at suspend points; fan-out `launch` without coordination is a data race.
+
+BACKEND_002:
+  bad: |
+    // BAD: MDC lost after withContext switches thread
+    suspend fun audit() = withContext(Dispatchers.IO) {
+        log.info("user=${MDC.get("userId")}")
+    }
+  good: |
+    // GOOD: propagate MDC across dispatcher boundaries
+    suspend fun audit() = withContext(Dispatchers.IO + MDCContext()) {
+        log.info("user=${MDC.get("userId")}")
+    }
+  why: |
+    `ThreadLocal` and SLF4J MDC are thread-bound. Without `MDCContext()`, logs after
+    `withContext` lose trace or user context.
+
+BACKEND_001:
+  bad: |
+    // BAD: blocking JDBC on Default dispatcher
+    suspend fun findUser(id: String): User = jdbcTemplate.queryForObject(sql, id)
+  good: |
+    // GOOD: isolate blocking I/O
+    suspend fun findUser(id: String): User = withContext(Dispatchers.IO) {
+        jdbcTemplate.queryForObject(sql, id)
+    }
+  why: |
+    Server coroutines multiplex on a limited pool. Blocking on `Default` exhausts workers
+    and increases latency under load.
+
+TEST_004:
+  why: |
+    Unit tests should be deterministic and fast. `runBlocking` ties tests to wall-clock time;
+    `runTest` isolates coroutine behavior under virtual time.
+
+TEST_005:
+  bad: |
+    // BAD: hardcoded dispatcher — hard to test
+    class UserRepository {
+        suspend fun load() = withContext(Dispatchers.IO) { api.fetch() }
+    }
+  good: |
+    // GOOD: inject dispatcher for tests
+    class UserRepository(private val io: CoroutineDispatcher = Dispatchers.IO) {
+        suspend fun load() = withContext(io) { api.fetch() }
+    }
+  why: |
+    Hardcoded dispatchers couple logic to real thread pools. Injection lets tests use
+    `StandardTestDispatcher` for deterministic execution.
+
+TEST_006:
+  bad: |
+    // BAD: assertion before launched work completes
+    @Test fun loads() = runTest {
+        viewModel.load()
+        assertEquals(Loaded, viewModel.state.value)
+    }
+  good: |
+    // GOOD: advance virtual time / idle before assert
+    @Test fun loads() = runTest {
+        viewModel.load()
+        advanceUntilIdle()
+        assertEquals(Loaded, viewModel.state.value)
+    }
+  why: |
+    `runTest` does not automatically run all launched coroutines before the next line.
+    Assertions race with pending children and produce flaky failures.
+
+COMPOSE_001:
+  why: |
+    Compose composition can outlive visible lifecycle states. Without lifecycle-aware
+    collection, ViewModel flows keep collecting and recomposing off-screen UI.
+  quick_fix:
+    erroneous: "`viewModel.uiState.collectAsState()` in Android screen"
+    optimized: "`viewModel.uiState.collectAsStateWithLifecycle()`"
+
+COMPOSE_002:
+  bad: |
+    // BAD: launch in Composable body — reruns on recomposition
+    @Composable
+    fun ProfileScreen(vm: ProfileViewModel) {
+        val scope = rememberCoroutineScope()
+        scope.launch { vm.loadProfile() }
+        Text(vm.name)
+    }
+  good: |
+    // GOOD: one-shot effect keyed to entry
+    @Composable
+    fun ProfileScreen(vm: ProfileViewModel) {
+        LaunchedEffect(vm.userId) { vm.loadProfile() }
+        Text(vm.name)
+    }
+  why: |
+    The Composable body must be idempotent. Side-effectful `launch` in the body ties work
+    to recomposition count, causing duplicate loads.
+
+COMPOSE_003:
+  bad: |
+    // BAD: analytics on every recomposition
+    @Composable
+    fun HomeScreen() {
+        analytics.logScreen("home")
+        Text("Welcome")
+    }
+  good: |
+    // GOOD: scoped side effect
+    @Composable
+    fun HomeScreen() {
+        SideEffect { analytics.logScreen("home") }
+        Text("Welcome")
+    }
+  why: |
+    Recomposition can happen frequently. Unscoped side effects in the body multiply
+    executions and break predictability.
+
+FLOW_010:
+  why: |
+    Public mutable flows let any caller bypass business rules and race updates. The
+    backing-property pattern is the standard ViewModel UDF approach.
+
+FLOW_005:
+  why: |
+    Flow operators run in the collecting coroutine's context. An uncaught exception upstream
+    cancels `viewModelScope` or `lifecycleScope`, often as a silent production crash.
+
+FLOW_006:
+  bad: |
+    // BAD: upstream always active — even with zero collectors
+    val uiState = repo.flow().stateIn(viewModelScope, SharingStarted.Eagerly, Loading)
+  good: |
+    // GOOD: stops shortly after last collector unsubscribes
+    val uiState = repo.flow().stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5_000),
+        Loading,
+    )
+  why: |
+    `Eagerly` keeps upstream active for the scope lifetime. `WhileSubscribed` matches
+    Android lifecycle collection patterns and saves battery/network.
+
+FLOW_007:
+  bad: |
+    // BAD: orphan Flow collector
+    fun observe(events: Flow<Event>) {
+        events.launchIn(GlobalScope)
+    }
+  good: |
+    // GOOD: tied to structured scope
+    fun observe(events: Flow<Event>) {
+        events.launchIn(viewModelScope)
+    }
+  why: |
+    `launchIn` runs until the scope is cancelled. An unstructured scope never cancels with
+    your UI lifecycle, leaking work.
+
+FLOW_008:
+  bad: |
+    // BAD: side effect inside map
+    items.map { item ->
+        analytics.track(item.id)
+        item.toUi()
+    }
+  good: |
+    // GOOD: pure map + onEach for effects
+    items.onEach { analytics.track(it.id) }.map { it.toUi() }
+  why: |
+    `map` should be a pure transform. Mixing effects in `map` surprises readers and may
+    repeat on re-collection.
+
+FLOW_009:
+  bad: |
+    // BAD: flatMapLatest cancels in-flight download when query changes slowly
+    searchQuery.flatMapLatest { url -> downloadFile(url) }
+  good: |
+    // GOOD: pick operator for semantics
+    // Search (last wins): flatMapLatest { repo.search(it) }
+    // Parallel downloads: flatMapMerge(concurrency = 4) { download(it) }
+    // Ordered pages: flatMapConcat { fetchPage(it) }
+  why: |
+    Each `flatMap*` variant defines different cancellation and ordering. The wrong choice
+    causes lost work, stale UI, or unnecessary serialization.
+
+FLOW_011:
+  bad: |
+    // BAD: SharedFlow with replay=0 can drop one-shot events
+    private val _events = MutableSharedFlow<NavigationEvent>()
+    val events = _events.asSharedFlow()
+  good: |
+    // GOOD: Channel buffers one-shot events until collected
+    private val _events = Channel<NavigationEvent>(Channel.BUFFERED)
+    val events = _events.receiveAsFlow()
+  why: |
+    Default `SharedFlow` does not buffer for late subscribers. One-shot events need a
+    channel or explicit replay/buffer policy.
+
+INTEROP_001:
+  why: |
+    Cancellation must be wired for callback APIs. Without `invokeOnCancellation`, cancelled
+    coroutines leave zombie callbacks that violate structured concurrency.
+
+INTEROP_002:
+  why: |
+    `awaitClose` suspends until the collector completes or cancels, giving the hook to tear
+    down platform callbacks. Without it, flows leak and may throw at runtime.
+
+INTEROP_003:
+  bad: |
+    // BAD: channelFlow for external GPS callback without close semantics
+    fun locationUpdates(): Flow<Location> = channelFlow {
+        val cb = LocationCallback { trySend(it) }
+        manager.register(cb)
+    }
+  good: |
+    // GOOD: callbackFlow + awaitClose for external listeners
+    fun locationUpdates(): Flow<Location> = callbackFlow {
+        val cb = LocationCallback { trySend(it) }
+        manager.register(cb)
+        awaitClose { manager.unregister(cb) }
+    }
+  why: |
+    `callbackFlow` is for register/unregister lifecycle. `channelFlow` is for fan-in from
+    coroutines launched inside the builder.
+
+INTEROP_004:
+  bad: |
+    // BAD: blocks dispatcher thread
+    suspend fun load(future: CompletableFuture<User>): User = future.get()
+  good: |
+    // GOOD: suspend until complete without blocking
+    suspend fun load(future: CompletableFuture<User>): User = future.await()
+  why: |
+    Coroutines assume suspend points free the thread. Blocking `get()` on `Default` or `Main`
+    reduces throughput and can cause ANRs or thread starvation.
+
+KMP_001:
+  why: |
+    `Dispatchers.IO` does not exist on Kotlin/Native or JS. Shared KMP code must inject
+    dispatchers or use `expect`/`actual` per platform.
+  quick_fix:
+    erroneous: "`withContext(Dispatchers.IO)` in commonMain"
+    optimized: "inject `CoroutineDispatcher` or `expect`/`actual` ioDispatcher"
+
+KMP_002:
+  bad: |
+    // BAD: runBlocking in commonMain — breaks JS / Native
+    fun loadData(): Data = runBlocking { repository.fetch() }
+  good: |
+    // GOOD: suspend API from shared code
+    suspend fun loadData(): Data = repository.fetch()
+  why: |
+    `runBlocking` blocks a thread — incompatible with JS and dangerous on Native UI threads.
+    KMP shared layers should be suspend-first.
+
+KMP_003:
+  bad: |
+    // BAD: MainScope never cancelled
+    class Presenter {
+        private val scope = MainScope()
+        fun start() = scope.launch { poll() }
+    }
+  good: |
+    // GOOD: explicit cleanup from platform lifecycle
+    class Presenter {
+        private val scope = MainScope()
+        fun start() = scope.launch { poll() }
+        fun dispose() = scope.cancel()
+    }
+  why: |
+    `MainScope` is not tied to lifecycle automatically. Without `cancel()`, coroutines keep
+    running after the UI owner is gone.
+
+DEBUG_001:
+  bad: |
+    // BAD: anonymous coroutine — hard to debug
+    scope.launch { syncOrders() }
+  good: |
+    // GOOD: named for logs and debugger
+    scope.launch(CoroutineName("sync-orders")) { syncOrders() }
+  why: |
+    Named coroutines appear in debugging tools and structured logs, shortening time to find
+    which job failed or is still running.

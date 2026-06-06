@@ -6,7 +6,26 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ---
 
-## [0.9.0] — Unreleased
+## [1.0.0] — 2026-06-04
+
+### Added
+
+- **COMPOSE_002** `RememberScopeForInit` — Lint, IntelliJ + LaunchedEffect quick-fix
+- **COMPOSE_003** `SideEffectInComposable` — Lint
+- **TEST_005** `HardcodedDispatcherInClass` — Detekt, IntelliJ
+- **TEST_006** `CoroutineNotCompletedInTest` — IntelliJ
+- **FLOW_009** `FlatMapOperatorChoice` — IntelliJ (info guidance)
+- **FLOW_011** `SharedFlowForOneshotEvents` — Detekt, IntelliJ + Channel quick-fix
+- **INTEROP_003** `ChannelFlowVsCallbackFlow` — Detekt, IntelliJ
+- **INTEROP_004** `BlockingFutureGet` — Detekt, Lint, IntelliJ + await quick-fix
+- **DEBUG_001** `MissingCoroutineName` — Detekt (opt-in, inactive by default)
+- IntelliJ **Flow Chain Analyzer** intention (`AnalyzeFlowChainIntention`)
+- Gradle **`useSpringBackendProfile()`** + `spring-backend-detekt.yml`
+- Docs: platform guides, migration guide v0.7→v1.0, **51** entries in `rule-codes.yml`
+- **COMPOSE_001** quick-fix: `collectAsStateWithLifecycle`
+- BEST_PRACTICES §§1.5, 8.3–8.5, 6.5–6.6, 9.10–9.11, 10.3–10.4, 14.1
+
+## [0.9.0] — 2026-06-04
 
 ### Changed
 

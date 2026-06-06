@@ -1,15 +1,8 @@
 package io.github.santimattius.structured.sample.detekt
 
 import java.util.concurrent.CompletableFuture
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 
-class BlockingFutureGetSample(private val scope: CoroutineScope) {
-    fun start() {
-        scope.launch(Dispatchers.Default) {
-            val future = CompletableFuture<String>()
-            future.get()
-        }
-    }
-}
+/** Demonstrates INTEROP_004: blocking [CompletableFuture.get] inside coroutine code. */
+
+suspend fun badAwaitFuture(future: CompletableFuture<String>): String = future.get()

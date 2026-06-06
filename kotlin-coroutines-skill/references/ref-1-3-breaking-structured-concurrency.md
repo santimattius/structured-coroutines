@@ -2,7 +2,8 @@
 
 ## Bad Practice
 
-Inside a suspend function or `coroutineScope`, launching work in an **external scope** without justification (e.g., `backgroundScope.launch { }`). This means work won’t be cancelled with the caller, complicating resource cleanup, testing, and traceability.
+- Inside a suspend function or `coroutineScope`, launching work in an **external scope** without justification (e.g., `backgroundScope.launch { }`). Work won’t be cancelled with the caller.
+- Creating an **inline `CoroutineScope`** (`CoroutineScope(Dispatchers.Default).launch { }` or `val scope = CoroutineScope(…)`) instead of a lifecycle-bound or injected scope. Orphan scopes are never cancelled automatically.
 
 ## Recommended
 
@@ -20,3 +21,10 @@ When you launch in an external scope from inside a suspend function, the new cor
 |-----------|-----------|
 | Inside suspend: `backgroundScope.launch { sync() }` | `coroutineScope { launch { sync() } }` so it’s a child and completes/cancels with the caller |
 | Same, when work must outlive caller | Keep external scope but add a comment: “Intentionally outlives caller for offline sync.” |
+| `CoroutineScope(Dispatchers.IO).launch { fetch() }` | `viewModelScope.launch { fetch() }` or inject `CoroutineScope` / use `coroutineScope { launch { } }` inside suspend |
+
+## Toolkit (Structured Coroutines)
+
+- **Rule code:** `SCOPE_003`
+- **Compiler / Detekt / Lint / IntelliJ:** `ExternalScopeLaunch`, `InlineCoroutineScope`
+- **Suppress:** `@Suppress("ExternalScopeLaunch")`, `@Suppress("InlineCoroutineScope")`

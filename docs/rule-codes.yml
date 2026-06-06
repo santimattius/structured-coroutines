@@ -439,12 +439,94 @@ rules:
     intellij: []
     default_severity: warning
 
-  - code: INTEROP_004
-    section: "10.4"
-    title: "Blocking Future get()"
-    doc_anchor: "104-interop_004--blocking-future-get"
+  - code: TEST_006
+    section: "6.6"
+    title: "Coroutine Not Completed In Test"
+    doc_anchor: "66-test_006--coroutine-not-completed-in-test"
     compiler: []
-    detekt: [BlockingFutureGet]
-    lint: [BlockingFutureGet]
-    intellij: [BlockingFutureGet]
+    detekt: []
+    lint: []
+    intellij: [CoroutineNotCompletedInTest]
     default_severity: warning
+
+  - code: FLOW_009
+    section: "9.10"
+    title: "FlatMap Operator Choice"
+    doc_anchor: "910-flow_009--flatmap-operator-choice"
+    compiler: []
+    detekt: []
+    lint: []
+    intellij: [FlatMapOperatorChoice]
+    default_severity: info
+
+  - code: SCOPE_004
+    section: "1.4"
+    title: "awaitAll and Exception Propagation"
+    doc_anchor: "14-scope_004--awaitall-and-exception-propagation"
+    compiler: []
+    detekt: []
+    lint: []
+    intellij: []
+    default_severity: warning
+    notes: "Documentation and skill guidance; heuristic inspections optional."
+
+  - code: CANCEL_006
+    section: "4.6"
+    title: "withTimeout and Scope Cancellation"
+    doc_anchor: "46-cancel_006--withtimeout-and-scope-cancellation"
+    compiler: []
+    detekt: [WithTimeoutScopeCancellation]
+    lint: []
+    intellij: [WithTimeoutScopeCancellation]
+    default_severity: warning
+
+  - code: EXCEPT_001
+    section: "5.1"
+    title: "SupervisorJob in Single Builder"
+    doc_anchor: "51-except_001--using-supervisorjob-as-an-argument-in-a-single-builder"
+    compiler: [JOB_IN_BUILDER_CONTEXT]
+    detekt: [JobInBuilderContext]
+    lint: [JobInBuilderContext]
+    intellij: [JobInBuilderContext]
+    default_severity: error
+
+  - code: CHANNEL_001
+    section: "7.1"
+    title: "Forgetting to Close Manual Channels"
+    doc_anchor: "71-channel_001--forgetting-to-close-manual-channels"
+    compiler: []
+    detekt: [ChannelNotClosed]
+    lint: [ChannelNotClosed]
+    intellij: []
+    default_severity: warning
+
+  - code: CHANNEL_002
+    section: "7.2"
+    title: "Sharing consumeEach Among Multiple Consumers"
+    doc_anchor: "72-channel_002--sharing-consumeeach-among-multiple-consumers"
+    compiler: []
+    detekt: [ConsumeEachMultipleConsumers]
+    lint: [ConsumeEachMultipleConsumers]
+    intellij: []
+    default_severity: warning
+
+  - code: FLOW_001
+    section: "9.1"
+    title: "Blocking Code in flow Builder"
+    doc_anchor: "91-flow_001--blocking-code-in-flow--builder"
+    compiler: []
+    detekt: [FlowBlockingCall]
+    lint: [FlowBlockingCall]
+    intellij: []
+    default_severity: warning
+
+  - code: FLOW_003
+    section: "9.3"
+    title: "collectLatest Cancels Previous Work"
+    doc_anchor: "93-flow_003--collectlatest-cancels-previous-work"
+    compiler: []
+    detekt: []
+    lint: []
+    intellij: []
+    default_severity: warning
+    notes: "Guidance in DECISION_GUIDE and skill; no dedicated static rule."

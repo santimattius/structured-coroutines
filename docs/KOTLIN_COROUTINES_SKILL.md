@@ -1,7 +1,7 @@
 # Kotlin Coroutines Skill
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/skill%20version-2.0.0-blue.svg)]()
+[![Version](https://img.shields.io/badge/skill%20version-3.0.0-blue.svg)]()
 
 Expert guidance for any AI coding tool that supports Agent Skills or custom instructions — **safe structured concurrency**, performance, and Kotlin 1.9/2.0+ best practices for Coroutines.
 
@@ -14,7 +14,7 @@ Inspired by the [Swift Concurrency Agent Skill](https://github.com/AvdLee/Swift-
 ## Why This Skill Exists
 
 - **Structured Concurrency is easy to get wrong:** `GlobalScope`, wrong Dispatchers, swallowed `CancellationException`, misuse of `SupervisorJob`, missing `withTimeoutOrNull`, or collecting Flow without lifecycle awareness lead to leaks, ANRs, and flaky behavior. Many AI answers repeat these mistakes.
-- **One source of truth:** This skill encodes a consistent checklist (32 practices) so every AI tool gives the same aligned recommendations.
+- **One source of truth:** This skill encodes a consistent checklist (51 documented patterns / 65+ triage entries) so every AI tool gives the same aligned recommendations.
 - **Faster reviews and migrations:** Teams can point their AI at this skill and get code that follows the same rules — no GlobalScope, main-safe suspend functions, injected dispatchers, virtual-time tests, lifecycle-aware Flow collection, and more.
 
 ---
@@ -24,7 +24,10 @@ Inspired by the [Swift Concurrency Agent Skill](https://github.com/AvdLee/Swift-
 | Asset | Description |
 |-------|-------------|
 | **SKILL.md** | Playbook (triage): strict rules, agent behavior contract, and a table mapping each topic/error to the right reference file. |
-| **references/** | One markdown file per best practice (32 files). Each has Bad / Recommended / Why / Quick fix. |
+| **SYSTEM_PROMPT.md** | Standalone agent system prompt with strict rules for INTEROP, KMP, Compose, Flow, and testing. |
+| **references/** | One self-contained markdown file per best practice (55+ files): Bad Practice, Recommended, Why, kotlin examples, Quick fix. Optional **Toolkit** block with Structured Coroutines rule codes when using the lint plugin. |
+| **ref-manifest.yml** + **ref-examples.yml** | Machine inputs for the reference generator (iter-2/3 rules). |
+| **scripts/generate_refs.py** | Regenerates manifest-listed refs from `BEST_PRACTICES` + `rule-codes.yml`. |
 
 ### References (per practice)
 
