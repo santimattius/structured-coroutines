@@ -593,7 +593,9 @@ Licensed under the Apache License, Version 2.0
 
 ## 🤝 Contributing
 
-Contributions welcome! Please submit a Pull Request.
+Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, module layout, and how to add rules.
+
+This project follows the [Code of Conduct](CODE_OF_CONDUCT.md). Security issues should be reported per [SECURITY.md](SECURITY.md), not via public issues.
 
 ```bash
 git clone https://github.com/santimattius/structured-coroutines.git

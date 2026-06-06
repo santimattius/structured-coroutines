@@ -1,0 +1,74 @@
+name: Bug report
+description: Report incorrect behavior, false positives, or build failures
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Please include enough detail to reproduce the issue.
+
+  - type: dropdown
+    name: component
+    attributes:
+      label: Component
+      description: Which part of the toolkit is affected?
+      options:
+        - Compiler plugin
+        - Gradle plugin
+        - Detekt rules
+        - Android Lint rules
+        - IntelliJ plugin
+        - Documentation / skill
+        - CI / build
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    name: version
+    attributes:
+      label: Version
+      description: Structured Coroutines version (e.g. 1.0.0) or commit SHA
+      placeholder: "1.0.0"
+    validations:
+      required: true
+
+  - type: textarea
+    name: description
+    attributes:
+      label: What happened?
+      description: Describe the bug and what you expected instead.
+    validations:
+      required: true
+
+  - type: textarea
+    name: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Minimal code sample, Gradle config, or command sequence
+      render: kotlin
+    validations:
+      required: true
+
+  - type: textarea
+    name: environment
+    attributes:
+      label: Environment
+      description: Kotlin version, Gradle version, IDE version, target platform (JVM/Android/KMP), etc.
+      placeholder: |
+        Kotlin 2.3.0
+        Gradle 8.12
+        IntelliJ IDEA 2026.1
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues for duplicates
+          required: true
+        - label: I can provide a minimal reproduction (or will attach one later)
+          required: true
