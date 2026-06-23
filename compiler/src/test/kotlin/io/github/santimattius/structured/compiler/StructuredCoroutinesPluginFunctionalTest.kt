@@ -56,15 +56,19 @@ class StructuredCoroutinesPluginFunctionalTest {
 
         // build.gradle.kts - version from system property (set by test task) or default for local runs
         val pluginVersion = System.getProperty("structuredCoroutines.version", "0.3.0")
+        val kotlinVersion = System.getProperty("kotlinVersion")
+            ?: error("kotlinVersion system property not set — check compiler/build.gradle.kts tasks.test block")
+        val coroutinesVersion = System.getProperty("coroutinesVersion")
+            ?: error("coroutinesVersion system property not set — check compiler/build.gradle.kts tasks.test block")
         File(projectDir, "build.gradle.kts").writeText("""
             plugins {
-                kotlin("jvm") version "2.3.20"
+                kotlin("jvm") version "$kotlinVersion"
                 id("io.github.santimattius.structured-coroutines") version "$pluginVersion"
             }
-            
+
             dependencies {
                 implementation("io.github.santimattius:structured-coroutines-annotations:$pluginVersion")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
             }
             
             kotlin {

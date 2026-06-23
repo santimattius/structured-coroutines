@@ -6,6 +6,22 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ---
 
+## [1.0.1] — 2026-06-23
+
+### Fixed
+
+- Kotlin 2.4.0 binary incompatibility in the compiler plugin caused by KT-83341 (`FirExtensionRegistrarAdapter.Companion` no longer extends `ProjectExtensionDescriptor`). The plugin is now compiled and published against Kotlin 2.4.0.
+- Added `@OptIn(CompilerConfiguration.Internals::class)` in `ScoroutinesCallCheckerExtension` and `PluginConfigurationInteropOptionsTest` to satisfy the new opt-in requirement introduced in Kotlin 2.4.0.
+
+### Changed
+
+- Bumped Kotlin from `2.3.20` to `2.4.0` in the version catalog (`gradle/libs.versions.toml`).
+- Functional test scratch project template now derives `kotlin` and `kotlinx-coroutines-core` versions from system properties injected by Gradle (`compiler/build.gradle.kts`) instead of hardcoded literals.
+- Added `CatalogVersionConsistencyTest` to detect version drift between the catalog and functional test template — prevents silent reintroduction of the KT-83341 ABI crash.
+- Updated comment on `kotlin-stdlib:2.0.21` force pin in `lint-rules/build.gradle.kts` to document the 2.4.0 catalog bump and Lint 31.4.0 constraint.
+
+---
+
 ## [1.0.0] — 2026-06-04
 
 ### Added

@@ -16,7 +16,9 @@ dependencies {
     testImplementation(libs.assertj.core)
 }
 
-// Lint 31.4.0 embeds Kotlin 2.0; align test runtime to avoid "metadata version 2.3.0, expected 2.0.0"
+// Lint 31.4.0 embeds Kotlin 2.0; align test runtime to avoid "metadata version X.Y.Z, expected 2.0.0".
+// The catalog bumped kotlin to 2.4.0 (KT-83341 fix) but Lint 31.4.0 still expects 2.0 metadata on
+// testRuntimeClasspath. Keeping the pin at 2.0.21; revisit when upgrading lint past 31.4.0.
 configurations.testRuntimeClasspath.get().resolutionStrategy.force("org.jetbrains.kotlin:kotlin-stdlib:2.0.21")
 
 kotlin {
