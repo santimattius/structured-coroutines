@@ -122,6 +122,9 @@ class CancellationExceptionSwallowedRule(config: Config = Config.empty) : Rule(c
         val body = catchClause.catchBody?.text ?: return false
         if (body.contains("throw") && body.contains("CancellationException")) return true
         val paramName = catchClause.catchParameter?.name ?: "e"
-        return body.contains("if") && body.contains("CancellationException") && body.contains("throw $paramName")
+        if (body.contains("if") && body.contains("CancellationException") && body.contains("throw $paramName")) return true
+        // Direct rethrow of the caught exception: catch(t: Throwable) { ...; throw t }
+        if (body.contains("throw $paramName")) return true
+        return false
     }
 }

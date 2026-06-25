@@ -100,6 +100,65 @@ class CancellationExceptionSwallowedRuleTest {
     }
 
     @Test
+    fun `does not report catch Throwable when rethrown directly`() {
+        val code = """
+            import kotlinx.coroutines.*
+
+            suspend fun fetch() {
+                try {
+                    val x = 1
+                } catch (t: Throwable) {
+                    println(t)
+                    throw t
+                }
+            }
+        """.trimIndent()
+
+        val findings = rule.compileAndLint(code)
+        assertThat(findings).isEmpty()
+    }
+
+    @Test
+    fun `does not report catch Exception when rethrown directly`() {
+        val code = """
+            import kotlinx.coroutines.*
+
+            suspend fun fetch() {
+                try {
+                    val x = 1
+                } catch (e: Exception) {
+                    throw e
+                }
+            }
+        """.trimIndent()
+
+        val findings = rule.compileAndLint(code)
+        assertThat(findings).isEmpty()
+    }
+
+    @Test
+    fun `does not report catch Throwable when rethrown directly inside launch`() {
+        val code = """
+            import kotlinx.coroutines.CoroutineScope
+            import kotlinx.coroutines.launch
+
+            fun update(scope: CoroutineScope) {
+                scope.launch {
+                    try {
+                        val x = 1
+                    } catch (t: Throwable) {
+                        println(t)
+                        throw t
+                    }
+                }
+            }
+        """.trimIndent()
+
+        val findings = rule.compileAndLint(code)
+        assertThat(findings).isEmpty()
+    }
+
+    @Test
     fun `does not report catch specific exception`() {
         val code = """
             import kotlinx.coroutines.launch
