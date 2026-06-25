@@ -34,6 +34,8 @@ tasks.test {
 
     systemProperty("structuredCoroutines.version", project.version.toString())
     systemProperty("structuredCoroutines.rootDir", project.rootProject.projectDir.absolutePath)
+    systemProperty("kotlinVersion", libs.versions.kotlin.get())
+    systemProperty("coroutinesVersion", libs.versions.kotlinx.coroutines.get())
 }
 
 // Configure JAR to include the service file

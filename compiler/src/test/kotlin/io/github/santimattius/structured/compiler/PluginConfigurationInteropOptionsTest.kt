@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.diagnostics.Severity
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
+@OptIn(CompilerConfiguration.Internals::class)
 class PluginConfigurationInteropOptionsTest {
 
     @Test

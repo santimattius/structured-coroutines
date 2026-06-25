@@ -74,6 +74,7 @@ class ScoroutinesCallCheckerExtension(session: FirSession) : FirAdditionalChecke
     /**
      * Gets the plugin configuration from the holder.
      */
+    @OptIn(org.jetbrains.kotlin.config.CompilerConfiguration.Internals::class)
     private val configuration: PluginConfiguration
         get() = PluginConfigurationHolder.configuration
             ?: PluginConfiguration(org.jetbrains.kotlin.config.CompilerConfiguration())
