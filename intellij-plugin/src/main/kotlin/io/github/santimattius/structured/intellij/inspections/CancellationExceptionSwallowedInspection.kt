@@ -87,6 +87,11 @@ class CancellationExceptionSwallowedInspection : CoroutineInspectionBase() {
                     return
                 }
 
+                // Direct rethrow of the caught exception: catch(t: Throwable) { ...; throw t }
+                if (catchBody.contains("throw $paramName")) {
+                    return
+                }
+
                 holder.registerProblem(
                     catchClause.catchParameter ?: catchClause,
                     StructuredCoroutinesBundle.message("error.cancellation.swallowed"),
