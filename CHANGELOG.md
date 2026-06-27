@@ -6,6 +6,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ---
 
+## [1.1.0] — 2026-06-27
+
+### Fixed
+
+- **CANCEL_003 false positive on direct rethrow** — `CancellationExceptionSwallowed` (Detekt rule + IntelliJ inspection) no longer fires when a `catch(t: Throwable)` or `catch(e: Exception)` block rethrows the caught parameter unconditionally (`throw t` / `throw e`). `CancellationException` always propagates in this pattern; the previous text-based escape check only recognized explicit `CancellationException` mentions.
+
+### Changed
+
+- Extended IDE compatibility upper bound: `untilBuild` raised from `261.*` to `262.*` so the plugin installs on IntelliJ Platform build 262 IDEs. Compilation target remains 2026.1 (build 261); Marketplace only requires `untilBuild >= sinceBuild`.
+
+---
+
 ## [1.0.1] — 2026-06-23
 
 ### Fixed

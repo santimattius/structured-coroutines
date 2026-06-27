@@ -17,7 +17,7 @@ plugins {
 }
 
 group = "io.github.santimattius"
-version = "1.0.0"
+version = "1.1.0"
 
 repositories {
     mavenCentral()
@@ -73,6 +73,11 @@ intellijPlatform {
             </ul>
         """.trimIndent()
         changeNotes = """
+            <p><b>v1.1.0</b></p>
+            <ul>
+                <li><b>CANCEL_003 false-positive fix</b> — <code>CancellationExceptionSwallowed</code> (Detekt + IntelliJ) no longer fires when a <code>catch(t: Throwable)</code> or <code>catch(e: Exception)</code> block rethrows the caught parameter unconditionally (<code>throw t</code> / <code>throw e</code>). <code>CancellationException</code> always propagates in this pattern.</li>
+                <li><b>IDE compatibility extended</b> — Now compatible with IntelliJ Platform build 262.* (raised <code>untilBuild</code> from <code>261.*</code> to <code>262.*</code>)</li>
+            </ul>
             <p><b>v1.0.0</b></p>
             <ul>
                 <li><b>9 new inspections (35 total)</b> — Production-ready iteration: Compose lifecycle, test dispatchers, Flow guidance, interop, and debug opt-in aligned with toolkit v1.0.0</li>
@@ -171,7 +176,7 @@ intellijPlatform {
         """.trimIndent()
         ideaVersion {
             sinceBuild = "243"
-            untilBuild = "261.*"
+            untilBuild = "262.*"
         }
         vendor {
             name = "Santiago Mattiauda"
