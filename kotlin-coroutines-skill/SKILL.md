@@ -1,9 +1,15 @@
 ---
 name: kotlin-coroutines-skill
-description: "Expert guidance on Kotlin Coroutines and structured concurrency. Use when developers write or review async Kotlin code and need help ensuring correctness, safety, and testability of coroutine-based implementations."
-license: MIT
+description: "Load, when a developer writes, reviews, or debugs Kotlin coroutine code and needs help spotting concurrency bugs — GlobalScope leaks, runBlocking in suspend, missing Flow catch, hardcoded or wrong dispatchers, unhandled timeouts, cancellation and structured-concurrency mistakes — or asks how to make async Kotlin testable."
+license: Apache-2.0
 metadata:
+  author: "github:@santimattius"
   version: "3.0.0"
+  tested_models:
+    provider: "anthropic"
+    model: "claude-sonnet-5"
+    agent_version: "Claude Code"
+    last_eval: "TBD"
 ---
 
 # Kotlin Coroutines

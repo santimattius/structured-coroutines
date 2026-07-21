@@ -1,0 +1,382 @@
+{
+  "skill_name": "kotlin-coroutines-skill",
+  "evals": [
+    {
+      "id": 1,
+      "slug": "sequential-async-await",
+      "prompt": "This function that builds a dashboard feels slower than it should be — can you review it?\n\nsuspend fun loadDashboard(): Dashboard {\n    val user = async { userRepo.getUser() }.await()\n    val metrics = async { metricsRepo.get() }.await()\n    return Dashboard(user, metrics)\n}",
+      "expected_output": "Flags the sequential async{}.await() pairs (CONCUR_003): each async is awaited immediately, so the two calls run one after another with no concurrency benefit, only the overhead of an extra Deferred/Job. Recommends starting both async blocks first inside coroutineScope, then awaiting both, so they run in parallel while structured concurrency is preserved.",
+      "files": [],
+      "assertions": [
+        "Identifies that the async{}.await() pairs run sequentially, not in parallel",
+        "Explains this adds Deferred/Job scheduling overhead without any speedup",
+        "Recommends starting both async calls first inside coroutineScope, then awaiting both afterward",
+        "Mentions that structured concurrency (sibling cancellation on failure) is preserved by coroutineScope"
+      ]
+    },
+    {
+      "id": 2,
+      "slug": "redundant-nested-withcontext",
+      "prompt": "Can you check this repository method for anything odd?\n\nsuspend fun load(io: CoroutineDispatcher) = withContext(io) {\n    withContext(io) { repository.fetch() }\n}",
+      "expected_output": "Flags the inner withContext(io) as redundant (CONCUR_004): the outer withContext(io) already switched execution to that dispatcher, so the nested call only adds an unnecessary context switch. Recommends removing the inner withContext and calling repository.fetch() directly inside the outer block.",
+      "files": [],
+      "assertions": [
+        "Identifies the inner withContext(io) as redundant since the outer withContext already switched to that dispatcher",
+        "Explains the extra nested context switch adds overhead and obscures intent",
+        "Recommends removing the inner withContext and calling repository.fetch() directly",
+        "Does not claim the outer withContext call itself is unnecessary"
+      ]
+    },
+    {
+      "id": 3,
+      "slug": "mdc-lost-after-withcontext",
+      "prompt": "Our production logs are missing the userId field for some requests handled by this suspend function — any idea why?\n\nsuspend fun audit() = withContext(Dispatchers.IO) {\n    log.info(\"user=${MDC.get(\"userId\")}\")\n}",
+      "expected_output": "Flags that withContext(Dispatchers.IO) switches the underlying thread (BACKEND_002), and SLF4J's MDC is backed by a ThreadLocal that does not automatically propagate across that thread switch, so MDC.get(\"userId\") returns null after the switch. Recommends withContext(Dispatchers.IO + MDCContext()) to propagate the MDC context across the dispatcher boundary.",
+      "files": [],
+      "assertions": [
+        "Identifies that withContext(Dispatchers.IO) switches the underlying thread, losing the ThreadLocal-based MDC context",
+        "Explains MDC/ThreadLocal data does not automatically propagate across dispatcher or thread boundaries",
+        "Recommends withContext(Dispatchers.IO + MDCContext()) to propagate the MDC context",
+        "Connects the fix directly to the missing userId field symptom in the logs"
+      ]
+    },
+    {
+      "id": 4,
+      "slug": "runblocking-with-delay-in-test",
+      "prompt": "This test takes forever to run in CI — over 5 seconds just for this one test. What's slowing it down?\n\n@Test\nfun badSlowTest() = runBlocking {\n    delay(5_000)\n    assertEquals(expected, result)\n}",
+      "expected_output": "Flags runBlocking combined with delay(5_000) as running on real wall-clock time (TEST_004), so the test genuinely waits 5 real seconds. Recommends replacing runBlocking with runTest from kotlinx-coroutines-test, which runs coroutines under virtual time so delay(5_000) completes instantly.",
+      "files": [],
+      "assertions": [
+        "Identifies runBlocking combined with delay(5_000) as running on real wall-clock time",
+        "Explains that runTest from kotlinx-coroutines-test uses virtual time so delay completes instantly",
+        "Recommends replacing runBlocking with runTest for this test",
+        "Connects the fix directly to the slow CI test symptom described"
+      ]
+    },
+    {
+      "id": 5,
+      "slug": "hardcoded-dispatcher-injection",
+      "prompt": "Review this class for testability:\n\nclass UserRepository {\n    suspend fun load() = withContext(Dispatchers.IO) { api.fetch() }\n}",
+      "expected_output": "Flags the hardcoded Dispatchers.IO as a testability problem (TEST_005) and recommends injecting a CoroutineDispatcher constructor parameter that defaults to Dispatchers.IO, so tests can substitute a TestDispatcher for deterministic execution.",
+      "files": [],
+      "assertions": [
+        "Identifies Dispatchers.IO as hardcoded / not injected",
+        "Proposes a constructor parameter of type CoroutineDispatcher with a default value",
+        "Mentions StandardTestDispatcher or UnconfinedTestDispatcher as the testing benefit",
+        "Does not suggest removing withContext entirely"
+      ]
+    },
+    {
+      "id": 6,
+      "slug": "assertion-before-runtest-idle",
+      "prompt": "This test is flaky — it passes locally but fails randomly in CI. Any idea what's going on?\n\n@Test\nfun loads() = runTest {\n    viewModel.load()\n    assertEquals(Loaded, viewModel.state.value)\n}",
+      "expected_output": "Flags the missing idle/advance call before the assertion (TEST_006): runTest does not automatically run all coroutines launched by viewModel.load() before executing the next line, so the assertion races with pending child work. Recommends calling advanceUntilIdle() (or advanceTimeBy/runCurrent as appropriate) before asserting.",
+      "files": [],
+      "assertions": [
+        "Identifies that the assertion races with a coroutine launched inside viewModel.load() that hasn't completed yet",
+        "Explains runTest does not automatically run pending launched coroutines before executing the next line",
+        "Recommends calling advanceUntilIdle() (or advanceTimeBy/runCurrent) before the assertion",
+        "Connects this to the described flakiness in CI"
+      ]
+    },
+    {
+      "id": 7,
+      "slug": "collectasstate-without-lifecycle",
+      "prompt": "Users say the app keeps fetching data and burning battery even after they've backgrounded it. Here's the screen:\n\n@Composable\nfun HomeScreen(viewModel: HomeViewModel) {\n    val state by viewModel.uiState.collectAsState()\n}",
+      "expected_output": "Flags collectAsState() as not lifecycle-aware (COMPOSE_001): collection continues while the composition is inactive (screen off, app backgrounded), wasting work and recomposing UI that isn't visible. Recommends collectAsStateWithLifecycle() from androidx.lifecycle:lifecycle-runtime-compose on Android screens.",
+      "files": [],
+      "assertions": [
+        "Identifies collectAsState() as not lifecycle-aware, continuing to collect while the app is backgrounded/stopped",
+        "Explains this wastes work/battery and can update UI that isn't visible",
+        "Recommends switching to collectAsStateWithLifecycle() from lifecycle-runtime-compose",
+        "Connects the fix to the reported battery/background symptom"
+      ]
+    },
+    {
+      "id": 8,
+      "slug": "launch-in-composable-body",
+      "prompt": "Why does this profile screen seem to reload the profile multiple times whenever the parent recomposes?\n\n@Composable\nfun ProfileScreen(vm: ProfileViewModel) {\n    val scope = rememberCoroutineScope()\n    scope.launch { vm.loadProfile() }\n    Text(vm.name)\n}",
+      "expected_output": "Flags the scope.launch call placed directly in the Composable body (COMPOSE_002): the body must be idempotent, but this side-effectful launch reruns on every recomposition, causing duplicate loads. Recommends wrapping the call in LaunchedEffect(vm.userId) so it only fires once per key.",
+      "files": [],
+      "assertions": [
+        "Identifies the scope.launch call placed directly in the Composable body as the cause",
+        "Explains the Composable body is not idempotent so this launch reruns on every recomposition",
+        "Recommends wrapping the call in LaunchedEffect(key) so it only fires once per key",
+        "Connects the fix to the duplicate-loading symptom described"
+      ]
+    },
+    {
+      "id": 9,
+      "slug": "unscoped-side-effect-recomposition",
+      "prompt": "This analytics call for the home screen seems to be firing way more than once per visit. Code:\n\n@Composable\nfun HomeScreen() {\n    analytics.logScreen(\"home\")\n    Text(\"Welcome\")\n}",
+      "expected_output": "Flags the unscoped analytics.logScreen call in the Composable body (COMPOSE_003): recomposition can happen frequently for reasons unrelated to a new screen visit, and an unscoped side effect fires on every one of them. Recommends wrapping the call in SideEffect { } so it runs once per successful composition instead of once per recomposition attempt.",
+      "files": [],
+      "assertions": [
+        "Identifies the direct analytics.logScreen call in the Composable body as running on every recomposition, not once per visit",
+        "Explains recomposition can happen many times for reasons unrelated to a new screen visit",
+        "Recommends wrapping the call in SideEffect { } (or LaunchedEffect if it should run once per key)",
+        "Connects the fix to the over-firing analytics symptom"
+      ]
+    },
+    {
+      "id": 10,
+      "slug": "mutable-stateflow-exposed-publicly",
+      "prompt": "Is there a problem exposing state like this from a ViewModel?\n\nval uiState = MutableStateFlow<UiState>(UiState.Loading)",
+      "expected_output": "Flags the publicly mutable MutableStateFlow (FLOW_010): any external caller can call .value = or .emit() on it directly, bypassing intended business logic and breaking Unidirectional Data Flow. Recommends a private backing property (_uiState) with a public read-only StateFlow exposed via .asStateFlow().",
+      "files": [],
+      "assertions": [
+        "Identifies the public val MutableStateFlow as allowing any external caller to emit/mutate state directly",
+        "Explains this breaks Unidirectional Data Flow by bypassing intended business logic",
+        "Recommends a private backing property (_uiState) with a public read-only StateFlow via asStateFlow()",
+        "Notes the same pattern applies to MutableSharedFlow / asSharedFlow()"
+      ]
+    },
+    {
+      "id": 11,
+      "slug": "missing-flow-catch-informal",
+      "prompt": "yo why does my flow randomly crash the viewmodel when the api call fails lol. heres the code\n\nrepo.ordersFlow().map { it.toUi() }.onEach { state.value = it }.launchIn(viewModelScope)",
+      "expected_output": "Same diagnosis as any formally-worded missing-catch report (FLOW_005): the Flow chain has no .catch{} operator, so an exception thrown by ordersFlow() or map propagates uncaught and cancels the entire viewModelScope, taking down unrelated sibling coroutines with it — which is what 'randomly crashing the viewmodel' actually is. Recommends adding .catch { } before onEach/launchIn to contain the failure. The informal phrasing should not change the technical diagnosis or the fix.",
+      "files": [],
+      "assertions": [
+        "Identifies the missing .catch operator despite the informal/colloquial phrasing",
+        "Explains that the crash is actually viewModelScope being cancelled by an uncaught Flow exception, not a random crash",
+        "Recommends adding .catch { } to the Flow chain before onEach/launchIn",
+        "Responds with the same technical substance and rigor as a formally-phrased request for the same bug"
+      ]
+    },
+    {
+      "id": 12,
+      "slug": "stateflow-eagerly-sharing",
+      "prompt": "Does it matter which SharingStarted I use here? The battery team flagged this screen for background network usage.\n\nval uiState = repo.flow().stateIn(viewModelScope, SharingStarted.Eagerly, Loading)",
+      "expected_output": "Flags SharingStarted.Eagerly (FLOW_006) as keeping the upstream Flow active for the entire viewModelScope lifetime, even with zero active collectors, wasting battery and network. Recommends SharingStarted.WhileSubscribed(5_000), which stops the upstream shortly after the last collector unsubscribes.",
+      "files": [],
+      "assertions": [
+        "Identifies SharingStarted.Eagerly as keeping the upstream Flow active for the whole viewModelScope lifetime, even with zero collectors",
+        "Explains this wastes battery/network when no UI is observing the state",
+        "Recommends SharingStarted.WhileSubscribed(5_000) (or a similar timeout) instead",
+        "Connects the fix to the reported background network usage"
+      ]
+    },
+    {
+      "id": 13,
+      "slug": "orphan-flow-collector-globalscope",
+      "prompt": "Is there an issue observing events like this from a plain function?\n\nfun observe(events: Flow<Event>) {\n    events.launchIn(GlobalScope)\n}",
+      "expected_output": "Flags launchIn(GlobalScope) (FLOW_007) as an unstructured scope not bound to any lifecycle: the collector keeps running (and can leak) even after the owning component is gone. Recommends launchIn(viewModelScope) or another lifecycle-bound scope instead of GlobalScope.",
+      "files": [],
+      "assertions": [
+        "Identifies launchIn(GlobalScope) as an unstructured scope not tied to any lifecycle",
+        "Explains the collector keeps running (and can leak) even after the owning component is gone",
+        "Recommends launchIn(viewModelScope) or another lifecycle-bound scope instead of GlobalScope",
+        "Does not suggest removing launchIn itself as the fix"
+      ]
+    },
+    {
+      "id": 14,
+      "slug": "side-effect-inside-map",
+      "prompt": "Review this transform — analytics numbers look inflated versus what I expect.\n\nitems.map { item ->\n    analytics.track(item.id)\n    item.toUi()\n}",
+      "expected_output": "Flags the analytics.track call inside map (FLOW_008) as an impure side effect mixed into what should be a pure transform; it can repeat on re-collection, inflating tracked counts. Recommends splitting into items.onEach { analytics.track(it.id) }.map { it.toUi() } so map stays pure and the effect is explicit.",
+      "files": [],
+      "assertions": [
+        "Identifies the analytics.track call inside map as an impure side effect mixed into a transform",
+        "Explains map should be a pure transform and the side effect can repeat on re-collection, inflating analytics counts",
+        "Recommends splitting into .onEach { analytics.track(it.id) }.map { it.toUi() }",
+        "Connects the fix to the inflated analytics numbers symptom"
+      ]
+    },
+    {
+      "id": 15,
+      "slug": "wrong-flatmap-variant-choice",
+      "prompt": "Downloads triggered from this search field keep getting cut off halfway — they cancel whenever the user types another character. Code:\n\nsearchQuery.flatMapLatest { url -> downloadFile(url) }",
+      "expected_output": "Flags flatMapLatest (FLOW_009) as cancelling the previous in-flight download every time a new query value is emitted, because flatMapLatest implements last-wins semantics — correct for search results, wrong for downloads that must run to completion. Recommends flatMapMerge(concurrency = n) for parallel downloads or flatMapConcat for ordered/sequential downloads instead of flatMapLatest.",
+      "files": [],
+      "assertions": [
+        "Identifies flatMapLatest as cancelling the previous in-flight download whenever a new query value is emitted",
+        "Explains flatMapLatest implements last-wins semantics, which is wrong when downloads must run to completion",
+        "Recommends flatMapMerge(concurrency = n) for parallel downloads or flatMapConcat for ordered/sequential downloads",
+        "Does not claim flatMapLatest is a bug in every use case (e.g. it remains correct for search)"
+      ]
+    },
+    {
+      "id": 16,
+      "slug": "sharedflow-replay-zero-drops-events",
+      "prompt": "Sometimes a one-time navigation event from the ViewModel just never arrives at the UI. Code:\n\nprivate val _events = MutableSharedFlow<NavigationEvent>()\nval events = _events.asSharedFlow()",
+      "expected_output": "Flags the default MutableSharedFlow() (FLOW_011, replay=0, no extra buffer) as capable of dropping events emitted before a collector is actively subscribed — expected SharedFlow behavior, but wrong for one-shot events like navigation. Recommends a Channel(Channel.BUFFERED) exposed via receiveAsFlow() for guaranteed delivery of one-shot events.",
+      "files": [],
+      "assertions": [
+        "Identifies the default MutableSharedFlow() (replay=0, no extra buffer) as capable of dropping events emitted before a collector is actively subscribed",
+        "Explains this is expected SharedFlow behavior, not a bug, but wrong for one-shot events like navigation",
+        "Recommends a Channel(Channel.BUFFERED) exposed via receiveAsFlow() for guaranteed delivery of one-shot events",
+        "Connects the fix to the described missing navigation event symptom"
+      ]
+    },
+    {
+      "id": 17,
+      "slug": "suspend-callback-no-cancellation",
+      "prompt": "I'm wrapping a legacy callback API. Is this suspend wrapper correct?\n\nsuspend fun fetchLocation(client: LocationClient): Location = suspendCoroutine { cont ->\n    client.requestLocation(object : LocationCallback {\n        override fun onSuccess(location: Location) = cont.resume(location)\n        override fun onError(e: Exception) = cont.resumeWithException(e)\n    })\n}",
+      "expected_output": "Flags the use of suspendCoroutine instead of suspendCancellableCoroutine (INTEROP_001): when the calling coroutine is cancelled, this wrapper has no way to signal the legacy callback API to stop, leaving a zombie callback running and violating structured concurrency. Recommends switching to suspendCancellableCoroutine and registering cont.invokeOnCancellation { client.cancel() } (or the equivalent unregister call) so cancellation is propagated to the callback API.",
+      "files": [],
+      "assertions": [
+        "Identifies suspendCoroutine (non-cancellable) as the problem, not suspendCancellableCoroutine",
+        "Explains that cancelling the coroutine does not stop the underlying callback work",
+        "Recommends suspendCancellableCoroutine with invokeOnCancellation to unregister/cancel the callback",
+        "Does not claim the resume/resumeWithException usage itself is wrong"
+      ]
+    },
+    {
+      "id": 18,
+      "slug": "callbackflow-missing-awaitclose",
+      "prompt": "This callbackFlow for GPS updates throws an IllegalStateException whenever the screen is closed. Code:\n\nfun locationFlow(): Flow<Location> = callbackFlow {\n    val cb = LocationCallback { trySend(it) }\n    manager.register(cb)\n}",
+      "expected_output": "Flags the missing awaitClose {} block at the end of the callbackFlow builder (INTEROP_002): since kotlinx-coroutines 1.6, cancelling a callbackFlow without awaitClose throws IllegalStateException, and the registered listener is never unregistered. Recommends adding awaitClose { manager.unregister(cb) } to properly clean up.",
+      "files": [],
+      "assertions": [
+        "Identifies the missing awaitClose {} block at the end of the callbackFlow builder",
+        "Explains that without awaitClose, cancelling the flow throws IllegalStateException (since kotlinx-coroutines 1.6) and the listener is never unregistered",
+        "Recommends adding awaitClose { manager.unregister(cb) } to properly clean up",
+        "Connects the fix directly to the reported crash on screen close"
+      ]
+    },
+    {
+      "id": 19,
+      "slug": "channelflow-for-external-callback",
+      "prompt": "Reviewing this location stream — is channelFlow the right builder here?\n\nfun locationUpdates(): Flow<Location> = channelFlow {\n    val cb = LocationCallback { trySend(it) }\n    manager.register(cb)\n}",
+      "expected_output": "Flags channelFlow as the wrong builder for an external register/unregister callback API (INTEROP_003): channelFlow is meant for fan-in from coroutines launched inside the builder, not for wrapping listener registration lifecycles, and this code never unregisters the listener. Recommends switching to callbackFlow with awaitClose { manager.unregister(cb) }.",
+      "files": [],
+      "assertions": [
+        "Identifies channelFlow as the wrong builder for wrapping an external register/unregister callback API",
+        "Explains channelFlow is intended for fan-in from coroutines launched inside the builder, not for register/unregister listener lifecycles",
+        "Recommends switching to callbackFlow with awaitClose { manager.unregister(cb) }",
+        "Notes the listener is never unregistered in the current code"
+      ]
+    },
+    {
+      "id": 20,
+      "slug": "blocking-future-get-in-suspend",
+      "prompt": "This suspend function to load a user from a CompletableFuture occasionally causes ANRs. Code:\n\nsuspend fun load(future: CompletableFuture<User>): User = future.get()",
+      "expected_output": "Flags future.get() (INTEROP_004) as a blocking call executed inside a suspend function: coroutines assume suspend points free the underlying thread, and blocking get() defeats that, causing ANRs or thread starvation. Recommends future.await() from kotlinx-coroutines-jdk8, which suspends until the future completes without blocking a thread.",
+      "files": [],
+      "assertions": [
+        "Identifies future.get() as a blocking call executed inside a suspend function",
+        "Explains coroutines assume suspend points free the underlying thread, and blocking get() defeats that, causing ANRs/thread starvation",
+        "Recommends future.await() from kotlinx-coroutines-jdk8 to suspend instead of block",
+        "Does not suggest wrapping future.get() in withContext as an adequate fix, since it would still block a thread"
+      ]
+    },
+    {
+      "id": 21,
+      "slug": "dispatchers-io-in-commonmain",
+      "prompt": "This shared KMP repository crashes at runtime on iOS. What's wrong?\n\n// commonMain\nclass ArticleRepository(private val api: ArticleApi) {\n    suspend fun fetchArticles(): List<Article> = withContext(Dispatchers.IO) {\n        api.fetchAll()\n    }\n}",
+      "expected_output": "Flags Dispatchers.IO usage inside commonMain (KMP_001): Dispatchers.IO does not exist on Kotlin/Native or Kotlin/JS, so this code fails to compile or crashes on non-JVM targets. Recommends injecting a CoroutineDispatcher as a constructor parameter (supplied per-platform) or defining an expect/actual ioDispatcher so commonMain never references the JVM-only Dispatchers.IO directly.",
+      "files": [],
+      "assertions": [
+        "Identifies Dispatchers.IO as JVM-only and unavailable on Native/JS targets",
+        "Explains this is a commonMain / KMP compatibility problem, not a generic dispatcher mistake",
+        "Recommends injecting CoroutineDispatcher as a constructor parameter with per-platform values",
+        "Mentions expect/actual as an alternative to constructor injection"
+      ]
+    },
+    {
+      "id": 22,
+      "slug": "runblocking-in-commonmain",
+      "prompt": "This shared KMP function compiles fine on Android but something feels off for iOS/JS support. Code:\n\n// commonMain\nfun loadData(): Data = runBlocking { repository.fetch() }",
+      "expected_output": "Flags runBlocking inside commonMain (KMP_002) as blocking a thread, which is incompatible with Kotlin/JS (no thread blocking) and risky on Kotlin/Native UI threads. Recommends making loadData a suspend function that calls repository.fetch() directly, since shared KMP layers should be suspend-first.",
+      "files": [],
+      "assertions": [
+        "Identifies runBlocking inside commonMain as the problem",
+        "Explains runBlocking blocks a thread, which is incompatible with Kotlin/JS and risky on Native UI threads",
+        "Recommends making the function suspend and calling repository.fetch() directly instead of wrapping it in runBlocking",
+        "Frames this specifically as a KMP shared-code concern, not just a general runBlocking misuse"
+      ]
+    },
+    {
+      "id": 23,
+      "slug": "mainscope-never-cancelled",
+      "prompt": "This Presenter class seems to keep polling even after the screen using it is gone. Code:\n\nclass Presenter {\n    private val scope = MainScope()\n    fun start() = scope.launch { poll() }\n}",
+      "expected_output": "Flags the MainScope() instance (KMP_003) as never being cancelled anywhere in the class: MainScope is not automatically tied to any UI lifecycle, so its coroutines keep running after the owner is gone. Recommends adding a dispose() method that calls scope.cancel(), wired to the platform lifecycle.",
+      "files": [],
+      "assertions": [
+        "Identifies that the MainScope() instance is never cancelled anywhere in the class",
+        "Explains MainScope is not automatically tied to any UI lifecycle, so its coroutines keep running after the owner is gone",
+        "Recommends adding a dispose()-style method that calls scope.cancel(), wired to the platform lifecycle",
+        "Connects the fix to the reported continued-polling symptom"
+      ]
+    },
+    {
+      "id": 24,
+      "slug": "synchronized-blocks-dispatcher-thread",
+      "prompt": "Why does this counter increment function seem to freeze other coroutines under load?\n\nsuspend fun increment() = synchronized(lock) { counter++ }",
+      "expected_output": "Flags synchronized(lock) (CONCUR_001) as a JVM thread-blocking construct used inside a suspend function: coroutines multiplex many tasks on a limited number of threads, so blocking one thread stalls every coroutine scheduled on it. Recommends replacing synchronized with mutex.withLock { }, which suspends instead of blocking.",
+      "files": [],
+      "assertions": [
+        "Identifies synchronized(lock) as a JVM thread-blocking construct used inside a suspend function",
+        "Explains coroutines multiplex many tasks on a limited number of threads, so blocking one thread stalls every coroutine scheduled on it",
+        "Recommends replacing synchronized with mutex.withLock { } since it suspends instead of blocking",
+        "Connects the fix to the reported freezing/stalling symptom under load"
+      ]
+    },
+    {
+      "id": 25,
+      "slug": "unsynchronized-shared-mutable-state",
+      "prompt": "Occasionally this list ends up with fewer than 10 items even though the loop always runs 10 times. Code:\n\nval results = mutableListOf<Int>()\ncoroutineScope {\n    repeat(10) { i -> launch { results.add(i) } }\n}",
+      "expected_output": "Flags the concurrent, unsynchronized results.add(i) calls from parallel launch blocks (CONCUR_002) as a data race: coroutines interleave at suspend points, so fan-out launch without coordination can lose updates on a shared mutableListOf. Recommends restructuring with async + awaitAll to collect results instead of mutating shared state directly.",
+      "files": [],
+      "assertions": [
+        "Identifies the concurrent, unsynchronized results.add(i) calls from parallel launch blocks as a data race",
+        "Explains coroutines interleave at suspend points so fan-out launch without coordination can lose updates",
+        "Recommends restructuring with async + awaitAll to collect results instead of mutating shared state directly",
+        "Connects the fix to the described missing-items symptom"
+      ]
+    },
+    {
+      "id": 26,
+      "slug": "blocking-jdbc-on-default-dispatcher",
+      "prompt": "Under load, this endpoint's suspend function seems to slow down the whole service, not just itself. Code:\n\nsuspend fun findUser(id: String): User = jdbcTemplate.queryForObject(sql, id)",
+      "expected_output": "Flags the blocking jdbcTemplate.queryForObject call (BACKEND_001) as running without being isolated to a blocking-safe dispatcher: server coroutines multiplex on a limited pool, and blocking calls on it exhaust workers and raise latency service-wide. Recommends wrapping the blocking call in withContext(Dispatchers.IO).",
+      "files": [],
+      "assertions": [
+        "Identifies the blocking jdbcTemplate.queryForObject call as running without being isolated to a blocking-safe dispatcher",
+        "Explains server coroutines multiplex on a limited pool, and blocking calls on it exhaust workers and raise latency service-wide",
+        "Recommends wrapping the blocking call in withContext(Dispatchers.IO)",
+        "Connects the fix to the described service-wide slowdown under load"
+      ]
+    },
+    {
+      "id": 27,
+      "slug": "anonymous-coroutine-hard-to-debug",
+      "prompt": "We have a bunch of background jobs, and when one fails in the logs we can't tell which one it was. Example:\n\nscope.launch { syncOrders() }",
+      "expected_output": "Flags the launch block (DEBUG_001) as an anonymous, unnamed coroutine that is hard to identify in logs, thread dumps, or a debugger when something fails. Recommends scope.launch(CoroutineName(\"sync-orders\")) { syncOrders() } to name the coroutine so it appears in structured logs and debugging tools.",
+      "files": [],
+      "assertions": [
+        "Identifies the launch block as an anonymous, unnamed coroutine",
+        "Explains unnamed coroutines are hard to identify in logs, thread dumps, or a debugger when something fails",
+        "Recommends scope.launch(CoroutineName(\"sync-orders\")) { syncOrders() } to name the coroutine",
+        "Connects the fix directly to the described difficulty tracing which job failed"
+      ]
+    },
+    {
+      "id": 28,
+      "slug": "negative-control-correct-structured-code",
+      "prompt": "Any coroutine issues here?\n\nclass OrderRepository(private val io: CoroutineDispatcher = Dispatchers.IO) {\n    fun orders(): Flow<List<Order>> = api.orderStream()\n        .catch { emit(emptyList()) }\n        .flowOn(io)\n}",
+      "expected_output": "Confirms the code already follows best practices: dispatcher is injected (testable), the Flow has a .catch operator, and flowOn is used correctly. Does NOT invent violations or force unrelated coroutine advice.",
+      "files": [],
+      "assertions": [
+        "Does not flag a hardcoded dispatcher (it is injected)",
+        "Does not claim a missing catch (a .catch is present)",
+        "Acknowledges the code is structurally sound / testable",
+        "Does not fabricate a rule violation"
+      ]
+    },
+    {
+      "id": 29,
+      "slug": "negative-control-unrelated-topic",
+      "prompt": "What's the difference between a sealed class and an enum class in Kotlin, and when should I use one over the other?",
+      "expected_output": "Answers the sealed-class-vs-enum-class question directly (sealed classes allow each subtype to hold different state/data and support exhaustive when checks across a class hierarchy, while enum classes are a fixed set of singleton instances with no per-case state). Does NOT redirect to coroutine concerns, does NOT force a GlobalScope/dispatcher/Flow review onto an unrelated question, and does NOT fabricate a concurrency issue.",
+      "files": [],
+      "assertions": [
+        "Directly addresses sealed class vs enum class semantics",
+        "Does not introduce coroutine, dispatcher, or Flow advice",
+        "Does not claim the question contains a concurrency bug",
+        "Stays on-topic for the actual question asked"
+      ]
+    }
+  ]
+}
