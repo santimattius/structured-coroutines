@@ -1,5 +1,5 @@
 # Maps skill reference files to BEST_PRACTICES rule codes.
-# Run: python3 kotlin-coroutines-skill/scripts/generate_refs.py
+# Run: python3 tools/scripts/generate_refs.py
 
 refs:
   - file: ref-15-concur-sequential-async.md
