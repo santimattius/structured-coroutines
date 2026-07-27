@@ -1,5 +1,15 @@
 #!/usr/bin/env python3
-"""Run kotlin-coroutines-skill/evals/evals.json against a live agent client.
+"""Run tools/evals/evals.json against a live agent client.
+
+Run install_skill.py first: it downloads the skill via `claude plugin
+marketplace add` and installs it into a real target project via
+`claude plugin install ... -s local`, writing <workspace>/install-info.json.
+This script reads that file and runs prompts from inside the installed
+project's directory, so "with_skill" reflects the actual installed plugin
+rather than whatever's already registered globally on this machine. If
+install-info.json is missing, falls back to the old empty-neutral-cwd
+behavior (skill only reachable via this machine's pre-existing global
+plugin registration).
 
 For each eval case, runs the prompt twice with a clean context: once with the
 skill enabled (with_skill) and once with it disabled (without_skill). Output
@@ -31,8 +41,7 @@ import time
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-SKILL_DIR = REPO_ROOT / "kotlin-coroutines-skill"
-EVALS_JSON = SKILL_DIR / "evals" / "evals.json"
+EVALS_JSON = REPO_ROOT / "tools" / "evals" / "evals.json"
 DEFAULT_WORKSPACE = REPO_ROOT.parent / "kotlin-coroutines-skill-workspace"
 
 # The plugin id as registered in `.claude-plugin/marketplace.json` /
@@ -51,17 +60,31 @@ def neutral_cwd(workspace: Path) -> Path:
     stumble onto the skill's own reference files and contaminate the
     without_skill baseline. Verified necessary: running the baseline from
     inside this repo let the model read ref-1-1-global-scope.md on its own
-    and reproduce skill-flavored advice even with the plugin disabled."""
+    and reproduce skill-flavored advice even with the plugin disabled.
+
+    Fallback only -- used when install_skill.py hasn't been run yet. Once a
+    plugin is installed into a real target project (see install_skill.py /
+    install-info.json), that project is used as cwd instead: it doesn't
+    contain the skill's own reference markdown, so the same contamination
+    risk doesn't apply, and it's a more realistic eval environment (a real
+    Kotlin project) than an empty directory."""
     d = workspace / "_neutral_cwd"
     d.mkdir(parents=True, exist_ok=True)
     return d
+
+
+def load_install_info(workspace: Path) -> dict | None:
+    info_path = workspace / "install-info.json"
+    if not info_path.exists():
+        return None
+    return json.loads(info_path.read_text())
 
 
 # ---------------------------------------------------------------------------
 # Claude Code runner (verified: claude 2.1.217, output-format json)
 # ---------------------------------------------------------------------------
 
-def run_claude(prompt: str, with_skill: bool, model: str, cwd: Path) -> dict:
+def run_claude(prompt: str, with_skill: bool, model: str, cwd: Path, plugin_id: str) -> dict:
     cmd = [
         "claude",
         "-p",
@@ -76,7 +99,7 @@ def run_claude(prompt: str, with_skill: bool, model: str, cwd: Path) -> dict:
         # Surgically disable only this project's plugin for one invocation.
         # (--disable-slash-commands was tested and did NOT reliably suppress
         # the skill's influence; this --settings override does.)
-        cmd += ["--settings", json.dumps({"enabledPlugins": {CLAUDE_PLUGIN_ID: False}})]
+        cmd += ["--settings", json.dumps({"enabledPlugins": {plugin_id: False}})]
 
     proc = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=300)
     if proc.returncode != 0:
@@ -102,7 +125,7 @@ def run_claude(prompt: str, with_skill: bool, model: str, cwd: Path) -> dict:
 # event stream. Re-check `codex exec --help` before trusting this.
 # ---------------------------------------------------------------------------
 
-def run_codex(prompt: str, with_skill: bool, model: str, cwd: Path) -> dict:
+def run_codex(prompt: str, with_skill: bool, model: str, cwd: Path, plugin_id: str) -> dict:
     cmd = ["codex", "exec", "--json"]
     if model:
         cmd += ["--model", model]
@@ -143,7 +166,7 @@ def run_codex(prompt: str, with_skill: bool, model: str, cwd: Path) -> dict:
 RUNNERS = {"claude": run_claude, "codex": run_codex}
 
 
-def run_case(client: str, case: dict, model: str, iteration_dir: Path, cwd: Path) -> None:
+def run_case(client: str, case: dict, model: str, iteration_dir: Path, cwd: Path, plugin_id: str) -> None:
     slug = case.get("slug") or f"eval-{case['id']}"
     case_dir = iteration_dir / f"eval-{slug}"
 
@@ -157,7 +180,7 @@ def run_case(client: str, case: dict, model: str, iteration_dir: Path, cwd: Path
 
         outputs_dir.mkdir(parents=True, exist_ok=True)
         print(f"  [run]  {slug}/{label} ({client}, model={model})")
-        result = RUNNERS[client](case["prompt"], with_skill, model, cwd)
+        result = RUNNERS[client](case["prompt"], with_skill, model, cwd, plugin_id)
 
         (outputs_dir / "response.md").write_text(result["result_text"])
         (out_dir / "raw.json").write_text(json.dumps(result["raw"], indent=2))
@@ -172,6 +195,13 @@ def main() -> int:
     ap.add_argument("--iteration", type=int, default=1)
     ap.add_argument("--limit", type=int, default=None, help="Only run the first N cases (useful for a smoke test)")
     ap.add_argument("--ids", type=str, default=None, help="Comma-separated eval ids to run, e.g. 1,5,28")
+    ap.add_argument(
+        "--cwd",
+        type=Path,
+        default=None,
+        help="Directory to run prompts from (default: the project install_skill.py installed the "
+        "plugin into, per install-info.json; falls back to an empty neutral dir if that's missing)",
+    )
     args = ap.parse_args()
 
     if args.client == "codex":
@@ -189,16 +219,30 @@ def main() -> int:
         evals = evals[: args.limit]
 
     iteration_dir = args.workspace / f"iteration-{args.iteration}"
-    cwd = neutral_cwd(args.workspace)
+
+    install_info = load_install_info(args.workspace)
+    plugin_id = (install_info or {}).get("plugin_id", CLAUDE_PLUGIN_ID)
+    if args.cwd:
+        cwd = args.cwd
+    elif install_info:
+        cwd = Path(install_info["target_project"])
+    else:
+        print(
+            "WARNING: no install-info.json found -- falling back to an empty neutral cwd. "
+            "Run install_skill.py first to eval against a real installed-plugin project.",
+            file=sys.stderr,
+        )
+        cwd = neutral_cwd(args.workspace)
 
     print(f"Running {len(evals)} case(s) x2 (with/without skill) via {args.client}, model={args.model}")
     print(f"Workspace: {iteration_dir}")
-    print(f"Neutral cwd (isolates baseline from repo files): {cwd}")
+    print(f"Plugin id: {plugin_id}")
+    print(f"cwd: {cwd}")
 
     start = time.time()
     for i, case in enumerate(evals, 1):
         print(f"[{i}/{len(evals)}] id={case['id']} slug={case.get('slug')}")
-        run_case(args.client, case, args.model, iteration_dir, cwd)
+        run_case(args.client, case, args.model, iteration_dir, cwd, plugin_id)
 
     print(f"Done in {time.time() - start:.1f}s. Next step: grade outputs against each case's assertions.")
     return 0

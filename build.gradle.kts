@@ -66,16 +66,16 @@ tasks.register("validateSample") {
 
 tasks.register<Exec>("generateSkillRefs") {
     group = "documentation"
-    description = "Regenerates kotlin-coroutines-skill references from BEST_PRACTICES (see kotlin-coroutines-skill/scripts/README.md)"
+    description = "Regenerates kotlin-coroutines-skill references from BEST_PRACTICES (see tools/scripts/README.md)"
     workingDir = rootDir
-    commandLine("python3", "kotlin-coroutines-skill/scripts/generate_refs.py")
+    commandLine("python3", "tools/scripts/generate_refs.py")
 }
 
 tasks.register<Exec>("checkSkillRefs") {
     group = "verification"
     description = "Fails if generated kotlin-coroutines-skill references are out of date"
     workingDir = rootDir
-    commandLine("python3", "kotlin-coroutines-skill/scripts/generate_refs.py", "--check")
+    commandLine("python3", "tools/scripts/generate_refs.py", "--check")
 }
 
 // Aggregate task to publish all library modules to Maven Central
