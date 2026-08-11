@@ -121,3 +121,31 @@ iteration-N/
   script was written on, so the exact flags for JSON output and for disabling a
   project-registered skill could not be confirmed. Check `codex exec --help` and fix
   `run_codex()` in `run_evals.py` before trusting numbers from this path.
+
+# Manifest sync guard
+
+Asserts `.claude-plugin/plugin.json`, its matching `.claude-plugin/marketplace.json` `plugins[]`
+entry, and `.codex-plugin/plugin.json` (when present) agree on `name`, `description`, `author`,
+`license`, and `keywords`. An assertion script, not a generator — three hand-edited JSON files
+justify a check, not a build step.
+
+```bash
+python3 tools/scripts/check_manifest_sync.py
+```
+
+Wired into CI via `.github/workflows/validate-manifests.yml` (own workflow, separate from
+`validate-skill.yml`), triggered on changes under `.claude-plugin/**`, `.codex-plugin/**`, or the
+script itself.
+
+**Excluded from comparison, on purpose:** `version` / `metadata.version`. Manifest `version`
+(package release, currently `1.1.0`) and `kotlin-coroutines-skill/SKILL.md`'s
+`metadata.version` (skill content revision, currently `3.0.0`) are independent semantics —
+comparing them would produce permanent false positives. `marketplace.json`'s top-level
+`version` (catalog version) is excluded for the same reason. `repository` is present in both
+plugin manifests but is out of scope for this guard's compared-field set.
+
+**Absent-manifest behavior:** if `.codex-plugin/plugin.json` doesn't exist yet, the script exits
+`0` with a printed skip notice instead of failing — Codex packaging (Tier 2) can slip or be
+rolled back independently of this guard without reddening CI. Mirrors this repo's existing
+`--client codex` **unverified** convention above: Codex support here degrades gracefully rather
+than hard-failing when unconfirmed/not-yet-shipped.

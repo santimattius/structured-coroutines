@@ -1,0 +1,38 @@
+# Guards against silent drift between the plugin manifests: `.claude-plugin/plugin.json`,
+# `.claude-plugin/marketplace.json`, and `.codex-plugin/plugin.json` (when present).
+#
+# Kept as its own workflow, separate from validate-skill.yml, because that file is part of the
+# upstream-compliance story and filters on `kotlin-coroutines-skill/**` -- manifest paths are
+# disjoint, and `paths:` filters are per-workflow, not per-job.
+
+name: Validate Plugin Manifests
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - ".claude-plugin/**"
+      - ".codex-plugin/**"
+      - "tools/scripts/check_manifest_sync.py"
+  pull_request:
+    branches: [main, master]
+    paths:
+      - ".claude-plugin/**"
+      - ".codex-plugin/**"
+      - "tools/scripts/check_manifest_sync.py"
+
+jobs:
+  validate-manifests:
+    name: Check manifest sync
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run manifest sync guard
+        run: python3 tools/scripts/check_manifest_sync.py
