@@ -114,7 +114,58 @@ repo root/
 
 ---
 
-### Option B: Claude (Projects — System Prompt)
+### Option B: OpenAI Codex (Plugin)
+
+Codex CLI natively supports plugins via a marketplace, the same way Claude Code does.
+
+**Requirements:** [OpenAI Codex CLI](https://developers.openai.com/codex) installed.
+
+#### Install from the marketplace
+
+```bash
+codex plugin marketplace add santimattius/structured-coroutines
+codex plugin add kotlin-coroutines-skill@structured-coroutines
+```
+
+#### Manual install (no plugin manifest required)
+
+If you don't want to install the plugin, or the plugin path is unavailable, Codex also
+auto-discovers skills placed directly under an `.agents/skills/` directory:
+
+- Repo-scoped: `$REPO_ROOT/.agents/skills/kotlin-coroutines-skill/`
+- User-scoped: `$HOME/.agents/skills/kotlin-coroutines-skill/`
+
+Copy or symlink the `kotlin-coroutines-skill/` folder (containing `SKILL.md` and
+`references/`) into either location — this works independently of `.codex-plugin/plugin.json`.
+
+#### How it works
+
+Once installed (either path), the skill is available automatically when you work on
+Kotlin/Android code. Codex reads:
+
+- `SKILL.md` — triage playbook with strict rules (maps your topic/error to the right reference)
+- `references/ref-*.md` — per-practice guidance loaded on demand
+
+**Plugin layout:**
+
+```
+repo root/
+├── .codex-plugin/
+│   └── plugin.json          ← plugin definition (skills: "./skills")
+├── skills/
+│   └── kotlin-coroutines-skill/   ← symlink → ../kotlin-coroutines-skill
+└── kotlin-coroutines-skill/
+    ├── SKILL.md
+    └── references/
+```
+
+**Verify installation:** Open a `.kt` file containing `GlobalScope.launch { }` and ask Codex to
+review it for coroutine best practices. The response should follow the format: **Analysis →
+Erroneous Code → Optimized Code → Technical Explanation**.
+
+---
+
+### Option C: Claude (Projects — System Prompt)
 
 Use this when you want the skill active for a specific Claude project without the Claude Code CLI.
 
@@ -128,7 +179,7 @@ Use this project when working on Kotlin/Android codebases for consistent advice.
 
 ---
 
-### Option C: ChatGPT (Custom GPTs)
+### Option D: ChatGPT (Custom GPTs)
 
 1. Create a new **Custom GPT** (ChatGPT Plus or Team).
 2. In **Configure → Instructions**, paste the Agent Behavior Contract from **SKILL.md**.
@@ -139,7 +190,7 @@ Use this project when working on Kotlin/Android codebases for consistent advice.
 
 ---
 
-### Option D: Cursor (Rules for AI)
+### Option E: Cursor (Rules for AI)
 
 1. In your repo, open or create `.cursor/rules/`.
 2. Create a file `kotlin-coroutines.mdc`.
