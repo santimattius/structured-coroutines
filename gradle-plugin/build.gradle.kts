@@ -13,6 +13,7 @@ dependencies {
 
     testImplementation(libs.kotlin.test)
     testImplementation(libs.junit.jupiter)
+    testImplementation(gradleTestKit())
 }
 
 kotlin {
@@ -21,6 +22,17 @@ kotlin {
 
 tasks.test {
     useJUnitPlatform()
+
+    // Publish to Maven Local so functional tests can resolve the plugin via mavenLocal()
+    dependsOn(
+        ":gradle-plugin:publishToMavenLocal",
+        ":compiler:publishToMavenLocal",
+        ":annotations:publishToMavenLocal"
+    )
+
+    systemProperty("structuredCoroutines.version", project.version.toString())
+    systemProperty("kotlinVersion", libs.versions.kotlin.get())
+    systemProperty("coroutinesVersion", libs.versions.kotlinx.coroutines.get())
 }
 
 gradlePlugin {

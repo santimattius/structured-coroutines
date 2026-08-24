@@ -6,6 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ---
 
+## [Unreleased]
+
+### Added
+
+- **Gradle DSL `"disabled"` severity value** — every per-check `structuredCoroutines { ... }` property (all 14 rules) now accepts `"disabled"` in addition to `"error"`/`"warning"`. Setting a check to `"disabled"` emits a one-time build-time advisory warning (once per project, not once per Kotlin Multiplatform compilation) naming the check, and `structuredCoroutinesReport` renders it as a distinct `DISABLED` state instead of coercing it to error/warning. `"disabled"` is decorative this release — the check still reports at its default severity — because no `CommandLineProcessor` is registered to carry DSL values into the compiler plugin yet. Real compile-time suppression is tracked in [#68](https://github.com/santimattius/structured-coroutines/issues/68). Only the exact string `"disabled"` is recognized (case-insensitive); `"off"` is not an alias, and unrecognized/typo values keep the existing silent fallback to the check's default severity. (#67)
+
+---
+
 ## [1.1.0] — 2026-06-27
 
 ### Fixed

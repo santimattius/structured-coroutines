@@ -114,10 +114,17 @@ structuredCoroutines {
 
 ### Severity Levels
 
-| Level       | Behavior                                     |
-|-------------|----------------------------------------------|
-| `"error"`   | Reports as compilation error (blocks build)  |
-| `"warning"` | Reports as warning (allows build to succeed) |
+| Level        | Behavior                                                            |
+|--------------|----------------------------------------------------------------------|
+| `"error"`    | Reports as compilation error (blocks build)                        |
+| `"warning"`  | Reports as warning (allows build to succeed)                       |
+| `"disabled"` | Recorded and shown distinctly in `structuredCoroutinesReport`; decorative this release — the check still reports at its default severity, and a one-time build advisory names it. Real compile-time suppression is tracked in [issue #68](https://github.com/santimattius/structured-coroutines/issues/68). Only the exact string `"disabled"` is recognized (case-insensitive); `"off"` is not accepted. |
+
+```kotlin
+structuredCoroutines {
+    loopWithoutYield.set("disabled")   // still reports at default severity this release; see #68
+}
+```
 
 ### Profiles (strict / gradual / relaxed)
 
