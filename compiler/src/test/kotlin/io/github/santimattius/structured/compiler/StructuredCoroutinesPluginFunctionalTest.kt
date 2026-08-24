@@ -919,7 +919,7 @@ class StructuredCoroutinesPluginFunctionalTest {
     }
 
     @Test
-    fun `GitHub issue 66 repro - functions a, b and c all cooperate identically`() {
+    fun `val initializer, statement, and assignment cooperation points together suppress LOOP_WITHOUT_YIELD`() {
         // Literal reproduction of https://github.com/santimattius/structured-coroutines/issues/66
         // (function names a/b/c preserved from the issue). `readAvailable`/`flush` stand in for
         // the issue's Ktor ByteReadChannel/ByteWriteChannel calls: this module's functional test
