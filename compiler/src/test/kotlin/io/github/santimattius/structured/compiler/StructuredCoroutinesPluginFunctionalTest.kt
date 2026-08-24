@@ -678,12 +678,243 @@ class StructuredCoroutinesPluginFunctionalTest {
     fun `channelFlow compiles without awaitClose`() {
         val sourceCode = """
             import kotlinx.coroutines.flow.channelFlow
-            
+
             fun ok() = channelFlow<Int> { send(42) }
         """.trimIndent()
 
         val projectDir = createTestProject(sourceCode)
         val output = runBuild(projectDir, expectSuccess = true)
         assertTrue("BUILD SUCCESSFUL" in output || "compileKotlin" in output, output)
+    }
+
+    // ============================================================================
+    // LOOP_WITHOUT_YIELD deep traversal (#66 / CANCEL_001)
+    // ============================================================================
+
+    @Test
+    fun `cooperation point in val initializer suppresses LOOP_WITHOUT_YIELD`() {
+        val sourceCode = """
+            import kotlinx.coroutines.delay
+
+            suspend fun suspendCall(): Int {
+                delay(1)
+                return 1
+            }
+
+            suspend fun loopValInitializer() {
+                while (true) {
+                    val n = suspendCall()
+                    if (n <= 0) break
+                }
+            }
+        """.trimIndent()
+
+        val projectDir = createTestProject(sourceCode)
+        val output = runBuild(projectDir, expectSuccess = true)
+
+        assertTrue(
+            "LOOP_WITHOUT_YIELD" !in output && "[CANCEL_001]" !in output,
+            "Did not expect LOOP_WITHOUT_YIELD for a cooperation point in a val initializer but got:\n$output"
+        )
+    }
+
+    @Test
+    fun `cooperation point in assignment RHS suppresses LOOP_WITHOUT_YIELD`() {
+        val sourceCode = """
+            import kotlinx.coroutines.delay
+
+            suspend fun suspendCall(): Int {
+                delay(1)
+                return 1
+            }
+
+            suspend fun loopAssignment() {
+                var n = 1
+                while (n > 0) {
+                    n = suspendCall()
+                }
+            }
+        """.trimIndent()
+
+        val projectDir = createTestProject(sourceCode)
+        val output = runBuild(projectDir, expectSuccess = true)
+
+        assertTrue(
+            "LOOP_WITHOUT_YIELD" !in output && "[CANCEL_001]" !in output,
+            "Did not expect LOOP_WITHOUT_YIELD for a cooperation point in an assignment RHS but got:\n$output"
+        )
+    }
+
+    @Test
+    fun `cooperation point in if condition suppresses LOOP_WITHOUT_YIELD`() {
+        val sourceCode = """
+            import kotlinx.coroutines.delay
+
+            suspend fun suspendCall(): Int {
+                delay(1)
+                return 1
+            }
+
+            suspend fun loopIfCondition() {
+                while (true) {
+                    if (suspendCall() <= 0) {
+                        break
+                    }
+                }
+            }
+        """.trimIndent()
+
+        val projectDir = createTestProject(sourceCode)
+        val output = runBuild(projectDir, expectSuccess = true)
+
+        assertTrue(
+            "LOOP_WITHOUT_YIELD" !in output && "[CANCEL_001]" !in output,
+            "Did not expect LOOP_WITHOUT_YIELD for a cooperation point in an if condition but got:\n$output"
+        )
+    }
+
+    @Test
+    fun `cooperation point in when branch suppresses LOOP_WITHOUT_YIELD`() {
+        val sourceCode = """
+            import kotlinx.coroutines.delay
+
+            suspend fun suspendCall(): Int {
+                delay(1)
+                return 1
+            }
+
+            suspend fun loopWhenBranch(): Int {
+                var count = 0
+                while (count < 10) {
+                    when {
+                        count % 2 == 0 -> suspendCall()
+                        else -> count++
+                    }
+                    count++
+                }
+                return count
+            }
+        """.trimIndent()
+
+        val projectDir = createTestProject(sourceCode)
+        val output = runBuild(projectDir, expectSuccess = true)
+
+        assertTrue(
+            "LOOP_WITHOUT_YIELD" !in output && "[CANCEL_001]" !in output,
+            "Did not expect LOOP_WITHOUT_YIELD for a cooperation point in a when branch but got:\n$output"
+        )
+    }
+
+    @Test
+    fun `cooperation point on elvis RHS suppresses LOOP_WITHOUT_YIELD`() {
+        val sourceCode = """
+            import kotlinx.coroutines.delay
+
+            suspend fun suspendCall(): Int {
+                delay(1)
+                return 1
+            }
+
+            suspend fun loopElvis(): Int {
+                var total = 0
+                while (total < 10) {
+                    val maybe: Int? = null
+                    val n = maybe ?: suspendCall()
+                    total += n
+                }
+                return total
+            }
+        """.trimIndent()
+
+        val projectDir = createTestProject(sourceCode)
+        val output = runBuild(projectDir, expectSuccess = true)
+
+        assertTrue(
+            "LOOP_WITHOUT_YIELD" !in output && "[CANCEL_001]" !in output,
+            "Did not expect LOOP_WITHOUT_YIELD for a cooperation point on an elvis RHS but got:\n$output"
+        )
+    }
+
+    @Test
+    fun `cooperation point inside try block suppresses LOOP_WITHOUT_YIELD`() {
+        val sourceCode = """
+            import kotlinx.coroutines.delay
+
+            suspend fun suspendCall(): Int {
+                delay(1)
+                return 1
+            }
+
+            suspend fun loopTryBlock(): Int {
+                var total = 0
+                while (total < 10) {
+                    try {
+                        total += suspendCall()
+                    } catch (e: Exception) {
+                        total++
+                    }
+                }
+                return total
+            }
+        """.trimIndent()
+
+        val projectDir = createTestProject(sourceCode)
+        val output = runBuild(projectDir, expectSuccess = true)
+
+        assertTrue(
+            "LOOP_WITHOUT_YIELD" !in output && "[CANCEL_001]" !in output,
+            "Did not expect LOOP_WITHOUT_YIELD for a cooperation point inside a try block but got:\n$output"
+        )
+    }
+
+    @Test
+    fun `loop with no cooperation point anywhere still reports LOOP_WITHOUT_YIELD`() {
+        val sourceCode = """
+            fun doWork() {
+                println("working")
+            }
+
+            suspend fun loopNoCooperation() {
+                while (true) {
+                    doWork()
+                }
+            }
+        """.trimIndent()
+
+        val projectDir = createTestProject(sourceCode)
+        val output = runBuild(projectDir, expectSuccess = true)
+
+        assertTrue(
+            "LOOP_WITHOUT_YIELD" in output || "[CANCEL_001]" in output,
+            "Expected LOOP_WITHOUT_YIELD for a loop with no cooperation point but got:\n$output"
+        )
+    }
+
+    @Test
+    fun `loop with only an uncalled local suspend fun still reports LOOP_WITHOUT_YIELD`() {
+        val sourceCode = """
+            import kotlinx.coroutines.delay
+
+            fun doWork() {
+                println("working")
+            }
+
+            suspend fun loopWithUncalledLocalSuspendFun() {
+                while (true) {
+                    suspend fun helper() {
+                        delay(1)
+                    }
+                    doWork()
+                }
+            }
+        """.trimIndent()
+
+        val projectDir = createTestProject(sourceCode)
+        val output = runBuild(projectDir, expectSuccess = true)
+
+        assertTrue(
+            "LOOP_WITHOUT_YIELD" in output || "[CANCEL_001]" in output,
+            "Expected LOOP_WITHOUT_YIELD for a loop with only an uncalled local suspend fun but got:\n$output"
+        )
     }
 }

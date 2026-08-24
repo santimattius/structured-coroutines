@@ -6,6 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **CANCEL_001 false negatives on non-top-level cooperation points** — `LoopWithoutYieldChecker` now performs a deep, structural search for cooperation points (`yield`, `ensureActive`, `delay`, `suspendCancellableCoroutine`, `withTimeout`, `withTimeoutOrNull`, or any resolved suspend call) anywhere in a loop body's statement tree — including `val`/`var` initializers, assignment RHS, `if`/`when` conditions and branches, elvis (`?:`) RHS, and `try`/`catch` blocks — instead of only top-level statements. Previously, `while (true) { val n = suspendCall() }` was incorrectly flagged even though the loop suspends on every iteration. (#66)
+
+---
+
 ## [1.1.0] — 2026-06-27
 
 ### Fixed
