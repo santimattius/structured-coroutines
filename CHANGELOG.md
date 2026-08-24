@@ -6,6 +6,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **CANCEL_001 false negatives on non-top-level cooperation points** — `LoopWithoutYieldChecker` now performs a deep, structural search for cooperation points (`yield`, `ensureActive`, `delay`, `suspendCancellableCoroutine`, `withTimeout`, `withTimeoutOrNull`, or any resolved suspend call) anywhere in a loop body's statement tree — including `val`/`var` initializers, assignment RHS, `if`/`when` conditions and branches, elvis (`?:`) RHS, and `try`/`catch` blocks — instead of only top-level statements. Previously, `while (true) { val n = suspendCall() }` was incorrectly flagged even though the loop suspends on every iteration. (#66)
+- **CANCEL_004 false positive on the recommended `withContext(NonCancellable)` pattern** — `SuspendInFinallyChecker` now recognizes a resolved reference to `kotlinx.coroutines.NonCancellable` (via `FirResolvedQualifier.classId`, matching the precedent established in `UnstructuredLaunchChecker.isGlobalScope`), whether written as a bare imported name, fully qualified (`kotlinx.coroutines.NonCancellable`), or combined via `+` (e.g. `NonCancellable + Dispatchers.IO`). Previously, the check could never pass — even the exact pattern the diagnostic message recommends was flagged. (#65)
+
+### Changed
+
+- **Deliberate tightening (#65)** — a user-defined property or variable merely *named* `NonCancellable` no longer suppresses `CANCEL_004`; only a reference that resolves to `kotlinx.coroutines.NonCancellable`'s `ClassId` does. The previous check matched on the bare identifier name only, which was a false negative.
+
+---
+
 ## [1.1.0] — 2026-06-27
 
 ### Fixed
