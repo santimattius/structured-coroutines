@@ -918,27 +918,86 @@ class StructuredCoroutinesPluginFunctionalTest {
         )
     }
 
+    @Test
+    fun `GitHub issue 66 repro - functions a, b and c all cooperate identically`() {
+        // Literal reproduction of https://github.com/santimattius/structured-coroutines/issues/66
+        // (function names a/b/c preserved from the issue). `readAvailable`/`flush` stand in for
+        // the issue's Ktor ByteReadChannel/ByteWriteChannel calls: this module's functional test
+        // harness has no Ktor on its classpath, and the checker is suspend-call-shape agnostic,
+        // not type-specific, so a dependency-free suspend fun exercises the exact same FIR path.
+        val sourceCode = """
+            import kotlinx.coroutines.delay
+
+            suspend fun readAvailable(): Int {
+                delay(1)
+                return 1
+            }
+
+            suspend fun flush() {
+                delay(1)
+            }
+
+            // a: only suspend call is a property initializer
+            suspend fun a(): Int {
+                var total = 0
+                while (true) {
+                    val n = readAvailable()
+                    if (n <= 0) break
+                    total += n
+                }
+                return total
+            }
+
+            // b: same loop plus one statement-level suspend call
+            suspend fun b(): Int {
+                var total = 0
+                while (true) {
+                    val n = readAvailable()
+                    if (n <= 0) break
+                    flush()
+                    total += n
+                }
+                return total
+            }
+
+            // c: suspend call in an assignment
+            suspend fun c(): Int {
+                var n = 1
+                while (n > 0) {
+                    n = readAvailable()
+                }
+                return n
+            }
+        """.trimIndent()
+
+        val projectDir = createTestProject(sourceCode)
+        val output = runBuild(projectDir, expectSuccess = true)
+
+        assertTrue(
+            "LOOP_WITHOUT_YIELD" !in output && "[CANCEL_001]" !in output,
+            "Did not expect LOOP_WITHOUT_YIELD for issue #66's a/b/c but got:\n$output"
+        )
+    }
+
     // ============================================================================
     // SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE ClassId recognition (#65 / CANCEL_004)
     // ============================================================================
 
     @Test
     fun `bare NonCancellable reference in withContext suppresses SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE`() {
+        // Literal reproduction of variant A from
+        // https://github.com/santimattius/structured-coroutines/issues/65 (function `a`).
         val sourceCode = """
             import kotlinx.coroutines.NonCancellable
             import kotlinx.coroutines.delay
             import kotlinx.coroutines.withContext
 
-            suspend fun saveToDb() {
-                delay(1)
-            }
-
-            suspend fun cleanupBare() {
+            suspend fun a() {
                 try {
                     delay(1)
                 } finally {
                     withContext(NonCancellable) {
-                        saveToDb()
+                        delay(1)
                     }
                 }
             }
@@ -955,20 +1014,18 @@ class StructuredCoroutinesPluginFunctionalTest {
 
     @Test
     fun `fully-qualified NonCancellable reference in withContext suppresses SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE`() {
+        // Literal reproduction of variant B from
+        // https://github.com/santimattius/structured-coroutines/issues/65 (function `b`).
         val sourceCode = """
             import kotlinx.coroutines.delay
             import kotlinx.coroutines.withContext
 
-            suspend fun saveToDb() {
-                delay(1)
-            }
-
-            suspend fun cleanupQualified() {
+            suspend fun b() {
                 try {
                     delay(1)
                 } finally {
                     withContext(kotlinx.coroutines.NonCancellable) {
-                        saveToDb()
+                        delay(1)
                     }
                 }
             }
