@@ -14,11 +14,17 @@ import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.expression.FirTryExpressionChecker
 import org.jetbrains.kotlin.fir.expressions.FirBlock
+import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
+import org.jetbrains.kotlin.fir.expressions.FirResolvedQualifier
 import org.jetbrains.kotlin.fir.expressions.FirStatement
 import org.jetbrains.kotlin.fir.expressions.FirTryExpression
 import org.jetbrains.kotlin.fir.references.toResolvedCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
+import org.jetbrains.kotlin.fir.types.ConeClassLikeType
+import org.jetbrains.kotlin.fir.types.resolvedType
+import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
 /**
@@ -72,7 +78,9 @@ class SuspendInFinallyChecker : FirTryExpressionChecker(MppCheckerKind.Common) {
 
     companion object {
         private val WITH_CONTEXT_NAME = Name.identifier("withContext")
-        private val NON_CANCELLABLE_NAME = Name.identifier("NonCancellable")
+        private val PLUS_NAME = Name.identifier("plus")
+        private val NON_CANCELLABLE_CLASS_ID =
+            ClassId(FqName("kotlinx.coroutines"), Name.identifier("NonCancellable"))
     }
 
     context(context: CheckerContext, reporter: DiagnosticReporter)
@@ -144,19 +152,39 @@ class SuspendInFinallyChecker : FirTryExpressionChecker(MppCheckerKind.Common) {
     }
 
     /**
-     * Checks if a function call is `withContext(NonCancellable)`.
+     * Checks if a function call is `withContext(NonCancellable)` (or a `NonCancellable`-derived
+     * combination such as `withContext(NonCancellable + Dispatchers.IO)`).
      */
     private fun isWithContextNonCancellable(call: FirFunctionCall): Boolean {
         if (call.calleeReference.name != WITH_CONTEXT_NAME) return false
 
-        // Check if first argument is NonCancellable
         val firstArg = call.argumentList.arguments.firstOrNull() ?: return false
-        
-        if (firstArg is org.jetbrains.kotlin.fir.expressions.FirPropertyAccessExpression) {
-            return firstArg.calleeReference.name == NON_CANCELLABLE_NAME
+        return isNonCancellable(firstArg)
+    }
+
+    /**
+     * Checks if [expression] resolves to `kotlinx.coroutines.NonCancellable`, whether referenced
+     * as a bare imported name, fully qualified, combined via `+` with another
+     * `CoroutineContext`, or through a variable typed as `NonCancellable`.
+     *
+     * Mirrors the verified precedent in `UnstructuredLaunchChecker.isGlobalScope`: a resolved
+     * object reference is a [FirResolvedQualifier], and [ConeClassLikeType.lookupTag] is used
+     * instead of the unstable `ConeKotlinType.toClassSymbol()` API that changed signature in
+     * Kotlin 2.3.20.
+     */
+    private fun isNonCancellable(expression: FirExpression): Boolean {
+        if (expression is FirResolvedQualifier) {
+            return expression.classId == NON_CANCELLABLE_CLASS_ID
         }
-        
-        return false
+
+        if (expression is FirFunctionCall && expression.calleeReference.name == PLUS_NAME) {
+            val receiver = expression.explicitReceiver
+            if (receiver != null && isNonCancellable(receiver)) return true
+            return expression.argumentList.arguments.any { isNonCancellable(it) }
+        }
+
+        val classId = (expression.resolvedType as? ConeClassLikeType)?.lookupTag?.classId
+        return classId == NON_CANCELLABLE_CLASS_ID
     }
 
     /**

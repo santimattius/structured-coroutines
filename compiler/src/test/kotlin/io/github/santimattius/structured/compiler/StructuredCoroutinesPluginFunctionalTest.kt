@@ -917,4 +917,128 @@ class StructuredCoroutinesPluginFunctionalTest {
             "Expected LOOP_WITHOUT_YIELD for a loop with only an uncalled local suspend fun but got:\n$output"
         )
     }
+
+    // ============================================================================
+    // SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE ClassId recognition (#65 / CANCEL_004)
+    // ============================================================================
+
+    @Test
+    fun `bare NonCancellable reference in withContext suppresses SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE`() {
+        val sourceCode = """
+            import kotlinx.coroutines.NonCancellable
+            import kotlinx.coroutines.delay
+            import kotlinx.coroutines.withContext
+
+            suspend fun saveToDb() {
+                delay(1)
+            }
+
+            suspend fun cleanupBare() {
+                try {
+                    delay(1)
+                } finally {
+                    withContext(NonCancellable) {
+                        saveToDb()
+                    }
+                }
+            }
+        """.trimIndent()
+
+        val projectDir = createTestProject(sourceCode)
+        val output = runBuild(projectDir, expectSuccess = true)
+
+        assertTrue(
+            "SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE" !in output && "[CANCEL_004]" !in output,
+            "Did not expect SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE for bare withContext(NonCancellable) but got:\n$output"
+        )
+    }
+
+    @Test
+    fun `fully-qualified NonCancellable reference in withContext suppresses SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE`() {
+        val sourceCode = """
+            import kotlinx.coroutines.delay
+            import kotlinx.coroutines.withContext
+
+            suspend fun saveToDb() {
+                delay(1)
+            }
+
+            suspend fun cleanupQualified() {
+                try {
+                    delay(1)
+                } finally {
+                    withContext(kotlinx.coroutines.NonCancellable) {
+                        saveToDb()
+                    }
+                }
+            }
+        """.trimIndent()
+
+        val projectDir = createTestProject(sourceCode)
+        val output = runBuild(projectDir, expectSuccess = true)
+
+        assertTrue(
+            "SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE" !in output && "[CANCEL_004]" !in output,
+            "Did not expect SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE for fully-qualified withContext(NonCancellable) but got:\n$output"
+        )
+    }
+
+    @Test
+    fun `NonCancellable plus Dispatchers combo in withContext suppresses SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE`() {
+        val sourceCode = """
+            import kotlinx.coroutines.Dispatchers
+            import kotlinx.coroutines.NonCancellable
+            import kotlinx.coroutines.delay
+            import kotlinx.coroutines.withContext
+
+            suspend fun saveToDb() {
+                delay(1)
+            }
+
+            suspend fun cleanupPlusCombo() {
+                try {
+                    delay(1)
+                } finally {
+                    withContext(NonCancellable + Dispatchers.IO) {
+                        saveToDb()
+                    }
+                }
+            }
+        """.trimIndent()
+
+        val projectDir = createTestProject(sourceCode)
+        val output = runBuild(projectDir, expectSuccess = true)
+
+        assertTrue(
+            "SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE" !in output && "[CANCEL_004]" !in output,
+            "Did not expect SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE for withContext(NonCancellable + Dispatchers.IO) but got:\n$output"
+        )
+    }
+
+    @Test
+    fun `unprotected suspend call in finally still reports SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE`() {
+        val sourceCode = """
+            import kotlinx.coroutines.delay
+
+            suspend fun saveToDb() {
+                delay(1)
+            }
+
+            suspend fun cleanupUnprotected() {
+                try {
+                    delay(1)
+                } finally {
+                    saveToDb()
+                }
+            }
+        """.trimIndent()
+
+        val projectDir = createTestProject(sourceCode)
+        val output = runBuild(projectDir, expectSuccess = true)
+
+        assertTrue(
+            "SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE" in output || "[CANCEL_004]" in output,
+            "Expected SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE for an unprotected suspend call in finally but got:\n$output"
+        )
+    }
 }
