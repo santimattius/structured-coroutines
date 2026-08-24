@@ -9,3 +9,5 @@
 open annotation class io.github.santimattius.structured.runtime/ExperimentalStructuredCoroutines : kotlin/Annotation { // io.github.santimattius.structured.runtime/ExperimentalStructuredCoroutines|null[0]
     constructor <init>() // io.github.santimattius.structured.runtime/ExperimentalStructuredCoroutines.<init>|<init>(){}[0]
 }
+
+final fun <#A: kotlin/Any?> io.github.santimattius.structured.runtime/safeCallbackFlow(kotlin/Function1<kotlinx.coroutines.channels/SendChannel<#A>, kotlinx.coroutines/DisposableHandle>): kotlinx.coroutines.flow/Flow<#A> // io.github.santimattius.structured.runtime/safeCallbackFlow|safeCallbackFlow(kotlin.Function1<kotlinx.coroutines.channels.SendChannel<0:0>,kotlinx.coroutines.DisposableHandle>){0§<kotlin.Any?>}[0]
