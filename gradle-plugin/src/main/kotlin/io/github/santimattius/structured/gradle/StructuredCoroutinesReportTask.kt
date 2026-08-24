@@ -186,17 +186,23 @@ abstract class StructuredCoroutinesReportTask : DefaultTask() {
         }
         if (excludedSourceSets.isNotEmpty() || excludedProjects.isNotEmpty()) sb.appendLine()
 
-        val errorCount = rules.count { severityOf(severityMap, it.propertyKey) == "error" }
-        val warnCount  = rules.count { severityOf(severityMap, it.propertyKey) == "warning" }
-        sb.appendLine("  Summary: $errorCount error(s), $warnCount warning(s) — ${rules.size} rules total")
+        val errorCount    = rules.count { severityOf(severityMap, it.propertyKey) == "error" }
+        val warnCount     = rules.count { severityOf(severityMap, it.propertyKey) == "warning" }
+        val disabledCount = rules.count { severityOf(severityMap, it.propertyKey) == "disabled" }
+        val summary = buildString {
+            append("  Summary: $errorCount error(s), $warnCount warning(s)")
+            if (disabledCount > 0) append(", $disabledCount disabled")
+            append(" — ${rules.size} rules total")
+        }
+        sb.appendLine(summary)
         sb.appendLine()
         sb.appendLine(sep)
-        sb.appendLine(String.format("  %-12s  %-7s  %-6s  %s", "Code", "Severity", "§", "Rule"))
+        sb.appendLine(String.format("  %-12s  %-8s  %-6s  %s", "Code", "Severity", "§", "Rule"))
         sb.appendLine(sep)
 
         for (rule in rules) {
-            val sev = severityOf(severityMap, rule.propertyKey).uppercase().padEnd(7)
-            sb.appendLine(String.format("  %-12s  %-7s  %-6s  %s", rule.ruleCode, sev, rule.section, rule.title))
+            val sev = severityOf(severityMap, rule.propertyKey).uppercase().padEnd(8)
+            sb.appendLine(String.format("  %-12s  %-8s  %-6s  %s", rule.ruleCode, sev, rule.section, rule.title))
         }
 
         sb.appendLine(sep)
@@ -216,12 +222,17 @@ abstract class StructuredCoroutinesReportTask : DefaultTask() {
         excludedSourceSets: List<String>,
         excludedProjects: List<String>,
     ): String {
-        val errorCount = rules.count { severityOf(severityMap, it.propertyKey) == "error" }
-        val warnCount  = rules.count { severityOf(severityMap, it.propertyKey) == "warning" }
+        val errorCount    = rules.count { severityOf(severityMap, it.propertyKey) == "error" }
+        val warnCount     = rules.count { severityOf(severityMap, it.propertyKey) == "warning" }
+        val disabledCount = rules.count { severityOf(severityMap, it.propertyKey) == "disabled" }
 
         val rulesRows = rules.joinToString("\n") { rule ->
             val sev        = severityOf(severityMap, rule.propertyKey)
-            val badgeClass = if (sev == "error") "badge-error" else "badge-warning"
+            val badgeClass = when (sev) {
+                "error" -> "badge-error"
+                "disabled" -> "badge-disabled"
+                else -> "badge-warning"
+            }
             val docUrl     = "$docBase#${rule.docAnchor}"
             """        <tr>
           <td><code>${rule.ruleCode}</code></td>
@@ -267,6 +278,7 @@ abstract class StructuredCoroutinesReportTask : DefaultTask() {
                    text-transform: uppercase; letter-spacing: .06em; }
     .stat.errors   .value { color: #dc3545; }
     .stat.warnings .value { color: #fd7e14; }
+    .stat.disabled .value { color: #6c757d; }
     .stat.total    .value { color: #0d6efd; }
     .content { padding: 24px 32px; }
     .excl { font-size: .85rem; color: #6c757d; margin-bottom: 6px; }
@@ -282,8 +294,9 @@ abstract class StructuredCoroutinesReportTask : DefaultTask() {
     .badge { display: inline-block; padding: 3px 8px; border-radius: 4px;
              font-size: .72rem; font-weight: 700; text-transform: uppercase;
              letter-spacing: .06em; }
-    .badge-error   { background: #fff1f0; color: #cf1322; border: 1px solid #ffa39e; }
-    .badge-warning { background: #fffbe6; color: #874d00; border: 1px solid #ffe58f; }
+    .badge-error    { background: #fff1f0; color: #cf1322; border: 1px solid #ffa39e; }
+    .badge-warning  { background: #fffbe6; color: #874d00; border: 1px solid #ffe58f; }
+    .badge-disabled { background: #f1f3f5; color: #495057; border: 1px solid #ced4da; }
     a { color: #0d6efd; text-decoration: none; }
     a:hover { text-decoration: underline; }
     footer { padding: 14px 32px; background: #f8f9fa;
@@ -303,6 +316,7 @@ abstract class StructuredCoroutinesReportTask : DefaultTask() {
   <div class="summary">
     <div class="stat errors"><div class="value">$errorCount</div><div class="label">Errors</div></div>
     <div class="stat warnings"><div class="value">$warnCount</div><div class="label">Warnings</div></div>
+    <div class="stat disabled"><div class="value">$disabledCount</div><div class="label">Disabled</div></div>
     <div class="stat total"><div class="value">${rules.size}</div><div class="label">Rules</div></div>
   </div>
 
@@ -330,6 +344,7 @@ $rulesRows
     &nbsp;·&nbsp;
     <a href="https://github.com/santimattius/structured-coroutines" target="_blank">GitHub</a>
     &nbsp;·&nbsp; Structured Coroutines v$version
+    ${if (disabledCount > 0) """<br><span class="excl">Disabled rules are not yet suppressed at compile time — see <a href="${DisabledSeverityAdvisory.TRACKING_ISSUE}" target="_blank">issue #68</a>.</span>""" else ""}
   </footer>
 </div>
 </body>

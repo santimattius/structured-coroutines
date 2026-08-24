@@ -42,6 +42,13 @@ import org.gradle.api.provider.Property
  *
  * - `"error"` - Reports as compilation error (blocks build)
  * - `"warning"` - Reports as warning (allows build to succeed)
+ * - `"disabled"` - Recorded and shown distinctly by [structuredCoroutinesReport], but does **not**
+ *   yet suppress diagnostics: this release, the check still reports at its default severity.
+ *   Setting a check to `"disabled"` emits a one-time build advisory naming the check. Real
+ *   compile-time enforcement is tracked in
+ *   [issue #68](https://github.com/santimattius/structured-coroutines/issues/68). Only the exact
+ *   string `"disabled"` is recognized (case-insensitive); `"off"` is not an alias. Any other
+ *   unrecognized value silently falls back to the check's default severity, unchanged from today.
  *
  * ## Default Behavior
  *
