@@ -59,4 +59,55 @@ class PluginConfiguration(configuration: CompilerConfiguration) {
             "warning" -> Severity.WARNING
             else -> defaultSeverity
         }
+
+    /**
+     * Resolves the effective tri-state severity for [rule] (#68, ADR-1/ADR-2).
+     *
+     * Unlike [getSeverity], this recognizes `"disabled"` as the real [RuleSeverity.DISABLED]
+     * state rather than silently falling back to a [Severity] value. An unrecognized value
+     * (e.g. a typo) falls back to [ScoroutinesRule.defaultSeverity] with no build failure —
+     * the same regression-safe fallback behavior `getSeverity` already had for #67.
+     *
+     * This method does not yet apply the ADR-7 grace-period direction rule (Phase 3); it is the
+     * raw resolution step that phase builds on.
+     */
+    fun effectiveSeverityOf(rule: ScoroutinesRule): RuleSeverity =
+        when (options[rule.optionKey]?.lowercase()) {
+            "error" -> RuleSeverity.ERROR
+            "warning" -> RuleSeverity.WARNING
+            "disabled" -> RuleSeverity.DISABLED
+            else -> rule.defaultSeverity.toRuleSeverity()
+        }
+}
+
+/**
+ * Every [ScoroutinesRule.defaultSeverity] is either [Severity.ERROR] or [Severity.WARNING] —
+ * no rule defaults to disabled — so this conversion is total in practice; any other [Severity]
+ * value indicates a rule was misconfigured with an unsupported default.
+ */
+private fun Severity.toRuleSeverity(): RuleSeverity = when (this) {
+    Severity.ERROR -> RuleSeverity.ERROR
+    Severity.WARNING -> RuleSeverity.WARNING
+    else -> error("Unsupported default Severity for a ScoroutinesRule: $this")
+}
+
+/**
+ * Tri-state severity (#68, ADR-2): [org.jetbrains.kotlin.diagnostics.Severity] has no
+ * disabled/off member, so it cannot represent a rule that must report nothing at all.
+ *
+ * [rank] is an explicit constructor value, never `ordinal`. ADR-7's relax/tighten direction
+ * rule compares `configured.rank` against `default.rank`; if rank were derived from enum
+ * declaration order, reordering these entries would silently invert that comparison.
+ */
+enum class RuleSeverity(val rank: Int) {
+    DISABLED(0),
+    WARNING(1),
+    ERROR(2);
+
+    /** `null` means DISABLED — the only state [Severity] cannot represent. */
+    fun toDiagnostic(): Severity? = when (this) {
+        DISABLED -> null
+        WARNING -> Severity.WARNING
+        ERROR -> Severity.ERROR
+    }
 }

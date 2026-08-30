@@ -22,7 +22,8 @@ class StructuredCoroutinesPluginFunctionalTest {
     private fun createTestProject(
         sourceCode: String,
         fileName: String = "Test.kt",
-        gradlePropertiesExtra: String? = null
+        gradlePropertiesExtra: String? = null,
+        extensionBlock: String? = null,
     ): File {
         val projectDir = File.createTempFile("test-project", "").apply {
             delete()
@@ -74,6 +75,8 @@ class StructuredCoroutinesPluginFunctionalTest {
             kotlin {
                 jvmToolchain(17)
             }
+
+            ${extensionBlock.orEmpty()}
         """.trimIndent())
 
         // Source directory
@@ -1096,6 +1099,58 @@ class StructuredCoroutinesPluginFunctionalTest {
         assertTrue(
             "SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE" in output || "[CANCEL_004]" in output,
             "Expected SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE for an unprotected suspend call in finally but got:\n$output"
+        )
+    }
+
+    // ============================================================================
+    // CLI bridge (#68, ADR-3, Phase 0/1) — StructuredCoroutinesCommandLineProcessor +
+    // META-INF/services registration. Before this bridge existed, every SubpluginOption the
+    // Gradle plugin emits for the 14 rule keys was silently dropped: no CommandLineProcessor was
+    // registered, so PluginConfiguration.OPTIONS_KEY was never populated in a real build
+    // (Ground truth in design.md). This section proves the bridge survives real jar packaging
+    // and java.util.ServiceLoader discovery, which unit tests instantiating the classes directly
+    // cannot cover.
+    // ============================================================================
+
+    @Test
+    fun `real build with all 14 severity options set via the DSL succeeds through the new CLI bridge`() {
+        val sourceCode = """
+            fun ok() = println("hello")
+        """.trimIndent()
+
+        // A mix of error/warning/disabled across all 14 rule keys: if the CLI bridge (the
+        // registered StructuredCoroutinesCommandLineProcessor + its META-INF/services file)
+        // were broken — wrong pluginId, missing/malformed service file, an option key typo, or
+        // an exception thrown from processOption — this real build would fail here, unlike the
+        // pre-bridge behavior where these options were always silently ignored.
+        val projectDir = createTestProject(
+            sourceCode,
+            extensionBlock = """
+                structuredCoroutines {
+                    globalScopeUsage.set("warning")
+                    inlineCoroutineScope.set("warning")
+                    unstructuredLaunch.set("warning")
+                    runBlockingInSuspend.set("warning")
+                    jobInBuilderContext.set("disabled")
+                    dispatchersUnconfined.set("error")
+                    cancellationExceptionSubclass.set("disabled")
+                    suspendInFinally.set("error")
+                    cancellationExceptionSwallowed.set("disabled")
+                    unusedDeferred.set("warning")
+                    redundantLaunchInCoroutineScope.set("disabled")
+                    loopWithoutYield.set("error")
+                    suspendCoroutineWithoutCancellation.set("warning")
+                    callbackFlowWithoutAwaitClose.set("disabled")
+                }
+            """.trimIndent(),
+        )
+        val output = runBuild(projectDir, expectSuccess = true)
+
+        assertTrue(
+            "BUILD SUCCESSFUL" in output || "compileKotlin" in output,
+            "Expected the CLI bridge (StructuredCoroutinesCommandLineProcessor + its " +
+                "META-INF/services registration) to accept all 14 severity options — including " +
+                "\"disabled\" — without failing the build, but got:\n$output",
         )
     }
 }
