@@ -9,9 +9,14 @@
  */
 package io.github.santimattius.structured.compiler
 
+import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.CompilerConfigurationKey
+import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
+import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactory0
 import org.jetbrains.kotlin.diagnostics.Severity
+import org.jetbrains.kotlin.diagnostics.reportOn
+import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 
 /**
  * Configuration for the Structured Coroutines compiler plugin.
@@ -38,35 +43,14 @@ class PluginConfiguration(configuration: CompilerConfiguration) {
 
     private val options: Map<String, String> = configuration.get(OPTIONS_KEY) ?: emptyMap()
 
-    val globalScopeUsage: Severity = getSeverity("globalScopeUsage", Severity.ERROR)
-    val inlineCoroutineScope: Severity = getSeverity("inlineCoroutineScope", Severity.ERROR)
-    val unstructuredLaunch: Severity = getSeverity("unstructuredLaunch", Severity.ERROR)
-    val runBlockingInSuspend: Severity = getSeverity("runBlockingInSuspend", Severity.ERROR)
-    val jobInBuilderContext: Severity = getSeverity("jobInBuilderContext", Severity.ERROR)
-    val dispatchersUnconfined: Severity = getSeverity("dispatchersUnconfined", Severity.WARNING)
-    val cancellationExceptionSubclass: Severity = getSeverity("cancellationExceptionSubclass", Severity.ERROR)
-    val suspendInFinally: Severity = getSeverity("suspendInFinally", Severity.WARNING)
-    val cancellationExceptionSwallowed: Severity = getSeverity("cancellationExceptionSwallowed", Severity.WARNING)
-    val unusedDeferred: Severity = getSeverity("unusedDeferred", Severity.ERROR)
-    val redundantLaunchInCoroutineScope: Severity = getSeverity("redundantLaunchInCoroutineScope", Severity.WARNING)
-    val loopWithoutYield: Severity = getSeverity("loopWithoutYield", Severity.WARNING)
-    val suspendCoroutineWithoutCancellation: Severity = getSeverity("suspendCoroutineWithoutCancellation", Severity.ERROR)
-    val callbackFlowWithoutAwaitClose: Severity = getSeverity("callbackFlowWithoutAwaitClose", Severity.ERROR)
-
-    private fun getSeverity(key: String, defaultSeverity: Severity): Severity =
-        when (options[key]?.lowercase()) {
-            "error" -> Severity.ERROR
-            "warning" -> Severity.WARNING
-            else -> defaultSeverity
-        }
-
     /**
      * Resolves the effective tri-state severity for [rule] (#68, ADR-1/ADR-2).
      *
-     * Unlike [getSeverity], this recognizes `"disabled"` as the real [RuleSeverity.DISABLED]
-     * state rather than silently falling back to a [Severity] value. An unrecognized value
-     * (e.g. a typo) falls back to [ScoroutinesRule.defaultSeverity] with no build failure —
-     * the same regression-safe fallback behavior `getSeverity` already had for #67.
+     * Unlike a plain [Severity] lookup, this recognizes `"disabled"` as the real
+     * [RuleSeverity.DISABLED] state rather than silently falling back to a [Severity] value. An
+     * unrecognized value (e.g. a typo) falls back to [ScoroutinesRule.defaultSeverity] with no
+     * build failure — the same regression-safe fallback behavior the legacy per-rule accessors
+     * had for #67.
      *
      * This method does not yet apply the ADR-7 grace-period direction rule (Phase 3); it is the
      * raw resolution step that phase builds on.
@@ -78,6 +62,27 @@ class PluginConfiguration(configuration: CompilerConfiguration) {
             "disabled" -> RuleSeverity.DISABLED
             else -> rule.defaultSeverity.toRuleSeverity()
         }
+}
+
+/**
+ * Single report gate for every configurable checker (#68, ADR-5).
+ *
+ * Short-circuits when [rule] resolves to [RuleSeverity.DISABLED] — this is the one place
+ * "disabled" actually suppresses a diagnostic, replacing the 14 duplicated no-op call sites a
+ * per-checker `if` would require. [factory] is the checker's existing (still hardcoded-severity)
+ * [KtDiagnosticFactory0]; this PR does not yet select between an ERROR/WARNING twin at report
+ * time (that selection lands with the Slice B twin factories) — only the disabled path changes
+ * behavior here.
+ */
+internal fun PluginConfiguration.report(
+    reporter: DiagnosticReporter,
+    rule: ScoroutinesRule,
+    factory: KtDiagnosticFactory0,
+    source: KtSourceElement?,
+    context: CheckerContext,
+) {
+    if (effectiveSeverityOf(rule) == RuleSeverity.DISABLED) return
+    reporter.reportOn(source, factory, context)
 }
 
 /**

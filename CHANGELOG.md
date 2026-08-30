@@ -6,6 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ---
 
+## [1.2.0] — Unreleased
+
+### Changed
+
+- **`"disabled"` severity now really suppresses diagnostics at compile time (#68)** — a `structuredCoroutines { <rule>.set("disabled") }` check no longer just records the value for `structuredCoroutinesReport`; it now actually skips reporting for that rule. This is a real (non-breaking) behavior change: builds that were previously still failing/warning on a check set to `"disabled"` will now pass cleanly for that check. The `PluginConfiguration` object is now injected into every checker via a bound member reference (replacing the internal `PluginConfigurationHolder` global), and the decorative build-time "disabled" advisory warning introduced in 1.1.1 has been removed, since its message is no longer accurate.
+
+---
+
 ## [1.1.1] — 2026-08-24
 
 ### Added

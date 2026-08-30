@@ -277,161 +277,137 @@ object StructuredCoroutinesErrors {
 }
 
 // ============================================================
-// Extension Functions for Reporting Diagnostics
+// Extension Functions for Reporting Diagnostics (#68, ADR-5)
 // ============================================================
+//
+// Every function below takes the injected [PluginConfiguration] and delegates to
+// [PluginConfiguration.report], which short-circuits when the rule's effective severity is
+// [RuleSeverity.DISABLED]. The 3 previously-dead `(call, context, severity: Severity)` overloads
+// that existed here (zero call sites) are gone: severity is now always *resolved*, never
+// caller-supplied, and `Severity` cannot represent "disabled" anyway (ADR-2).
 
 // --- Core Structured Concurrency ---
 
 /**
- * Reports an unstructured coroutine launch error.
+ * Reports an unstructured coroutine launch, unless [config] resolves the rule to disabled.
  */
-fun DiagnosticReporter.reportUnstructuredLaunch(call: FirCall, context: CheckerContext) {
-    reportOn(call.source, StructuredCoroutinesErrors.UNSTRUCTURED_COROUTINE_LAUNCH, context)
+fun DiagnosticReporter.reportUnstructuredLaunch(call: FirCall, context: CheckerContext, config: PluginConfiguration) {
+    config.report(this, ScoroutinesRule.UNSTRUCTURED_LAUNCH, StructuredCoroutinesErrors.UNSTRUCTURED_COROUTINE_LAUNCH, call.source, context)
 }
 
 /**
- * Reports a GlobalScope usage error.
+ * Reports a GlobalScope usage, unless [config] resolves the rule to disabled.
  */
-fun DiagnosticReporter.reportGlobalScopeUsage(call: FirCall, context: CheckerContext) {
-    reportOn(call.source, StructuredCoroutinesErrors.GLOBAL_SCOPE_USAGE, context)
+fun DiagnosticReporter.reportGlobalScopeUsage(call: FirCall, context: CheckerContext, config: PluginConfiguration) {
+    config.report(this, ScoroutinesRule.GLOBAL_SCOPE_USAGE, StructuredCoroutinesErrors.GLOBAL_SCOPE_USAGE, call.source, context)
 }
 
 /**
- * Reports an inline CoroutineScope creation error.
+ * Reports an inline CoroutineScope creation, unless [config] resolves the rule to disabled.
  */
-fun DiagnosticReporter.reportInlineCoroutineScope(call: FirCall, context: CheckerContext) {
-    reportOn(call.source, StructuredCoroutinesErrors.INLINE_COROUTINE_SCOPE, context)
+fun DiagnosticReporter.reportInlineCoroutineScope(call: FirCall, context: CheckerContext, config: PluginConfiguration) {
+    config.report(this, ScoroutinesRule.INLINE_COROUTINE_SCOPE, StructuredCoroutinesErrors.INLINE_COROUTINE_SCOPE, call.source, context)
 }
 
 // --- Blocking & runBlocking ---
 
 /**
- * Reports a runBlocking in suspend function error.
+ * Reports a runBlocking in suspend function, unless [config] resolves the rule to disabled.
  */
-fun DiagnosticReporter.reportRunBlockingInSuspend(call: FirCall, context: CheckerContext) {
-    reportOn(call.source, StructuredCoroutinesErrors.RUN_BLOCKING_IN_SUSPEND, context)
+fun DiagnosticReporter.reportRunBlockingInSuspend(call: FirCall, context: CheckerContext, config: PluginConfiguration) {
+    config.report(this, ScoroutinesRule.RUN_BLOCKING_IN_SUSPEND, StructuredCoroutinesErrors.RUN_BLOCKING_IN_SUSPEND, call.source, context)
 }
 
 // --- Job & Context ---
 
 /**
- * Reports a Job/SupervisorJob in builder context error.
+ * Reports a Job/SupervisorJob in builder context, unless [config] resolves the rule to disabled.
  */
-fun DiagnosticReporter.reportJobInBuilderContext(call: FirCall, context: CheckerContext) {
-    reportOn(call.source, StructuredCoroutinesErrors.JOB_IN_BUILDER_CONTEXT, context)
+fun DiagnosticReporter.reportJobInBuilderContext(call: FirCall, context: CheckerContext, config: PluginConfiguration) {
+    config.report(this, ScoroutinesRule.JOB_IN_BUILDER_CONTEXT, StructuredCoroutinesErrors.JOB_IN_BUILDER_CONTEXT, call.source, context)
 }
 
 // --- Dispatchers ---
 
 /**
- * Reports a Dispatchers.Unconfined usage warning.
+ * Reports a Dispatchers.Unconfined usage, unless [config] resolves the rule to disabled.
  */
-fun DiagnosticReporter.reportDispatchersUnconfinedUsage(call: FirCall, context: CheckerContext) {
-    reportOn(call.source, StructuredCoroutinesErrors.DISPATCHERS_UNCONFINED_USAGE, context)
+fun DiagnosticReporter.reportDispatchersUnconfinedUsage(call: FirCall, context: CheckerContext, config: PluginConfiguration) {
+    config.report(this, ScoroutinesRule.DISPATCHERS_UNCONFINED, StructuredCoroutinesErrors.DISPATCHERS_UNCONFINED_USAGE, call.source, context)
 }
 
 // --- Exception Handling ---
 
 /**
- * Reports a CancellationException subclass error.
+ * Reports a CancellationException subclass, unless [config] resolves the rule to disabled.
  */
 fun DiagnosticReporter.reportCancellationExceptionSubclass(
     declaration: FirDeclaration,
-    context: CheckerContext
+    context: CheckerContext,
+    config: PluginConfiguration,
 ) {
-    reportOn(declaration.source, StructuredCoroutinesErrors.CANCELLATION_EXCEPTION_SUBCLASS, context)
+    config.report(this, ScoroutinesRule.CANCELLATION_EXCEPTION_SUBCLASS, StructuredCoroutinesErrors.CANCELLATION_EXCEPTION_SUBCLASS, declaration.source, context)
 }
 
 /**
- * Reports a suspend call in finally without NonCancellable warning.
+ * Reports a suspend call in finally without NonCancellable, unless [config] resolves the rule to
+ * disabled.
  */
 fun DiagnosticReporter.reportSuspendInFinally(
     expression: org.jetbrains.kotlin.fir.expressions.FirExpression,
-    context: CheckerContext
+    context: CheckerContext,
+    config: PluginConfiguration,
 ) {
-    reportOn(expression.source, StructuredCoroutinesErrors.SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE, context)
+    config.report(this, ScoroutinesRule.SUSPEND_IN_FINALLY, StructuredCoroutinesErrors.SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE, expression.source, context)
 }
 
 /**
- * Reports a CancellationException swallowed warning.
+ * Reports a CancellationException swallowed, unless [config] resolves the rule to disabled.
  */
 fun DiagnosticReporter.reportCancellationExceptionSwallowed(
     expression: org.jetbrains.kotlin.fir.expressions.FirExpression,
-    context: CheckerContext
+    context: CheckerContext,
+    config: PluginConfiguration,
 ) {
-    reportOn(expression.source, StructuredCoroutinesErrors.CANCELLATION_EXCEPTION_SWALLOWED, context)
+    config.report(this, ScoroutinesRule.CANCELLATION_EXCEPTION_SWALLOWED, StructuredCoroutinesErrors.CANCELLATION_EXCEPTION_SWALLOWED, expression.source, context)
 }
 
 // --- Additional Rules ---
 
 /**
- * Reports an unused Deferred error.
+ * Reports an unused Deferred, unless [config] resolves the rule to disabled.
  */
-fun DiagnosticReporter.reportUnusedDeferred(call: FirCall, context: CheckerContext) {
-    reportOn(call.source, StructuredCoroutinesErrors.UNUSED_DEFERRED, context)
+fun DiagnosticReporter.reportUnusedDeferred(call: FirCall, context: CheckerContext, config: PluginConfiguration) {
+    config.report(this, ScoroutinesRule.UNUSED_DEFERRED, StructuredCoroutinesErrors.UNUSED_DEFERRED, call.source, context)
 }
 
 /**
- * Reports a redundant launch in coroutineScope warning.
+ * Reports a redundant launch in coroutineScope, unless [config] resolves the rule to disabled.
  */
-fun DiagnosticReporter.reportRedundantLaunchInCoroutineScope(call: FirCall, context: CheckerContext) {
-    reportOn(call.source, StructuredCoroutinesErrors.REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE, context)
+fun DiagnosticReporter.reportRedundantLaunchInCoroutineScope(call: FirCall, context: CheckerContext, config: PluginConfiguration) {
+    config.report(this, ScoroutinesRule.REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE, StructuredCoroutinesErrors.REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE, call.source, context)
 }
 
 /**
- * Reports a loop in suspend function without cooperation point warning.
+ * Reports a loop in suspend function without cooperation point, unless [config] resolves the
+ * rule to disabled. Takes a raw [org.jetbrains.kotlin.KtSourceElement] (the loop's own source,
+ * not a [org.jetbrains.kotlin.fir.expressions.FirExpression]) because [LoopWithoutYieldChecker]
+ * reports on the loop statement itself, not on an expression.
  */
 fun DiagnosticReporter.reportLoopWithoutYield(
-    expression: org.jetbrains.kotlin.fir.expressions.FirExpression,
-    context: CheckerContext
-) {
-    reportOn(expression.source, StructuredCoroutinesErrors.LOOP_WITHOUT_YIELD, context)
-}
-
-/** INTEROP_001 — report suspendCoroutine usage in suspend contexts. */
-fun DiagnosticReporter.reportSuspendCoroutineWithoutCancellation(call: FirCall, context: CheckerContext) {
-    reportOn(call.source, StructuredCoroutinesErrors.SUSPEND_COROUTINE_WITHOUT_CANCELLATION, context)
-}
-
-/** INTEROP_002 — report callbackFlow without awaitClose. */
-fun DiagnosticReporter.reportCallbackFlowWithoutAwaitClose(call: FirCall, context: CheckerContext) {
-    reportOn(call.source, StructuredCoroutinesErrors.CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE, context)
-}
-
-// ============================================================
-// Configurable Report Functions
-// ============================================================
-
-/**
- * Reports an unstructured launch with configurable severity.
- */
-fun DiagnosticReporter.reportUnstructuredLaunch(
-    call: FirCall,
+    source: org.jetbrains.kotlin.KtSourceElement?,
     context: CheckerContext,
-    severity: org.jetbrains.kotlin.diagnostics.Severity
+    config: PluginConfiguration,
 ) {
-    // Use the existing diagnostic (it's ERROR by default, but severity is checked at report time)
-    reportOn(call.source, StructuredCoroutinesErrors.UNSTRUCTURED_COROUTINE_LAUNCH, context)
+    config.report(this, ScoroutinesRule.LOOP_WITHOUT_YIELD, StructuredCoroutinesErrors.LOOP_WITHOUT_YIELD, source, context)
 }
 
-/**
- * Reports GlobalScope usage with configurable severity.
- */
-fun DiagnosticReporter.reportGlobalScopeUsage(
-    call: FirCall,
-    context: CheckerContext,
-    severity: org.jetbrains.kotlin.diagnostics.Severity
-) {
-    reportOn(call.source, StructuredCoroutinesErrors.GLOBAL_SCOPE_USAGE, context)
+/** INTEROP_001 — reports suspendCoroutine usage in suspend contexts, unless [config] disables it. */
+fun DiagnosticReporter.reportSuspendCoroutineWithoutCancellation(call: FirCall, context: CheckerContext, config: PluginConfiguration) {
+    config.report(this, ScoroutinesRule.SUSPEND_COROUTINE_WITHOUT_CANCELLATION, StructuredCoroutinesErrors.SUSPEND_COROUTINE_WITHOUT_CANCELLATION, call.source, context)
 }
 
-/**
- * Reports inline CoroutineScope creation with configurable severity.
- */
-fun DiagnosticReporter.reportInlineCoroutineScope(
-    call: FirCall,
-    context: CheckerContext,
-    severity: org.jetbrains.kotlin.diagnostics.Severity
-) {
-    reportOn(call.source, StructuredCoroutinesErrors.INLINE_COROUTINE_SCOPE, context)
+/** INTEROP_002 — reports callbackFlow without awaitClose, unless [config] disables it. */
+fun DiagnosticReporter.reportCallbackFlowWithoutAwaitClose(call: FirCall, context: CheckerContext, config: PluginConfiguration) {
+    config.report(this, ScoroutinesRule.CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE, StructuredCoroutinesErrors.CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE, call.source, context)
 }

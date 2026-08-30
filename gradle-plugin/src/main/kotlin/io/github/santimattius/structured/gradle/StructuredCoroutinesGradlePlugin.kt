@@ -132,25 +132,6 @@ class StructuredCoroutinesGradlePlugin : KotlinCompilerPluginSupportPlugin {
         }
 
         target.afterEvaluate {
-            val disabledSeverityKeys = listOf(
-                "globalScopeUsage" to extension.globalScopeUsage,
-                "inlineCoroutineScope" to extension.inlineCoroutineScope,
-                "unstructuredLaunch" to extension.unstructuredLaunch,
-                "runBlockingInSuspend" to extension.runBlockingInSuspend,
-                "jobInBuilderContext" to extension.jobInBuilderContext,
-                "dispatchersUnconfined" to extension.dispatchersUnconfined,
-                "cancellationExceptionSubclass" to extension.cancellationExceptionSubclass,
-                "suspendInFinally" to extension.suspendInFinally,
-                "cancellationExceptionSwallowed" to extension.cancellationExceptionSwallowed,
-                "unusedDeferred" to extension.unusedDeferred,
-                "redundantLaunchInCoroutineScope" to extension.redundantLaunchInCoroutineScope,
-                "loopWithoutYield" to extension.loopWithoutYield,
-                "suspendCoroutineWithoutCancellation" to extension.suspendCoroutineWithoutCancellation,
-                "callbackFlowWithoutAwaitClose" to extension.callbackFlowWithoutAwaitClose,
-            ).filter { (_, property) -> property.getOrElse("").lowercase() == "disabled" }
-                .map { (key, _) -> key }
-            DisabledSeverityAdvisory.message(disabledSeverityKeys)?.let { target.logger.warn(it) }
-
             val detektReportPath = target.layout.buildDirectory.file("reports/detekt/detekt.xml")
                 .get().asFile.absolutePath
             generateBaseline.configure { it.detektReportXmlPaths.set(listOf(detektReportPath)) }

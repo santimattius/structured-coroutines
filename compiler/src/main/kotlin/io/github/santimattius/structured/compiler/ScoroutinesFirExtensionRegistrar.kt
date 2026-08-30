@@ -9,6 +9,7 @@
  */
 package io.github.santimattius.structured.compiler
 
+import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 
 /**
@@ -24,7 +25,7 @@ import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
  * CompilerPluginRegistrar.registerExtensions()
  *     └── FirExtensionRegistrarAdapter.registerExtension(ScoroutinesFirExtensionRegistrar)
  *             └── ScoroutinesFirExtensionRegistrar.configurePlugin()
- *                     └── +::ScoroutinesCallCheckerExtension
+ *                     └── +this@ScoroutinesFirExtensionRegistrar::createCallCheckerExtension
  * ```
  *
  * ## Responsibilities
@@ -39,8 +40,8 @@ import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
  *
  * ```kotlin
  * override fun ExtensionRegistrarContext.configurePlugin() {
- *     +::ScoroutinesCallCheckerExtension
- *     +::MyNewExtension  // Add new extensions here
+ *     +this@ScoroutinesFirExtensionRegistrar::createCallCheckerExtension
+ *     +this@ScoroutinesFirExtensionRegistrar::createMyNewExtension  // Add new extensions here
  * }
  * ```
  *
@@ -58,20 +59,18 @@ class ScoroutinesFirExtensionRegistrar(
      * This method is called by the Kotlin compiler during the FIR phase.
      * Extensions registered here will analyze the FIR representation of the code
      * and emit diagnostics for any violations found.
+     *
+     * Registers via a **bound** member reference (#68, ADR-4) rather than a global mutable
+     * holder: [configuration] is captured directly by [createCallCheckerExtension], so two
+     * modules compiling concurrently in the same Gradle/Kotlin daemon can no longer clobber
+     * each other's [PluginConfiguration] — each [ScoroutinesFirExtensionRegistrar] instance
+     * (one per compilation, created by [StructuredCoroutinesCompilerPluginRegistrar]) has its
+     * own.
      */
     override fun ExtensionRegistrarContext.configurePlugin() {
-        // Store configuration globally so checkers can access it
-        PluginConfigurationHolder.configuration = configuration
-        
-        // Register the main checker extension that provides all coroutine analysis
-        +::ScoroutinesCallCheckerExtension
+        +this@ScoroutinesFirExtensionRegistrar::createCallCheckerExtension
     }
-}
 
-/**
- * Holder for plugin configuration to make it accessible to checkers.
- * This is a workaround since FIR extensions are created via function references.
- */
-object PluginConfigurationHolder {
-    var configuration: PluginConfiguration? = null
+    private fun createCallCheckerExtension(session: FirSession): ScoroutinesCallCheckerExtension =
+        ScoroutinesCallCheckerExtension(session, configuration)
 }
