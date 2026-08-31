@@ -41,7 +41,13 @@ class StructuredCoroutinesCommandLineProcessor : CommandLineProcessor {
             required = false,
             allowMultipleOccurrences = false,
         )
-    }
+    } + CliOption(
+        optionName = "severityEnforcement",
+        valueDescription = "<grace|strict>",
+        description = "Grace-period enforcement policy for severity tightening (#68, ADR-7)",
+        required = false,
+        allowMultipleOccurrences = false,
+    )
 
     /**
      * Read-modify-write of the single [PluginConfiguration.OPTIONS_KEY] map (ADR-3), honoring

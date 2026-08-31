@@ -71,7 +71,7 @@ class StructuredCoroutinesPluginFunctionalTest {
                 implementation("io.github.santimattius:structured-coroutines-annotations:$pluginVersion")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
             }
-            
+
             kotlin {
                 jvmToolchain(17)
             }
@@ -1506,5 +1506,159 @@ class StructuredCoroutinesPluginFunctionalTest {
                 "Expected $marker to still be reported at its default severity but it was missing from:\n$output",
             )
         }
+    }
+
+    // ============================================================================
+    // Grace period + twin factory selection (#68, ADR-7, Phase 3, tasks 3.10-3.12).
+    //
+    // Empirical finding (task 3.12, verified via a throwaway spike build before writing these
+    // assertions, per the same caution documented for PR2): the twin ERROR/WARNING factories
+    // (ADR-6) reuse the SAME bundle key as their default-severity sibling, so the rendered
+    // bracketed rule-code marker (e.g. "[CANCEL_001]") is IDENTICAL on both the default and the
+    // reconfigured (twin) path — this is exactly what ADR-6's renderer registration note says
+    // ("message text is shared, so the catalog does not double"). What DOES differ, and is the
+    // only externally observable proof that a different factory (hence a different
+    // KtDiagnosticFactory0.name, hence a different @Suppress target) was selected, is the
+    // diagnostic's Severity — rendered by Gradle/kotlinc as the "e: " vs "w: " line prefix. The
+    // tests below assert on that prefix, not on a nonexistent distinct marker string.
+    // ============================================================================
+
+    private fun assertMarkerSeverityPrefix(output: String, marker: String, expectedPrefix: String) {
+        val line = output.lineSequence().firstOrNull { marker in it }
+        assertTrue(line != null, "Expected a line containing $marker in output:\n$output")
+        assertTrue(
+            line.trimStart().startsWith(expectedPrefix),
+            "Expected the line reporting $marker to start with \"$expectedPrefix\" but got:\n$line",
+        )
+    }
+
+    private val loopWithoutYieldTriggerSource = """
+        fun triggerLoopWithoutYieldWork() {
+            println("x")
+        }
+        suspend fun triggerLoopWithoutYield() {
+            while (true) {
+                triggerLoopWithoutYieldWork()
+            }
+        }
+    """.trimIndent()
+
+    private val globalScopeUsageTriggerSource = """
+        import kotlinx.coroutines.GlobalScope
+        import kotlinx.coroutines.launch
+
+        fun triggerGlobalScopeUsage() {
+            GlobalScope.launch { println("x") }
+        }
+    """.trimIndent()
+
+    private val unusedDeferredTriggerSource = """
+        import kotlinx.coroutines.CoroutineScope
+        import kotlinx.coroutines.async
+        import io.github.santimattius.structured.annotations.StructuredScope
+
+        fun triggerUnusedDeferred(@StructuredScope scope: CoroutineScope) {
+            val deferred = scope.async { 42 }
+        }
+    """.trimIndent()
+
+    @Test
+    fun `warning tightened to error stays a warning during the grace period and logs the deferral advisory`() {
+        val projectDir = createTestProject(
+            loopWithoutYieldTriggerSource,
+            extensionBlock = """
+                structuredCoroutines {
+                    loopWithoutYield.set("error")
+                }
+            """.trimIndent(),
+        )
+        val output = runBuild(projectDir, expectSuccess = true)
+
+        assertMarkerSeverityPrefix(output, "[CANCEL_001]", "w:")
+        assertTrue("loopWithoutYield" in output, "Advisory must name the rule, got:\n$output")
+        assertTrue("\"error\"" in output, "Advisory must name the configured value, got:\n$output")
+        assertTrue("\"warning\"" in output, "Advisory must name the currently-effective severity, got:\n$output")
+        assertTrue(
+            SeverityGracePeriod.ENFORCING_VERSION in output,
+            "Advisory must name the enforcing release, got:\n$output",
+        )
+    }
+
+    @Test
+    fun `same tightening with severityEnforcement strict fails the build reporting error`() {
+        val projectDir = createTestProject(
+            loopWithoutYieldTriggerSource,
+            extensionBlock = """
+                structuredCoroutines {
+                    loopWithoutYield.set("error")
+                    severityEnforcement.set("strict")
+                }
+            """.trimIndent(),
+        )
+        val output = runBuild(projectDir, expectSuccess = false)
+
+        assertMarkerSeverityPrefix(output, "[CANCEL_001]", "e:")
+    }
+
+    @Test
+    fun `error relaxed to warning applies immediately with no deferral advisory (Slice A regression guard)`() {
+        val projectDir = createTestProject(
+            unusedDeferredTriggerSource,
+            extensionBlock = """
+                structuredCoroutines {
+                    unusedDeferred.set("warning")
+                }
+            """.trimIndent(),
+        )
+        val output = runBuild(projectDir, expectSuccess = true)
+
+        assertMarkerSeverityPrefix(output, "[SCOPE_002]", "w:")
+        assertTrue(
+            SeverityGracePeriod.ENFORCING_VERSION !in output,
+            "A relaxation must never log a deferral advisory, got:\n$output",
+        )
+    }
+
+    @Test
+    fun `error relaxed to disabled applies immediately with no deferral advisory (Slice A regression guard)`() {
+        val projectDir = createTestProject(
+            unusedDeferredTriggerSource,
+            extensionBlock = """
+                structuredCoroutines {
+                    unusedDeferred.set("disabled")
+                }
+            """.trimIndent(),
+        )
+        val output = runBuild(projectDir, expectSuccess = true)
+
+        assertTrue("[SCOPE_002]" !in output, "Expected [SCOPE_002] to be suppressed but got:\n$output")
+        assertTrue(
+            SeverityGracePeriod.ENFORCING_VERSION !in output,
+            "A relaxation must never log a deferral advisory, got:\n$output",
+        )
+    }
+
+    @Test
+    fun `twin factory selection is proven by the Severity line prefix, not by a distinct marker (ADR-6)`() {
+        // Default (unreconfigured) path: GLOBAL_SCOPE_USAGE (ERROR-default) factory selected.
+        val defaultProjectDir = createTestProject(globalScopeUsageTriggerSource)
+        val defaultOutput = runBuild(defaultProjectDir, expectSuccess = false)
+        assertMarkerSeverityPrefix(defaultOutput, "[SCOPE_001]", "e:")
+
+        // Reconfigured to warning (a relaxation, applies immediately regardless of policy):
+        // the GLOBAL_SCOPE_USAGE_WARNING twin factory is selected instead. The rendered rule-code
+        // marker is IDENTICAL to the default path (ADR-6 shared bundle key) - only the Severity
+        // prefix differs, proving a different factory (and therefore a different
+        // KtDiagnosticFactory0.name / @Suppress target) actually reported the diagnostic.
+        val warningProjectDir = createTestProject(
+            globalScopeUsageTriggerSource,
+            extensionBlock = """
+                structuredCoroutines {
+                    globalScopeUsage.set("warning")
+                }
+            """.trimIndent(),
+        )
+        val warningOutput = runBuild(warningProjectDir, expectSuccess = true)
+        assertMarkerSeverityPrefix(warningOutput, "[SCOPE_001]", "w:")
     }
 }

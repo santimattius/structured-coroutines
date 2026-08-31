@@ -66,6 +66,7 @@ class StructuredCoroutinesGradlePlugin : KotlinCompilerPluginSupportPlugin {
         extension.loopWithoutYield.convention("warning")
         extension.suspendCoroutineWithoutCancellation.convention("error")
         extension.callbackFlowWithoutAwaitClose.convention("error")
+        extension.severityEnforcement.convention("grace")
         extension.excludeSourceSets.convention(emptyList())
         extension.excludeProjects.convention(emptyList())
 
@@ -195,6 +196,7 @@ class StructuredCoroutinesGradlePlugin : KotlinCompilerPluginSupportPlugin {
                 add(SubpluginOption("loopWithoutYield", extension.loopWithoutYield.get()))
                 add(SubpluginOption("suspendCoroutineWithoutCancellation", extension.suspendCoroutineWithoutCancellation.get()))
                 add(SubpluginOption("callbackFlowWithoutAwaitClose", extension.callbackFlowWithoutAwaitClose.get()))
+                add(SubpluginOption("severityEnforcement", extension.severityEnforcement.get()))
             }
         }
     }

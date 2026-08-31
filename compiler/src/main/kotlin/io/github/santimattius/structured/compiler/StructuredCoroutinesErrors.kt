@@ -53,6 +53,25 @@ object StructuredCoroutinesErrorRenderer : BaseDiagnosticRendererFactory() {
         MAP.put(StructuredCoroutinesErrors.LOOP_WITHOUT_YIELD, CompilerMessages.message("LOOP_WITHOUT_YIELD"))
         MAP.put(StructuredCoroutinesErrors.SUSPEND_COROUTINE_WITHOUT_CANCELLATION, CompilerMessages.message("SUSPEND_COROUTINE_WITHOUT_CANCELLATION"))
         MAP.put(StructuredCoroutinesErrors.CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE, CompilerMessages.message("CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE"))
+
+        // Twin ERROR/WARNING factories (#68, ADR-6, Slice B). Each twin reuses the SAME bundle
+        // key as its default-severity sibling — the rendered message text (including the
+        // bracketed rule code, e.g. "[SCOPE_001]") is identical regardless of which twin reports;
+        // only the diagnostic factory NAME differs, which is what @Suppress matches against.
+        MAP.put(StructuredCoroutinesErrors.UNSTRUCTURED_COROUTINE_LAUNCH_WARNING, CompilerMessages.message("UNSTRUCTURED_COROUTINE_LAUNCH"))
+        MAP.put(StructuredCoroutinesErrors.GLOBAL_SCOPE_USAGE_WARNING, CompilerMessages.message("GLOBAL_SCOPE_USAGE"))
+        MAP.put(StructuredCoroutinesErrors.INLINE_COROUTINE_SCOPE_WARNING, CompilerMessages.message("INLINE_COROUTINE_SCOPE"))
+        MAP.put(StructuredCoroutinesErrors.RUN_BLOCKING_IN_SUSPEND_WARNING, CompilerMessages.message("RUN_BLOCKING_IN_SUSPEND"))
+        MAP.put(StructuredCoroutinesErrors.JOB_IN_BUILDER_CONTEXT_WARNING, CompilerMessages.message("JOB_IN_BUILDER_CONTEXT"))
+        MAP.put(StructuredCoroutinesErrors.DISPATCHERS_UNCONFINED_USAGE_ERROR, CompilerMessages.message("DISPATCHERS_UNCONFINED_USAGE"))
+        MAP.put(StructuredCoroutinesErrors.CANCELLATION_EXCEPTION_SUBCLASS_WARNING, CompilerMessages.message("CANCELLATION_EXCEPTION_SUBCLASS"))
+        MAP.put(StructuredCoroutinesErrors.SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE_ERROR, CompilerMessages.message("SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE"))
+        MAP.put(StructuredCoroutinesErrors.CANCELLATION_EXCEPTION_SWALLOWED_ERROR, CompilerMessages.message("CANCELLATION_EXCEPTION_SWALLOWED"))
+        MAP.put(StructuredCoroutinesErrors.UNUSED_DEFERRED_WARNING, CompilerMessages.message("UNUSED_DEFERRED"))
+        MAP.put(StructuredCoroutinesErrors.REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE_ERROR, CompilerMessages.message("REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE"))
+        MAP.put(StructuredCoroutinesErrors.LOOP_WITHOUT_YIELD_ERROR, CompilerMessages.message("LOOP_WITHOUT_YIELD"))
+        MAP.put(StructuredCoroutinesErrors.SUSPEND_COROUTINE_WITHOUT_CANCELLATION_WARNING, CompilerMessages.message("SUSPEND_COROUTINE_WITHOUT_CANCELLATION"))
+        MAP.put(StructuredCoroutinesErrors.CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE_WARNING, CompilerMessages.message("CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE"))
     }
 }
 
@@ -270,9 +289,175 @@ object StructuredCoroutinesErrors {
         rendererFactory = StructuredCoroutinesErrorRenderer
     )
 
+    // ============================================================
+    // Twin ERROR/WARNING factories (#68, ADR-6, Slice B)
+    // ============================================================
+    //
+    // Every configurable rule now has TWO factories: the one declared above keeps its original
+    // name and is bound to the rule's documented DEFAULT severity; its twin below is suffixed
+    // `_WARNING` (for ERROR-default rules) or `_ERROR` (for WARNING-default rules) and carries
+    // the opposite Severity. This is the minimum needed to represent the tri-state without a
+    // third factory: DISABLED never reports at all (PluginConfiguration.report short-circuits
+    // before selecting a factory).
+    //
+    // ACCEPTED BREAKING CHANGE (ADR-6, user-confirmed): a project that reconfigures a rule away
+    // from its default severity will see the SUFFIXED name in its diagnostic output, so an
+    // existing `@Suppress("<NAME>")` stops matching on the reconfigured path only (unreconfigured
+    // builds are unaffected). See CHANGELOG.md.
+
+    val UNSTRUCTURED_COROUTINE_LAUNCH_WARNING: KtDiagnosticFactory0 = KtDiagnosticFactory0(
+        name = "UNSTRUCTURED_COROUTINE_LAUNCH_WARNING",
+        severity = Severity.WARNING,
+        defaultPositioningStrategy = SourceElementPositioningStrategies.CALL_ELEMENT_WITH_DOT,
+        psiType = KtElement::class,
+        rendererFactory = StructuredCoroutinesErrorRenderer
+    )
+
+    val GLOBAL_SCOPE_USAGE_WARNING: KtDiagnosticFactory0 = KtDiagnosticFactory0(
+        name = "GLOBAL_SCOPE_USAGE_WARNING",
+        severity = Severity.WARNING,
+        defaultPositioningStrategy = SourceElementPositioningStrategies.CALL_ELEMENT_WITH_DOT,
+        psiType = KtElement::class,
+        rendererFactory = StructuredCoroutinesErrorRenderer
+    )
+
+    val INLINE_COROUTINE_SCOPE_WARNING: KtDiagnosticFactory0 = KtDiagnosticFactory0(
+        name = "INLINE_COROUTINE_SCOPE_WARNING",
+        severity = Severity.WARNING,
+        defaultPositioningStrategy = SourceElementPositioningStrategies.CALL_ELEMENT_WITH_DOT,
+        psiType = KtElement::class,
+        rendererFactory = StructuredCoroutinesErrorRenderer
+    )
+
+    val RUN_BLOCKING_IN_SUSPEND_WARNING: KtDiagnosticFactory0 = KtDiagnosticFactory0(
+        name = "RUN_BLOCKING_IN_SUSPEND_WARNING",
+        severity = Severity.WARNING,
+        defaultPositioningStrategy = SourceElementPositioningStrategies.CALL_ELEMENT_WITH_DOT,
+        psiType = KtElement::class,
+        rendererFactory = StructuredCoroutinesErrorRenderer
+    )
+
+    val JOB_IN_BUILDER_CONTEXT_WARNING: KtDiagnosticFactory0 = KtDiagnosticFactory0(
+        name = "JOB_IN_BUILDER_CONTEXT_WARNING",
+        severity = Severity.WARNING,
+        defaultPositioningStrategy = SourceElementPositioningStrategies.CALL_ELEMENT_WITH_DOT,
+        psiType = KtElement::class,
+        rendererFactory = StructuredCoroutinesErrorRenderer
+    )
+
+    val DISPATCHERS_UNCONFINED_USAGE_ERROR: KtDiagnosticFactory0 = KtDiagnosticFactory0(
+        name = "DISPATCHERS_UNCONFINED_USAGE_ERROR",
+        severity = Severity.ERROR,
+        defaultPositioningStrategy = SourceElementPositioningStrategies.CALL_ELEMENT_WITH_DOT,
+        psiType = KtElement::class,
+        rendererFactory = StructuredCoroutinesErrorRenderer
+    )
+
+    val CANCELLATION_EXCEPTION_SUBCLASS_WARNING: KtDiagnosticFactory0 = KtDiagnosticFactory0(
+        name = "CANCELLATION_EXCEPTION_SUBCLASS_WARNING",
+        severity = Severity.WARNING,
+        defaultPositioningStrategy = SourceElementPositioningStrategies.DECLARATION_NAME,
+        psiType = KtElement::class,
+        rendererFactory = StructuredCoroutinesErrorRenderer
+    )
+
+    val SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE_ERROR: KtDiagnosticFactory0 = KtDiagnosticFactory0(
+        name = "SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE_ERROR",
+        severity = Severity.ERROR,
+        defaultPositioningStrategy = SourceElementPositioningStrategies.DEFAULT,
+        psiType = KtElement::class,
+        rendererFactory = StructuredCoroutinesErrorRenderer
+    )
+
+    val CANCELLATION_EXCEPTION_SWALLOWED_ERROR: KtDiagnosticFactory0 = KtDiagnosticFactory0(
+        name = "CANCELLATION_EXCEPTION_SWALLOWED_ERROR",
+        severity = Severity.ERROR,
+        defaultPositioningStrategy = SourceElementPositioningStrategies.DEFAULT,
+        psiType = KtElement::class,
+        rendererFactory = StructuredCoroutinesErrorRenderer
+    )
+
+    val UNUSED_DEFERRED_WARNING: KtDiagnosticFactory0 = KtDiagnosticFactory0(
+        name = "UNUSED_DEFERRED_WARNING",
+        severity = Severity.WARNING,
+        defaultPositioningStrategy = SourceElementPositioningStrategies.CALL_ELEMENT_WITH_DOT,
+        psiType = KtElement::class,
+        rendererFactory = StructuredCoroutinesErrorRenderer
+    )
+
+    val REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE_ERROR: KtDiagnosticFactory0 = KtDiagnosticFactory0(
+        name = "REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE_ERROR",
+        severity = Severity.ERROR,
+        defaultPositioningStrategy = SourceElementPositioningStrategies.CALL_ELEMENT_WITH_DOT,
+        psiType = KtElement::class,
+        rendererFactory = StructuredCoroutinesErrorRenderer
+    )
+
+    val LOOP_WITHOUT_YIELD_ERROR: KtDiagnosticFactory0 = KtDiagnosticFactory0(
+        name = "LOOP_WITHOUT_YIELD_ERROR",
+        severity = Severity.ERROR,
+        defaultPositioningStrategy = SourceElementPositioningStrategies.DEFAULT,
+        psiType = KtElement::class,
+        rendererFactory = StructuredCoroutinesErrorRenderer
+    )
+
+    val SUSPEND_COROUTINE_WITHOUT_CANCELLATION_WARNING: KtDiagnosticFactory0 = KtDiagnosticFactory0(
+        name = "SUSPEND_COROUTINE_WITHOUT_CANCELLATION_WARNING",
+        severity = Severity.WARNING,
+        defaultPositioningStrategy = SourceElementPositioningStrategies.CALL_ELEMENT_WITH_DOT,
+        psiType = KtElement::class,
+        rendererFactory = StructuredCoroutinesErrorRenderer
+    )
+
+    val CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE_WARNING: KtDiagnosticFactory0 = KtDiagnosticFactory0(
+        name = "CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE_WARNING",
+        severity = Severity.WARNING,
+        defaultPositioningStrategy = SourceElementPositioningStrategies.CALL_ELEMENT_WITH_DOT,
+        psiType = KtElement::class,
+        rendererFactory = StructuredCoroutinesErrorRenderer
+    )
+
     init {
         // Register error messages after factories are created
         StructuredCoroutinesErrorRenderer.registerMessages()
+    }
+
+    /**
+     * Selects the [KtDiagnosticFactory0] matching [severity] for [rule] (#68, ADR-6). Returns the
+     * rule's default-named factory when [severity] equals [ScoroutinesRule.defaultSeverity];
+     * otherwise returns the suffixed twin. This is the single selection point every `reportXxx`
+     * function routes through via [PluginConfiguration.report] — no call site chooses a factory
+     * directly.
+     */
+    internal fun factoryFor(rule: ScoroutinesRule, severity: Severity): KtDiagnosticFactory0 = when (rule) {
+        ScoroutinesRule.GLOBAL_SCOPE_USAGE ->
+            if (severity == Severity.WARNING) GLOBAL_SCOPE_USAGE_WARNING else GLOBAL_SCOPE_USAGE
+        ScoroutinesRule.INLINE_COROUTINE_SCOPE ->
+            if (severity == Severity.WARNING) INLINE_COROUTINE_SCOPE_WARNING else INLINE_COROUTINE_SCOPE
+        ScoroutinesRule.UNSTRUCTURED_LAUNCH ->
+            if (severity == Severity.WARNING) UNSTRUCTURED_COROUTINE_LAUNCH_WARNING else UNSTRUCTURED_COROUTINE_LAUNCH
+        ScoroutinesRule.RUN_BLOCKING_IN_SUSPEND ->
+            if (severity == Severity.WARNING) RUN_BLOCKING_IN_SUSPEND_WARNING else RUN_BLOCKING_IN_SUSPEND
+        ScoroutinesRule.JOB_IN_BUILDER_CONTEXT ->
+            if (severity == Severity.WARNING) JOB_IN_BUILDER_CONTEXT_WARNING else JOB_IN_BUILDER_CONTEXT
+        ScoroutinesRule.CANCELLATION_EXCEPTION_SUBCLASS ->
+            if (severity == Severity.WARNING) CANCELLATION_EXCEPTION_SUBCLASS_WARNING else CANCELLATION_EXCEPTION_SUBCLASS
+        ScoroutinesRule.UNUSED_DEFERRED ->
+            if (severity == Severity.WARNING) UNUSED_DEFERRED_WARNING else UNUSED_DEFERRED
+        ScoroutinesRule.SUSPEND_COROUTINE_WITHOUT_CANCELLATION ->
+            if (severity == Severity.WARNING) SUSPEND_COROUTINE_WITHOUT_CANCELLATION_WARNING else SUSPEND_COROUTINE_WITHOUT_CANCELLATION
+        ScoroutinesRule.CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE ->
+            if (severity == Severity.WARNING) CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE_WARNING else CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE
+        ScoroutinesRule.DISPATCHERS_UNCONFINED ->
+            if (severity == Severity.ERROR) DISPATCHERS_UNCONFINED_USAGE_ERROR else DISPATCHERS_UNCONFINED_USAGE
+        ScoroutinesRule.SUSPEND_IN_FINALLY ->
+            if (severity == Severity.ERROR) SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE_ERROR else SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE
+        ScoroutinesRule.CANCELLATION_EXCEPTION_SWALLOWED ->
+            if (severity == Severity.ERROR) CANCELLATION_EXCEPTION_SWALLOWED_ERROR else CANCELLATION_EXCEPTION_SWALLOWED
+        ScoroutinesRule.REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE ->
+            if (severity == Severity.ERROR) REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE_ERROR else REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE
+        ScoroutinesRule.LOOP_WITHOUT_YIELD ->
+            if (severity == Severity.ERROR) LOOP_WITHOUT_YIELD_ERROR else LOOP_WITHOUT_YIELD
     }
 }
 
@@ -292,21 +477,21 @@ object StructuredCoroutinesErrors {
  * Reports an unstructured coroutine launch, unless [config] resolves the rule to disabled.
  */
 fun DiagnosticReporter.reportUnstructuredLaunch(call: FirCall, context: CheckerContext, config: PluginConfiguration) {
-    config.report(this, ScoroutinesRule.UNSTRUCTURED_LAUNCH, StructuredCoroutinesErrors.UNSTRUCTURED_COROUTINE_LAUNCH, call.source, context)
+    config.report(this, ScoroutinesRule.UNSTRUCTURED_LAUNCH, call.source, context)
 }
 
 /**
  * Reports a GlobalScope usage, unless [config] resolves the rule to disabled.
  */
 fun DiagnosticReporter.reportGlobalScopeUsage(call: FirCall, context: CheckerContext, config: PluginConfiguration) {
-    config.report(this, ScoroutinesRule.GLOBAL_SCOPE_USAGE, StructuredCoroutinesErrors.GLOBAL_SCOPE_USAGE, call.source, context)
+    config.report(this, ScoroutinesRule.GLOBAL_SCOPE_USAGE, call.source, context)
 }
 
 /**
  * Reports an inline CoroutineScope creation, unless [config] resolves the rule to disabled.
  */
 fun DiagnosticReporter.reportInlineCoroutineScope(call: FirCall, context: CheckerContext, config: PluginConfiguration) {
-    config.report(this, ScoroutinesRule.INLINE_COROUTINE_SCOPE, StructuredCoroutinesErrors.INLINE_COROUTINE_SCOPE, call.source, context)
+    config.report(this, ScoroutinesRule.INLINE_COROUTINE_SCOPE, call.source, context)
 }
 
 // --- Blocking & runBlocking ---
@@ -315,7 +500,7 @@ fun DiagnosticReporter.reportInlineCoroutineScope(call: FirCall, context: Checke
  * Reports a runBlocking in suspend function, unless [config] resolves the rule to disabled.
  */
 fun DiagnosticReporter.reportRunBlockingInSuspend(call: FirCall, context: CheckerContext, config: PluginConfiguration) {
-    config.report(this, ScoroutinesRule.RUN_BLOCKING_IN_SUSPEND, StructuredCoroutinesErrors.RUN_BLOCKING_IN_SUSPEND, call.source, context)
+    config.report(this, ScoroutinesRule.RUN_BLOCKING_IN_SUSPEND, call.source, context)
 }
 
 // --- Job & Context ---
@@ -324,7 +509,7 @@ fun DiagnosticReporter.reportRunBlockingInSuspend(call: FirCall, context: Checke
  * Reports a Job/SupervisorJob in builder context, unless [config] resolves the rule to disabled.
  */
 fun DiagnosticReporter.reportJobInBuilderContext(call: FirCall, context: CheckerContext, config: PluginConfiguration) {
-    config.report(this, ScoroutinesRule.JOB_IN_BUILDER_CONTEXT, StructuredCoroutinesErrors.JOB_IN_BUILDER_CONTEXT, call.source, context)
+    config.report(this, ScoroutinesRule.JOB_IN_BUILDER_CONTEXT, call.source, context)
 }
 
 // --- Dispatchers ---
@@ -333,7 +518,7 @@ fun DiagnosticReporter.reportJobInBuilderContext(call: FirCall, context: Checker
  * Reports a Dispatchers.Unconfined usage, unless [config] resolves the rule to disabled.
  */
 fun DiagnosticReporter.reportDispatchersUnconfinedUsage(call: FirCall, context: CheckerContext, config: PluginConfiguration) {
-    config.report(this, ScoroutinesRule.DISPATCHERS_UNCONFINED, StructuredCoroutinesErrors.DISPATCHERS_UNCONFINED_USAGE, call.source, context)
+    config.report(this, ScoroutinesRule.DISPATCHERS_UNCONFINED, call.source, context)
 }
 
 // --- Exception Handling ---
@@ -346,7 +531,7 @@ fun DiagnosticReporter.reportCancellationExceptionSubclass(
     context: CheckerContext,
     config: PluginConfiguration,
 ) {
-    config.report(this, ScoroutinesRule.CANCELLATION_EXCEPTION_SUBCLASS, StructuredCoroutinesErrors.CANCELLATION_EXCEPTION_SUBCLASS, declaration.source, context)
+    config.report(this, ScoroutinesRule.CANCELLATION_EXCEPTION_SUBCLASS, declaration.source, context)
 }
 
 /**
@@ -358,7 +543,7 @@ fun DiagnosticReporter.reportSuspendInFinally(
     context: CheckerContext,
     config: PluginConfiguration,
 ) {
-    config.report(this, ScoroutinesRule.SUSPEND_IN_FINALLY, StructuredCoroutinesErrors.SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE, expression.source, context)
+    config.report(this, ScoroutinesRule.SUSPEND_IN_FINALLY, expression.source, context)
 }
 
 /**
@@ -369,7 +554,7 @@ fun DiagnosticReporter.reportCancellationExceptionSwallowed(
     context: CheckerContext,
     config: PluginConfiguration,
 ) {
-    config.report(this, ScoroutinesRule.CANCELLATION_EXCEPTION_SWALLOWED, StructuredCoroutinesErrors.CANCELLATION_EXCEPTION_SWALLOWED, expression.source, context)
+    config.report(this, ScoroutinesRule.CANCELLATION_EXCEPTION_SWALLOWED, expression.source, context)
 }
 
 // --- Additional Rules ---
@@ -378,14 +563,14 @@ fun DiagnosticReporter.reportCancellationExceptionSwallowed(
  * Reports an unused Deferred, unless [config] resolves the rule to disabled.
  */
 fun DiagnosticReporter.reportUnusedDeferred(call: FirCall, context: CheckerContext, config: PluginConfiguration) {
-    config.report(this, ScoroutinesRule.UNUSED_DEFERRED, StructuredCoroutinesErrors.UNUSED_DEFERRED, call.source, context)
+    config.report(this, ScoroutinesRule.UNUSED_DEFERRED, call.source, context)
 }
 
 /**
  * Reports a redundant launch in coroutineScope, unless [config] resolves the rule to disabled.
  */
 fun DiagnosticReporter.reportRedundantLaunchInCoroutineScope(call: FirCall, context: CheckerContext, config: PluginConfiguration) {
-    config.report(this, ScoroutinesRule.REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE, StructuredCoroutinesErrors.REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE, call.source, context)
+    config.report(this, ScoroutinesRule.REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE, call.source, context)
 }
 
 /**
@@ -399,15 +584,15 @@ fun DiagnosticReporter.reportLoopWithoutYield(
     context: CheckerContext,
     config: PluginConfiguration,
 ) {
-    config.report(this, ScoroutinesRule.LOOP_WITHOUT_YIELD, StructuredCoroutinesErrors.LOOP_WITHOUT_YIELD, source, context)
+    config.report(this, ScoroutinesRule.LOOP_WITHOUT_YIELD, source, context)
 }
 
 /** INTEROP_001 — reports suspendCoroutine usage in suspend contexts, unless [config] disables it. */
 fun DiagnosticReporter.reportSuspendCoroutineWithoutCancellation(call: FirCall, context: CheckerContext, config: PluginConfiguration) {
-    config.report(this, ScoroutinesRule.SUSPEND_COROUTINE_WITHOUT_CANCELLATION, StructuredCoroutinesErrors.SUSPEND_COROUTINE_WITHOUT_CANCELLATION, call.source, context)
+    config.report(this, ScoroutinesRule.SUSPEND_COROUTINE_WITHOUT_CANCELLATION, call.source, context)
 }
 
 /** INTEROP_002 — reports callbackFlow without awaitClose, unless [config] disables it. */
 fun DiagnosticReporter.reportCallbackFlowWithoutAwaitClose(call: FirCall, context: CheckerContext, config: PluginConfiguration) {
-    config.report(this, ScoroutinesRule.CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE, StructuredCoroutinesErrors.CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE, call.source, context)
+    config.report(this, ScoroutinesRule.CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE, call.source, context)
 }
