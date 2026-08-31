@@ -68,7 +68,9 @@ import org.jetbrains.kotlin.name.Name
  *
  * @see StructuredCoroutinesErrors.REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE
  */
-class RedundantLaunchInCoroutineScopeChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
+class RedundantLaunchInCoroutineScopeChecker(
+    private val config: PluginConfiguration,
+) : FirFunctionCallChecker(MppCheckerKind.Common) {
 
     companion object {
         private val COROUTINE_SCOPE_NAME = Name.identifier("coroutineScope")
@@ -93,7 +95,7 @@ class RedundantLaunchInCoroutineScopeChecker : FirFunctionCallChecker(MppChecker
         val result = countBuildersAndRepeating(lambdaBlock, insideRepeating = false)
 
         if (result.launchCount == 1 && result.launchCount + result.asyncCount == 1 && !result.singleLaunchInsideRepeating) {
-            reporter.reportRedundantLaunchInCoroutineScope(expression, context)
+            reporter.reportRedundantLaunchInCoroutineScope(expression, context, config)
         }
     }
 

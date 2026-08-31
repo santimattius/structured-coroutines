@@ -24,7 +24,9 @@ import org.jetbrains.kotlin.name.Name
  *
  * Does not apply to `channelFlow`.
  */
-class CallbackFlowWithoutAwaitCloseChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
+class CallbackFlowWithoutAwaitCloseChecker(
+    private val config: PluginConfiguration,
+) : FirFunctionCallChecker(MppCheckerKind.Common) {
 
     companion object {
         private val CALLBACK_FLOW = Name.identifier("callbackFlow")
@@ -42,7 +44,7 @@ class CallbackFlowWithoutAwaitCloseChecker : FirFunctionCallChecker(MppCheckerKi
 
         if (blockContainsAwaitClose(lambdaBlock)) return
 
-        reporter.reportCallbackFlowWithoutAwaitClose(expression, context)
+        reporter.reportCallbackFlowWithoutAwaitClose(expression, context, config)
     }
 
     /** Trailing lambda of `callbackFlow { }`: [FirBlock] or body of anonymous function. */
