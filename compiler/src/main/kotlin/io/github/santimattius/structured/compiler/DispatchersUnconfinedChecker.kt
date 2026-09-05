@@ -101,7 +101,9 @@ import org.jetbrains.kotlin.name.Name
  * @see StructuredCoroutinesErrors.DISPATCHERS_UNCONFINED_USAGE
  * @see <a href="https://kotlinlang.org/docs/coroutine-context-and-dispatchers.html#unconfined-vs-confined-dispatcher">Unconfined vs confined dispatcher</a>
  */
-class DispatchersUnconfinedChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
+class DispatchersUnconfinedChecker(
+    private val config: PluginConfiguration,
+) : FirFunctionCallChecker(MppCheckerKind.Common) {
 
     companion object {
         /**
@@ -133,7 +135,7 @@ class DispatchersUnconfinedChecker : FirFunctionCallChecker(MppCheckerKind.Commo
         // Check arguments for Dispatchers.Unconfined
         for (argument in expression.arguments) {
             if (isDispatchersUnconfined(argument)) {
-                reporter.reportDispatchersUnconfinedUsage(expression, context)
+                reporter.reportDispatchersUnconfinedUsage(expression, context, config)
                 return
             }
         }

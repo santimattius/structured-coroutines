@@ -100,7 +100,9 @@ import org.jetbrains.kotlin.name.Name
  * @see StructuredCoroutinesErrors.RUN_BLOCKING_IN_SUSPEND
  * @see <a href="https://kotlinlang.org/docs/coroutines-basics.html#bridging-blocking-and-non-blocking-worlds">Bridging blocking and non-blocking worlds</a>
  */
-class RunBlockingInSuspendChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
+class RunBlockingInSuspendChecker(
+    private val config: PluginConfiguration,
+) : FirFunctionCallChecker(MppCheckerKind.Common) {
 
     companion object {
         /**
@@ -116,7 +118,7 @@ class RunBlockingInSuspendChecker : FirFunctionCallChecker(MppCheckerKind.Common
 
         // Check if we're inside a suspend function
         if (isInsideSuspendFunction(context)) {
-            reporter.reportRunBlockingInSuspend(expression, context)
+            reporter.reportRunBlockingInSuspend(expression, context, config)
         }
     }
 

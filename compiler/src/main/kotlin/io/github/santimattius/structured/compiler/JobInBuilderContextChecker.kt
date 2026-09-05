@@ -106,7 +106,9 @@ import org.jetbrains.kotlin.name.Name
  * @see StructuredCoroutinesErrors.JOB_IN_BUILDER_CONTEXT
  * @see <a href="https://kotlinlang.org/docs/exception-handling.html#supervision">Supervision in Coroutines</a>
  */
-class JobInBuilderContextChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
+class JobInBuilderContextChecker(
+    private val config: PluginConfiguration,
+) : FirFunctionCallChecker(MppCheckerKind.Common) {
 
     companion object {
         /**
@@ -139,7 +141,7 @@ class JobInBuilderContextChecker : FirFunctionCallChecker(MppCheckerKind.Common)
             if (argument is FirFunctionCall) {
                 val argCalleeName = argument.calleeReference.name
                 if (argCalleeName in JOB_CONSTRUCTORS) {
-                    reporter.reportJobInBuilderContext(expression, context)
+                    reporter.reportJobInBuilderContext(expression, context, config)
                     return
                 }
             }
