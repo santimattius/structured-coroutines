@@ -16,8 +16,12 @@ import org.jetbrains.kotlin.fir.analysis.checkers.expression.FirFunctionCallChec
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
 import org.jetbrains.kotlin.fir.expressions.FirPropertyAccessExpression
-import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccessExpression
+import org.jetbrains.kotlin.fir.expressions.FirResolvedQualifier
 import org.jetbrains.kotlin.fir.expressions.arguments
+import org.jetbrains.kotlin.fir.types.ConeClassLikeType
+import org.jetbrains.kotlin.fir.types.resolvedType
+import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
 /**
@@ -116,9 +120,12 @@ class DispatchersUnconfinedChecker(
         )
 
         /**
-         * Name of the Dispatchers object.
+         * ClassId for kotlinx.coroutines.Dispatchers.
          */
-        private val DISPATCHERS_NAME = Name.identifier("Dispatchers")
+        private val DISPATCHERS_CLASS_ID = ClassId(
+            FqName("kotlinx.coroutines"),
+            Name.identifier("Dispatchers"),
+        )
 
         /**
          * Name of the Unconfined property to detect.
@@ -152,16 +159,30 @@ class DispatchersUnconfinedChecker(
      */
     private fun isDispatchersUnconfined(expression: FirExpression): Boolean {
         // Check for property access like Dispatchers.Unconfined
-        if (expression is FirPropertyAccessExpression) {
-            val propertyName = expression.calleeReference.name
-            if (propertyName == UNCONFINED_NAME) {
-                // Check if the receiver is Dispatchers
-                val receiver = (expression as? FirQualifiedAccessExpression)?.explicitReceiver
-                if (receiver is FirPropertyAccessExpression) {
-                    return receiver.calleeReference.name == DISPATCHERS_NAME
-                }
-            }
+        if (expression !is FirPropertyAccessExpression) return false
+        if (expression.calleeReference.name != UNCONFINED_NAME) return false
+
+        // Check if the receiver resolves to the Dispatchers object
+        val receiver = expression.explicitReceiver ?: return false
+        return isDispatchersReceiver(receiver)
+    }
+
+    /**
+     * Checks whether [expression] resolves to the `kotlinx.coroutines.Dispatchers` object.
+     *
+     * Mirrors the verified precedent in `SuspendInFinallyChecker.isNonCancellable`: a resolved
+     * object reference (e.g. the `Dispatchers` in `Dispatchers.Unconfined`) surfaces as a
+     * [FirResolvedQualifier], not a [FirPropertyAccessExpression] as the previous implementation
+     * assumed — which made the check always return false. The [ConeClassLikeType.lookupTag]
+     * fallback additionally covers a [FirPropertyAccessExpression] receiver whose resolved type
+     * is `Dispatchers` (e.g. referenced through a property alias).
+     */
+    private fun isDispatchersReceiver(expression: FirExpression): Boolean {
+        if (expression is FirResolvedQualifier) {
+            return expression.classId == DISPATCHERS_CLASS_ID
         }
-        return false
+
+        val classId = (expression.resolvedType as? ConeClassLikeType)?.lookupTag?.classId
+        return classId == DISPATCHERS_CLASS_ID
     }
 }

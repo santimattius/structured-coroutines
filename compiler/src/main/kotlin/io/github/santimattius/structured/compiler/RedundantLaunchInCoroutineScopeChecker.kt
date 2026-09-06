@@ -13,9 +13,11 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.analysis.checkers.MppCheckerKind
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.expression.FirFunctionCallChecker
+import org.jetbrains.kotlin.fir.expressions.FirAnonymousFunctionExpression
 import org.jetbrains.kotlin.fir.expressions.FirBlock
 import org.jetbrains.kotlin.fir.expressions.FirDoWhileLoop
 import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
+import org.jetbrains.kotlin.fir.expressions.FirReturnExpression
 import org.jetbrains.kotlin.fir.expressions.FirStatement
 import org.jetbrains.kotlin.fir.expressions.FirWhileLoop
 import org.jetbrains.kotlin.name.Name
@@ -102,19 +104,20 @@ class RedundantLaunchInCoroutineScopeChecker(
     /**
      * Gets the lambda block from the coroutineScope call.
      *
+     * Mirrors the verified precedent in `CallbackFlowWithoutAwaitCloseChecker.getTrailingLambdaBlock`:
+     * a trailing lambda argument is wrapped as a [FirAnonymousFunctionExpression] whose
+     * `anonymousFunction.body` is the actual [FirBlock] — casting the argument directly to
+     * [FirBlock] (the previous implementation) always yields null.
+     *
      * @param call The coroutineScope call
      * @return The block expression, or null if not found
      */
     private fun getLambdaBlock(call: FirFunctionCall): FirBlock? {
-        // The lambda is typically the last argument
-        val arguments = call.argumentList.arguments
-        if (arguments.isEmpty()) return null
+        // Get the last argument (the trailing lambda)
+        val lambdaArg = call.argumentList.arguments.lastOrNull() ?: return null
 
-        // Get the last argument (the lambda)
-        val lambdaArg = arguments.lastOrNull() ?: return null
-
-        // The lambda body is a FirBlock
-        return lambdaArg as? FirBlock
+        (lambdaArg as? FirBlock)?.let { return it }
+        return (lambdaArg as? FirAnonymousFunctionExpression)?.anonymousFunction?.body as? FirBlock
     }
 
     /**
@@ -166,6 +169,15 @@ class RedundantLaunchInCoroutineScopeChecker(
                 return BuilderCountResult(launchCount, asyncCount, singleLaunchInsideRepeating)
             }
             is FirBlock -> return countBuildersAndRepeating(statement, insideRepeating)
+            is FirReturnExpression -> {
+                // The last statement of a lambda body is desugared into an implicit
+                // `return <lastExpression>` (FirReturnExpression) wrapping that expression, e.g.
+                // in `coroutineScope { launch { } }` the block's only statement is this wrapper,
+                // not a bare FirFunctionCall — so a trailing launch/async must be unwrapped here
+                // or it silently drops out of the count (and, worse, throws off the counting of
+                // any builder before it, since a truthful count requires this to still be seen).
+                return countBuildersInStatement(statement.result, insideRepeating)
+            }
             is FirWhileLoop -> {
                 val body = statement.block ?: return BuilderCountResult(0, 0, false)
                 return countBuildersAndRepeating(body, insideRepeating = true)

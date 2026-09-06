@@ -8,6 +8,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [1.2.0] — Unreleased
 
+### Fixed
+
+- **DISPATCH_003 silent no-fire on `Dispatchers.Unconfined`** — `DispatchersUnconfinedChecker` matched the `Dispatchers` receiver against `FirPropertyAccessExpression`, but a resolved object reference (e.g. the `Dispatchers` in `Dispatchers.Unconfined`) surfaces as `FirResolvedQualifier` — so the check always returned false and the rule never fired, even for the exact pattern documented in its own KDoc. It now also resolves via `FirResolvedQualifier.classId`, with a `ConeClassLikeType` lookup-tag fallback for a receiver reached through a property alias. (#71)
+- **RUNBLOCK_001 silent no-fire on a single trailing `launch`** — `RedundantLaunchInCoroutineScopeChecker` cast the trailing lambda argument of `coroutineScope { }` directly to `FirBlock`, but it is actually wrapped in a `FirAnonymousFunctionExpression` whose `anonymousFunction.body` is the real block — so the cast always returned null and the rule never fired. The checker's statement counter also now unwraps `FirReturnExpression` (the implicit-return wrapper for a lambda's last expression) so a trailing `launch` reached via implicit return is counted correctly. (#71)
+
 ### Changed
 
 - **`"disabled"` severity now really suppresses diagnostics at compile time (#68)** — a `structuredCoroutines { <rule>.set("disabled") }` check no longer just records the value for `structuredCoroutinesReport`; it now actually skips reporting for that rule. This is a real (non-breaking) behavior change: builds that were previously still failing/warning on a check set to `"disabled"` will now pass cleanly for that check. The `PluginConfiguration` object is now injected into every checker via a bound member reference (replacing the internal `PluginConfigurationHolder` global), and the decorative build-time "disabled" advisory warning introduced in 1.1.1 has been removed, since its message is no longer accurate.
