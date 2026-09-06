@@ -88,7 +88,9 @@ import org.jetbrains.kotlin.name.Name
  *
  * @see <a href="https://kotlinlang.org/docs/cancellation-and-timeouts.html">Kotlin Cancellation</a>
  */
-class CancellationExceptionSwallowedChecker : FirTryExpressionChecker(MppCheckerKind.Common) {
+class CancellationExceptionSwallowedChecker(
+    private val config: PluginConfiguration,
+) : FirTryExpressionChecker(MppCheckerKind.Common) {
 
     companion object {
         // Exception types that would catch CancellationException
@@ -140,7 +142,7 @@ class CancellationExceptionSwallowedChecker : FirTryExpressionChecker(MppChecker
                 // Check if the catch block properly handles cancellation
                 val catchBlock = catchClause.block
                 if (!handlesCancellationProperly(catchBlock, catchClause.parameter.name)) {
-                    reporter.reportCancellationExceptionSwallowed(expression, context)
+                    reporter.reportCancellationExceptionSwallowed(expression, context, config)
                     return
                 }
             }

@@ -20,7 +20,9 @@ import org.jetbrains.kotlin.name.Name
  * FIR check for [INTEROP_001]: `suspendCoroutine { }` in suspend functions —
  * cancellation is not propagated; prefer `suspendCancellableCoroutine`.
  */
-class SuspendCoroutineWithoutCancellationChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
+class SuspendCoroutineWithoutCancellationChecker(
+    private val config: PluginConfiguration,
+) : FirFunctionCallChecker(MppCheckerKind.Common) {
 
     companion object {
         private val SUSPEND_COROUTINE = Name.identifier("suspendCoroutine")
@@ -32,7 +34,7 @@ class SuspendCoroutineWithoutCancellationChecker : FirFunctionCallChecker(MppChe
         if (name != SUSPEND_COROUTINE) return
         if (!isInsideSuspendFunction(context)) return
 
-        reporter.reportSuspendCoroutineWithoutCancellation(expression, context)
+        reporter.reportSuspendCoroutineWithoutCancellation(expression, context, config)
     }
 
     @OptIn(SymbolInternals::class)

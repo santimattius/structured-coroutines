@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.fir.expressions.FirBlock
 import org.jetbrains.kotlin.fir.expressions.FirDoWhileLoop
 import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
 import org.jetbrains.kotlin.fir.expressions.FirWhileLoop
-import org.jetbrains.kotlin.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.expressions.FirLoop
 import org.jetbrains.kotlin.fir.references.toResolvedCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
@@ -40,7 +39,9 @@ import org.jetbrains.kotlin.name.Name
  * Visits each suspend function body, finds while/do-while (and for) loops, and reports
  * LOOP_WITHOUT_YIELD if the loop body has no cooperation point.
  */
-class LoopWithoutYieldChecker : FirSimpleFunctionChecker(MppCheckerKind.Common) {
+class LoopWithoutYieldChecker(
+    private val config: PluginConfiguration,
+) : FirSimpleFunctionChecker(MppCheckerKind.Common) {
 
     companion object {
         private val COOPERATION_POINT_NAMES = setOf(
@@ -83,7 +84,7 @@ class LoopWithoutYieldChecker : FirSimpleFunctionChecker(MppCheckerKind.Common) 
     ) {
         if (body == null) return
         if (bodyHasCooperationPoint(body)) return
-        rep.reportOn(loop.source, StructuredCoroutinesErrors.LOOP_WITHOUT_YIELD, ctx)
+        rep.reportLoopWithoutYield(loop.source, ctx, config)
     }
 
     /**

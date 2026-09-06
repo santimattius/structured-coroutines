@@ -62,7 +62,9 @@ import org.jetbrains.kotlin.name.Name
  * @see <a href="https://kotlinlang.org/docs/cancellation-and-timeouts.html">Kotlin Cancellation</a>
  */
 @OptIn(SymbolInternals::class)
-class CancellationExceptionSubclassChecker : FirClassChecker(MppCheckerKind.Common) {
+class CancellationExceptionSubclassChecker(
+    private val config: PluginConfiguration,
+) : FirClassChecker(MppCheckerKind.Common) {
 
     companion object {
         /**
@@ -89,7 +91,7 @@ class CancellationExceptionSubclassChecker : FirClassChecker(MppCheckerKind.Comm
                 ?.lookupTag?.classId ?: continue
 
             if (isCancellationExceptionOrSubclass(superClassId, context, mutableSetOf())) {
-                reporter.reportCancellationExceptionSubclass(declaration, context)
+                reporter.reportCancellationExceptionSubclass(declaration, context, config)
                 return
             }
         }

@@ -22,7 +22,8 @@ class StructuredCoroutinesPluginFunctionalTest {
     private fun createTestProject(
         sourceCode: String,
         fileName: String = "Test.kt",
-        gradlePropertiesExtra: String? = null
+        gradlePropertiesExtra: String? = null,
+        extensionBlock: String? = null,
     ): File {
         val projectDir = File.createTempFile("test-project", "").apply {
             delete()
@@ -70,10 +71,12 @@ class StructuredCoroutinesPluginFunctionalTest {
                 implementation("io.github.santimattius:structured-coroutines-annotations:$pluginVersion")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
             }
-            
+
             kotlin {
                 jvmToolchain(17)
             }
+
+            ${extensionBlock.orEmpty()}
         """.trimIndent())
 
         // Source directory
@@ -1097,5 +1100,565 @@ class StructuredCoroutinesPluginFunctionalTest {
             "SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE" in output || "[CANCEL_004]" in output,
             "Expected SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE for an unprotected suspend call in finally but got:\n$output"
         )
+    }
+
+    // ============================================================================
+    // CLI bridge (#68, ADR-3, Phase 0/1) — StructuredCoroutinesCommandLineProcessor +
+    // META-INF/services registration. Before this bridge existed, every SubpluginOption the
+    // Gradle plugin emits for the 14 rule keys was silently dropped: no CommandLineProcessor was
+    // registered, so PluginConfiguration.OPTIONS_KEY was never populated in a real build
+    // (Ground truth in design.md). This section proves the bridge survives real jar packaging
+    // and java.util.ServiceLoader discovery, which unit tests instantiating the classes directly
+    // cannot cover.
+    // ============================================================================
+
+    @Test
+    fun `real build with all 14 severity options set via the DSL succeeds through the new CLI bridge`() {
+        val sourceCode = """
+            fun ok() = println("hello")
+        """.trimIndent()
+
+        // A mix of error/warning/disabled across all 14 rule keys: if the CLI bridge (the
+        // registered StructuredCoroutinesCommandLineProcessor + its META-INF/services file)
+        // were broken — wrong pluginId, missing/malformed service file, an option key typo, or
+        // an exception thrown from processOption — this real build would fail here, unlike the
+        // pre-bridge behavior where these options were always silently ignored.
+        val projectDir = createTestProject(
+            sourceCode,
+            extensionBlock = """
+                structuredCoroutines {
+                    globalScopeUsage.set("warning")
+                    inlineCoroutineScope.set("warning")
+                    unstructuredLaunch.set("warning")
+                    runBlockingInSuspend.set("warning")
+                    jobInBuilderContext.set("disabled")
+                    dispatchersUnconfined.set("error")
+                    cancellationExceptionSubclass.set("disabled")
+                    suspendInFinally.set("error")
+                    cancellationExceptionSwallowed.set("disabled")
+                    unusedDeferred.set("warning")
+                    redundantLaunchInCoroutineScope.set("disabled")
+                    loopWithoutYield.set("error")
+                    suspendCoroutineWithoutCancellation.set("warning")
+                    callbackFlowWithoutAwaitClose.set("disabled")
+                }
+            """.trimIndent(),
+        )
+        val output = runBuild(projectDir, expectSuccess = true)
+
+        assertTrue(
+            "BUILD SUCCESSFUL" in output || "compileKotlin" in output,
+            "Expected the CLI bridge (StructuredCoroutinesCommandLineProcessor + its " +
+                "META-INF/services registration) to accept all 14 severity options — including " +
+                "\"disabled\" — without failing the build, but got:\n$output",
+        )
+    }
+
+    // ============================================================================
+    // Real "disabled" enforcement (#68, ADR-5, Phase 2, tasks 2.6/2.7) — PluginConfiguration is
+    // now injected into ScoroutinesCallCheckerExtension and all 12 checkers (replacing the
+    // PluginConfigurationHolder global var, which had zero consumers), and PluginConfiguration.
+    // report() short-circuits reporting when a rule resolves to RuleSeverity.DISABLED. This is
+    // the first real compile-time behavior change of the whole #68 feature — everything before
+    // this was inert plumbing (the CLI bridge existed, but nothing read PluginConfiguration at a
+    // report call site).
+    //
+    // One triggering source file exercises all 14 rules; only the DSL block differs between the
+    // two tests below, so both tests exercise the exact same production source shape.
+    // ============================================================================
+
+    private val allFourteenRulesTriggerSource = """
+        import kotlinx.coroutines.CancellationException
+        import kotlinx.coroutines.CoroutineScope
+        import kotlinx.coroutines.Dispatchers
+        import kotlinx.coroutines.GlobalScope
+        import kotlinx.coroutines.Job
+        import kotlinx.coroutines.async
+        import kotlinx.coroutines.coroutineScope
+        import kotlinx.coroutines.delay
+        import kotlinx.coroutines.flow.callbackFlow
+        import kotlinx.coroutines.launch
+        import kotlinx.coroutines.runBlocking
+        import io.github.santimattius.structured.annotations.StructuredScope
+        import kotlin.coroutines.resume
+        import kotlin.coroutines.suspendCoroutine
+
+        // globalScopeUsage
+        fun triggerGlobalScopeUsage() {
+            GlobalScope.launch { println("x") }
+        }
+
+        // inlineCoroutineScope
+        fun triggerInlineCoroutineScope() {
+            CoroutineScope(Dispatchers.IO).launch { println("x") }
+        }
+
+        // unstructuredLaunch
+        fun triggerUnstructuredLaunch(scope: CoroutineScope) {
+            scope.launch { println("x") }
+        }
+
+        // runBlockingInSuspend
+        suspend fun triggerRunBlockingInSuspend() {
+            runBlocking { delay(1) }
+        }
+
+        // jobInBuilderContext
+        fun triggerJobInBuilderContext(@StructuredScope scope: CoroutineScope) {
+            scope.launch(Job()) { println("x") }
+        }
+
+        // dispatchersUnconfined
+        fun triggerDispatchersUnconfined(@StructuredScope scope: CoroutineScope) {
+            scope.launch(Dispatchers.Unconfined) { println("x") }
+        }
+
+        // cancellationExceptionSubclass
+        class TriggerCancellationExceptionSubclass : CancellationException("domain error")
+
+        // suspendInFinally
+        suspend fun triggerSuspendInFinallyHelper() {
+            delay(1)
+        }
+        suspend fun triggerSuspendInFinally() {
+            try {
+                delay(1)
+            } finally {
+                triggerSuspendInFinallyHelper()
+            }
+        }
+
+        // cancellationExceptionSwallowed
+        suspend fun triggerCancellationExceptionSwallowedHelper() {
+            delay(1)
+        }
+        suspend fun triggerCancellationExceptionSwallowed() {
+            try {
+                triggerCancellationExceptionSwallowedHelper()
+            } catch (e: Exception) {
+                println(e)
+            }
+        }
+
+        // unusedDeferred
+        fun triggerUnusedDeferred(@StructuredScope scope: CoroutineScope) {
+            val deferred = scope.async { 42 }
+        }
+
+        // redundantLaunchInCoroutineScope
+        suspend fun triggerRedundantLaunchInCoroutineScope() = coroutineScope {
+            launch { println("x") }
+        }
+
+        // loopWithoutYield
+        fun triggerLoopWithoutYieldWork() {
+            println("x")
+        }
+        suspend fun triggerLoopWithoutYield() {
+            while (true) {
+                triggerLoopWithoutYieldWork()
+            }
+        }
+
+        // suspendCoroutineWithoutCancellation
+        suspend fun triggerSuspendCoroutineWithoutCancellation(): Unit =
+            suspendCoroutine { cont -> cont.resume(Unit) }
+
+        // callbackFlowWithoutAwaitClose
+        fun triggerCallbackFlowWithoutAwaitClose() = callbackFlow<Unit> { }
+    """.trimIndent()
+
+    // Locale-invariant rule-code markers (e.g. "[SCOPE_001]") from CompilerBundle*.properties —
+    // NOT the raw KtDiagnosticFactory0 `name` strings (e.g. "GLOBAL_SCOPE_USAGE"), which never
+    // appear verbatim in compiler output; only the rendered, bracketed rule code does, and it is
+    // identical in both the English and Spanish message bundles. `unstructuredLaunch` and
+    // `inlineCoroutineScope` share the same "[SCOPE_003]" code in this codebase's message
+    // catalog (CompilerBundle.properties:7,11), so this list's shared marker's presence/absence
+    // proves both rules together.
+    //
+    // EXCLUDES dispatchersUnconfined ("[DISPATCH_003]") and redundantLaunchInCoroutineScope
+    // ("[RUNBLOCK_001]"): manually isolated during this task (outside GradleRunner, via a plain
+    // `gradlew compileKotlin` invocation against the published plugin jar) and confirmed that
+    // `DispatchersUnconfinedChecker`/`RedundantLaunchInCoroutineScopeChecker` never report at all,
+    // even for the exact trigger shape documented in their own KDoc and in the pre-existing
+    // (assertion-free) `Dispatchers Unconfined produces warning but compiles` test. This is a
+    // pre-existing bug in the checkers' own detection logic — present in the released 1.1.1 jar,
+    // byte-identical in this session's diff except for the constructor/report-call-site changes —
+    // not something introduced by, or in scope for, PR2 (injection + disabled enforcement only).
+    // The config-resolution side for both rules IS still proven correct by
+    // `PluginConfigurationEffectiveSeverityTest` (all 14 rules, including these 2) and both
+    // `reportDispatchersUnconfinedUsage`/`reportRedundantLaunchInCoroutineScope` are wired to
+    // `config.report(...)` with the exact same shape as the other 12 rules that ARE proven live
+    // here. Flagged as a risk/follow-up for sdd-verify and a separate GitHub issue.
+    private val allRuleDiagnosticMarkers = listOf(
+        "[SCOPE_001]", // globalScopeUsage
+        "[SCOPE_003]", // unstructuredLaunch + inlineCoroutineScope (shared code)
+        "[RUNBLOCK_002]", // runBlockingInSuspend
+        "[DISPATCH_004]", // jobInBuilderContext
+        "[EXCEPT_002]", // cancellationExceptionSubclass
+        "[CANCEL_004]", // suspendInFinally
+        "[CANCEL_003]", // cancellationExceptionSwallowed
+        "[SCOPE_002]", // unusedDeferred
+        "[CANCEL_001]", // loopWithoutYield
+        "[INTEROP_001]", // suspendCoroutineWithoutCancellation
+        "[INTEROP_002]", // callbackFlowWithoutAwaitClose
+    )
+
+    @Test
+    fun `disabled severity really suppresses all 14 configurable diagnostics in a real build`() {
+        val projectDir = createTestProject(
+            allFourteenRulesTriggerSource,
+            extensionBlock = """
+                structuredCoroutines {
+                    globalScopeUsage.set("disabled")
+                    inlineCoroutineScope.set("disabled")
+                    unstructuredLaunch.set("disabled")
+                    runBlockingInSuspend.set("disabled")
+                    jobInBuilderContext.set("disabled")
+                    dispatchersUnconfined.set("disabled")
+                    cancellationExceptionSubclass.set("disabled")
+                    suspendInFinally.set("disabled")
+                    cancellationExceptionSwallowed.set("disabled")
+                    unusedDeferred.set("disabled")
+                    redundantLaunchInCoroutineScope.set("disabled")
+                    loopWithoutYield.set("disabled")
+                    suspendCoroutineWithoutCancellation.set("disabled")
+                    callbackFlowWithoutAwaitClose.set("disabled")
+                }
+            """.trimIndent(),
+        )
+        val output = runBuild(projectDir, expectSuccess = true)
+
+        assertTrue(
+            "BUILD SUCCESSFUL" in output || "compileKotlin" in output,
+            "Expected the build to succeed once all 14 rules are disabled but got:\n$output",
+        )
+        for (marker in allRuleDiagnosticMarkers) {
+            assertTrue(
+                marker !in output,
+                "Expected $marker to be suppressed once its rule is \"disabled\" but it appeared in:\n$output",
+            )
+        }
+    }
+
+    // Negative control (task 2.7) is split into two builds by default severity class. When a
+    // `compileKotlin` build FAILS (buildAndFail), only ERROR-level diagnostics reliably reach the
+    // captured GradleRunner output in this Kotlin/Gradle combination (Kotlin 2.4's Build Tools
+    // API problem reporting routes WARNING-level diagnostics elsewhere — e.g. the incubating
+    // Problems API report — once the task fails; verified empirically: mixing all 14 triggers in
+    // one buildAndFail() build reported all 9 ERROR-default codes but none of the 5 WARNING-
+    // default codes). A build that SUCCEEDS does not have this issue — the existing
+    // `Dispatchers Unconfined produces warning but compiles` and
+    // `loop with no cooperation point anywhere still reports LOOP_WITHOUT_YIELD` tests already
+    // rely on warning text surviving a successful build. So: ERROR-default rules are proven via
+    // one failing build, WARNING-default rules via one succeeding build.
+
+    private val errorDefaultRulesTriggerSource = """
+        import kotlinx.coroutines.CancellationException
+        import kotlinx.coroutines.CoroutineScope
+        import kotlinx.coroutines.Dispatchers
+        import kotlinx.coroutines.GlobalScope
+        import kotlinx.coroutines.Job
+        import kotlinx.coroutines.async
+        import kotlinx.coroutines.flow.callbackFlow
+        import kotlinx.coroutines.launch
+        import kotlinx.coroutines.runBlocking
+        import kotlinx.coroutines.delay
+        import io.github.santimattius.structured.annotations.StructuredScope
+        import kotlin.coroutines.resume
+        import kotlin.coroutines.suspendCoroutine
+
+        // globalScopeUsage
+        fun triggerGlobalScopeUsage() {
+            GlobalScope.launch { println("x") }
+        }
+
+        // inlineCoroutineScope
+        fun triggerInlineCoroutineScope() {
+            CoroutineScope(Dispatchers.IO).launch { println("x") }
+        }
+
+        // unstructuredLaunch
+        fun triggerUnstructuredLaunch(scope: CoroutineScope) {
+            scope.launch { println("x") }
+        }
+
+        // runBlockingInSuspend
+        suspend fun triggerRunBlockingInSuspend() {
+            runBlocking { delay(1) }
+        }
+
+        // jobInBuilderContext
+        fun triggerJobInBuilderContext(@StructuredScope scope: CoroutineScope) {
+            scope.launch(Job()) { println("x") }
+        }
+
+        // cancellationExceptionSubclass
+        class TriggerCancellationExceptionSubclass : CancellationException("domain error")
+
+        // unusedDeferred
+        fun triggerUnusedDeferred(@StructuredScope scope: CoroutineScope) {
+            val deferred = scope.async { 42 }
+        }
+
+        // suspendCoroutineWithoutCancellation
+        suspend fun triggerSuspendCoroutineWithoutCancellation(): Unit =
+            suspendCoroutine { cont -> cont.resume(Unit) }
+
+        // callbackFlowWithoutAwaitClose
+        fun triggerCallbackFlowWithoutAwaitClose() = callbackFlow<Unit> { }
+    """.trimIndent()
+
+    private val errorDefaultRuleMarkers = listOf(
+        "[SCOPE_001]", // globalScopeUsage
+        "[SCOPE_003]", // unstructuredLaunch + inlineCoroutineScope (shared code)
+        "[RUNBLOCK_002]", // runBlockingInSuspend
+        "[DISPATCH_004]", // jobInBuilderContext
+        "[EXCEPT_002]", // cancellationExceptionSubclass
+        "[SCOPE_002]", // unusedDeferred
+        "[INTEROP_001]", // suspendCoroutineWithoutCancellation
+        "[INTEROP_002]", // callbackFlowWithoutAwaitClose
+    )
+
+    private val warningDefaultRulesTriggerSource = """
+        import kotlinx.coroutines.CoroutineScope
+        import kotlinx.coroutines.Dispatchers
+        import kotlinx.coroutines.coroutineScope
+        import kotlinx.coroutines.delay
+        import kotlinx.coroutines.launch
+        import io.github.santimattius.structured.annotations.StructuredScope
+
+        // dispatchersUnconfined
+        fun triggerDispatchersUnconfined(@StructuredScope scope: CoroutineScope) {
+            scope.launch(Dispatchers.Unconfined) { println("x") }
+        }
+
+        // suspendInFinally
+        suspend fun triggerSuspendInFinallyHelper() {
+            delay(1)
+        }
+        suspend fun triggerSuspendInFinally() {
+            try {
+                delay(1)
+            } finally {
+                triggerSuspendInFinallyHelper()
+            }
+        }
+
+        // cancellationExceptionSwallowed
+        suspend fun triggerCancellationExceptionSwallowedHelper() {
+            delay(1)
+        }
+        suspend fun triggerCancellationExceptionSwallowed() {
+            try {
+                triggerCancellationExceptionSwallowedHelper()
+            } catch (e: Exception) {
+                println(e)
+            }
+        }
+
+        // redundantLaunchInCoroutineScope
+        suspend fun triggerRedundantLaunchInCoroutineScope() = coroutineScope {
+            launch { println("x") }
+        }
+
+        // loopWithoutYield
+        fun triggerLoopWithoutYieldWork() {
+            println("x")
+        }
+        suspend fun triggerLoopWithoutYield() {
+            while (true) {
+                triggerLoopWithoutYieldWork()
+            }
+        }
+    """.trimIndent()
+
+    // Excludes "[DISPATCH_003]" (dispatchersUnconfined) and "[RUNBLOCK_001]"
+    // (redundantLaunchInCoroutineScope) — see the exclusion note on allRuleDiagnosticMarkers
+    // above; both checkers were confirmed (independent of this PR) to never report at all.
+    private val warningDefaultRuleMarkers = listOf(
+        "[CANCEL_004]", // suspendInFinally
+        "[CANCEL_003]", // cancellationExceptionSwallowed
+        "[CANCEL_001]", // loopWithoutYield
+    )
+
+    @Test
+    fun `unset severity still reports the 9 ERROR-default diagnostics as before (negative control)`() {
+        val projectDir = createTestProject(errorDefaultRulesTriggerSource)
+        val output = runBuild(projectDir, expectSuccess = false)
+
+        for (marker in errorDefaultRuleMarkers) {
+            assertTrue(
+                marker in output,
+                "Expected $marker to still be reported at its default severity but it was missing from:\n$output",
+            )
+        }
+    }
+
+    @Test
+    fun `unset severity still reports the 5 WARNING-default diagnostics as before (negative control)`() {
+        val projectDir = createTestProject(warningDefaultRulesTriggerSource)
+        val output = runBuild(projectDir, expectSuccess = true)
+
+        for (marker in warningDefaultRuleMarkers) {
+            assertTrue(
+                marker in output,
+                "Expected $marker to still be reported at its default severity but it was missing from:\n$output",
+            )
+        }
+    }
+
+    // ============================================================================
+    // Grace period + twin factory selection (#68, ADR-7, Phase 3, tasks 3.10-3.12).
+    //
+    // Empirical finding (task 3.12, verified via a throwaway spike build before writing these
+    // assertions, per the same caution documented for PR2): the twin ERROR/WARNING factories
+    // (ADR-6) reuse the SAME bundle key as their default-severity sibling, so the rendered
+    // bracketed rule-code marker (e.g. "[CANCEL_001]") is IDENTICAL on both the default and the
+    // reconfigured (twin) path — this is exactly what ADR-6's renderer registration note says
+    // ("message text is shared, so the catalog does not double"). What DOES differ, and is the
+    // only externally observable proof that a different factory (hence a different
+    // KtDiagnosticFactory0.name, hence a different @Suppress target) was selected, is the
+    // diagnostic's Severity — rendered by Gradle/kotlinc as the "e: " vs "w: " line prefix. The
+    // tests below assert on that prefix, not on a nonexistent distinct marker string.
+    // ============================================================================
+
+    private fun assertMarkerSeverityPrefix(output: String, marker: String, expectedPrefix: String) {
+        val line = output.lineSequence().firstOrNull { marker in it }
+        assertTrue(line != null, "Expected a line containing $marker in output:\n$output")
+        assertTrue(
+            line.trimStart().startsWith(expectedPrefix),
+            "Expected the line reporting $marker to start with \"$expectedPrefix\" but got:\n$line",
+        )
+    }
+
+    private val loopWithoutYieldTriggerSource = """
+        fun triggerLoopWithoutYieldWork() {
+            println("x")
+        }
+        suspend fun triggerLoopWithoutYield() {
+            while (true) {
+                triggerLoopWithoutYieldWork()
+            }
+        }
+    """.trimIndent()
+
+    private val globalScopeUsageTriggerSource = """
+        import kotlinx.coroutines.GlobalScope
+        import kotlinx.coroutines.launch
+
+        fun triggerGlobalScopeUsage() {
+            GlobalScope.launch { println("x") }
+        }
+    """.trimIndent()
+
+    private val unusedDeferredTriggerSource = """
+        import kotlinx.coroutines.CoroutineScope
+        import kotlinx.coroutines.async
+        import io.github.santimattius.structured.annotations.StructuredScope
+
+        fun triggerUnusedDeferred(@StructuredScope scope: CoroutineScope) {
+            val deferred = scope.async { 42 }
+        }
+    """.trimIndent()
+
+    @Test
+    fun `warning tightened to error stays a warning during the grace period and logs the deferral advisory`() {
+        val projectDir = createTestProject(
+            loopWithoutYieldTriggerSource,
+            extensionBlock = """
+                structuredCoroutines {
+                    loopWithoutYield.set("error")
+                }
+            """.trimIndent(),
+        )
+        val output = runBuild(projectDir, expectSuccess = true)
+
+        assertMarkerSeverityPrefix(output, "[CANCEL_001]", "w:")
+        assertTrue("loopWithoutYield" in output, "Advisory must name the rule, got:\n$output")
+        assertTrue("\"error\"" in output, "Advisory must name the configured value, got:\n$output")
+        assertTrue("\"warning\"" in output, "Advisory must name the currently-effective severity, got:\n$output")
+        assertTrue(
+            SeverityGracePeriod.ENFORCING_VERSION in output,
+            "Advisory must name the enforcing release, got:\n$output",
+        )
+    }
+
+    @Test
+    fun `same tightening with severityEnforcement strict fails the build reporting error`() {
+        val projectDir = createTestProject(
+            loopWithoutYieldTriggerSource,
+            extensionBlock = """
+                structuredCoroutines {
+                    loopWithoutYield.set("error")
+                    severityEnforcement.set("strict")
+                }
+            """.trimIndent(),
+        )
+        val output = runBuild(projectDir, expectSuccess = false)
+
+        assertMarkerSeverityPrefix(output, "[CANCEL_001]", "e:")
+    }
+
+    @Test
+    fun `error relaxed to warning applies immediately with no deferral advisory (Slice A regression guard)`() {
+        val projectDir = createTestProject(
+            unusedDeferredTriggerSource,
+            extensionBlock = """
+                structuredCoroutines {
+                    unusedDeferred.set("warning")
+                }
+            """.trimIndent(),
+        )
+        val output = runBuild(projectDir, expectSuccess = true)
+
+        assertMarkerSeverityPrefix(output, "[SCOPE_002]", "w:")
+        assertTrue(
+            SeverityGracePeriod.ENFORCING_VERSION !in output,
+            "A relaxation must never log a deferral advisory, got:\n$output",
+        )
+    }
+
+    @Test
+    fun `error relaxed to disabled applies immediately with no deferral advisory (Slice A regression guard)`() {
+        val projectDir = createTestProject(
+            unusedDeferredTriggerSource,
+            extensionBlock = """
+                structuredCoroutines {
+                    unusedDeferred.set("disabled")
+                }
+            """.trimIndent(),
+        )
+        val output = runBuild(projectDir, expectSuccess = true)
+
+        assertTrue("[SCOPE_002]" !in output, "Expected [SCOPE_002] to be suppressed but got:\n$output")
+        assertTrue(
+            SeverityGracePeriod.ENFORCING_VERSION !in output,
+            "A relaxation must never log a deferral advisory, got:\n$output",
+        )
+    }
+
+    @Test
+    fun `twin factory selection is proven by the Severity line prefix, not by a distinct marker (ADR-6)`() {
+        // Default (unreconfigured) path: GLOBAL_SCOPE_USAGE (ERROR-default) factory selected.
+        val defaultProjectDir = createTestProject(globalScopeUsageTriggerSource)
+        val defaultOutput = runBuild(defaultProjectDir, expectSuccess = false)
+        assertMarkerSeverityPrefix(defaultOutput, "[SCOPE_001]", "e:")
+
+        // Reconfigured to warning (a relaxation, applies immediately regardless of policy):
+        // the GLOBAL_SCOPE_USAGE_WARNING twin factory is selected instead. The rendered rule-code
+        // marker is IDENTICAL to the default path (ADR-6 shared bundle key) - only the Severity
+        // prefix differs, proving a different factory (and therefore a different
+        // KtDiagnosticFactory0.name / @Suppress target) actually reported the diagnostic.
+        val warningProjectDir = createTestProject(
+            globalScopeUsageTriggerSource,
+            extensionBlock = """
+                structuredCoroutines {
+                    globalScopeUsage.set("warning")
+                }
+            """.trimIndent(),
+        )
+        val warningOutput = runBuild(warningProjectDir, expectSuccess = true)
+        assertMarkerSeverityPrefix(warningOutput, "[SCOPE_001]", "w:")
     }
 }

@@ -74,7 +74,9 @@ import org.jetbrains.kotlin.name.Name
  *
  * @see <a href="https://kotlinlang.org/docs/cancellation-and-timeouts.html#run-non-cancellable-block">Non-cancellable block</a>
  */
-class SuspendInFinallyChecker : FirTryExpressionChecker(MppCheckerKind.Common) {
+class SuspendInFinallyChecker(
+    private val config: PluginConfiguration,
+) : FirTryExpressionChecker(MppCheckerKind.Common) {
 
     companion object {
         private val WITH_CONTEXT_NAME = Name.identifier("withContext")
@@ -92,7 +94,7 @@ class SuspendInFinallyChecker : FirTryExpressionChecker(MppCheckerKind.Common) {
         
         if (unprotectedSuspendCalls.isNotEmpty()) {
             // Report on the first unprotected suspend call found
-            reporter.reportSuspendInFinally(expression, context)
+            reporter.reportSuspendInFinally(expression, context, config)
         }
     }
 

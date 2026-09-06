@@ -137,7 +137,9 @@ import org.jetbrains.kotlin.name.Name
  * @see StructuredCoroutinesErrors
  * @see <a href="https://kotlinlang.org/docs/coroutines-basics.html#structured-concurrency">Structured Concurrency</a>
  */
-class UnstructuredLaunchChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
+class UnstructuredLaunchChecker(
+    private val config: PluginConfiguration,
+) : FirFunctionCallChecker(MppCheckerKind.Common) {
 
     companion object {
         /**
@@ -254,19 +256,19 @@ class UnstructuredLaunchChecker : FirFunctionCallChecker(MppCheckerKind.Common) 
 
         // Step 3: Check for GlobalScope usage
         if (isGlobalScope(receiver, context)) {
-            reporter.reportGlobalScopeUsage(expression, context)
+            reporter.reportGlobalScopeUsage(expression, context, config)
             return
         }
 
         // Step 4: Check for inline CoroutineScope creation
         if (isInlineCoroutineScopeCreation(receiver)) {
-            reporter.reportInlineCoroutineScope(expression, context)
+            reporter.reportInlineCoroutineScope(expression, context, config)
             return
         }
 
         // Step 5: Check if receiver is annotated with @StructuredScope
         if (!isStructuredScope(receiver, context)) {
-            reporter.reportUnstructuredLaunch(expression, context)
+            reporter.reportUnstructuredLaunch(expression, context, config)
         }
     }
 

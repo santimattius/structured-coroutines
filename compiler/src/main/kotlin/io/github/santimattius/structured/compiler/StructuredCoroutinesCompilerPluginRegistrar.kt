@@ -9,8 +9,11 @@
  */
 package io.github.santimattius.structured.compiler
 
+import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
+import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
+import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrarAdapter
 
@@ -98,6 +101,21 @@ class StructuredCoroutinesCompilerPluginRegistrar : CompilerPluginRegistrar() {
      */
     override fun ExtensionStorage.registerExtensions(configuration: CompilerConfiguration) {
         val pluginConfig = PluginConfiguration(configuration)
+        emitGracePeriodAdvisory(pluginConfig, configuration)
         FirExtensionRegistrarAdapter.registerExtension(ScoroutinesFirExtensionRegistrar(pluginConfig))
+    }
+
+    /**
+     * Emits one [MessageCollector.WARNING][CompilerMessageSeverity.WARNING] per compilation
+     * naming every rule in [PluginConfiguration.deferredTightenings] (#68, ADR-7). No-op when the
+     * list is empty — relaxations never defer, and nothing is deferred under
+     * [EnforcementPolicy.STRICT].
+     */
+    private fun emitGracePeriodAdvisory(pluginConfig: PluginConfiguration, configuration: CompilerConfiguration) {
+        val deferred = pluginConfig.deferredTightenings
+        if (deferred.isEmpty()) return
+        val messageCollector = configuration.get(CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY, MessageCollector.NONE)
+        val message = deferred.joinToString(separator = "\n") { it.advisoryText() }
+        messageCollector.report(CompilerMessageSeverity.WARNING, message)
     }
 }

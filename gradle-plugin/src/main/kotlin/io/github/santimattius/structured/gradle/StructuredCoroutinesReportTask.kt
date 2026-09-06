@@ -51,6 +51,20 @@ import java.time.format.DateTimeFormatter
 @CacheableTask
 abstract class StructuredCoroutinesReportTask : DefaultTask() {
 
+    companion object {
+        /**
+         * Tracking issue for the Structured Coroutines severity-enforcement feature (#68).
+         *
+         * Previously lived on the now-deleted `DisabledSeverityAdvisory` (#68, Slice A): that
+         * object's advisory message became factually false once `"disabled"` started really
+         * suppressing diagnostics at compile time, so it — and its dedicated advisory wiring in
+         * [StructuredCoroutinesGradlePlugin] — were removed. This constant survives here because
+         * the HTML report footnote below still links out to the umbrella tracking issue.
+         */
+        internal const val SEVERITY_ENFORCEMENT_TRACKING_ISSUE =
+            "https://github.com/santimattius/structured-coroutines/issues/68"
+    }
+
     // ─── Rule metadata ──────────────────────────────────────────────────────
 
     private data class RuleInfo(
@@ -344,7 +358,7 @@ $rulesRows
     &nbsp;·&nbsp;
     <a href="https://github.com/santimattius/structured-coroutines" target="_blank">GitHub</a>
     &nbsp;·&nbsp; Structured Coroutines v$version
-    ${if (disabledCount > 0) """<br><span class="excl">Disabled rules are not yet suppressed at compile time — see <a href="${DisabledSeverityAdvisory.TRACKING_ISSUE}" target="_blank">issue #68</a>.</span>""" else ""}
+    ${if (disabledCount > 0) """<br><span class="excl">Disabled rules are fully suppressed at compile time — see <a href="$SEVERITY_ENFORCEMENT_TRACKING_ISSUE" target="_blank">issue #68</a> for the full severity-enforcement roadmap.</span>""" else ""}
   </footer>
 </div>
 </body>

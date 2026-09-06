@@ -65,7 +65,9 @@ import org.jetbrains.kotlin.name.Name
  *
  * @see StructuredCoroutinesErrors.UNUSED_DEFERRED
  */
-class UnusedDeferredChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
+class UnusedDeferredChecker(
+    private val config: PluginConfiguration,
+) : FirFunctionCallChecker(MppCheckerKind.Common) {
 
     companion object {
         /**
@@ -98,7 +100,7 @@ class UnusedDeferredChecker : FirFunctionCallChecker(MppCheckerKind.Common) {
 
         // Check if await() is called on this variable in the same block
         if (!hasAwaitCall(containingBlock, variableName, context)) {
-            reporter.reportUnusedDeferred(expression, context)
+            reporter.reportUnusedDeferred(expression, context, config)
         }
     }
 

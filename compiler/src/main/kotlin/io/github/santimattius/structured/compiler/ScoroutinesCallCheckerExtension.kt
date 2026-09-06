@@ -67,17 +67,14 @@ import org.jetbrains.kotlin.fir.analysis.extensions.FirAdditionalCheckersExtensi
  * - **2.1** Avoid redundant launch in coroutineScope
  *
  * @param session The FIR session used for symbol resolution
+ * @param configuration The resolved plugin configuration (#68, ADR-4), injected by
+ *   [ScoroutinesFirExtensionRegistrar] via a bound member reference — no global mutable holder.
  * @see FirAdditionalCheckersExtension
  */
-class ScoroutinesCallCheckerExtension(session: FirSession) : FirAdditionalCheckersExtension(session) {
-    
-    /**
-     * Gets the plugin configuration from the holder.
-     */
-    @OptIn(org.jetbrains.kotlin.config.CompilerConfiguration.Internals::class)
-    private val configuration: PluginConfiguration
-        get() = PluginConfigurationHolder.configuration
-            ?: PluginConfiguration(org.jetbrains.kotlin.config.CompilerConfiguration())
+class ScoroutinesCallCheckerExtension(
+    session: FirSession,
+    private val configuration: PluginConfiguration,
+) : FirAdditionalCheckersExtension(session) {
 
     /**
      * Expression checkers analyze FIR expressions (function calls, try expressions, etc.)
@@ -90,20 +87,20 @@ class ScoroutinesCallCheckerExtension(session: FirSession) : FirAdditionalChecke
          */
         override val functionCallCheckers: Set<FirFunctionCallChecker> = setOf(
             // Rule 1-3: GlobalScope, inline CoroutineScope, unstructured launch (Best Practice 1.1, 1.3)
-            UnstructuredLaunchChecker(),
+            UnstructuredLaunchChecker(configuration),
             // Rule 4: runBlocking in suspend functions (Best Practice 2.2)
-            RunBlockingInSuspendChecker(),
+            RunBlockingInSuspendChecker(configuration),
             // Rule 5: Job()/SupervisorJob() in builder context (Best Practice 3.3 & 5.1)
-            JobInBuilderContextChecker(),
+            JobInBuilderContextChecker(configuration),
             // Rule 6: Dispatchers.Unconfined usage (Best Practice 3.2)
-            DispatchersUnconfinedChecker(),
+            DispatchersUnconfinedChecker(configuration),
             // Rule 10: async without await (Best Practice 1.2)
-            UnusedDeferredChecker(),
+            UnusedDeferredChecker(configuration),
             // Rule 11: redundant launch in coroutineScope (Best Practice 2.1)
-            RedundantLaunchInCoroutineScopeChecker(),
+            RedundantLaunchInCoroutineScopeChecker(configuration),
             // INTEROP (v0.8.0)
-            SuspendCoroutineWithoutCancellationChecker(),
-            CallbackFlowWithoutAwaitCloseChecker(),
+            SuspendCoroutineWithoutCancellationChecker(configuration),
+            CallbackFlowWithoutAwaitCloseChecker(configuration),
         )
 
         /**
@@ -112,9 +109,9 @@ class ScoroutinesCallCheckerExtension(session: FirSession) : FirAdditionalChecke
          */
         override val tryExpressionCheckers: Set<FirTryExpressionChecker> = setOf(
             // Rule 7: Suspend calls in finally without NonCancellable (Best Practice 4.3)
-            SuspendInFinallyChecker(),
+            SuspendInFinallyChecker(configuration),
             // Rule 8: catch(Exception) swallowing CancellationException (Best Practice 4.2)
-            CancellationExceptionSwallowedChecker()
+            CancellationExceptionSwallowedChecker(configuration)
         )
     }
 
@@ -122,13 +119,13 @@ class ScoroutinesCallCheckerExtension(session: FirSession) : FirAdditionalChecke
      * Declaration checkers analyze FIR declarations (classes, functions, properties, etc.)
      */
     override val declarationCheckers: DeclarationCheckers = object : DeclarationCheckers() {
-        
+
         /**
          * Checkers for simple function declarations.
          */
         override val simpleFunctionCheckers: Set<FirSimpleFunctionChecker> = setOf(
             // Rule 12: Loops in suspend functions without cooperation point (Best Practice 4.1)
-            LoopWithoutYieldChecker()
+            LoopWithoutYieldChecker(configuration)
         )
 
         /**
@@ -137,7 +134,7 @@ class ScoroutinesCallCheckerExtension(session: FirSession) : FirAdditionalChecke
          */
         override val classCheckers: Set<FirClassChecker> = setOf(
             // Rule 9: Classes extending CancellationException (Best Practice 5.2)
-            CancellationExceptionSubclassChecker()
+            CancellationExceptionSubclassChecker(configuration)
         )
     }
 }

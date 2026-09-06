@@ -153,6 +153,18 @@ interface StructuredCoroutinesExtension {
     val callbackFlowWithoutAwaitClose: Property<String>
 
     /**
+     * Grace-period enforcement policy for severity *tightening* (warning -> error) (#68, ADR-7).
+     *
+     * - `"grace"` (default) - a tightening is deferred one release: the rule keeps reporting at
+     *   its documented default severity, and a build advisory names the future enforcing release.
+     * - `"strict"` - every configured severity, including tightening, applies immediately.
+     *
+     * *Relaxing* a severity (error -> warning, or anything -> "disabled") always applies
+     * immediately regardless of this setting - it can only make a previously-failing build pass.
+     */
+    val severityEnforcement: Property<String>
+
+    /**
      * Source set (compilation) names to exclude from the compiler plugin.
      * Excluded compilations will not run the Structured Coroutines plugin.
      * Use for legacy modules or test source sets during migration.
