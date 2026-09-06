@@ -412,7 +412,7 @@ class StructuredCoroutinesPluginFunctionalTest {
             import kotlinx.coroutines.Dispatchers
             import kotlinx.coroutines.launch
             import io.github.santimattius.structured.annotations.StructuredScope
-            
+
             fun test(@StructuredScope scope: CoroutineScope) {
                 scope.launch(Dispatchers.Unconfined) {
                     println("Warning!")
@@ -423,10 +423,119 @@ class StructuredCoroutinesPluginFunctionalTest {
         val projectDir = createTestProject(sourceCode)
         // Should succeed (warning, not error) - compilation completes
         val output = runBuild(projectDir, expectSuccess = true)
-        
+
         // Build should succeed even with warning
         assertTrue("BUILD SUCCESSFUL" in output || "compileKotlin" in output,
             "Expected successful build but got:\n$output")
+
+        // Regression test for #71: DispatchersUnconfinedChecker.isDispatchersUnconfined() used to
+        // cast the `Dispatchers` receiver to FirPropertyAccessExpression, but a resolved object
+        // reference surfaces as FirResolvedQualifier — so the check was always false and
+        // DISPATCH_003 never fired for this exact shape.
+        assertTrue(
+            "[DISPATCH_003]" in output,
+            "Expected [DISPATCH_003] (dispatchersUnconfined) for Dispatchers.Unconfined but got:\n$output"
+        )
+    }
+
+    @Test
+    fun `fully-qualified Dispatchers Unconfined reference fires DISPATCH_003`() {
+        val sourceCode = """
+            import kotlinx.coroutines.CoroutineScope
+            import kotlinx.coroutines.launch
+            import io.github.santimattius.structured.annotations.StructuredScope
+
+            fun test(@StructuredScope scope: CoroutineScope) {
+                scope.launch(kotlinx.coroutines.Dispatchers.Unconfined) {
+                    println("Warning!")
+                }
+            }
+        """.trimIndent()
+
+        val projectDir = createTestProject(sourceCode)
+        val output = runBuild(projectDir, expectSuccess = true)
+
+        // Regression test for #71: the fully-qualified spelling must resolve to the same
+        // ClassId as the imported short-name form and trigger DISPATCH_003 identically.
+        assertTrue(
+            "[DISPATCH_003]" in output,
+            "Expected [DISPATCH_003] (dispatchersUnconfined) for fully-qualified kotlinx.coroutines.Dispatchers.Unconfined but got:\n$output"
+        )
+    }
+
+    @Test
+    fun `Dispatchers IO and Default do not trigger DISPATCH_003`() {
+        val sourceCode = """
+            import kotlinx.coroutines.CoroutineScope
+            import kotlinx.coroutines.Dispatchers
+            import kotlinx.coroutines.launch
+            import io.github.santimattius.structured.annotations.StructuredScope
+
+            fun test(@StructuredScope scope: CoroutineScope) {
+                scope.launch(Dispatchers.IO) {
+                    println("IO")
+                }
+                scope.launch(Dispatchers.Default) {
+                    println("Default")
+                }
+            }
+        """.trimIndent()
+
+        val projectDir = createTestProject(sourceCode)
+        val output = runBuild(projectDir, expectSuccess = true)
+
+        assertTrue(
+            "[DISPATCH_003]" !in output,
+            "Expected no [DISPATCH_003] for Dispatchers.IO/Default but got:\n$output"
+        )
+    }
+
+    @Test
+    fun `single launch on the last line of coroutineScope produces RUNBLOCK_001 warning`() {
+        val sourceCode = """
+            import kotlinx.coroutines.coroutineScope
+            import kotlinx.coroutines.launch
+
+            suspend fun test() = coroutineScope {
+                launch { println("Warning!") }
+            }
+        """.trimIndent()
+
+        val projectDir = createTestProject(sourceCode)
+        val output = runBuild(projectDir, expectSuccess = true)
+
+        assertTrue("BUILD SUCCESSFUL" in output || "compileKotlin" in output,
+            "Expected successful build but got:\n$output")
+
+        // Regression test for #71: RedundantLaunchInCoroutineScopeChecker.getLambdaBlock() used to
+        // cast the trailing lambda argument directly to FirBlock, but it is actually wrapped as a
+        // FirAnonymousFunctionExpression whose anonymousFunction.body is the FirBlock — so the
+        // cast always yielded null and RUNBLOCK_001 never fired.
+        assertTrue(
+            "[RUNBLOCK_001]" in output,
+            "Expected [RUNBLOCK_001] (redundantLaunchInCoroutineScope) for a single launch but got:\n$output"
+        )
+    }
+
+    @Test
+    fun `two launches in coroutineScope do not trigger RUNBLOCK_001`() {
+        val sourceCode = """
+            import kotlinx.coroutines.coroutineScope
+            import kotlinx.coroutines.launch
+
+            suspend fun test() = coroutineScope {
+                launch { println("one") }
+                launch { println("two") }
+            }
+        """.trimIndent()
+
+        val projectDir = createTestProject(sourceCode)
+        val output = runBuild(projectDir, expectSuccess = true)
+
+        assertTrue(
+            "[RUNBLOCK_001]" !in output,
+            "Expected no [RUNBLOCK_001] for two launches but got:\n$output"
+        )
     }
 
     // ============================================================================
@@ -1276,29 +1385,29 @@ class StructuredCoroutinesPluginFunctionalTest {
     // catalog (CompilerBundle.properties:7,11), so this list's shared marker's presence/absence
     // proves both rules together.
     //
-    // EXCLUDES dispatchersUnconfined ("[DISPATCH_003]") and redundantLaunchInCoroutineScope
-    // ("[RUNBLOCK_001]"): manually isolated during this task (outside GradleRunner, via a plain
-    // `gradlew compileKotlin` invocation against the published plugin jar) and confirmed that
-    // `DispatchersUnconfinedChecker`/`RedundantLaunchInCoroutineScopeChecker` never report at all,
-    // even for the exact trigger shape documented in their own KDoc and in the pre-existing
-    // (assertion-free) `Dispatchers Unconfined produces warning but compiles` test. This is a
-    // pre-existing bug in the checkers' own detection logic — present in the released 1.1.1 jar,
-    // byte-identical in this session's diff except for the constructor/report-call-site changes —
-    // not something introduced by, or in scope for, PR2 (injection + disabled enforcement only).
-    // The config-resolution side for both rules IS still proven correct by
-    // `PluginConfigurationEffectiveSeverityTest` (all 14 rules, including these 2) and both
-    // `reportDispatchersUnconfinedUsage`/`reportRedundantLaunchInCoroutineScope` are wired to
-    // `config.report(...)` with the exact same shape as the other 12 rules that ARE proven live
-    // here. Flagged as a risk/follow-up for sdd-verify and a separate GitHub issue.
+    // dispatchersUnconfined ("[DISPATCH_003]") and redundantLaunchInCoroutineScope
+    // ("[RUNBLOCK_001]") are included below. They used to be excluded because
+    // `DispatchersUnconfinedChecker`/`RedundantLaunchInCoroutineScopeChecker` never reported at
+    // all (see issue #71): the former matched the `Dispatchers` receiver against
+    // FirPropertyAccessExpression when a resolved object reference actually surfaces as
+    // FirResolvedQualifier, and the latter cast the trailing lambda argument directly to FirBlock
+    // when it is really wrapped in a FirAnonymousFunctionExpression. Both are now fixed and
+    // proven live here, and standalone positive/negative-case coverage lives in
+    // `Dispatchers Unconfined produces warning but compiles`,
+    // `Dispatchers IO and Default do not trigger DISPATCH_003`,
+    // `single launch on the last line of coroutineScope produces RUNBLOCK_001 warning`, and
+    // `two launches in coroutineScope do not trigger RUNBLOCK_001`.
     private val allRuleDiagnosticMarkers = listOf(
         "[SCOPE_001]", // globalScopeUsage
         "[SCOPE_003]", // unstructuredLaunch + inlineCoroutineScope (shared code)
         "[RUNBLOCK_002]", // runBlockingInSuspend
         "[DISPATCH_004]", // jobInBuilderContext
+        "[DISPATCH_003]", // dispatchersUnconfined
         "[EXCEPT_002]", // cancellationExceptionSubclass
         "[CANCEL_004]", // suspendInFinally
         "[CANCEL_003]", // cancellationExceptionSwallowed
         "[SCOPE_002]", // unusedDeferred
+        "[RUNBLOCK_001]", // redundantLaunchInCoroutineScope
         "[CANCEL_001]", // loopWithoutYield
         "[INTEROP_001]", // suspendCoroutineWithoutCancellation
         "[INTEROP_002]", // callbackFlowWithoutAwaitClose
@@ -1473,12 +1582,14 @@ class StructuredCoroutinesPluginFunctionalTest {
         }
     """.trimIndent()
 
-    // Excludes "[DISPATCH_003]" (dispatchersUnconfined) and "[RUNBLOCK_001]"
-    // (redundantLaunchInCoroutineScope) — see the exclusion note on allRuleDiagnosticMarkers
-    // above; both checkers were confirmed (independent of this PR) to never report at all.
+    // "[DISPATCH_003]" (dispatchersUnconfined) and "[RUNBLOCK_001]"
+    // (redundantLaunchInCoroutineScope) are included below — see the note on
+    // allRuleDiagnosticMarkers above; both checkers are now fixed (issue #71).
     private val warningDefaultRuleMarkers = listOf(
+        "[DISPATCH_003]", // dispatchersUnconfined
         "[CANCEL_004]", // suspendInFinally
         "[CANCEL_003]", // cancellationExceptionSwallowed
+        "[RUNBLOCK_001]", // redundantLaunchInCoroutineScope
         "[CANCEL_001]", // loopWithoutYield
     )
 
