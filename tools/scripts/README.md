@@ -149,3 +149,35 @@ plugin manifests but is out of scope for this guard's compared-field set.
 rolled back independently of this guard without reddening CI. Mirrors this repo's existing
 `--client codex` **unverified** convention above: Codex support here degrades gracefully rather
 than hard-failing when unconfirmed/not-yet-shipped.
+
+# Rule manifest drift guard
+
+Asserts `docs/rule-codes.yml`'s per-surface coverage arrays (`compiler:`, `detekt:`, `lint:`,
+`intellij:`) agree with the 4 real rule registries: the compiler's `ScoroutinesRule` enum,
+Detekt's `StructuredCoroutinesRuleSetProvider`, Lint's `StructuredCoroutinesIssueRegistry`, and
+the IntelliJ plugin's `plugin.xml` `shortName` attributes. An assertion script, not a generator —
+rule identifiers are hand-maintained in `rule-codes.yml`, so a check is what catches drift here.
+
+```bash
+python3 tools/scripts/check_rule_manifest_sync.py
+```
+
+Wired into CI via `.github/workflows/validate-rule-manifest.yml` (own workflow, separate from
+`validate-manifests.yml`, which targets a different manifest with disjoint `paths:`), triggered
+on changes to the manifest, any of the 4 registry source files, or the script itself.
+
+**Checks, in both directions:** every ID a rule code lists for a surface must actually be
+registered there (catches a manifest claiming coverage that was never implemented, renamed, or
+removed), and every ID actually registered in a surface must appear in at least one manifest
+entry for that surface (catches an implemented rule the manifest never mentions). "At least
+one," not "exactly one" — some rules intentionally back two rule codes (e.g.
+`JobInBuilderContext` backs both DISPATCH_004 and EXCEPT_001), and that mapping is legitimate,
+not drift. Also fails on duplicate `code:` values.
+
+**Extraction is regex/text-based, not a Kotlin/XML parser:** the same proportionate approach
+`check_manifest_sync.py` uses for its own hand-edited JSON files, applied to a known, narrow
+declaration shape per surface. No shelling out — unlike `generate_refs.py`'s optional
+Ruby-psych fallback, which this guard deliberately does not reuse.
+
+**Dependencies:** Python 3.9+ and **PyYAML** (`pip install pyyaml`); the workflow installs it
+explicitly.
