@@ -109,6 +109,62 @@ class LoopWithoutYieldRuleTest {
     }
 
     @Test
+    fun `reports loop with only an uncalled local suspend fun containing delay (spike, #66 divergence)`() {
+        // SPIKE: unlike the compiler checker (which prunes nested FirNamedFunction/
+        // FirPropertyAccessor declarations, see #66), this rule's unpruned
+        // collectDescendantsOfType<KtCallExpression>() walk over the whole loop body finds
+        // `delay(1)` inside the *declared-but-never-called* local `helper()` and mistakes it
+        // for a real cooperation point. `helper()` is dead code: `delay(1)` never executes
+        // during loop iterations, so this while loop still busy-loops and SHOULD be reported.
+        val code = """
+            import kotlinx.coroutines.*
+
+            suspend fun processItems() {
+                var i = 0
+                while (i < 100) {
+                    suspend fun helper() {
+                        delay(1)
+                    }
+                    println(i)
+                    i++
+                }
+            }
+        """.trimIndent()
+
+        val findings = rule.compileAndLint(code)
+        assertThat(findings).hasSize(1)
+    }
+
+    @Test
+    fun `does not report loop when the local suspend fun cooperation point is actually called`() {
+        // Negative counterpart to the spike above: `fetchData()` is now called on every
+        // iteration, so `delay(1)` genuinely executes as a cooperation point. Pruning the
+        // declaration must not suppress detection of the call site itself. The call is named
+        // `fetchData` (matching `isSuspendCall`'s "fetch" naming heuristic) rather than `helper`,
+        // since this rule's suspend-call detection is a naming heuristic, not real type
+        // resolution — an arbitrarily-named call is not something this rule can recognize as a
+        // cooperation point regardless of pruning.
+        val code = """
+            import kotlinx.coroutines.*
+
+            suspend fun processItems() {
+                var i = 0
+                while (i < 100) {
+                    suspend fun fetchData() {
+                        delay(1)
+                    }
+                    fetchData()
+                    println(i)
+                    i++
+                }
+            }
+        """.trimIndent()
+
+        val findings = rule.compileAndLint(code)
+        assertThat(findings).isEmpty()
+    }
+
+    @Test
     fun `does not report loop in non-suspend function`() {
         val code = """
             fun processItems(items: List<Int>) {

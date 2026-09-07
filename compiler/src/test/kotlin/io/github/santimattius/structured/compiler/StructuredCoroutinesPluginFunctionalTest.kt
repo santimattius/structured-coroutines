@@ -1031,6 +1031,59 @@ class StructuredCoroutinesPluginFunctionalTest {
     }
 
     @Test
+    fun `loop with a called local suspend fun does not report LOOP_WITHOUT_YIELD`() {
+        // Negative counterpart to the test above: `helper()` is now called on every iteration,
+        // so `delay(1)` genuinely executes as a cooperation point. The call site is resolved via
+        // real FIR symbol resolution (`isSuspendCall`), so pruning the declaration itself must
+        // not suppress detection of this call.
+        val sourceCode = """
+            import kotlinx.coroutines.delay
+
+            suspend fun loopWithCalledLocalSuspendFun() {
+                while (true) {
+                    suspend fun helper() {
+                        delay(1)
+                    }
+                    helper()
+                }
+            }
+        """.trimIndent()
+
+        val projectDir = createTestProject(sourceCode)
+        val output = runBuild(projectDir, expectSuccess = true)
+
+        assertTrue(
+            "LOOP_WITHOUT_YIELD" !in output && "[CANCEL_001]" !in output,
+            "Did not expect LOOP_WITHOUT_YIELD for a loop with a called local suspend fun but got:\n$output"
+        )
+    }
+
+    @Test
+    fun `loop with a real top-level delay call does not report LOOP_WITHOUT_YIELD`() {
+        // Sanity/regression guard: the most basic passing case (a direct cooperation-point call
+        // in the loop body, no nested declaration involved) must keep passing after pruning is
+        // introduced.
+        val sourceCode = """
+            import kotlinx.coroutines.delay
+
+            suspend fun loopWithTopLevelDelay() {
+                while (true) {
+                    delay(10)
+                    break
+                }
+            }
+        """.trimIndent()
+
+        val projectDir = createTestProject(sourceCode)
+        val output = runBuild(projectDir, expectSuccess = true)
+
+        assertTrue(
+            "LOOP_WITHOUT_YIELD" !in output && "[CANCEL_001]" !in output,
+            "Did not expect LOOP_WITHOUT_YIELD for a loop with a real top-level delay call but got:\n$output"
+        )
+    }
+
+    @Test
     fun `val initializer, statement, and assignment cooperation points together suppress LOOP_WITHOUT_YIELD`() {
         // Literal reproduction of https://github.com/santimattius/structured-coroutines/issues/66
         // (function names a/b/c preserved from the issue). `readAvailable`/`flush` stand in for

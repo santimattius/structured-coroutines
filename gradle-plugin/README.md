@@ -198,7 +198,7 @@ For a full migration path (relaxed → gradual → strict) and suppression best 
 
 ### Single entry point for rules
 
-This plugin is the **recommended single entry point** for structured-coroutines: it applies the Kotlin compiler plugin and fits into the same project as **Detekt** and **Android Lint**. For consistent behavior across tools, keep severity choices aligned (e.g. use the same error/warning level for a given rule in the plugin and in `detekt.yml` / Lint config). Rule codes and suppression IDs are listed in [docs/rule-codes.yml](../docs/rule-codes.yml) and [docs/RULES_SYNC_COMPARISON.md](../docs/RULES_SYNC_COMPARISON.md).
+This plugin is the **recommended single entry point** for structured-coroutines: it applies the Kotlin compiler plugin and fits into the same project as **Detekt** and **Android Lint**. For consistent behavior across tools, keep severity choices aligned (e.g. use the same error/warning level for a given rule in the plugin and in `detekt.yml` / Lint config). Rule codes are listed in [docs/rule-codes.yml](../docs/rule-codes.yml) and per-tool suppression IDs in [docs/SUPPRESSING_RULES.md](../docs/SUPPRESSING_RULES.md).
 
 ---
 

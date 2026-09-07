@@ -30,7 +30,7 @@ rules:
     section: "1.3"
     title: "Breaking Structured Concurrency"
     doc_anchor: "13-scope_003--breaking-structured-concurrency"
-    compiler: [UNSTRUCTURED_COROUTINE_LAUNCH, INLINE_COROUTINE_SCOPE]
+    compiler: [UNSTRUCTURED_LAUNCH, INLINE_COROUTINE_SCOPE]
     detekt: [ExternalScopeLaunch, InlineCoroutineScope]
     lint: [UnstructuredLaunch, InlineCoroutineScope]
     intellij: [UnstructuredLaunch, InlineCoroutineScope]
@@ -54,7 +54,7 @@ rules:
     detekt: [RunBlockingInSuspend]
     lint: [RunBlockingInSuspend]
     intellij: [RunBlockingInSuspend]
-    default_severity: warning
+    default_severity: error
 
   - code: DISPATCH_001
     section: "3.1"
@@ -70,7 +70,7 @@ rules:
     section: "3.3"
     title: "Abusing Dispatchers.Unconfined"
     doc_anchor: "33-dispatch_003--abusing-dispatchersunconfined"
-    compiler: [DISPATCHERS_UNCONFINED_USAGE]
+    compiler: [DISPATCHERS_UNCONFINED]
     detekt: [DispatchersUnconfined]
     lint: [DispatchersUnconfined]
     intellij: [DispatchersUnconfined]
@@ -90,10 +90,10 @@ rules:
     section: "4.1"
     title: "Ignoring Cancellation in Intensive Loops"
     doc_anchor: "41-cancel_001--ignoring-cancellation-in-intensive-loops"
-    compiler: []
+    compiler: [LOOP_WITHOUT_YIELD]
     detekt: [LoopWithoutYield]
     lint: [LoopWithoutYield]
-    intellij: []
+    intellij: [LoopWithoutYield]
     default_severity: warning
 
   - code: CANCEL_003
@@ -110,7 +110,7 @@ rules:
     section: "4.4"
     title: "Suspendable Cleanup Without NonCancellable"
     doc_anchor: "44-cancel_004--suspendable-cleanup-without-noncancellable"
-    compiler: [SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE]
+    compiler: [SUSPEND_IN_FINALLY]
     detekt: [SuspendInFinally]
     lint: [SuspendInFinally]
     intellij: [SuspendInFinally]
@@ -174,8 +174,8 @@ rules:
     doc_anchor: "82-lifecycle-aware-flow-collection-android"
     compiler: []
     detekt: []
-    lint: [LifecycleAwareScope, ViewModelScopeLeak]
-    intellij: []
+    lint: [LifecycleAwareScope, ViewModelScopeLeak, LifecycleAwareFlowCollection]
+    intellij: [LifecycleAwareFlowCollection]
     default_severity: warning
     notes: "Android-only; not implemented in Detekt or Compiler."
 
@@ -469,16 +469,6 @@ rules:
     intellij: []
     default_severity: warning
     notes: "Documentation and skill guidance; heuristic inspections optional."
-
-  - code: CANCEL_006
-    section: "4.6"
-    title: "withTimeout and Scope Cancellation"
-    doc_anchor: "46-cancel_006--withtimeout-and-scope-cancellation"
-    compiler: []
-    detekt: [WithTimeoutScopeCancellation]
-    lint: []
-    intellij: [WithTimeoutScopeCancellation]
-    default_severity: warning
 
   - code: EXCEPT_001
     section: "5.1"

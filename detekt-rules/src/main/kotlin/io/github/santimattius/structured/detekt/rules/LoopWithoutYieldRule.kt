@@ -20,11 +20,13 @@ import io.gitlab.arturbosch.detekt.api.Issue
 import io.gitlab.arturbosch.detekt.api.Rule
 import io.gitlab.arturbosch.detekt.api.Severity
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.psi.KtLoopExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
+import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.KtWhileExpression
-import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 /**
@@ -120,11 +122,7 @@ class LoopWithoutYieldRule(config: Config = Config.empty) : Rule(config) {
 
         // Check if the loop body contains any cooperation points
         val loopBody = loop.body ?: return
-        val callExpressions = loopBody.collectDescendantsOfType<KtCallExpression>()
-        
-        val hasCooperationPoint = callExpressions.any { call ->
-            CoroutineDetektUtils.isCooperationPoint(call) || isSuspendCall(call)
-        }
+        val hasCooperationPoint = bodyHasCooperationPoint(loopBody)
 
         if (!hasCooperationPoint) {
             val loopType = when (loop) {
@@ -156,7 +154,7 @@ class LoopWithoutYieldRule(config: Config = Config.empty) : Rule(config) {
      */
     private fun isSuspendCall(call: KtCallExpression): Boolean {
         val calleeName = call.calleeExpression?.text ?: return false
-        
+
         // Common suspend function naming patterns
         return calleeName.startsWith("await") ||
             calleeName.startsWith("suspend") ||
@@ -168,5 +166,47 @@ class LoopWithoutYieldRule(config: Config = Config.empty) : Rule(config) {
             calleeName == "collect" ||
             calleeName == "send" ||
             calleeName == "receive"
+    }
+
+    /**
+     * Deep, structural search for a cooperation point anywhere in [body]'s statement tree —
+     * mirrors the compiler's [io.github.santimattius.structured.compiler.LoopWithoutYieldChecker]
+     * `CooperationPointFinder` (#66) so the two surfaces stay in parity.
+     */
+    private fun bodyHasCooperationPoint(body: KtExpression): Boolean {
+        val finder = CooperationPointFinder()
+        body.accept(finder)
+        return finder.found
+    }
+
+    /**
+     * Depth-first walk over a loop body that short-circuits as soon as a cooperation point is
+     * found anywhere in the statement tree.
+     *
+     * Pruning policy: named function/property-accessor *declarations* are not descended into — a
+     * local `suspend fun helper() { delay(1) }` that is declared but never called inside the loop
+     * must not suppress the diagnostic (see #66). Anonymous functions (`fun() { }`, a nameless
+     * [KtNamedFunction]) and lambda bodies are NOT pruned and are still searched, since they
+     * execute inline at their call site (e.g. a lambda passed to `run { }`).
+     */
+    private inner class CooperationPointFinder : KtTreeVisitorVoid() {
+        var found: Boolean = false
+            private set
+
+        override fun visitNamedFunction(function: KtNamedFunction) {
+            if (function.name != null) return // prune declaration, keep anonymous fun
+            super.visitNamedFunction(function)
+        }
+
+        override fun visitPropertyAccessor(accessor: KtPropertyAccessor) = Unit // prune
+
+        override fun visitCallExpression(expression: KtCallExpression) {
+            if (found) return
+            if (CoroutineDetektUtils.isCooperationPoint(expression) || isSuspendCall(expression)) {
+                found = true
+                return
+            }
+            super.visitCallExpression(expression)
+        }
     }
 }

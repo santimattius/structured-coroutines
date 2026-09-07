@@ -126,7 +126,7 @@
             bundle="messages.StructuredCoroutinesBundle"
             key="inspection.unstructured.launch.display.name"
             enabledByDefault="true"
-            level="WARNING"
+            level="ERROR"
             implementationClass="io.github.santimattius.structured.intellij.inspections.UnstructuredLaunchInspection"/>
 
         <localInspection
@@ -138,7 +138,7 @@
             bundle="messages.StructuredCoroutinesBundle"
             key="inspection.async.without.await.display.name"
             enabledByDefault="true"
-            level="WARNING"
+            level="ERROR"
             implementationClass="io.github.santimattius.structured.intellij.inspections.AsyncWithoutAwaitInspection"/>
 
         <localInspection
@@ -390,7 +390,7 @@
             bundle="messages.StructuredCoroutinesBundle"
             key="inspection.sideeffect.in.map.display.name"
             enabledByDefault="false"
-            level="WARNING"
+            level="INFO"
             implementationClass="io.github.santimattius.structured.intellij.inspections.SideEffectInMapOperatorInspection"/>
 
         <localInspection

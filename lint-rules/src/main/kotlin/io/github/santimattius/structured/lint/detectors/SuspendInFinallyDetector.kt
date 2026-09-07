@@ -9,6 +9,7 @@
  */
 package io.github.santimattius.structured.lint.detectors
 
+import com.android.tools.lint.client.api.UElementHandler
 import com.android.tools.lint.detector.api.*
 import com.android.tools.lint.detector.api.Category
 import com.android.tools.lint.detector.api.Severity
@@ -71,29 +72,43 @@ class SuspendInFinallyDetector : Detector(), SourceCodeScanner {
         )
     }
     
-    override fun visitClass(context: JavaContext, declaration: UClass) {
-        declaration.accept(object : AbstractUastVisitor() {
-            override fun visitTryExpression(node: UTryExpression): Boolean {
-                val finallyClause = node.finallyClause ?: return super.visitTryExpression(node)
+    // NOTE (bugfix, dead-dispatch registration): this detector previously overrode
+    // `SourceCodeScanner.visitClass(context, declaration)` without pairing it with
+    // `applicableSuperClasses()` (the only registration mechanism `visitClass` responds to).
+    // With neither `applicableSuperClasses()` nor `getApplicableUastTypes()` registered, lint's
+    // `UElementVisitor` never added this detector to any dispatch map, so `visitClass` was never
+    // invoked and this detector never reported a single diagnostic, in production or in tests.
+    // Fixed by switching to the `getApplicableUastTypes()` + `createUastHandler()` pairing used
+    // by every other working detector in this module (e.g. LoopWithoutYieldDetector).
+    override fun getApplicableUastTypes(): List<Class<out UElement>> =
+        listOf(UClass::class.java)
 
-                if (finallyClause is UBlockExpression) {
-                    // Check if there are suspend calls not wrapped in withContext(NonCancellable)
-                    val unprotectedSuspendCalls = findUnprotectedSuspendCallsInFinally(finallyClause)
-                    
-                    if (unprotectedSuspendCalls.isNotEmpty()) {
-                        context.report(
-                            ISSUE,
-                            node,
-                            context.getLocation(node as UElement),
-                            "Suspend calls in finally block should be wrapped with withContext(NonCancellable) { } to ensure cleanup executes even if cancelled"
-                        )
+    override fun createUastHandler(context: JavaContext): UElementHandler =
+        object : UElementHandler() {
+            override fun visitClass(node: UClass) {
+                node.accept(object : AbstractUastVisitor() {
+                    override fun visitTryExpression(tryNode: UTryExpression): Boolean {
+                        val finallyClause = tryNode.finallyClause ?: return super.visitTryExpression(tryNode)
+
+                        if (finallyClause is UBlockExpression) {
+                            // Check if there are suspend calls not wrapped in withContext(NonCancellable)
+                            val unprotectedSuspendCalls = findUnprotectedSuspendCallsInFinally(finallyClause)
+
+                            if (unprotectedSuspendCalls.isNotEmpty()) {
+                                context.report(
+                                    ISSUE,
+                                    tryNode,
+                                    context.getLocation(tryNode as UElement),
+                                    "Suspend calls in finally block should be wrapped with withContext(NonCancellable) { } to ensure cleanup executes even if cancelled"
+                                )
+                            }
+                        }
+
+                        return super.visitTryExpression(tryNode)
                     }
-                }
-                
-                return super.visitTryExpression(node)
+                })
             }
-        })
-    }
+        }
     
     /**
      * Finds suspend function calls in finally clause that are not wrapped in withContext(NonCancellable).
