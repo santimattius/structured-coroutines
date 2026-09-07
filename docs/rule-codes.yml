@@ -90,10 +90,10 @@ rules:
     section: "4.1"
     title: "Ignoring Cancellation in Intensive Loops"
     doc_anchor: "41-cancel_001--ignoring-cancellation-in-intensive-loops"
-    compiler: []
+    compiler: [LOOP_WITHOUT_YIELD]
     detekt: [LoopWithoutYield]
     lint: [LoopWithoutYield]
-    intellij: []
+    intellij: [LoopWithoutYield]
     default_severity: warning
 
   - code: CANCEL_003
@@ -174,8 +174,8 @@ rules:
     doc_anchor: "82-lifecycle-aware-flow-collection-android"
     compiler: []
     detekt: []
-    lint: [LifecycleAwareScope, ViewModelScopeLeak]
-    intellij: []
+    lint: [LifecycleAwareScope, ViewModelScopeLeak, LifecycleAwareFlowCollection]
+    intellij: [LifecycleAwareFlowCollection]
     default_severity: warning
     notes: "Android-only; not implemented in Detekt or Compiler."
 
@@ -469,16 +469,6 @@ rules:
     intellij: []
     default_severity: warning
     notes: "Documentation and skill guidance; heuristic inspections optional."
-
-  - code: CANCEL_006
-    section: "4.6"
-    title: "withTimeout and Scope Cancellation"
-    doc_anchor: "46-cancel_006--withtimeout-and-scope-cancellation"
-    compiler: []
-    detekt: [WithTimeoutScopeCancellation]
-    lint: []
-    intellij: [WithTimeoutScopeCancellation]
-    default_severity: warning
 
   - code: EXCEPT_001
     section: "5.1"
