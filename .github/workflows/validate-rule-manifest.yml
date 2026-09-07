@@ -1,0 +1,52 @@
+# Guards against silent drift between `docs/rule-codes.yml`'s per-surface coverage arrays
+# (compiler/detekt/lint/intellij) and the 4 real rule registries. This exact drift class caused
+# CANCEL_001 and ARCH_002 to under-report their real coverage (see #80).
+#
+# Kept as its own workflow, separate from validate-manifests.yml, because that file targets a
+# semantically different manifest (plugin packaging metadata) with disjoint `paths:` -- `paths:`
+# filters are per-workflow, not per-job.
+
+name: Validate Rule Manifest
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "docs/rule-codes.yml"
+      - "compiler/src/main/kotlin/io/github/santimattius/structured/compiler/ScoroutinesRule.kt"
+      - "detekt-rules/src/main/kotlin/io/github/santimattius/structured/detekt/StructuredCoroutinesRuleSetProvider.kt"
+      - "detekt-rules/src/main/kotlin/io/github/santimattius/structured/detekt/rules/**"
+      - "lint-rules/src/main/kotlin/io/github/santimattius/structured/lint/StructuredCoroutinesIssueRegistry.kt"
+      - "lint-rules/src/main/kotlin/io/github/santimattius/structured/lint/detectors/**"
+      - "intellij-plugin/src/main/resources/META-INF/plugin.xml"
+      - "tools/scripts/check_rule_manifest_sync.py"
+  pull_request:
+    branches: [main, master]
+    paths:
+      - "docs/rule-codes.yml"
+      - "compiler/src/main/kotlin/io/github/santimattius/structured/compiler/ScoroutinesRule.kt"
+      - "detekt-rules/src/main/kotlin/io/github/santimattius/structured/detekt/StructuredCoroutinesRuleSetProvider.kt"
+      - "detekt-rules/src/main/kotlin/io/github/santimattius/structured/detekt/rules/**"
+      - "lint-rules/src/main/kotlin/io/github/santimattius/structured/lint/StructuredCoroutinesIssueRegistry.kt"
+      - "lint-rules/src/main/kotlin/io/github/santimattius/structured/lint/detectors/**"
+      - "intellij-plugin/src/main/resources/META-INF/plugin.xml"
+      - "tools/scripts/check_rule_manifest_sync.py"
+
+jobs:
+  validate-rule-manifest:
+    name: Check rule manifest sync
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install PyYAML
+        run: pip install pyyaml
+
+      - name: Run rule manifest sync guard
+        run: python3 tools/scripts/check_rule_manifest_sync.py
