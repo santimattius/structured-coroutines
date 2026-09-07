@@ -9,11 +9,14 @@
  */
 package io.github.santimattius.structured.lint.detectors
 
+import com.android.tools.lint.client.api.UElementHandler
 import com.android.tools.lint.detector.api.*
 import com.android.tools.lint.detector.api.Category
 import com.android.tools.lint.detector.api.Severity
 import io.github.santimattius.structured.lint.utils.CoroutineLintUtils
 import io.github.santimattius.structured.lint.utils.LintDocUrl
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
@@ -93,20 +96,28 @@ class LoopWithoutYieldDetector : Detector(), SourceCodeScanner {
         )
     }
     
-    override fun visitClass(context: JavaContext, declaration: UClass) {
-        declaration.accept(object : AbstractUastVisitor() {
-            override fun visitForExpression(node: UForExpression): Boolean {
+    // NOTE (bugfix, see #66 parity work): this detector previously overrode
+    // `SourceCodeScanner.visitClass(context, declaration)` without pairing it with
+    // `applicableSuperClasses()` (the only registration mechanism `visitClass` responds to).
+    // With neither `applicableSuperClasses()` nor `getApplicableUastTypes()` registered, lint's
+    // `UElementVisitor` never added this detector to any dispatch map, so `visitClass` was never
+    // invoked and this detector never reported a single diagnostic, in production or in tests.
+    // Fixed by switching to the `getApplicableUastTypes()` + `createUastHandler()` pairing used
+    // by every other working detector in this module (e.g. SynchronizedInCoroutineDetector).
+    override fun getApplicableUastTypes(): List<Class<out UElement>> =
+        listOf(UForExpression::class.java, UWhileExpression::class.java)
+
+    override fun createUastHandler(context: JavaContext): UElementHandler =
+        object : UElementHandler() {
+            override fun visitForExpression(node: UForExpression) {
                 checkLoop(context, node, node.body)
-                return super.visitForExpression(node)
             }
-            
-            override fun visitWhileExpression(node: UWhileExpression): Boolean {
+
+            override fun visitWhileExpression(node: UWhileExpression) {
                 checkLoop(context, node, node.body)
-                return super.visitWhileExpression(node)
             }
-        })
-    }
-    
+        }
+
     private fun checkLoop(
         context: JavaContext,
         loop: ULoopExpression,
@@ -116,12 +127,12 @@ class LoopWithoutYieldDetector : Detector(), SourceCodeScanner {
         if (!CoroutineLintUtils.isInSuspendFunction(context, loop)) {
             return
         }
-        
+
         if (loopBody == null) return
-        
+
         // Check if the loop body contains any cooperation points
         val hasCooperationPoint = hasCooperationPoint(loopBody)
-        
+
         if (!hasCooperationPoint) {
             val loopType = when (loop) {
                 is UForExpression -> "for"
@@ -145,21 +156,38 @@ class LoopWithoutYieldDetector : Detector(), SourceCodeScanner {
     
     /**
      * Checks if an expression contains any cooperation points.
+     *
+     * Pruning policy: named function/property-accessor *declarations* are not descended into —
+     * a local `suspend fun helper() { delay(1) }` that is declared but never called inside the
+     * loop must not suppress the diagnostic (see #66), mirroring the compiler's
+     * `LoopWithoutYieldChecker.CooperationPointFinder` and the Detekt rule's equivalent visitor.
+     * Kotlin local functions surface inconsistently across UAST backends — as a nested [UMethod]
+     * in some, as a `KotlinLocalFunctionUVariable` wrapping a [ULambdaExpression] in others —
+     * so pruning is checked on `sourcePsi` (identical in both shapes) rather than on the UAST
+     * node type.
      */
     private fun hasCooperationPoint(expression: UExpression): Boolean {
         var found = false
-        
+
         expression.accept(object : AbstractUastVisitor() {
+            override fun visitElement(node: UElement): Boolean {
+                val psi = node.sourcePsi
+                if ((psi is KtNamedFunction && psi.name != null) || psi is KtPropertyAccessor) {
+                    return true // Skip pruned subtree (UAST: true stops descent)
+                }
+                return super.visitElement(node)
+            }
+
             override fun visitCallExpression(node: UCallExpression): Boolean {
                 val methodName = node.methodName
                 if (methodName in COOPERATION_POINTS) {
                     found = true
-                    return false // Stop traversal
+                    return true // Stop traversal (UAST: true stops descent)
                 }
                 return super.visitCallExpression(node)
             }
         })
-        
+
         return found
     }
 }
