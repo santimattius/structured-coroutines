@@ -149,7 +149,10 @@ class RedundantLaunchInCoroutineScopeDetector : Detector(), SourceCodeScanner {
                         ancestor = ancestor.uastParent
                     }
                 }
-                is UForExpression, is UWhileExpression -> return true
+                // Kotlin's `for (x in xs)` is represented in UAST as UForEachExpression, not
+                // UForExpression (the C-style for(init;cond;update) loop Kotlin doesn't have).
+                // UForExpression is kept only as a defensive no-op for other JVM languages.
+                is UForExpression, is UForEachExpression, is UWhileExpression -> return true
                 else -> {}
             }
             p = p.uastParent
