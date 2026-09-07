@@ -9,6 +9,7 @@
  */
 package io.github.santimattius.structured.lint.detectors
 
+import com.android.tools.lint.client.api.UElementHandler
 import com.android.tools.lint.detector.api.*
 import com.android.tools.lint.detector.api.Category
 import com.android.tools.lint.detector.api.Severity
@@ -165,26 +166,43 @@ class LifecycleAwareScopeDetector : Detector(), SourceCodeScanner {
         return true
     }
     
-    override fun visitClass(context: JavaContext, declaration: UClass) {
-        declaration.accept(object : AbstractUastVisitor() {
-            override fun visitVariable(node: UVariable): Boolean {
-                // Check for property initialization with CoroutineScope in LifecycleOwner
-                if (!AndroidLintUtils.isInLifecycleOwner(context, node)) {
-                    return super.visitVariable(node)
-                }
-                
-                val initializer = node.uastInitializer as? UCallExpression ?: return super.visitVariable(node)
-                
-                if (initializer.methodName == "CoroutineScope") {
-                    context.report(
-                        ISSUE,
-                        node.sourcePsi,
-                        context.getLocation(node as UElement),
-                        "Don't create custom CoroutineScope in LifecycleOwner. Use lifecycleScope instead"
-                    )
-                }
-                return super.visitVariable(node)
+    // NOTE (bugfix, dead-dispatch registration): this secondary check previously overrode
+    // `SourceCodeScanner.visitClass(context, declaration)` without pairing it with
+    // `applicableSuperClasses()` (the only registration mechanism `visitClass` responds to).
+    // With neither `applicableSuperClasses()` nor `getApplicableUastTypes()` registered for
+    // `UClass`, lint's `UElementVisitor` never dispatched it, so this secondary check never
+    // reported a single diagnostic. Fixed by additionally registering `getApplicableUastTypes()`
+    // + `createUastHandler()` for `UClass`, the same pairing already used by every other working
+    // detector in this module (e.g. LoopWithoutYieldDetector). This is purely additive: the
+    // primary check above keeps its own, already-working `getApplicableMethodNames()` /
+    // `visitMethodCall()` registration untouched — both mechanisms coexist on the same detector.
+    override fun getApplicableUastTypes(): List<Class<out UElement>> =
+        listOf(UClass::class.java)
+
+    override fun createUastHandler(context: JavaContext): UElementHandler =
+        object : UElementHandler() {
+            override fun visitClass(node: UClass) {
+                node.accept(object : AbstractUastVisitor() {
+                    override fun visitVariable(variable: UVariable): Boolean {
+                        // Check for property initialization with CoroutineScope in LifecycleOwner
+                        if (!AndroidLintUtils.isInLifecycleOwner(context, variable)) {
+                            return super.visitVariable(variable)
+                        }
+
+                        val initializer = variable.uastInitializer as? UCallExpression
+                            ?: return super.visitVariable(variable)
+
+                        if (initializer.methodName == "CoroutineScope") {
+                            context.report(
+                                ISSUE,
+                                variable.sourcePsi,
+                                context.getLocation(variable as UElement),
+                                "Don't create custom CoroutineScope in LifecycleOwner. Use lifecycleScope instead"
+                            )
+                        }
+                        return super.visitVariable(variable)
+                    }
+                })
             }
-        })
-    }
+        }
 }
