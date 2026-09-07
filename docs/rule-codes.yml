@@ -54,7 +54,7 @@ rules:
     detekt: [RunBlockingInSuspend]
     lint: [RunBlockingInSuspend]
     intellij: [RunBlockingInSuspend]
-    default_severity: warning
+    default_severity: error
 
   - code: DISPATCH_001
     section: "3.1"
