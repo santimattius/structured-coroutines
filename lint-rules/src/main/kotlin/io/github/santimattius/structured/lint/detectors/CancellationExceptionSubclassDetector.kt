@@ -9,6 +9,7 @@
  */
 package io.github.santimattius.structured.lint.detectors
 
+import com.android.tools.lint.client.api.UElementHandler
 import com.android.tools.lint.detector.api.*
 import com.android.tools.lint.detector.api.Category
 import com.android.tools.lint.detector.api.Severity
@@ -72,17 +73,28 @@ class CancellationExceptionSubclassDetector : Detector(), SourceCodeScanner {
         )
     }
     
-    override fun visitClass(
-        context: JavaContext,
-        declaration: UClass
-    ) {
-        if (CoroutineLintUtils.extendsCancellationException(context, declaration)) {
-            context.report(
-                ISSUE,
-                declaration,
-                context.getLocation(declaration as UElement),
-                "Don't extend CancellationException for domain errors. Use Exception or RuntimeException instead"
-            )
+    // NOTE (bugfix, dead-dispatch registration): this detector previously overrode
+    // `SourceCodeScanner.visitClass(context, declaration)` without pairing it with
+    // `applicableSuperClasses()` (the only registration mechanism `visitClass` responds to).
+    // With neither `applicableSuperClasses()` nor `getApplicableUastTypes()` registered, lint's
+    // `UElementVisitor` never added this detector to any dispatch map, so `visitClass` was never
+    // invoked and this detector never reported a single diagnostic, in production or in tests.
+    // Fixed by switching to the `getApplicableUastTypes()` + `createUastHandler()` pairing used
+    // by every other working detector in this module (e.g. LoopWithoutYieldDetector).
+    override fun getApplicableUastTypes(): List<Class<out UElement>> =
+        listOf(UClass::class.java)
+
+    override fun createUastHandler(context: JavaContext): UElementHandler =
+        object : UElementHandler() {
+            override fun visitClass(node: UClass) {
+                if (CoroutineLintUtils.extendsCancellationException(context, node)) {
+                    context.report(
+                        ISSUE,
+                        node,
+                        context.getLocation(node as UElement),
+                        "Don't extend CancellationException for domain errors. Use Exception or RuntimeException instead"
+                    )
+                }
+            }
         }
-    }
 }

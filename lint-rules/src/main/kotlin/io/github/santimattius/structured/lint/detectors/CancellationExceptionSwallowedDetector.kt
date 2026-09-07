@@ -9,6 +9,7 @@
  */
 package io.github.santimattius.structured.lint.detectors
 
+import com.android.tools.lint.client.api.UElementHandler
 import com.android.tools.lint.detector.api.*
 import com.android.tools.lint.detector.api.Category
 import com.android.tools.lint.detector.api.Severity
@@ -97,54 +98,68 @@ class CancellationExceptionSwallowedDetector : Detector(), SourceCodeScanner {
         )
     }
     
-    override fun visitClass(context: JavaContext, declaration: UClass) {
-        declaration.accept(object : AbstractUastVisitor() {
-            override fun visitTryExpression(node: UTryExpression): Boolean {
-                // Only check inside suspend functions
-                if (!CoroutineLintUtils.isInSuspendFunction(context, node)) {
-                    return super.visitTryExpression(node)
-                }
-                
-                val catchClauses = node.catchClauses
-                if (catchClauses.isEmpty()) return super.visitTryExpression(node)
-                
-                // Check if there's a catch(CancellationException) - if present, the code is safe
-                val hasCancellationExceptionCatch = catchClauses.any { clause ->
-                    val parameters = clause.parameters
-                    if (parameters.isEmpty()) return@any false
-                    val parameter = parameters.first()
-                    val typeName = parameter.type.canonicalText
-                    CANCELLATION_EXCEPTION_TYPES.any { typeName.contains(it) }
-                }
-                
-                if (hasCancellationExceptionCatch) return super.visitTryExpression(node)
-                
-                // Look for catch(Exception) or catch(Throwable)
-                for (catchClause in catchClauses) {
-                    val parameters = catchClause.parameters
-                    if (parameters.isEmpty()) continue
-                    val parameter = parameters.first()
-                    val typeName = parameter.type.canonicalText
-                    
-                    if (BROAD_EXCEPTION_TYPES.any { typeName.contains(it) }) {
-                        // Check if the catch block properly handles cancellation
-                        val catchBody = catchClause.body
-                        if (!handlesCancellationProperly(catchBody)) {
-                            context.report(
-                                ISSUE,
-                                node,
-                                context.getLocation(node as UElement),
-                                "catch(Exception) may swallow CancellationException. Add catch (e: CancellationException) { throw e } or call ensureActive() in the catch block"
-                            )
-                            return super.visitTryExpression(node)
+    // NOTE (bugfix, dead-dispatch registration): this detector previously overrode
+    // `SourceCodeScanner.visitClass(context, declaration)` without pairing it with
+    // `applicableSuperClasses()` (the only registration mechanism `visitClass` responds to).
+    // With neither `applicableSuperClasses()` nor `getApplicableUastTypes()` registered, lint's
+    // `UElementVisitor` never added this detector to any dispatch map, so `visitClass` was never
+    // invoked and this detector never reported a single diagnostic, in production or in tests.
+    // Fixed by switching to the `getApplicableUastTypes()` + `createUastHandler()` pairing used
+    // by every other working detector in this module (e.g. LoopWithoutYieldDetector).
+    override fun getApplicableUastTypes(): List<Class<out UElement>> =
+        listOf(UClass::class.java)
+
+    override fun createUastHandler(context: JavaContext): UElementHandler =
+        object : UElementHandler() {
+            override fun visitClass(node: UClass) {
+                node.accept(object : AbstractUastVisitor() {
+                    override fun visitTryExpression(tryNode: UTryExpression): Boolean {
+                        // Only check inside suspend functions
+                        if (!CoroutineLintUtils.isInSuspendFunction(context, tryNode)) {
+                            return super.visitTryExpression(tryNode)
                         }
+
+                        val catchClauses = tryNode.catchClauses
+                        if (catchClauses.isEmpty()) return super.visitTryExpression(tryNode)
+
+                        // Check if there's a catch(CancellationException) - if present, the code is safe
+                        val hasCancellationExceptionCatch = catchClauses.any { clause ->
+                            val parameters = clause.parameters
+                            if (parameters.isEmpty()) return@any false
+                            val parameter = parameters.first()
+                            val typeName = parameter.type.canonicalText
+                            CANCELLATION_EXCEPTION_TYPES.any { typeName.contains(it) }
+                        }
+
+                        if (hasCancellationExceptionCatch) return super.visitTryExpression(tryNode)
+
+                        // Look for catch(Exception) or catch(Throwable)
+                        for (catchClause in catchClauses) {
+                            val parameters = catchClause.parameters
+                            if (parameters.isEmpty()) continue
+                            val parameter = parameters.first()
+                            val typeName = parameter.type.canonicalText
+
+                            if (BROAD_EXCEPTION_TYPES.any { typeName.contains(it) }) {
+                                // Check if the catch block properly handles cancellation
+                                val catchBody = catchClause.body
+                                if (!handlesCancellationProperly(catchBody)) {
+                                    context.report(
+                                        ISSUE,
+                                        tryNode,
+                                        context.getLocation(tryNode as UElement),
+                                        "catch(Exception) may swallow CancellationException. Add catch (e: CancellationException) { throw e } or call ensureActive() in the catch block"
+                                    )
+                                    return super.visitTryExpression(tryNode)
+                                }
+                            }
+                        }
+
+                        return super.visitTryExpression(tryNode)
                     }
-                }
-                
-                return super.visitTryExpression(node)
+                })
             }
-        })
-    }
+        }
     
     /**
      * Checks if a catch block properly handles cancellation by:
