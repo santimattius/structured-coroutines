@@ -79,8 +79,8 @@ The plugin provides four main feature categories:
 | MainDispatcherMisuse | WARNING | Detects blocking code on `Dispatchers.Main` |
 | ScopeReuseAfterCancel | WARNING | Detects scope cancelled then reused |
 | RunBlockingInSuspend | ERROR | Detects `runBlocking` in suspend functions |
-| UnstructuredLaunch | WARNING | Detects launch without structured scope (recognizes `@StructuredScope` on parameters and properties) |
-| AsyncWithoutAwait | WARNING | Detects `async` without `await()` |
+| UnstructuredLaunch | ERROR | Detects launch without structured scope (recognizes `@StructuredScope` on parameters and properties) |
+| AsyncWithoutAwait | ERROR | Detects `async` without `await()` |
 | InlineCoroutineScope | ERROR | Detects `CoroutineScope(...).launch` |
 | JobInBuilderContext | ERROR | Detects `Job()`/`SupervisorJob()` in builders |
 | SuspendInFinally | WARNING | Detects suspend calls in finally without NonCancellable |
@@ -159,7 +159,7 @@ suspend fun fetchData() {
 }
 ```
 
-#### AsyncWithoutAwait (WARNING)
+#### AsyncWithoutAwait (ERROR)
 
 **Problem:** `async` creates a `Deferred` that should be awaited.
 

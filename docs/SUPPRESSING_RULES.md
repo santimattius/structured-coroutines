@@ -135,6 +135,45 @@ That way the code compiles, passes Detekt, and the IDE does not show the inspect
 
 ---
 
+## Severity-reconfigured rules need the twin suppress name
+
+**Breaking change in 1.2.0.** Every configurable rule now has **two** diagnostic factories, one per
+severity. The factory bound to the rule's **documented default** severity keeps its original name
+(e.g. `LOOP_WITHOUT_YIELD`, `DISPATCHERS_UNCONFINED_USAGE`) — unreconfigured builds are unaffected.
+The **opposite**-severity twin is suffixed `_WARNING` (for ERROR-default rules) or `_ERROR` (for
+WARNING-default rules) — e.g. `GLOBAL_SCOPE_USAGE_WARNING`, `LOOP_WITHOUT_YIELD_ERROR`.
+
+If you reconfigure a check away from its default severity — via `structuredCoroutines { }` (including
+through `severityEnforcement = "strict"`, once a tightened check starts enforcing) — **and** suppress
+it with `@Suppress("<ORIGINAL_NAME>")`, that suppression stops matching on the reconfigured path,
+because the diagnostic is now emitted by the differently-named factory.
+
+```kotlin
+// build.gradle.kts
+structuredCoroutines {
+    loopWithoutYield.set("error")   // default is "warning" — now emits LOOP_WITHOUT_YIELD_ERROR
+}
+```
+
+```kotlin
+// ❌ Stops matching once the check above is reconfigured to "error"
+@Suppress("LOOP_WITHOUT_YIELD")
+suspend fun legacyLoop() {
+    while (true) { /* ... */ }
+}
+
+// ✅ Matches the reconfigured (twin) diagnostic
+@Suppress("LOOP_WITHOUT_YIELD_ERROR")
+suspend fun legacyLoop() {
+    while (true) { /* ... */ }
+}
+```
+
+**Remedy:** either update the `@Suppress` string to the suffixed twin name, or leave the check at its
+documented default severity.
+
+---
+
 ## References
 
 - [Rule codes and practices](BEST_PRACTICES_COROUTINES.md#rule-codes-reference) — full list and
