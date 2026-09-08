@@ -34,9 +34,9 @@ This publishes artifacts to `~/.m2/repository/`:
 
 | Artifact                                                              | Purpose                                          |
 |-----------------------------------------------------------------------|--------------------------------------------------|
-| `io.github.santimattius:structured-coroutines-annotations:0.1.0`      | Annotations (`@StructuredScope`) - Multiplatform |
-| `io.github.santimattius:structured-coroutines-compiler:0.1.0`         | Kotlin Compiler Plugin                           |
-| `io.github.santimattius.structured-coroutines:...gradle.plugin:0.1.0` | Gradle Plugin                                    |
+| `io.github.santimattius:structured-coroutines-annotations:1.1.1`      | Annotations (`@StructuredScope`) - Multiplatform |
+| `io.github.santimattius:structured-coroutines-compiler:1.1.1`         | Kotlin Compiler Plugin                           |
+| `io.github.santimattius.structured-coroutines:...gradle.plugin:1.1.1` | Gradle Plugin                                    |
 
 ### 2. Configure Repositories
 
@@ -68,12 +68,12 @@ dependencyResolutionManagement {
 ```kotlin
 plugins {
     kotlin("jvm") version "2.3.0"  // Requires Kotlin 2.0+
-    id("io.github.santimattius.structured-coroutines") version "0.1.0"
+    id("io.github.santimattius.structured-coroutines") version "1.1.1"
 }
 
 dependencies {
     // Annotations for @StructuredScope
-    implementation("io.github.santimattius:structured-coroutines-annotations:0.1.0")
+    implementation("io.github.santimattius:structured-coroutines-annotations:1.1.1")
 
     // Coroutines dependency
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
@@ -118,11 +118,35 @@ structuredCoroutines {
 |--------------|----------------------------------------------------------------------|
 | `"error"`    | Reports as compilation error (blocks build)                        |
 | `"warning"`  | Reports as warning (allows build to succeed)                       |
-| `"disabled"` | Recorded and shown distinctly in `structuredCoroutinesReport`; decorative this release — the check still reports at its default severity, and a one-time build advisory names it. Real compile-time suppression is tracked in [issue #68](https://github.com/santimattius/structured-coroutines/issues/68). Only the exact string `"disabled"` is recognized (case-insensitive); `"off"` is not accepted. |
+| `"disabled"` | Recorded and shown distinctly in `structuredCoroutinesReport`; as of 1.2.0, `"disabled"` really suppresses the diagnostic at compile time — the check no longer reports at all ([issue #68](https://github.com/santimattius/structured-coroutines/issues/68)). Only the exact string `"disabled"` is recognized (case-insensitive); `"off"` is not accepted. |
 
 ```kotlin
 structuredCoroutines {
-    loopWithoutYield.set("disabled")   // still reports at default severity this release; see #68
+    loopWithoutYield.set("disabled")   // suppressed at compile time — no report, no build failure
+}
+```
+
+### Severity enforcement grace period
+
+Since 1.2.0, changing a check's severity really takes effect at compile time — but *tightening* a check gets a one-release grace period:
+
+- **Relaxing** a check (`error` → `warning`, or anything → `disabled`) applies **immediately**, since it can only make a previously-failing build pass.
+- **Tightening** a check (`warning` → `error`) is **deferred**: in 1.2.0 the check keeps reporting at its documented default severity, and the build logs a one-time advisory naming the rule, the configured value, the currently-effective severity, and the release (**1.3.0**) where enforcement starts.
+
+```kotlin
+structuredCoroutines {
+    dispatchersUnconfined.set("error")   // default is "warning" — deferred until 1.3.0; logs an advisory
+}
+```
+
+### Opting into strict enforcement now (`severityEnforcement`)
+
+Set `severityEnforcement = "strict"` in the `structuredCoroutines { }` block to opt into immediate enforcement of tightened checks now, ahead of 1.3.0:
+
+```kotlin
+structuredCoroutines {
+    severityEnforcement = "strict"
+    dispatchersUnconfined.set("error")   // enforced immediately instead of waiting for 1.3.0
 }
 ```
 
@@ -245,7 +269,7 @@ This plugin is the **recommended single entry point** for structured-coroutines:
 ```kotlin
 plugins {
     kotlin("jvm") version "2.3.0"
-    id("io.github.santimattius.structured-coroutines") version "0.1.0"
+    id("io.github.santimattius.structured-coroutines") version "1.1.1"
 }
 
 structuredCoroutines {
@@ -430,7 +454,7 @@ The plugin fully supports Kotlin Multiplatform projects.
 ```kotlin
 plugins {
     kotlin("multiplatform") version "2.3.0"
-    id("io.github.santimattius.structured-coroutines") version "0.1.0"
+    id("io.github.santimattius.structured-coroutines") version "1.1.1"
 }
 
 kotlin {
@@ -446,7 +470,7 @@ kotlin {
         commonMain {
             dependencies {
                 // Multiplatform annotations
-                implementation("io.github.santimattius:structured-coroutines-annotations:0.1.0")
+                implementation("io.github.santimattius:structured-coroutines-annotations:1.1.1")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
             }
         }
@@ -697,10 +721,10 @@ Remove or change the offending code (e.g. use `coroutineScope { launch { ... } }
 
 ```kotlin
 // For JVM projects
-implementation("io.github.santimattius:structured-coroutines-annotations:0.1.0")
+implementation("io.github.santimattius:structured-coroutines-annotations:1.1.1")
 
 // For KMP projects (in commonMain)
-implementation("io.github.santimattius:structured-coroutines-annotations:0.1.0")
+implementation("io.github.santimattius:structured-coroutines-annotations:1.1.1")
 ```
 
 ### Verify Maven Local
@@ -747,11 +771,11 @@ dependencyResolutionManagement {
 ```kotlin
 plugins {
     kotlin("jvm") version "2.3.0"
-    id("io.github.santimattius.structured-coroutines") version "0.1.0"
+    id("io.github.santimattius.structured-coroutines") version "1.1.1"
 }
 
 dependencies {
-    implementation("io.github.santimattius:structured-coroutines-annotations:0.1.0")
+    implementation("io.github.santimattius:structured-coroutines-annotations:1.1.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
 }
 
@@ -812,7 +836,7 @@ dependencyResolutionManagement {
 ```kotlin
 plugins {
     kotlin("multiplatform") version "2.3.0"
-    id("io.github.santimattius.structured-coroutines") version "0.1.0"
+    id("io.github.santimattius.structured-coroutines") version "1.1.1"
 }
 
 kotlin {
@@ -823,7 +847,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation("io.github.santimattius:structured-coroutines-annotations:0.1.0")
+                implementation("io.github.santimattius:structured-coroutines-annotations:1.1.1")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
             }
         }

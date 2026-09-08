@@ -183,7 +183,7 @@ detekt {
 }
 ```
 
-The Detekt HTML report lists findings from all 19 Detekt rules in the toolkit — including `WithTimeoutScopeCancellation`, `ChannelNotClosed`, `FlowBlockingCall`, and others — with the rule code, description, and a link to the documentation.
+The Detekt HTML report lists findings from all 40 Detekt rules in the toolkit — including `WithTimeoutScopeCancellation`, `ChannelNotClosed`, `FlowBlockingCall`, and others — with the rule code, description, and a link to the documentation.
 
 ---
 
@@ -208,8 +208,8 @@ Detekt can export findings in SARIF format, which GitHub displays directly in th
 |-------------|--------------|
 | `compileKotlin` | Compiles with the active compiler plugin; errors/warnings appear in the log |
 | `structuredCoroutinesReport` | Generates HTML + plain-text report of the active configuration |
-| `detekt` | Runs all 19 Detekt rules with HTML / XML / SARIF output |
-| `lint` | Runs all 21 Android Lint rules with HTML / XML output |
+| `detekt` | Runs all 40 Detekt rules with HTML / XML / SARIF output |
+| `lint` | Runs all 35 Android Lint detectors with HTML / XML output |
 | `testAll` | Runs tests for all modules (excludes `:sample`, which fails by design) |
 
 ---
