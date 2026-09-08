@@ -17,7 +17,7 @@ plugins {
 }
 
 group = "io.github.santimattius"
-version = "1.1.0"
+version = "1.2.0-ALPHA01"
 
 repositories {
     mavenCentral()
@@ -73,6 +73,11 @@ intellijPlatform {
             </ul>
         """.trimIndent()
         changeNotes = """
+            <p><b>v1.2.0</b></p>
+            <ul>
+                <li><b>BREAKING — AsyncWithoutAwaitInspection (SCOPE_002) and UnstructuredLaunchInspection (SCOPE_003) now default to ERROR</b> (previously WARNING), matching the compiler, Detekt, and Lint defaults. Findings that previously showed as warnings now show as errors; adjust your inspection profile if you rely on the previous severity.</li>
+                <li><b>SideEffectInMapOperatorInspection (FLOW_008) now defaults to INFO</b> (previously WARNING), matching Detekt's Minor severity for the same check. Previously-warning-level findings now show at the lower INFO severity.</li>
+            </ul>
             <p><b>v1.1.0</b></p>
             <ul>
                 <li><b>CANCEL_003 false-positive fix</b> — <code>CancellationExceptionSwallowed</code> (Detekt + IntelliJ) no longer fires when a <code>catch(t: Throwable)</code> or <code>catch(e: Exception)</code> block rethrows the caught parameter unconditionally (<code>throw t</code> / <code>throw e</code>). <code>CancellationException</code> always propagates in this pattern.</li>
