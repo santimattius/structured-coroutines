@@ -170,16 +170,17 @@ class DispatchersUnconfinedChecker(
     /**
      * Checks whether [expression] resolves to the `kotlinx.coroutines.Dispatchers` object.
      *
-     * Mirrors the verified precedent in `SuspendInFinallyChecker.isNonCancellable`: a resolved
-     * object reference (e.g. the `Dispatchers` in `Dispatchers.Unconfined`) surfaces as a
-     * [FirResolvedQualifier], not a [FirPropertyAccessExpression] as the previous implementation
-     * assumed — which made the check always return false. The [ConeClassLikeType.lookupTag]
-     * fallback additionally covers a [FirPropertyAccessExpression] receiver whose resolved type
-     * is `Dispatchers` (e.g. referenced through a property alias).
+     * A resolved object reference (e.g. the `Dispatchers` in `Dispatchers.Unconfined`) surfaces
+     * as a [FirResolvedQualifier], not a [FirPropertyAccessExpression] as a previous
+     * implementation assumed — which made the check always return false. It is resolved via the
+     * shared [resolvedClassId] helper, not a direct `.classId` call — removed as a member in
+     * Kotlin 2.4.20 (KT-84522). The [ConeClassLikeType.lookupTag] fallback additionally covers a
+     * [FirPropertyAccessExpression] receiver whose resolved type is `Dispatchers` (e.g.
+     * referenced through a property alias).
      */
     private fun isDispatchersReceiver(expression: FirExpression): Boolean {
         if (expression is FirResolvedQualifier) {
-            return expression.classId == DISPATCHERS_CLASS_ID
+            return expression.resolvedClassId() == DISPATCHERS_CLASS_ID
         }
 
         val classId = (expression.resolvedType as? ConeClassLikeType)?.lookupTag?.classId

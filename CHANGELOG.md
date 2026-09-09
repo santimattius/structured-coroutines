@@ -6,6 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ---
 
+## [Unreleased]
+
+### Fixed
+
+- **`NoSuchMethodError` on `FirResolvedQualifier.getClassId()` under Kotlin 2.4.20`** — `FirResolvedQualifier.classId` was removed as a member in Kotlin 2.4.20 (KT-84522), which broke `SuspendInFinallyChecker` (CANCEL_004), `UnstructuredLaunchChecker` (GlobalScope detection), and `DispatchersUnconfinedChecker` (DISPATCH_003) at runtime against a 2.4.20 `kotlin-compiler-embeddable`. All three checkers now resolve the `ClassId` through a shared `FirResolvedQualifier.resolvedClassId()` helper built from the stable `packageFqName`/`relativeClassFqName` members instead of the removed `.classId` member, and a structural guard test now forbids any direct `.classId` call on a `FirResolvedQualifier` under `compiler/src/main` to prevent the pattern — including the KDoc mutual-precedent citation chain between these three checkers that spread it (#71) — from reappearing. Behavior is unchanged on the pinned Kotlin 2.4.0. (#90)
+
+---
+
 ## [1.2.0] — 2026-09-08
 
 ### Fixed

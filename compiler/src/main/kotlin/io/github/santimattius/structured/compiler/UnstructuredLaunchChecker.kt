@@ -302,9 +302,11 @@ class UnstructuredLaunchChecker(
         receiver: FirExpression,
         context: CheckerContext
     ): Boolean {
-        // Check if it's a direct reference to GlobalScope object
+        // Check if it's a direct reference to GlobalScope object. Resolved via the shared
+        // resolvedClassId() helper, not a direct .classId call — removed as a member in
+        // Kotlin 2.4.20 (KT-84522).
         if (receiver is FirResolvedQualifier) {
-            return receiver.classId == GLOBAL_SCOPE_CLASS_ID
+            return receiver.resolvedClassId() == GLOBAL_SCOPE_CLASS_ID
         }
 
         // Check the resolved type via ConeClassLikeType.lookupTag to avoid the unstable
