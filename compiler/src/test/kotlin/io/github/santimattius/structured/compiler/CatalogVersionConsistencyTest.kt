@@ -18,11 +18,24 @@ class CatalogVersionConsistencyTest {
         File(rootDir, "gradle/libs.versions.toml")
     }
 
+    private val sampleSeverityPropertiesFile: File by lazy {
+        val rootDir = System.getProperty("structuredCoroutines.rootDir")
+            ?: error("structuredCoroutines.rootDir system property not set — run via Gradle (:compiler:test)")
+        File(rootDir, "sample-severity/gradle.properties")
+    }
+
     private fun parseCatalogVersion(key: String): String {
         val pattern = Regex("""^\s*$key\s*=\s*"([^"]+)"""", RegexOption.MULTILINE)
         val content = catalogFile.readText()
         return pattern.find(content)?.groupValues?.get(1)
             ?: error("Key '$key' not found in ${catalogFile.absolutePath}")
+    }
+
+    private fun parseSampleSeverityProperty(key: String): String {
+        val pattern = Regex("""^\s*$key\s*=\s*(\S+)\s*$""", RegexOption.MULTILINE)
+        val content = sampleSeverityPropertiesFile.readText()
+        return pattern.find(content)?.groupValues?.get(1)
+            ?: error("Key '$key' not found in ${sampleSeverityPropertiesFile.absolutePath}")
     }
 
     @Test
@@ -50,6 +63,21 @@ class CatalogVersionConsistencyTest {
             propertyCoroutines,
             "Catalog kotlinx-coroutines=$catalogCoroutines but test system property coroutinesVersion=$propertyCoroutines; " +
                 "functional-test template will drift from the catalog and can reintroduce the KT-83341 ABI crash."
+        )
+    }
+
+    @Test
+    fun `sample-severity kotlinVersion matches root catalog kotlin version`() {
+        val catalogKotlin = parseCatalogVersion("kotlin")
+        val sampleSeverityKotlin = parseSampleSeverityProperty("kotlinVersion")
+
+        assertEquals(
+            catalogKotlin,
+            sampleSeverityKotlin,
+            "Root catalog kotlin=$catalogKotlin but sample-severity/gradle.properties " +
+                "kotlinVersion=$sampleSeverityKotlin; sample-severity is a standalone build and does " +
+                "not read the root catalog, so it can silently diverge from the production Kotlin " +
+                "version unless kept in sync manually."
         )
     }
 }
