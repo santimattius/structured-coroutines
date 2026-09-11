@@ -10,13 +10,11 @@ package io.github.santimattius.structured.detekt.rules
 import io.github.santimattius.structured.detekt.utils.CoroutineDetektUtils
 import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
-import io.gitlab.arturbosch.detekt.api.CodeSmell
-import io.gitlab.arturbosch.detekt.api.Config
-import io.gitlab.arturbosch.detekt.api.Debt
-import io.gitlab.arturbosch.detekt.api.Entity
-import io.gitlab.arturbosch.detekt.api.Issue
-import io.gitlab.arturbosch.detekt.api.Rule
-import io.gitlab.arturbosch.detekt.api.Severity
+import dev.detekt.api.Config
+import dev.detekt.api.Entity
+import dev.detekt.api.Finding
+import dev.detekt.api.Rule
+import dev.detekt.api.RuleName
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtPsiUtil
@@ -28,16 +26,14 @@ import org.jetbrains.kotlin.psi.KtProperty
  * Mirrors the iteration plan heuristic: expose `StateFlow` / `SharedFlow` via `.asStateFlow()`
  * / `.asSharedFlow()` on backing properties.
  */
-class MutableFlowExposedRule(config: Config = Config.empty) : Rule(config) {
-
-    override val issue = Issue(
-        id = "MutableFlowExposed",
-        severity = Severity.CodeSmell,
-        description = "[FLOW_010] Exposing MutableStateFlow/MutableSharedFlow is usually an API leak. " +
+class MutableFlowExposedRule(config: Config = Config.empty) : Rule(
+    config,
+    description = "[FLOW_010] Exposing MutableStateFlow/MutableSharedFlow is usually an API leak. " +
             "Prefer `private val _x = MutableStateFlow(...)` and `val x = _x.asStateFlow()`. " +
             "See: ${DetektDocUrl.buildDocLink("95-flow_010--mutablestateflow-exposed")}",
-        debt = Debt.TEN_MINS
-    )
+) {
+
+    override val ruleName: RuleName get() = RuleName("MutableFlowExposed")
 
     override fun visitProperty(property: KtProperty) {
         super.visitProperty(property)
@@ -75,8 +71,7 @@ class MutableFlowExposedRule(config: Config = Config.empty) : Rule(config) {
         if (!(typeShowsMutableFlow || ctorMutableFlow)) return
 
         report(
-            CodeSmell(
-                issue = issue,
+            Finding(
                 entity = Entity.from(property),
                 message = "[FLOW_010] Public mutable Flow surface — hide mutability with `.asStateFlow()` / `.asSharedFlow()`. " +
                     "See: ${DetektDocUrl.buildDocLink("95-flow_010--mutablestateflow-exposed")}"

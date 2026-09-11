@@ -12,13 +12,11 @@ package io.github.santimattius.structured.detekt.rules
 import io.github.santimattius.structured.detekt.utils.CoroutineDetektUtils
 import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
-import io.gitlab.arturbosch.detekt.api.CodeSmell
-import io.gitlab.arturbosch.detekt.api.Config
-import io.gitlab.arturbosch.detekt.api.Debt
-import io.gitlab.arturbosch.detekt.api.Entity
-import io.gitlab.arturbosch.detekt.api.Issue
-import io.gitlab.arturbosch.detekt.api.Rule
-import io.gitlab.arturbosch.detekt.api.Severity
+import dev.detekt.api.Config
+import dev.detekt.api.Entity
+import dev.detekt.api.Finding
+import dev.detekt.api.Rule
+import dev.detekt.api.RuleName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtForExpression
@@ -90,18 +88,16 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
  * - suspendCancellableCoroutine
  * - withTimeout / withTimeoutOrNull
  */
-class LoopWithoutYieldRule(config: Config = Config.empty) : Rule(config) {
-
-    override val issue = Issue(
-        id = "LoopWithoutYield",
-        severity = Severity.Warning,
-        description = "[CANCEL_001] Loop in suspend function without cooperation point. " +
+class LoopWithoutYieldRule(config: Config = Config.empty) : Rule(
+    config,
+    description = "[CANCEL_001] Loop in suspend function without cooperation point. " +
             "The coroutine cannot be cancelled until the loop completes. " +
             "Inside a scope builder (launch/async/coroutineScope/supervisorScope/withContext) use ensureActive(); " +
             "otherwise use currentCoroutineContext().ensureActive(), yield(), or delay(). " +
             "See: ${DetektDocUrl.buildDocLink("41-cancel_001--ignoring-cancellation-in-intensive-loops")}",
-        debt = Debt.TEN_MINS
-    )
+) {
+
+    override val ruleName: RuleName get() = RuleName("LoopWithoutYield")
 
     override fun visitForExpression(expression: KtForExpression) {
         super.visitForExpression(expression)
@@ -137,8 +133,7 @@ class LoopWithoutYieldRule(config: Config = Config.empty) : Rule(config) {
                 "Add currentCoroutineContext().ensureActive(), yield(), or delay(0) inside the loop to enable cancellation."
             }
             report(
-                CodeSmell(
-                    issue = issue,
+                Finding(
                     entity = Entity.from(loop),
                     message = "[CANCEL_001] '$loopType' loop in suspend function '${containingFunction.name}' " +
                         "without cooperation point. The coroutine cannot be cancelled during iteration. " +

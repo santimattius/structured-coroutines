@@ -12,13 +12,11 @@ package io.github.santimattius.structured.detekt.rules
 import io.github.santimattius.structured.detekt.utils.CoroutineDetektUtils
 import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
-import io.gitlab.arturbosch.detekt.api.CodeSmell
-import io.gitlab.arturbosch.detekt.api.Config
-import io.gitlab.arturbosch.detekt.api.Debt
-import io.gitlab.arturbosch.detekt.api.Entity
-import io.gitlab.arturbosch.detekt.api.Issue
-import io.gitlab.arturbosch.detekt.api.Rule
-import io.gitlab.arturbosch.detekt.api.Severity
+import dev.detekt.api.Config
+import dev.detekt.api.Entity
+import dev.detekt.api.Finding
+import dev.detekt.api.Rule
+import dev.detekt.api.RuleName
 import org.jetbrains.kotlin.psi.KtCatchClause
 import org.jetbrains.kotlin.psi.KtTryExpression
 
@@ -70,17 +68,15 @@ import org.jetbrains.kotlin.psi.KtTryExpression
  *     severity: warning
  * ```
  */
-class CancellationExceptionSwallowedRule(config: Config = Config.empty) : Rule(config) {
-
-    override val issue = Issue(
-        id = "CancellationExceptionSwallowed",
-        severity = Severity.CodeSmell,
-        description = "[CANCEL_003] Catching Exception or Throwable without rethrowing CancellationException " +
+class CancellationExceptionSwallowedRule(config: Config = Config.empty) : Rule(
+    config,
+    description = "[CANCEL_003] Catching Exception or Throwable without rethrowing CancellationException " +
             "breaks coroutine cancellation. Add a catch (e: CancellationException) { throw e } clause first, " +
             "or use ensureActive() in the catch block. " +
             "See: ${DetektDocUrl.buildDocLink("43-cancel_003--swallowing-cancellationexception")}",
-        debt = Debt.TEN_MINS
-    )
+) {
+
+    override val ruleName: RuleName get() = RuleName("CancellationExceptionSwallowed")
 
     override fun visitTryExpression(expression: KtTryExpression) {
         super.visitTryExpression(expression)
@@ -92,8 +88,7 @@ class CancellationExceptionSwallowedRule(config: Config = Config.empty) : Rule(c
             if (!CoroutineDetektUtils.isInsideCoroutine(catchClause)) continue
             val entity = catchClause.catchParameter ?: catchClause
             report(
-                CodeSmell(
-                    issue = issue,
+                Finding(
                     entity = Entity.from(entity),
                     message = "[CANCEL_003] catch(Exception) may swallow CancellationException. " +
                         "Add catch (e: CancellationException) { throw e } before the generic catch, " +

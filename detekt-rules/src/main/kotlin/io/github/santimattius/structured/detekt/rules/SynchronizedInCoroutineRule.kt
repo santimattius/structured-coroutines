@@ -9,13 +9,11 @@ package io.github.santimattius.structured.detekt.rules
 import io.github.santimattius.structured.detekt.utils.CoroutineDetektUtils
 import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
-import io.gitlab.arturbosch.detekt.api.CodeSmell
-import io.gitlab.arturbosch.detekt.api.Config
-import io.gitlab.arturbosch.detekt.api.Debt
-import io.gitlab.arturbosch.detekt.api.Entity
-import io.gitlab.arturbosch.detekt.api.Issue
-import io.gitlab.arturbosch.detekt.api.Rule
-import io.gitlab.arturbosch.detekt.api.Severity
+import dev.detekt.api.Config
+import dev.detekt.api.Entity
+import dev.detekt.api.Finding
+import dev.detekt.api.Rule
+import dev.detekt.api.RuleName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtLambdaArgument
@@ -25,16 +23,14 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 /**
  * [CONCUR_001] — `synchronized` blocks the dispatcher thread inside coroutines; prefer `Mutex.withLock`.
  */
-class SynchronizedInCoroutineRule(config: Config = Config.empty) : Rule(config) {
-
-    override val issue = Issue(
-        id = "SynchronizedInCoroutine",
-        severity = Severity.Warning,
-        description = "[CONCUR_001] synchronized() inside a coroutine blocks the dispatcher thread. " +
+class SynchronizedInCoroutineRule(config: Config = Config.empty) : Rule(
+    config,
+    description = "[CONCUR_001] synchronized() inside a coroutine blocks the dispatcher thread. " +
             "Use Mutex.withLock { } instead. " +
             "See: ${DetektDocUrl.buildDocLink("121-concur_001--synchronizedincoroutine")}",
-        debt = Debt.TEN_MINS,
-    )
+) {
+
+    override val ruleName: RuleName get() = RuleName("SynchronizedInCoroutine")
 
     override fun visitCallExpression(expression: KtCallExpression) {
         super.visitCallExpression(expression)
@@ -45,8 +41,7 @@ class SynchronizedInCoroutineRule(config: Config = Config.empty) : Rule(config) 
         if (isInsideMutexWithLock(expression)) return
 
         report(
-            CodeSmell(
-                issue = issue,
+            Finding(
                 entity = Entity.from(expression),
                 message = "[CONCUR_001] synchronized() inside a coroutine blocks the dispatcher thread and can " +
                     "deadlock on single-thread dispatchers. Use Mutex.withLock { } instead. " +

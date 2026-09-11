@@ -9,8 +9,8 @@
  */
 package io.github.santimattius.structured.detekt.rules
 
-import io.gitlab.arturbosch.detekt.api.Config
-import io.gitlab.arturbosch.detekt.test.compileAndLint
+import dev.detekt.api.Config
+import dev.detekt.test.lint
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -29,7 +29,7 @@ class JobInBuilderContextRuleTest {
                 }
             }
         """.trimIndent()
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).hasSize(1)
         assertThat(findings[0].message).contains("DISPATCH_004")
         assertThat(findings[0].message).contains("Job")
@@ -46,7 +46,7 @@ class JobInBuilderContextRuleTest {
                 }
             }
         """.trimIndent()
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).hasSize(1)
         assertThat(findings[0].message).contains("SupervisorJob")
     }
@@ -62,7 +62,7 @@ class JobInBuilderContextRuleTest {
                 }
             }
         """.trimIndent()
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).hasSize(1)
     }
 
@@ -77,7 +77,7 @@ class JobInBuilderContextRuleTest {
                 }
             }
         """.trimIndent()
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).isEmpty()
     }
 
@@ -92,7 +92,7 @@ class JobInBuilderContextRuleTest {
                 }
             }
         """.trimIndent()
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).isEmpty()
     }
 }
