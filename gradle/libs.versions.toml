@@ -8,7 +8,7 @@ kotlin = "2.4.0"
 # existing bare "kotlin" version accessor into a group (breaking every
 # `libs.versions.kotlin.get()` call site).
 forward-compat-kotlin = "2.4.20"
-detekt = "1.23.7"
+detekt = "2.0.0-alpha.6"
 maven-publish-plugin = "0.36.0"
 lint = "31.4.0"
 junit-jupiter = "5.10.2"
@@ -31,8 +31,8 @@ kotlin-gradle-plugin-api = { group = "org.jetbrains.kotlin", name = "kotlin-grad
 forward-compat-kotlin-compiler-embeddable = { group = "org.jetbrains.kotlin", name = "kotlin-compiler-embeddable", version.ref = "forward-compat-kotlin" }
 
 # Detekt
-detekt-api = { group = "io.gitlab.arturbosch.detekt", name = "detekt-api", version.ref = "detekt" }
-detekt-test = { group = "io.gitlab.arturbosch.detekt", name = "detekt-test", version.ref = "detekt" }
+detekt-api = { group = "dev.detekt", name = "detekt-api", version.ref = "detekt" }
+detekt-test = { group = "dev.detekt", name = "detekt-test", version.ref = "detekt" }
 
 # Android Lint
 lint-api = { group = "com.android.tools.lint", name = "lint-api", version.ref = "lint" }
@@ -53,7 +53,7 @@ lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-ru
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
-detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+detekt = { id = "dev.detekt", version.ref = "detekt" }
 maven-publish = { id = "maven-publish" }
 maven-publish-vanniktech = { id = "com.vanniktech.maven.publish", version.ref = "maven-publish-plugin" }
 java-library = { id = "java-library" }

@@ -6,8 +6,8 @@
 
 package io.github.santimattius.structured.detekt.rules
 
-import io.gitlab.arturbosch.detekt.api.Config
-import io.gitlab.arturbosch.detekt.test.compileAndLint
+import dev.detekt.api.Config
+import dev.detekt.test.compileAndLint
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 

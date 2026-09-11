@@ -49,9 +49,9 @@ import io.github.santimattius.structured.detekt.rules.SuspendCoroutineWithoutCan
 import io.github.santimattius.structured.detekt.rules.SuspendInFinallyRule
 import io.github.santimattius.structured.detekt.rules.UnusedDeferredRule
 import io.github.santimattius.structured.detekt.rules.WithTimeoutScopeCancellationRule
-import io.gitlab.arturbosch.detekt.api.Config
-import io.gitlab.arturbosch.detekt.api.RuleSet
-import io.gitlab.arturbosch.detekt.api.RuleSetProvider
+import dev.detekt.api.Config
+import dev.detekt.api.RuleSet
+import dev.detekt.api.RuleSetProvider
 
 /**
  * Detekt RuleSetProvider for Structured Coroutines rules.
