@@ -11,13 +11,11 @@ package io.github.santimattius.structured.detekt.rules
 
 import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
-import io.gitlab.arturbosch.detekt.api.CodeSmell
-import io.gitlab.arturbosch.detekt.api.Config
-import io.gitlab.arturbosch.detekt.api.Debt
-import io.gitlab.arturbosch.detekt.api.Entity
-import io.gitlab.arturbosch.detekt.api.Issue
-import io.gitlab.arturbosch.detekt.api.Rule
-import io.gitlab.arturbosch.detekt.api.Severity
+import dev.detekt.api.Config
+import dev.detekt.api.Entity
+import dev.detekt.api.Finding
+import dev.detekt.api.Rule
+import dev.detekt.api.RuleName
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
@@ -54,16 +52,14 @@ import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
  * is not detected; different variables that refer to the same channel at runtime are not
  * reported.
  */
-class ConsumeEachMultipleConsumersRule(config: Config = Config.empty) : Rule(config) {
-
-    override val issue = Issue(
-        id = "ConsumeEachMultipleConsumers",
-        severity = Severity.Warning,
-        description = "[CHANNEL_002] Same channel used with consumeEach from multiple coroutines. " +
+class ConsumeEachMultipleConsumersRule(config: Config = Config.empty) : Rule(
+    config,
+    description = "[CHANNEL_002] Same channel used with consumeEach from multiple coroutines. " +
             "Use for (value in channel) per consumer. " +
             "See: ${DetektDocUrl.buildDocLink("72-sharing-consumeeach-among-multiple-consumers")}",
-        debt = Debt.TEN_MINS
-    )
+) {
+
+    override val ruleName: RuleName get() = RuleName("ConsumeEachMultipleConsumers")
 
     private val builderNames = setOf("launch", "async")
 
@@ -114,8 +110,7 @@ class ConsumeEachMultipleConsumersRule(config: Config = Config.empty) : Rule(con
                     val name = getReceiverName(dq) ?: return@forEach
                     if (name in duplicatedNames) {
                         report(
-                            CodeSmell(
-                                issue = issue,
+                            Finding(
                                 entity = Entity.from(dq),
                                 message = "[CHANNEL_002] Channel '$name' is used with consumeEach from multiple coroutines. " +
                                     "Use for (value in $name) in each consumer. " +

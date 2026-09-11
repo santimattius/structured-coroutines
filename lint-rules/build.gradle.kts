@@ -16,16 +16,41 @@ dependencies {
     testImplementation(libs.assertj.core)
 }
 
-// Lint 31.4.0 embeds Kotlin 2.0; align test runtime to avoid "metadata version X.Y.Z, expected 2.0.0".
-// The catalog bumped kotlin to 2.4.0 (KT-83341 fix) but Lint 31.4.0 still expects 2.0 metadata on
-// testRuntimeClasspath. Keeping the pin at 2.0.21; revisit when upgrading lint past 31.4.0.
-configurations.testRuntimeClasspath.get().resolutionStrategy.force("org.jetbrains.kotlin:kotlin-stdlib:2.0.21")
+// Lint 31.4.0's bundled kotlin-compiler frontend rejected class metadata newer than binary
+// version 2.0.0, so testRuntimeClasspath's kotlin-stdlib had to be forced down to 2.0.21 to avoid
+// "metadata version X.Y.Z, expected 2.0.0". Bumping to lint-api 31.6.1 lifts that ceiling — its
+// bundled kotlin-compiler frontend accepts the catalog's kotlin=2.4.0 stdlib metadata directly, so
+// Gradle's default highest-version conflict resolution can pick it with no force needed, verified
+// by TestRuntimeClasspathStdlibVersionTest below.
+//
+// NOT bumped further to the true current stable (32.4.0, verified available on Google's Maven as
+// of this change) or even lint-api 31.7.0+: starting at 31.7.0, lint-tests' built-in
+// "Default vs Names replaced with Fully Qualified Names" TestMode consistency check starts failing
+// for several existing detectors here (UnstructuredLaunchDetector, SideEffectInComposableDetector,
+// SuspendInFinallyDetector, and others) — a genuine detector-behavior gap unrelated to the stdlib
+// force, confirmed unchanged through lint-api 32.4.0. Fixing that is out of this slice's scope
+// (Slice B must not change rule behavior); 31.6.1 is the newest verified-green version.
 
 kotlin {
     jvmToolchain(17)
 }
 
 // Tests use @org.junit.Test (JUnit 4); lint-tests expects JUnit 4. Do not use useJUnitPlatform().
+
+tasks.test {
+    // Guard for TestRuntimeClasspathStdlibVersionTest: expose the catalog's kotlin version and the
+    // kotlin-stdlib version actually resolved on testRuntimeClasspath, so the test can assert they
+    // match instead of silently drifting behind a resolutionStrategy override.
+    systemProperty("catalogKotlinVersion", libs.versions.kotlin.get())
+    doFirst {
+        val resolvedKotlinStdlibVersion = configurations.testRuntimeClasspath.get()
+            .resolvedConfiguration.resolvedArtifacts
+            .firstOrNull { it.moduleVersion.id.group == "org.jetbrains.kotlin" && it.moduleVersion.id.name == "kotlin-stdlib" }
+            ?.moduleVersion?.id?.version
+            ?: error("kotlin-stdlib not found on :lint-rules:testRuntimeClasspath")
+        systemProperty("resolvedKotlinStdlibVersion", resolvedKotlinStdlibVersion)
+    }
+}
 
 // Create JAR with Lint rules
 val lintJar = tasks.register<Jar>("lintJar") {

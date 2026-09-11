@@ -91,4 +91,4 @@ jobs:
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
 
       - name: Compile IntelliJ plugin
-        run: ./gradlew :intellij-plugin:compileKotlin :intellij-plugin:instrumentCode --no-daemon
+        run: ./gradlew -p intellij-plugin compileKotlin instrumentCode --no-daemon

@@ -9,8 +9,8 @@
  */
 package io.github.santimattius.structured.detekt.rules
 
-import io.gitlab.arturbosch.detekt.api.Config
-import io.gitlab.arturbosch.detekt.test.compileAndLint
+import dev.detekt.api.Config
+import dev.detekt.test.lint
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -27,7 +27,7 @@ class RedundantLaunchInCoroutineScopeRuleTest {
                 launch { println("x") }
             }
         """.trimIndent()
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).hasSize(1)
         assertThat(findings[0].message).contains("RUNBLOCK_001")
         assertThat(findings[0].message).contains("Redundant")
@@ -42,7 +42,7 @@ class RedundantLaunchInCoroutineScopeRuleTest {
                 launch { println("x") }
             }
         """.trimIndent()
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).hasSize(1)
     }
 
@@ -56,7 +56,7 @@ class RedundantLaunchInCoroutineScopeRuleTest {
                 launch { println("b") }
             }
         """.trimIndent()
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).isEmpty()
     }
 
@@ -70,7 +70,7 @@ class RedundantLaunchInCoroutineScopeRuleTest {
                 async { 1 }
             }
         """.trimIndent()
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).isEmpty()
     }
 
@@ -83,7 +83,7 @@ class RedundantLaunchInCoroutineScopeRuleTest {
                 delay(1)
             }
         """.trimIndent()
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).isEmpty()
     }
 
@@ -102,7 +102,7 @@ class RedundantLaunchInCoroutineScopeRuleTest {
             
             suspend fun doSomething(x: Int) {}
         """.trimIndent()
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).isEmpty()
     }
 
@@ -121,7 +121,7 @@ class RedundantLaunchInCoroutineScopeRuleTest {
             
             suspend fun doSomething(x: Int) {}
         """.trimIndent()
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).isEmpty()
     }
 }

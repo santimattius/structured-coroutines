@@ -12,13 +12,11 @@ package io.github.santimattius.structured.detekt.rules
 import io.github.santimattius.structured.detekt.utils.CoroutineDetektUtils
 import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
-import io.gitlab.arturbosch.detekt.api.CodeSmell
-import io.gitlab.arturbosch.detekt.api.Config
-import io.gitlab.arturbosch.detekt.api.Debt
-import io.gitlab.arturbosch.detekt.api.Entity
-import io.gitlab.arturbosch.detekt.api.Issue
-import io.gitlab.arturbosch.detekt.api.Rule
-import io.gitlab.arturbosch.detekt.api.Severity
+import dev.detekt.api.Config
+import dev.detekt.api.Entity
+import dev.detekt.api.Finding
+import dev.detekt.api.Rule
+import dev.detekt.api.RuleName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
@@ -72,16 +70,14 @@ import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
  * - *Spec.kt
  * - Files in /test/ or /androidTest/ directories
  */
-class RunBlockingWithDelayInTestRule(config: Config = Config.empty) : Rule(config) {
-
-    override val issue = Issue(
-        id = "RunBlockingWithDelayInTest",
-        severity = Severity.Warning,
-        description = "[TEST_001] Using runBlocking with delay() in tests makes tests slow. " +
+class RunBlockingWithDelayInTestRule(config: Config = Config.empty) : Rule(
+    config,
+    description = "[TEST_001] Using runBlocking with delay() in tests makes tests slow. " +
             "Use runTest { } from kotlinx-coroutines-test for virtual time support. " +
             "See: ${DetektDocUrl.buildDocLink("61-test_001--slow-tests-with-real-delays")}",
-        debt = Debt.FIVE_MINS
-    )
+) {
+
+    override val ruleName: RuleName get() = RuleName("RunBlockingWithDelayInTest")
 
     override fun visitCallExpression(expression: KtCallExpression) {
         super.visitCallExpression(expression)
@@ -102,8 +98,7 @@ class RunBlockingWithDelayInTestRule(config: Config = Config.empty) : Rule(confi
         val lambdaArg = expression.lambdaArguments.firstOrNull() ?: return
         if (containsDelayCall(lambdaArg)) {
             report(
-                CodeSmell(
-                    issue = issue,
+                Finding(
                     entity = Entity.from(expression),
                     message = "[TEST_001] runBlocking with delay() in test file. " +
                         "Use runTest { } from kotlinx-coroutines-test for instant virtual time. " +

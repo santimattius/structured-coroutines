@@ -11,13 +11,11 @@ package io.github.santimattius.structured.detekt.rules
 
 import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
-import io.gitlab.arturbosch.detekt.api.CodeSmell
-import io.gitlab.arturbosch.detekt.api.Config
-import io.gitlab.arturbosch.detekt.api.Debt
-import io.gitlab.arturbosch.detekt.api.Entity
-import io.gitlab.arturbosch.detekt.api.Issue
-import io.gitlab.arturbosch.detekt.api.Rule
-import io.gitlab.arturbosch.detekt.api.Severity
+import dev.detekt.api.Config
+import dev.detekt.api.Entity
+import dev.detekt.api.Finding
+import dev.detekt.api.Rule
+import dev.detekt.api.RuleName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtValueArgument
 
@@ -37,16 +35,14 @@ import org.jetbrains.kotlin.psi.KtValueArgument
  *     active: true
  * ```
  */
-class JobInBuilderContextRule(config: Config = Config.empty) : Rule(config) {
-
-    override val issue = Issue(
-        id = "JobInBuilderContext",
-        severity = Severity.Warning,
-        description = "[DISPATCH_004] Job() or SupervisorJob() passed to coroutine builder breaks structured concurrency. " +
+class JobInBuilderContextRule(config: Config = Config.empty) : Rule(
+    config,
+    description = "[DISPATCH_004] Job() or SupervisorJob() passed to coroutine builder breaks structured concurrency. " +
             "Use supervisorScope { } or the scope's default Job. " +
             "See: ${DetektDocUrl.buildDocLink("34-dispatch_004--passing-job-directly-as-context-to-builders")}",
-        debt = Debt.TEN_MINS
-    )
+) {
+
+    override val ruleName: RuleName get() = RuleName("JobInBuilderContext")
 
     private val builders = setOf("launch", "async", "withContext")
     private val jobConstructors = setOf("Job", "SupervisorJob")
@@ -60,8 +56,7 @@ class JobInBuilderContextRule(config: Config = Config.empty) : Rule(config) {
         for (arg in expression.valueArguments) {
             if (isJobOrSupervisorJobCall(arg)) {
                 report(
-                    CodeSmell(
-                        issue = issue,
+                    Finding(
                         entity = Entity.from(expression),
                         message = "[DISPATCH_004] Passing Job() or SupervisorJob() to $calleeName breaks structured concurrency. " +
                             "Use supervisorScope { } for supervision, or omit the context to use the parent's Job. " +

@@ -11,13 +11,11 @@ package io.github.santimattius.structured.detekt.rules
 
 import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
-import io.gitlab.arturbosch.detekt.api.CodeSmell
-import io.gitlab.arturbosch.detekt.api.Config
-import io.gitlab.arturbosch.detekt.api.Debt
-import io.gitlab.arturbosch.detekt.api.Entity
-import io.gitlab.arturbosch.detekt.api.Issue
-import io.gitlab.arturbosch.detekt.api.Rule
-import io.gitlab.arturbosch.detekt.api.Severity
+import dev.detekt.api.Config
+import dev.detekt.api.Entity
+import dev.detekt.api.Finding
+import dev.detekt.api.Rule
+import dev.detekt.api.RuleName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtTryExpression
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -52,16 +50,14 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
  *     active: true
  * ```
  */
-class WithTimeoutScopeCancellationRule(config: Config = Config.empty) : Rule(config) {
-
-    override val issue = Issue(
-        id = "WithTimeoutScopeCancellation",
-        severity = Severity.Warning,
-        description = "[CANCEL_006] withTimeout without handling TimeoutCancellationException may cancel the parent scope. " +
+class WithTimeoutScopeCancellationRule(config: Config = Config.empty) : Rule(
+    config,
+    description = "[CANCEL_006] withTimeout without handling TimeoutCancellationException may cancel the parent scope. " +
             "Prefer withTimeoutOrNull or catch TimeoutCancellationException explicitly. " +
             "See: ${DetektDocUrl.buildDocLink("46-cancel_006--withtimeout-and-scope-cancellation")}",
-        debt = Debt.FIVE_MINS
-    )
+) {
+
+    override val ruleName: RuleName get() = RuleName("WithTimeoutScopeCancellation")
 
     /**
      * Exception type names that cover `TimeoutCancellationException`.
@@ -90,8 +86,7 @@ class WithTimeoutScopeCancellationRule(config: Config = Config.empty) : Rule(con
         if (tryExpression != null && catchesTimeoutException(tryExpression)) return
 
         report(
-            CodeSmell(
-                issue = issue,
+            Finding(
                 entity = Entity.from(expression),
                 message = "[CANCEL_006] withTimeout may cancel the parent scope if TimeoutCancellationException propagates. " +
                     "Use withTimeoutOrNull or wrap in try { } catch (e: TimeoutCancellationException) { }. " +

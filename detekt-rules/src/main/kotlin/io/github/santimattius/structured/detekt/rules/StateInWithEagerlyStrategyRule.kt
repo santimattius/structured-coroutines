@@ -8,28 +8,24 @@ package io.github.santimattius.structured.detekt.rules
 
 import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
-import io.gitlab.arturbosch.detekt.api.CodeSmell
-import io.gitlab.arturbosch.detekt.api.Config
-import io.gitlab.arturbosch.detekt.api.Debt
-import io.gitlab.arturbosch.detekt.api.Entity
-import io.gitlab.arturbosch.detekt.api.Issue
-import io.gitlab.arturbosch.detekt.api.Rule
-import io.gitlab.arturbosch.detekt.api.Severity
+import dev.detekt.api.Config
+import dev.detekt.api.Entity
+import dev.detekt.api.Finding
+import dev.detekt.api.Rule
+import dev.detekt.api.RuleName
 import org.jetbrains.kotlin.psi.KtCallExpression
 
 /**
  * [FLOW_006] — `SharingStarted.Eagerly` in lifecycle scopes starts collection before subscribers exist.
  */
-class StateInWithEagerlyStrategyRule(config: Config = Config.empty) : Rule(config) {
-
-    override val issue = Issue(
-        id = "StateInWithEagerlyStrategy",
-        severity = Severity.Warning,
-        description = "[FLOW_006] stateIn with SharingStarted.Eagerly in a lifecycle scope starts work " +
+class StateInWithEagerlyStrategyRule(config: Config = Config.empty) : Rule(
+    config,
+    description = "[FLOW_006] stateIn with SharingStarted.Eagerly in a lifecycle scope starts work " +
             "before any collector is active. Prefer SharingStarted.WhileSubscribed(5_000). " +
             "See: ${DetektDocUrl.buildDocLink("97-flow_006--stateinwitheagerlystrategy")}",
-        debt = Debt.FIVE_MINS,
-    )
+) {
+
+    override val ruleName: RuleName get() = RuleName("StateInWithEagerlyStrategy")
 
     private val lifecycleScopeNames = setOf("viewModelScope", "lifecycleScope")
 
@@ -47,8 +43,7 @@ class StateInWithEagerlyStrategyRule(config: Config = Config.empty) : Rule(confi
         if (!isLifecycleScope) return
 
         report(
-            CodeSmell(
-                issue = issue,
+            Finding(
                 entity = Entity.from(expression),
                 message = "[FLOW_006] stateIn(..., SharingStarted.Eagerly, ...) on $scopeArg starts upstream " +
                     "collection immediately. Prefer SharingStarted.WhileSubscribed(5_000) for rotation safety. " +
