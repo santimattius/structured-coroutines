@@ -13,13 +13,11 @@ import io.github.santimattius.structured.detekt.utils.BlockingCallHeuristic
 import io.github.santimattius.structured.detekt.utils.CoroutineDetektUtils
 import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
-import dev.detekt.api.CodeSmell
 import dev.detekt.api.Config
-import dev.detekt.api.Debt
 import dev.detekt.api.Entity
-import dev.detekt.api.Issue
+import dev.detekt.api.Finding
 import dev.detekt.api.Rule
-import dev.detekt.api.Severity
+import dev.detekt.api.RuleName
 import org.jetbrains.kotlin.psi.KtCallExpression
 
 /**
@@ -79,17 +77,15 @@ import org.jetbrains.kotlin.psi.KtCallExpression
  *
  * @see CoroutineDetektUtils.BLOCKING_METHODS for full list
  */
-class BlockingCallInCoroutineRule(config: Config = Config.empty) : Rule(config) {
-
-    override val issue = Issue(
-        id = "BlockingCallInCoroutine",
-        severity = Severity.Warning,
-        description = "[DISPATCH_001] Blocking call detected inside a coroutine. " +
+class BlockingCallInCoroutineRule(config: Config = Config.empty) : Rule(
+    config,
+    description = "[DISPATCH_001] Blocking call detected inside a coroutine. " +
             "This can block the coroutine thread and cause thread starvation. " +
             "Use non-blocking alternatives or wrap in withContext(Dispatchers.IO). " +
             "See: ${DetektDocUrl.buildDocLink("31-dispatch_001--mixing-blocking-code-with-wrong-dispatchers")}",
-        debt = Debt.TEN_MINS
-    )
+) {
+
+    override val ruleName: RuleName get() = RuleName("BlockingCallInCoroutine")
 
     override fun visitCallExpression(expression: KtCallExpression) {
         super.visitCallExpression(expression)
@@ -100,8 +96,7 @@ class BlockingCallInCoroutineRule(config: Config = Config.empty) : Rule(config) 
         // Report the issue
         val callName = CoroutineDetektUtils.getFullyQualifiedCallName(expression)
         report(
-            CodeSmell(
-                issue = issue,
+            Finding(
                 entity = Entity.from(expression),
                 message = buildMessage(callName)
             )

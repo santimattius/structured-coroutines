@@ -9,13 +9,11 @@ package io.github.santimattius.structured.detekt.rules
 import io.github.santimattius.structured.detekt.utils.CoroutineDetektUtils
 import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
-import dev.detekt.api.CodeSmell
 import dev.detekt.api.Config
-import dev.detekt.api.Debt
 import dev.detekt.api.Entity
-import dev.detekt.api.Issue
+import dev.detekt.api.Finding
 import dev.detekt.api.Rule
-import dev.detekt.api.Severity
+import dev.detekt.api.RuleName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -24,15 +22,13 @@ import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 /**
  * [BACKEND_002] — MDC usage with withContext without MDCContext (active when slf4j MDC is imported).
  */
-class ThreadLocalNotPropagatedRule(config: Config = Config.empty) : Rule(config) {
-
-    override val issue = Issue(
-        id = "ThreadLocalNotPropagated",
-        severity = Severity.Warning,
-        description = "[BACKEND_002] MDC not propagated across withContext — add MDCContext(). " +
+class ThreadLocalNotPropagatedRule(config: Config = Config.empty) : Rule(
+    config,
+    description = "[BACKEND_002] MDC not propagated across withContext — add MDCContext(). " +
             "See: ${DetektDocUrl.buildDocLink("37-backend_002--threadlocalnotpropagated")}",
-        debt = Debt.TEN_MINS,
-    )
+) {
+
+    override val ruleName: RuleName get() = RuleName("ThreadLocalNotPropagated")
 
     override fun visitNamedFunction(function: KtNamedFunction) {
         super.visitNamedFunction(function)
@@ -54,8 +50,7 @@ class ThreadLocalNotPropagatedRule(config: Config = Config.empty) : Rule(config)
                 val hasMdcContext = ctxText.contains("MDCContext")
                 if (usesIoOrDefault && !hasMdcContext) {
                     report(
-                        CodeSmell(
-                            issue = issue,
+                        Finding(
                             entity = Entity.from(expression),
                             message = "[BACKEND_002] withContext without MDCContext() — MDC will not propagate. " +
                                 "Use withContext(Dispatchers.IO + MDCContext()) { }. " +

@@ -12,13 +12,11 @@ package io.github.santimattius.structured.detekt.rules
 import io.github.santimattius.structured.detekt.utils.CoroutineDetektUtils
 import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
-import dev.detekt.api.CodeSmell
 import dev.detekt.api.Config
-import dev.detekt.api.Debt
 import dev.detekt.api.Entity
-import dev.detekt.api.Issue
+import dev.detekt.api.Finding
 import dev.detekt.api.Rule
-import dev.detekt.api.Severity
+import dev.detekt.api.RuleName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
@@ -85,17 +83,15 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
  *
  * Framework scopes like viewModelScope, lifecycleScope are excluded.
  */
-class ExternalScopeLaunchRule(config: Config = Config.empty) : Rule(config) {
-
-    override val issue = Issue(
-        id = "ExternalScopeLaunch",
-        severity = Severity.Warning,
-        description = "[SCOPE_003] Launching coroutine on external scope from suspend function. " +
+class ExternalScopeLaunchRule(config: Config = Config.empty) : Rule(
+    config,
+    description = "[SCOPE_003] Launching coroutine on external scope from suspend function. " +
             "This breaks structured concurrency. Use coroutineScope { } instead, " +
             "or make the function non-suspend if fire-and-forget is intentional. " +
             "See: ${DetektDocUrl.buildDocLink("13-scope_003--breaking-structured-concurrency")}",
-        debt = Debt.TEN_MINS
-    )
+) {
+
+    override val ruleName: RuleName get() = RuleName("ExternalScopeLaunch")
 
     /**
      * Framework scopes that are lifecycle-aware and acceptable.
@@ -135,8 +131,7 @@ class ExternalScopeLaunchRule(config: Config = Config.empty) : Rule(config) {
         val containingClass = expression.getParentOfType<KtClass>(strict = true)
         if (containingClass != null && isClassProperty(containingClass, scopeName)) {
             report(
-                CodeSmell(
-                    issue = issue,
+                Finding(
                     entity = Entity.from(expression),
                     message = "[SCOPE_003] Launching on external scope '$scopeName' from suspend function " +
                         "'${containingFunction.name}'. This breaks structured concurrency. " +

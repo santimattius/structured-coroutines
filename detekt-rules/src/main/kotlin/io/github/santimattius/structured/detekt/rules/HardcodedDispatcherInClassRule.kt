@@ -9,13 +9,11 @@ package io.github.santimattius.structured.detekt.rules
 import io.github.santimattius.structured.detekt.utils.CoroutineDetektUtils
 import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
-import dev.detekt.api.CodeSmell
 import dev.detekt.api.Config
-import dev.detekt.api.Debt
 import dev.detekt.api.Entity
-import dev.detekt.api.Issue
+import dev.detekt.api.Finding
 import dev.detekt.api.Rule
-import dev.detekt.api.Severity
+import dev.detekt.api.RuleName
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
@@ -26,15 +24,13 @@ import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 /**
  * [TEST_005] — hardcoded [Dispatchers.IO] / [Dispatchers.Main] in production classes.
  */
-class HardcodedDispatcherInClassRule(config: Config = Config.empty) : Rule(config) {
-
-    override val issue = Issue(
-        id = "HardcodedDispatcherInClass",
-        severity = Severity.Warning,
-        description = "[TEST_005] Inject CoroutineDispatcher instead of hardcoding Dispatchers.IO/Main. " +
+class HardcodedDispatcherInClassRule(config: Config = Config.empty) : Rule(
+    config,
+    description = "[TEST_005] Inject CoroutineDispatcher instead of hardcoding Dispatchers.IO/Main. " +
             "See: ${DetektDocUrl.buildDocLink("65-test_005--hardcoded-dispatcher-in-class")}",
-        debt = Debt.FIVE_MINS,
-    )
+) {
+
+    override val ruleName: RuleName get() = RuleName("HardcodedDispatcherInClass")
 
     override fun visitDotQualifiedExpression(expression: KtDotQualifiedExpression) {
         super.visitDotQualifiedExpression(expression)
@@ -59,8 +55,7 @@ class HardcodedDispatcherInClassRule(config: Config = Config.empty) : Rule(confi
         if (klass.hasDispatcherQualifierParameter()) return
 
         report(
-            CodeSmell(
-                issue = issue,
+            Finding(
                 entity = Entity.from(expression),
                 message = "[TEST_005] Inject CoroutineDispatcher (@IoDispatcher / @MainDispatcher) instead of " +
                     "hardcoding Dispatchers.$selector; use UnconfinedTestDispatcher or StandardTestDispatcher in tests. " +

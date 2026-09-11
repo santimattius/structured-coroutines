@@ -11,28 +11,24 @@ import io.github.santimattius.structured.detekt.utils.CoroutineDetektUtils
 import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
 import io.github.santimattius.structured.detekt.utils.MissingCatchInFlowHeuristic
-import dev.detekt.api.CodeSmell
 import dev.detekt.api.Config
-import dev.detekt.api.Debt
 import dev.detekt.api.Entity
-import dev.detekt.api.Issue
+import dev.detekt.api.Finding
 import dev.detekt.api.Rule
-import dev.detekt.api.Severity
+import dev.detekt.api.RuleName
 import org.jetbrains.kotlin.psi.KtCallExpression
 
 /**
  * [FLOW_005] — upstream `.catch { }` recommended before terminal `.collect` / `.launchIn`
  * on transformed Flow chains (same heuristic as Lint `MissingCatchInFlow`).
  */
-class MissingCatchInFlowRule(config: Config = Config.empty) : Rule(config) {
-
-    override val issue = Issue(
-        id = "MissingCatchInFlow",
-        severity = Severity.CodeSmell,
-        description = "[FLOW_005] Transformed Flow chains often need `.catch { }` before the terminal collector " +
+class MissingCatchInFlowRule(config: Config = Config.empty) : Rule(
+    config,
+    description = "[FLOW_005] Transformed Flow chains often need `.catch { }` before the terminal collector " +
             "to avoid cancelling the enclosing scope unexpectedly. See: ${DetektDocUrl.buildDocLink("96-flow_005--missing-catch-in-flow-chain")}",
-        debt = Debt.TEN_MINS
-    )
+) {
+
+    override val ruleName: RuleName get() = RuleName("MissingCatchInFlow")
 
     override fun visitCallExpression(expression: KtCallExpression) {
         super.visitCallExpression(expression)
@@ -48,8 +44,7 @@ class MissingCatchInFlowRule(config: Config = Config.empty) : Rule(config) {
         if (!MissingCatchInFlowHeuristic.shouldReportTerminalCall(expression)) return
 
         report(
-            CodeSmell(
-                issue = issue,
+            Finding(
                 entity = Entity.from(expression),
                 message = "[FLOW_005] Consider `.catch { }` before `.${callee}` on this Flow chain unless errors " +
                     "are deliberately propagated. See: ${DetektDocUrl.buildDocLink("96-flow_005--missing-catch-in-flow-chain")}",

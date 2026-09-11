@@ -8,28 +8,24 @@ package io.github.santimattius.structured.detekt.rules
 
 import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
-import dev.detekt.api.CodeSmell
 import dev.detekt.api.Config
-import dev.detekt.api.Debt
 import dev.detekt.api.Entity
-import dev.detekt.api.Issue
+import dev.detekt.api.Finding
 import dev.detekt.api.Rule
-import dev.detekt.api.Severity
+import dev.detekt.api.RuleName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 
 /**
  * [CONCUR_004] — nested withContext using the same dispatcher reference (opt-in / inactive by default in profiles).
  */
-class RedundantWithContextRule(config: Config = Config.empty) : Rule(config) {
-
-    override val issue = Issue(
-        id = "RedundantWithContext",
-        severity = Severity.Warning,
-        description = "[CONCUR_004] Nested withContext with the same dispatcher is redundant. " +
+class RedundantWithContextRule(config: Config = Config.empty) : Rule(
+    config,
+    description = "[CONCUR_004] Nested withContext with the same dispatcher is redundant. " +
             "See: ${DetektDocUrl.buildDocLink("36-concur_004--redundantwithcontext")}",
-        debt = Debt.FIVE_MINS,
-    )
+) {
+
+    override val ruleName: RuleName get() = RuleName("RedundantWithContext")
 
     override fun visitCallExpression(expression: KtCallExpression) {
         super.visitCallExpression(expression)
@@ -43,8 +39,7 @@ class RedundantWithContextRule(config: Config = Config.empty) : Rule(config) {
         if (outerDispatcher != innerDispatcher) return
 
         report(
-            CodeSmell(
-                issue = issue,
+            Finding(
                 entity = Entity.from(innerWithContext),
                 message = "[CONCUR_004] Redundant nested withContext($outerDispatcher) — already on that dispatcher. " +
                     "See: ${DetektDocUrl.buildDocLink("36-concur_004--redundantwithcontext")}",

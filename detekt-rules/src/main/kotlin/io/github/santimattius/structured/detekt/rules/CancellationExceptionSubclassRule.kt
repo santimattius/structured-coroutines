@@ -11,13 +11,11 @@ package io.github.santimattius.structured.detekt.rules
 
 import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
-import dev.detekt.api.CodeSmell
 import dev.detekt.api.Config
-import dev.detekt.api.Debt
 import dev.detekt.api.Entity
-import dev.detekt.api.Issue
+import dev.detekt.api.Finding
 import dev.detekt.api.Rule
-import dev.detekt.api.Severity
+import dev.detekt.api.RuleName
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtSuperTypeListEntry
 
@@ -76,17 +74,15 @@ import org.jetbrains.kotlin.psi.KtSuperTypeListEntry
  *     severity: error  # or warning
  * ```
  */
-class CancellationExceptionSubclassRule(config: Config = Config.empty) : Rule(config) {
-
-    override val issue = Issue(
-        id = "CancellationExceptionSubclass",
-        severity = Severity.CodeSmell,
-        description = "[EXCEPT_002] Domain errors should not extend CancellationException. " +
+class CancellationExceptionSubclassRule(config: Config = Config.empty) : Rule(
+    config,
+    description = "[EXCEPT_002] Domain errors should not extend CancellationException. " +
             "CancellationException is reserved for coroutine cancellation. " +
             "Use regular Exception for domain errors. " +
             "See: ${DetektDocUrl.buildDocLink("52-except_002--extending-cancellationexception-for-domain-errors")}",
-        debt = Debt.TEN_MINS
-    )
+) {
+
+    override val ruleName: RuleName get() = RuleName("CancellationExceptionSubclass")
 
     override fun visitClass(klass: KtClass) {
         super.visitClass(klass)
@@ -99,8 +95,7 @@ class CancellationExceptionSubclassRule(config: Config = Config.empty) : Rule(co
         for (superTypeEntry in superTypeList) {
             if (isCancellationException(superTypeEntry)) {
                 report(
-                    CodeSmell(
-                        issue = issue,
+                    Finding(
                         entity = Entity.from(klass),
                         message = buildMessage(klass.name ?: "class")
                     )

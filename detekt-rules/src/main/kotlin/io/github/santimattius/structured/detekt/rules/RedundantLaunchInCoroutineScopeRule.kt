@@ -11,13 +11,11 @@ package io.github.santimattius.structured.detekt.rules
 
 import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
-import dev.detekt.api.CodeSmell
 import dev.detekt.api.Config
-import dev.detekt.api.Debt
 import dev.detekt.api.Entity
-import dev.detekt.api.Issue
+import dev.detekt.api.Finding
 import dev.detekt.api.Rule
-import dev.detekt.api.Severity
+import dev.detekt.api.RuleName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtForExpression
@@ -41,16 +39,14 @@ import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
  *     active: true
  * ```
  */
-class RedundantLaunchInCoroutineScopeRule(config: Config = Config.empty) : Rule(config) {
-
-    override val issue = Issue(
-        id = "RedundantLaunchInCoroutineScope",
-        severity = Severity.Warning,
-        description = "[RUNBLOCK_001] Single launch inside coroutineScope/supervisorScope is redundant. " +
+class RedundantLaunchInCoroutineScopeRule(config: Config = Config.empty) : Rule(
+    config,
+    description = "[RUNBLOCK_001] Single launch inside coroutineScope/supervisorScope is redundant. " +
             "Execute the work directly without launch. " +
             "See: ${DetektDocUrl.buildDocLink("21-runblock_001--using-launch-on-the-last-line-of-coroutinescope")}",
-        debt = Debt.FIVE_MINS
-    )
+) {
+
+    override val ruleName: RuleName get() = RuleName("RedundantLaunchInCoroutineScope")
 
     private val scopeNames = setOf("coroutineScope", "supervisorScope")
     private val builderNames = setOf("launch", "async")
@@ -81,8 +77,7 @@ class RedundantLaunchInCoroutineScopeRule(config: Config = Config.empty) : Rule(
             if (isInsideRepeatingContext(singleBuilder, body)) return
 
             report(
-                CodeSmell(
-                    issue = issue,
+                Finding(
                     entity = Entity.from(expression),
                     message = "[RUNBLOCK_001] Redundant launch inside $calleeName. " +
                         "Execute the work directly: $calleeName { work() } instead of $calleeName { launch { work() } }. " +

@@ -9,28 +9,24 @@ package io.github.santimattius.structured.detekt.rules
 import io.github.santimattius.structured.detekt.utils.CoroutineDetektUtils
 import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
-import dev.detekt.api.CodeSmell
 import dev.detekt.api.Config
-import dev.detekt.api.Debt
 import dev.detekt.api.Entity
-import dev.detekt.api.Issue
+import dev.detekt.api.Finding
 import dev.detekt.api.Rule
-import dev.detekt.api.Severity
+import dev.detekt.api.RuleName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 
 /**
  * [INTEROP_004] — blocking [java.util.concurrent.Future.get] inside coroutines.
  */
-class BlockingFutureGetRule(config: Config = Config.empty) : Rule(config) {
-
-    override val issue = Issue(
-        id = "BlockingFutureGet",
-        severity = Severity.Warning,
-        description = "[INTEROP_004] Use .await() from kotlinx-coroutines-jdk8 or kotlinx-coroutines-guava. " +
+class BlockingFutureGetRule(config: Config = Config.empty) : Rule(
+    config,
+    description = "[INTEROP_004] Use .await() from kotlinx-coroutines-jdk8 or kotlinx-coroutines-guava. " +
             "See: ${DetektDocUrl.buildDocLink("104-interop_004--blocking-future-get")}",
-        debt = Debt.FIVE_MINS,
-    )
+) {
+
+    override val ruleName: RuleName get() = RuleName("BlockingFutureGet")
 
     override fun visitCallExpression(expression: KtCallExpression) {
         super.visitCallExpression(expression)
@@ -44,8 +40,7 @@ class BlockingFutureGetRule(config: Config = Config.empty) : Rule(config) {
         if (!CoroutineDetektUtils.isInsideCoroutine(expression)) return
 
         report(
-            CodeSmell(
-                issue = issue,
+            Finding(
                 entity = Entity.from(expression),
                 message = "[INTEROP_004] .get() blocks the dispatcher thread — use .await() from " +
                     "kotlinx-coroutines-jdk8 or kotlinx-coroutines-guava. " +

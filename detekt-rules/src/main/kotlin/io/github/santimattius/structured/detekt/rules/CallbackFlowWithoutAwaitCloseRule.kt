@@ -9,13 +9,11 @@ package io.github.santimattius.structured.detekt.rules
 
 import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
-import dev.detekt.api.CodeSmell
 import dev.detekt.api.Config
-import dev.detekt.api.Debt
 import dev.detekt.api.Entity
-import dev.detekt.api.Issue
+import dev.detekt.api.Finding
 import dev.detekt.api.Rule
-import dev.detekt.api.Severity
+import dev.detekt.api.RuleName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
@@ -23,15 +21,13 @@ import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 /**
  * [INTEROP_002] — `callbackFlow { }` should call `awaitClose { }` for listener cleanup (mirrors FIR rule).
  */
-class CallbackFlowWithoutAwaitCloseRule(config: Config = Config.empty) : Rule(config) {
-
-    override val issue = Issue(
-        id = "CallbackFlowWithoutAwaitClose",
-        severity = Severity.Defect,
-        description = "[INTEROP_002] 'callbackFlow' block must invoke 'awaitClose' to unregister listeners. " +
+class CallbackFlowWithoutAwaitCloseRule(config: Config = Config.empty) : Rule(
+    config,
+    description = "[INTEROP_002] 'callbackFlow' block must invoke 'awaitClose' to unregister listeners. " +
             "See: ${DetektDocUrl.buildDocLink("102-interop_002--callbackflow-without-awaitclose")}",
-        debt = Debt.FIVE_MINS
-    )
+) {
+
+    override val ruleName: RuleName get() = RuleName("CallbackFlowWithoutAwaitClose")
 
     override fun visitCallExpression(expression: KtCallExpression) {
         super.visitCallExpression(expression)
@@ -44,8 +40,7 @@ class CallbackFlowWithoutAwaitCloseRule(config: Config = Config.empty) : Rule(co
         if (lambdaBodyContainsAwaitClose(lambdaExpr)) return
 
         report(
-            CodeSmell(
-                issue = issue,
+            Finding(
                 entity = Entity.from(expression),
                 message = "[INTEROP_002] 'callbackFlow' without 'awaitClose' — add 'awaitClose { /* unregister */ }' " +
                     "so collectors can cancel cleanly. See: ${DetektDocUrl.buildDocLink("102-interop_002--callbackflow-without-awaitclose")}"

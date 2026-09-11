@@ -11,13 +11,11 @@ package io.github.santimattius.structured.detekt.rules
 
 import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
-import dev.detekt.api.CodeSmell
 import dev.detekt.api.Config
-import dev.detekt.api.Debt
 import dev.detekt.api.Entity
-import dev.detekt.api.Issue
+import dev.detekt.api.Finding
 import dev.detekt.api.Rule
-import dev.detekt.api.Severity
+import dev.detekt.api.RuleName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -76,16 +74,14 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
  *     severity: warning
  * ```
  */
-class DispatchersUnconfinedRule(config: Config = Config.empty) : Rule(config) {
-
-    override val issue = Issue(
-        id = "DispatchersUnconfined",
-        severity = Severity.CodeSmell,
-        description = "[DISPATCH_003] Dispatchers.Unconfined has unpredictable execution thread behavior. " +
+class DispatchersUnconfinedRule(config: Config = Config.empty) : Rule(
+    config,
+    description = "[DISPATCH_003] Dispatchers.Unconfined has unpredictable execution thread behavior. " +
             "Consider using Dispatchers.Default, Dispatchers.IO, or Dispatchers.Main instead. " +
             "See: ${DetektDocUrl.buildDocLink("33-dispatch_003--abusing-dispatchersunconfined")}",
-        debt = Debt.TEN_MINS
-    )
+) {
+
+    override val ruleName: RuleName get() = RuleName("DispatchersUnconfined")
 
     private val contextUsingFunctions = setOf("launch", "async", "withContext")
 
@@ -104,8 +100,7 @@ class DispatchersUnconfinedRule(config: Config = Config.empty) : Rule(config) {
                 val builderName = parentCall.calleeExpression?.text
                 if (builderName in contextUsingFunctions) {
                     report(
-                        CodeSmell(
-                            issue = issue,
+                        Finding(
                             entity = Entity.from(expression),
                             message = buildMessage(builderName ?: "coroutine builder")
                         )

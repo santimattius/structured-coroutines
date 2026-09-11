@@ -11,13 +11,11 @@ package io.github.santimattius.structured.detekt.rules
 
 import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
-import dev.detekt.api.CodeSmell
 import dev.detekt.api.Config
-import dev.detekt.api.Debt
 import dev.detekt.api.Entity
-import dev.detekt.api.Issue
+import dev.detekt.api.Finding
 import dev.detekt.api.Rule
-import dev.detekt.api.Severity
+import dev.detekt.api.RuleName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtExpression
@@ -77,16 +75,14 @@ import org.jetbrains.kotlin.psi.KtVariableDeclaration
  *     severity: error  # or warning
  * ```
  */
-class InlineCoroutineScopeRule(config: Config = Config.empty) : Rule(config) {
-
-    override val issue = Issue(
-        id = "InlineCoroutineScope",
-        severity = Severity.CodeSmell,
-        description = "[SCOPE_003] Inline CoroutineScope creation creates orphan coroutines without lifecycle management. " +
+class InlineCoroutineScopeRule(config: Config = Config.empty) : Rule(
+    config,
+    description = "[SCOPE_003] Inline CoroutineScope creation creates orphan coroutines without lifecycle management. " +
             "Use @StructuredScope annotated scopes, framework scopes, or structured builders. " +
             "See: ${DetektDocUrl.buildDocLink("13-scope_003--breaking-structured-concurrency")}",
-        debt = Debt.TEN_MINS
-    )
+) {
+
+    override val ruleName: RuleName get() = RuleName("InlineCoroutineScope")
 
     private val coroutineBuilders = setOf("launch", "async")
 
@@ -107,8 +103,7 @@ class InlineCoroutineScopeRule(config: Config = Config.empty) : Rule(config) {
         }
         if (receiver != null && isCoroutineScopeConstructor(receiver)) {
             report(
-                CodeSmell(
-                    issue = issue,
+                Finding(
                     entity = Entity.from(expression),
                     message = buildMessage(builderName)
                 )
@@ -124,8 +119,7 @@ class InlineCoroutineScopeRule(config: Config = Config.empty) : Rule(config) {
         val initializer = property.initializer
         if (initializer is KtCallExpression && isCoroutineScopeConstructor(initializer)) {
             report(
-                CodeSmell(
-                    issue = issue,
+                Finding(
                     entity = Entity.from(property),
                     message = "[SCOPE_003] Property '${property.name}' initialized with inline CoroutineScope creation. " +
                         "This creates an orphan coroutine scope without lifecycle management. " +

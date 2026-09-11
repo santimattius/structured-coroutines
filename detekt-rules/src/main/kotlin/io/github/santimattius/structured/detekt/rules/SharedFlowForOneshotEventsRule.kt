@@ -9,28 +9,24 @@ package io.github.santimattius.structured.detekt.rules
 import io.github.santimattius.structured.detekt.utils.CoroutineDetektUtils
 import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
-import dev.detekt.api.CodeSmell
 import dev.detekt.api.Config
-import dev.detekt.api.Debt
 import dev.detekt.api.Entity
-import dev.detekt.api.Issue
+import dev.detekt.api.Finding
 import dev.detekt.api.Rule
-import dev.detekt.api.Severity
+import dev.detekt.api.RuleName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtProperty
 
 /**
  * [FLOW_011] — [MutableSharedFlow] with default args for one-shot UI events.
  */
-class SharedFlowForOneshotEventsRule(config: Config = Config.empty) : Rule(config) {
-
-    override val issue = Issue(
-        id = "SharedFlowForOneshotEvents",
-        severity = Severity.Warning,
-        description = "[FLOW_011] Prefer Channel(BUFFERED).receiveAsFlow() for one-shot events. " +
+class SharedFlowForOneshotEventsRule(config: Config = Config.empty) : Rule(
+    config,
+    description = "[FLOW_011] Prefer Channel(BUFFERED).receiveAsFlow() for one-shot events. " +
             "See: ${DetektDocUrl.buildDocLink("911-flow_011--sharedflow-for-oneshot-events")}",
-        debt = Debt.TEN_MINS,
-    )
+) {
+
+    override val ruleName: RuleName get() = RuleName("SharedFlowForOneshotEvents")
 
     private val oneShotNamePattern = Regex("""(event|command|effect)""", RegexOption.IGNORE_CASE)
 
@@ -51,8 +47,7 @@ class SharedFlowForOneshotEventsRule(config: Config = Config.empty) : Rule(confi
         if (hasNonDefaultBuffer(init.text)) return
 
         report(
-            CodeSmell(
-                issue = issue,
+            Finding(
                 entity = Entity.from(property),
                 message = "[FLOW_011] MutableSharedFlow(replay=0) for one-shot events may drop emissions — " +
                     "use Channel(BUFFERED).receiveAsFlow(). " +

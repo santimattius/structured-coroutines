@@ -9,13 +9,11 @@ package io.github.santimattius.structured.detekt.rules
 import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
 import io.github.santimattius.structured.detekt.utils.SharedMutableStateHeuristic
-import dev.detekt.api.CodeSmell
 import dev.detekt.api.Config
-import dev.detekt.api.Debt
 import dev.detekt.api.Entity
-import dev.detekt.api.Issue
+import dev.detekt.api.Finding
 import dev.detekt.api.Rule
-import dev.detekt.api.Severity
+import dev.detekt.api.RuleName
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -24,16 +22,14 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 /**
  * [CONCUR_002] — shared mutable state accessed from multiple launch blocks (default info).
  */
-class SharedMutableStateInCoroutineRule(config: Config = Config.empty) : Rule(config) {
-
-    override val issue = Issue(
-        id = "SharedMutableStateInCoroutine",
-        severity = Severity.Minor,
-        description = "[CONCUR_002] Shared mutable state accessed from parallel launch blocks may race. " +
+class SharedMutableStateInCoroutineRule(config: Config = Config.empty) : Rule(
+    config,
+    description = "[CONCUR_002] Shared mutable state accessed from parallel launch blocks may race. " +
             "Prefer async/awaitAll or channels. " +
             "See: ${DetektDocUrl.buildDocLink("122-concur_002--sharedmutablestateincoroutine")}",
-        debt = Debt.TWENTY_MINS,
-    )
+) {
+
+    override val ruleName: RuleName get() = RuleName("SharedMutableStateInCoroutine")
 
     override fun visitNamedFunction(function: KtNamedFunction) {
         super.visitNamedFunction(function)
@@ -86,8 +82,7 @@ class SharedMutableStateInCoroutineRule(config: Config = Config.empty) : Rule(co
 
     private fun reportFunctionIssue(function: KtNamedFunction) {
         report(
-            CodeSmell(
-                issue = issue,
+            Finding(
                 entity = Entity.from(function),
                 message = "[CONCUR_002] Shared mutable state accessed from multiple launch blocks. " +
                     "Use async/awaitAll or a Channel. " +
@@ -98,8 +93,7 @@ class SharedMutableStateInCoroutineRule(config: Config = Config.empty) : Rule(co
 
     private fun reportReferenceIssue(ref: org.jetbrains.kotlin.psi.KtNameReferenceExpression) {
         report(
-            CodeSmell(
-                issue = issue,
+            Finding(
                 entity = Entity.from(ref),
                 message = "[CONCUR_002] Shared mutable state '${ref.text}' accessed from multiple launch blocks. " +
                     "Use async/awaitAll or a Channel. " +

@@ -11,13 +11,11 @@ package io.github.santimattius.structured.detekt.rules
 
 import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
-import dev.detekt.api.CodeSmell
 import dev.detekt.api.Config
-import dev.detekt.api.Debt
 import dev.detekt.api.Entity
-import dev.detekt.api.Issue
+import dev.detekt.api.Finding
 import dev.detekt.api.Rule
-import dev.detekt.api.Severity
+import dev.detekt.api.RuleName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtTryExpression
@@ -38,16 +36,14 @@ import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
  *     active: true
  * ```
  */
-class SuspendInFinallyRule(config: Config = Config.empty) : Rule(config) {
-
-    override val issue = Issue(
-        id = "SuspendInFinally",
-        severity = Severity.Warning,
-        description = "[CANCEL_004] Suspend call in finally block may not execute when cancelled. " +
+class SuspendInFinallyRule(config: Config = Config.empty) : Rule(
+    config,
+    description = "[CANCEL_004] Suspend call in finally block may not execute when cancelled. " +
             "Wrap in withContext(NonCancellable) { }. " +
             "See: ${DetektDocUrl.buildDocLink("44-cancel_004--suspendable-cleanup-without-noncancellable")}",
-        debt = Debt.TEN_MINS
-    )
+) {
+
+    override val ruleName: RuleName get() = RuleName("SuspendInFinally")
 
     private val knownSuspendNames = setOf(
         "delay", "yield", "withContext", "withTimeout", "withTimeoutOrNull",
@@ -63,8 +59,7 @@ class SuspendInFinallyRule(config: Config = Config.empty) : Rule(config) {
 
         findUnprotectedSuspendCalls(body).firstOrNull()?.let { call ->
             report(
-                CodeSmell(
-                    issue = issue,
+                Finding(
                     entity = Entity.from(call),
                     message = "[CANCEL_004] Suspend call in finally without NonCancellable. " +
                         "Wrap cleanup in withContext(NonCancellable) { } so it runs even when cancelled. " +

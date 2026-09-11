@@ -8,13 +8,11 @@ package io.github.santimattius.structured.detekt.rules
 
 import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
-import dev.detekt.api.CodeSmell
 import dev.detekt.api.Config
-import dev.detekt.api.Debt
 import dev.detekt.api.Entity
-import dev.detekt.api.Issue
+import dev.detekt.api.Finding
 import dev.detekt.api.Rule
-import dev.detekt.api.Severity
+import dev.detekt.api.RuleName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
@@ -22,15 +20,13 @@ import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 /**
  * [INTEROP_003] — choose [callbackFlow] vs [channelFlow] correctly.
  */
-class ChannelFlowVsCallbackFlowRule(config: Config = Config.empty) : Rule(config) {
-
-    override val issue = Issue(
-        id = "ChannelFlowVsCallbackFlow",
-        severity = Severity.Warning,
-        description = "[INTEROP_003] Use callbackFlow for external callbacks (with awaitClose); channelFlow for internal emission. " +
+class ChannelFlowVsCallbackFlowRule(config: Config = Config.empty) : Rule(
+    config,
+    description = "[INTEROP_003] Use callbackFlow for external callbacks (with awaitClose); channelFlow for internal emission. " +
             "See: ${DetektDocUrl.buildDocLink("103-interop_003--channelflow-vs-callbackflow")}",
-        debt = Debt.FIVE_MINS,
-    )
+) {
+
+    override val ruleName: RuleName get() = RuleName("ChannelFlowVsCallbackFlow")
 
     private val externalCallbackCalleePattern = Regex(
         """(?i)(register|unregister|addListener|removeListener|subscribe|unsubscribe|setCallback|observe|enqueue)""",
@@ -64,8 +60,7 @@ class ChannelFlowVsCallbackFlowRule(config: Config = Config.empty) : Rule(config
 
     private fun reportMismatch(expression: KtCallExpression, detail: String) {
         report(
-            CodeSmell(
-                issue = issue,
+            Finding(
                 entity = Entity.from(expression),
                 message = "[INTEROP_003] $detail. " +
                     "See: ${DetektDocUrl.buildDocLink("103-interop_003--channelflow-vs-callbackflow")}",
