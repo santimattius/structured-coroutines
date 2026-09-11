@@ -10,7 +10,7 @@
 package io.github.santimattius.structured.detekt.rules
 
 import dev.detekt.api.Config
-import dev.detekt.test.compileAndLint
+import dev.detekt.test.lint
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -30,7 +30,7 @@ class BlockingCallInCoroutineRuleTest {
             }
         """.trimIndent()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).hasSize(1)
         assertThat(findings[0].message).contains("Thread.sleep")
         assertThat(findings[0].message).contains("[DISPATCH_001]")
@@ -46,7 +46,7 @@ class BlockingCallInCoroutineRuleTest {
             }
         """.trimIndent()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).hasSize(1)
     }
 
@@ -58,7 +58,7 @@ class BlockingCallInCoroutineRuleTest {
             }
         """.trimIndent()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).isEmpty()
     }
 
@@ -75,7 +75,7 @@ class BlockingCallInCoroutineRuleTest {
             }
         """.trimIndent()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         // Note: The rule detection depends on how well we can resolve the FQN
         // In unit tests, the simple name matching may not work perfectly
         // This is acceptable as it demonstrates the rule's intent
@@ -93,7 +93,7 @@ class BlockingCallInCoroutineRuleTest {
             }
         """.trimIndent()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).isEmpty()
     }
 }

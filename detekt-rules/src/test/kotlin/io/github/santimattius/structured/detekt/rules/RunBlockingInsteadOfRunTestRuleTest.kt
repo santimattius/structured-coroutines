@@ -8,8 +8,8 @@
 package io.github.santimattius.structured.detekt.rules
 
 import dev.detekt.api.Config
-import dev.detekt.test.compileAndLint
 import dev.detekt.test.lint
+import dev.detekt.test.utils.compileForTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.nio.file.Paths
@@ -21,7 +21,7 @@ class RunBlockingInsteadOfRunTestRuleTest {
     @Test
     fun `reports runBlocking as JUnit expression body under src test path`() {
         val uri = javaClass.getResource("/detekt-junit-src-test/src/test/kotlin/ExpressionBodyTest.kt")!!
-        val findings = rule.lint(Paths.get(uri.toURI()))
+        val findings = rule.lint(compileForTest(Paths.get(uri.toURI())))
         assertThat(findings).hasSize(1)
         assertThat(findings.single().message).contains("[TEST_004]")
     }
@@ -35,7 +35,7 @@ class RunBlockingInsteadOfRunTestRuleTest {
             fun main() = runBlocking { }
             """.trimIndent()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).isEmpty()
     }
 
@@ -55,9 +55,9 @@ class RunBlockingInsteadOfRunTestRuleTest {
             }
             """.trimIndent()
 
-        // Rule checks file/function name for test file heuristic — compileAndLint uses synthetic name;
+        // Rule checks file/function name for test file heuristic — lint(String) uses synthetic name;
         // even if rule would otherwise fire, @Suppress prevents the finding
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).isEmpty()
     }
 }

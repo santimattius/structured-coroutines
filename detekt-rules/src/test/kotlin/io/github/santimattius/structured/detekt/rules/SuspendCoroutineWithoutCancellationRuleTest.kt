@@ -8,7 +8,7 @@
 package io.github.santimattius.structured.detekt.rules
 
 import dev.detekt.api.Config
-import dev.detekt.test.compileAndLint
+import dev.detekt.test.lint
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -27,7 +27,7 @@ class SuspendCoroutineWithoutCancellationRuleTest {
             }
             """.trimIndent()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).hasSize(1)
         assertThat(findings[0].message).contains("[INTEROP_001]")
     }
@@ -39,7 +39,7 @@ class SuspendCoroutineWithoutCancellationRuleTest {
             suspend fun load(): Unit = Unit
             """.trimIndent()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).isEmpty()
     }
 
@@ -52,7 +52,7 @@ class SuspendCoroutineWithoutCancellationRuleTest {
             suspend fun x() = suspendCoroutine<Unit> { }
             """.trimIndent()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).hasSize(1)
         assertThat(findings[0].message).contains("suspendCancellableCoroutine")
     }

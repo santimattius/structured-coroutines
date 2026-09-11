@@ -10,7 +10,7 @@
 package io.github.santimattius.structured.detekt.rules
 
 import dev.detekt.api.Config
-import dev.detekt.test.compileAndLint
+import dev.detekt.test.lint
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -31,9 +31,9 @@ class RunBlockingWithDelayInTestRuleTest {
 
         // Note: The rule checks file name to determine if it's a test file.
         // In actual Detekt execution, the file path would be used.
-        // In unit tests with compileAndLint, the file name is synthetic,
+        // In unit tests with lint(String), the file name is synthetic,
         // so we can't fully test the file-name filtering here.
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         
         // Document that this test demonstrates the rule's intent:
         // - The rule should report runBlocking + delay in *Test.kt files
@@ -54,7 +54,7 @@ class RunBlockingWithDelayInTestRuleTest {
             }
         """.trimIndent()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).isEmpty()
     }
 
@@ -70,7 +70,7 @@ class RunBlockingWithDelayInTestRuleTest {
             }
         """.trimIndent()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).isEmpty()
     }
 }

@@ -10,7 +10,7 @@
 package io.github.santimattius.structured.detekt.rules
 
 import dev.detekt.api.Config
-import dev.detekt.test.compileAndLint
+import dev.detekt.test.lint
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -35,7 +35,7 @@ class CancellationExceptionSwallowedRuleTest {
             }
         """.trimIndent()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).hasSize(1)
         assertThat(findings[0].message).contains("CANCEL_003")
         assertThat(findings[0].message).contains("CancellationException")
@@ -55,7 +55,7 @@ class CancellationExceptionSwallowedRuleTest {
             }
         """.trimIndent()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).hasSize(1)
     }
 
@@ -79,7 +79,7 @@ class CancellationExceptionSwallowedRuleTest {
             }
         """.trimIndent()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).isEmpty()
     }
 
@@ -95,7 +95,7 @@ class CancellationExceptionSwallowedRuleTest {
             }
         """.trimIndent()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).isEmpty()
     }
 
@@ -114,7 +114,7 @@ class CancellationExceptionSwallowedRuleTest {
             }
         """.trimIndent()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).isEmpty()
     }
 
@@ -132,7 +132,7 @@ class CancellationExceptionSwallowedRuleTest {
             }
         """.trimIndent()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).isEmpty()
     }
 
@@ -154,7 +154,7 @@ class CancellationExceptionSwallowedRuleTest {
             }
         """.trimIndent()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).isEmpty()
     }
 
@@ -175,7 +175,7 @@ class CancellationExceptionSwallowedRuleTest {
             }
         """.trimIndent()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).isEmpty()
     }
 }

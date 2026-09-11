@@ -10,7 +10,7 @@
 package io.github.santimattius.structured.detekt.rules
 
 import dev.detekt.api.Config
-import dev.detekt.test.compileAndLint
+import dev.detekt.test.lint
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -28,7 +28,7 @@ class ScopeReuseAfterCancelRuleTest {
                 scope.launch { println("x") }
             }
         """.trimIndent()
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).hasSize(1)
         assertThat(findings[0].message).contains("CANCEL_005")
         assertThat(findings[0].message).contains("reused")
@@ -44,7 +44,7 @@ class ScopeReuseAfterCancelRuleTest {
                 scope.async { 1 }
             }
         """.trimIndent()
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).hasSize(1)
     }
 
@@ -57,7 +57,7 @@ class ScopeReuseAfterCancelRuleTest {
                 scope.cancel()
             }
         """.trimIndent()
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).isEmpty()
     }
 
@@ -71,7 +71,7 @@ class ScopeReuseAfterCancelRuleTest {
                 scope.cancel()
             }
         """.trimIndent()
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).isEmpty()
     }
 
@@ -85,7 +85,7 @@ class ScopeReuseAfterCancelRuleTest {
                 scope2.launch { }
             }
         """.trimIndent()
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).isEmpty()
     }
 }

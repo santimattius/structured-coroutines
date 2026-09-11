@@ -10,7 +10,7 @@
 package io.github.santimattius.structured.detekt.rules
 
 import dev.detekt.api.Config
-import dev.detekt.test.compileAndLint
+import dev.detekt.test.lint
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -28,7 +28,7 @@ class ChannelNotClosedRuleTest {
                 ch.send(1)
             }
         """.trimIndent()
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).hasSize(1)
         assertThat(findings[0].message).contains("CHANNEL_001")
         assertThat(findings[0].message).contains("ch")
@@ -48,7 +48,7 @@ class ChannelNotClosedRuleTest {
                 }
             }
         """.trimIndent()
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).isEmpty()
     }
 
@@ -61,7 +61,7 @@ class ChannelNotClosedRuleTest {
                 send(1)
             }
         """.trimIndent()
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).isEmpty()
     }
 
@@ -75,7 +75,7 @@ class ChannelNotClosedRuleTest {
                 channel.send("x")
             }
         """.trimIndent()
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).hasSize(1)
         assertThat(findings[0].message).contains("channel")
     }
@@ -89,7 +89,7 @@ class ChannelNotClosedRuleTest {
                 useChannel(Channel<Int>())
             }
         """.trimIndent()
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).isEmpty()
     }
 }

@@ -10,7 +10,7 @@
 package io.github.santimattius.structured.detekt.rules
 
 import dev.detekt.api.Config
-import dev.detekt.test.compileAndLint
+import dev.detekt.test.lint
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -30,7 +30,7 @@ class ConsumeEachMultipleConsumersRuleTest {
                 scope.launch { ch.consumeEach { } }
             }
         """.trimIndent()
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).hasSize(2)
         assertThat(findings[0].message).contains("CHANNEL_002")
         assertThat(findings[0].message).contains("ch")
@@ -48,7 +48,7 @@ class ConsumeEachMultipleConsumersRuleTest {
                 scope.async { ch.consumeEach { } }
             }
         """.trimIndent()
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).hasSize(2)
         assertThat(findings.all { it.message.contains("CHANNEL_002") }).isTrue()
     }
@@ -64,7 +64,7 @@ class ConsumeEachMultipleConsumersRuleTest {
                 scope.launch { ch.consumeEach { } }
             }
         """.trimIndent()
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).isEmpty()
     }
 
@@ -81,7 +81,7 @@ class ConsumeEachMultipleConsumersRuleTest {
                 scope.launch { ch2.consumeEach { } }
             }
         """.trimIndent()
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).isEmpty()
     }
 
@@ -99,7 +99,7 @@ class ConsumeEachMultipleConsumersRuleTest {
                 scope.async { ch.consumeEach { } }
             }
         """.trimIndent()
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).hasSize(2)
     }
 }

@@ -8,7 +8,7 @@
 package io.github.santimattius.structured.detekt.rules
 
 import dev.detekt.api.Config
-import dev.detekt.test.compileAndLint
+import dev.detekt.test.lint
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -27,7 +27,7 @@ class CallbackFlowWithoutAwaitCloseRuleTest {
             }
             """.trimIndent()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).hasSize(1)
         assertThat(findings[0].message).contains("[INTEROP_002]")
     }
@@ -44,7 +44,7 @@ class CallbackFlowWithoutAwaitCloseRuleTest {
             }
             """.trimIndent()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).isEmpty()
     }
 
@@ -55,7 +55,7 @@ class CallbackFlowWithoutAwaitCloseRuleTest {
             fun noop() = Unit
             """.trimIndent()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).isEmpty()
     }
 }

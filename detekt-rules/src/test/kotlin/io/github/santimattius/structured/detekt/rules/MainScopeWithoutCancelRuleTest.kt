@@ -1,7 +1,7 @@
 package io.github.santimattius.structured.detekt.rules
 
 import dev.detekt.api.Config
-import dev.detekt.test.compileAndLint
+import dev.detekt.test.lint
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -20,7 +20,7 @@ class MainScopeWithoutCancelRuleTest {
             }
         """.trimIndent()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).hasSize(1)
         assertThat(findings[0].message).contains("[KMP_003]")
     }
@@ -36,7 +36,7 @@ class MainScopeWithoutCancelRuleTest {
             }
         """.trimIndent()
 
-        assertThat(rule.compileAndLint(code)).isEmpty()
+        assertThat(rule.lint(code)).isEmpty()
     }
 
     @Test
@@ -51,6 +51,6 @@ class MainScopeWithoutCancelRuleTest {
             }
         """.trimIndent()
 
-        assertThat(rule.compileAndLint(code)).isEmpty()
+        assertThat(rule.lint(code)).isEmpty()
     }
 }

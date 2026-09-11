@@ -33,6 +33,7 @@ forward-compat-kotlin-compiler-embeddable = { group = "org.jetbrains.kotlin", na
 # Detekt
 detekt-api = { group = "dev.detekt", name = "detekt-api", version.ref = "detekt" }
 detekt-test = { group = "dev.detekt", name = "detekt-test", version.ref = "detekt" }
+detekt-test-utils = { group = "dev.detekt", name = "detekt-test-utils", version.ref = "detekt" }
 
 # Android Lint
 lint-api = { group = "com.android.tools.lint", name = "lint-api", version.ref = "lint" }
