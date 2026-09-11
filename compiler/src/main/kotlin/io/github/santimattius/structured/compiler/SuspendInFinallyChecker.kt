@@ -169,14 +169,14 @@ class SuspendInFinallyChecker(
      * as a bare imported name, fully qualified, combined via `+` with another
      * `CoroutineContext`, or through a variable typed as `NonCancellable`.
      *
-     * Mirrors the verified precedent in `UnstructuredLaunchChecker.isGlobalScope`: a resolved
-     * object reference is a [FirResolvedQualifier], and [ConeClassLikeType.lookupTag] is used
-     * instead of the unstable `ConeKotlinType.toClassSymbol()` API that changed signature in
-     * Kotlin 2.3.20.
+     * A resolved object reference is a [FirResolvedQualifier], resolved via the shared
+     * [resolvedClassId] helper (not a direct `.classId` call — removed as a member in Kotlin
+     * 2.4.20, KT-84522). [ConeClassLikeType.lookupTag] is used for the fallback path instead of
+     * the unstable `ConeKotlinType.toClassSymbol()` API that changed signature in Kotlin 2.3.20.
      */
     private fun isNonCancellable(expression: FirExpression): Boolean {
         if (expression is FirResolvedQualifier) {
-            return expression.classId == NON_CANCELLABLE_CLASS_ID
+            return expression.resolvedClassId() == NON_CANCELLABLE_CLASS_ID
         }
 
         if (expression is FirFunctionCall && expression.calleeReference.name == PLUS_NAME) {
