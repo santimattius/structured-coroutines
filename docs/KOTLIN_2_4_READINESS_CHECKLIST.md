@@ -40,6 +40,33 @@ rediscovered from scratch at bump time:
   `fix/firresolvedqualifier-classid-crash-90` branch (issue #90) merged before
   or as part of the bump.
 
+## `:intellij-plugin` isolated-build exception (D1)
+
+`:intellij-plugin` is extracted into its own Gradle included build
+(`intellij-plugin/settings.gradle.kts`, `intellij-plugin/gradle.properties`),
+independent of the root buildscript classpath. This is required, not
+optional: the root build declares `alias(libs.plugins.kotlin.jvm) apply false`,
+which resolves the Kotlin Gradle Plugin once onto the root classpath, and
+Gradle rejects a subproject that requests a differing KGP version from an
+ancestor classpath. A separate build is the only mechanism that yields a
+genuinely independent KGP classpath.
+
+`:intellij-plugin` is pinned at Kotlin **2.4.0** — the version it already
+compiled with before this change — so the extraction itself is purely
+structural and behaviour-preserving. It does **not** track the root
+catalog's `kotlin` version, and after the production bump to 2.4.20
+(tracked separately) it will remain on 2.4.0 by design. This drift is
+guarded by `CatalogVersionConsistencyTest` in `compiler/src/test/kotlin/...`
+(`intellij-plugin kotlinVersion is pinned independently at the documented
+value`).
+
+**Unblock criterion** to raise `:intellij-plugin`'s pin beyond 2.4.0 (e.g.
+toward the IDE-mapped Kotlin version, or to rejoin the root catalog): a
+released `intellij-platform-gradle-plugin` version whose
+`PlatformKotlinVersions` table maps this module's target IDE build
+(`intellij-ide` in `gradle/libs.versions.toml`) to the desired Kotlin
+version — the same blocking threshold tracked in the table above.
+
 ## Non-goals
 
 This checklist does not upgrade detekt, Android Lint/AGP, or
