@@ -1,5 +1,5 @@
 [versions]
-kotlin = "2.4.0"
+kotlin = "2.4.20"
 # Test-scope-only forward-compat pin. NEVER used by production compilation or
 # any kotlin-jvm/kotlin-multiplatform plugin alias — see compiler/build.gradle.kts
 # forwardCompatTest source set and docs/KOTLIN_2_4_READINESS_CHECKLIST.md.

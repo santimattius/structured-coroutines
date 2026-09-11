@@ -14,6 +14,7 @@ package io.github.santimattius.structured.compiler
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactory0
 import org.jetbrains.kotlin.diagnostics.KtDiagnosticFactoryToRendererMap
+import org.jetbrains.kotlin.diagnostics.KtSourcelessDiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.SourceElementPositioningStrategies
 import org.jetbrains.kotlin.diagnostics.rendering.BaseDiagnosticRendererFactory
@@ -72,6 +73,12 @@ object StructuredCoroutinesErrorRenderer : BaseDiagnosticRendererFactory() {
         MAP.put(StructuredCoroutinesErrors.LOOP_WITHOUT_YIELD_ERROR, CompilerMessages.message("LOOP_WITHOUT_YIELD"))
         MAP.put(StructuredCoroutinesErrors.SUSPEND_COROUTINE_WITHOUT_CANCELLATION_WARNING, CompilerMessages.message("SUSPEND_COROUTINE_WITHOUT_CANCELLATION"))
         MAP.put(StructuredCoroutinesErrors.CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE_WARNING, CompilerMessages.message("CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE"))
+
+        // Sourceless (#68, ADR-7): reported once per compilation from the plugin registrar, not
+        // from a FIR checker, so it carries no PSI element. The message is supplied per-report-call
+        // (not a fixed bundle string), hence the passthrough "{0}" template (mirrors the Kotlin
+        // compiler's own internal MESSAGE_PLACEHOLDER, not exposed by kotlin-compiler-embeddable).
+        MAP.put(StructuredCoroutinesErrors.GRACE_PERIOD_ADVISORY, "{0}")
     }
 }
 
@@ -286,6 +293,21 @@ object StructuredCoroutinesErrors {
         severity = Severity.ERROR,
         defaultPositioningStrategy = SourceElementPositioningStrategies.CALL_ELEMENT_WITH_DOT,
         psiType = KtElement::class,
+        rendererFactory = StructuredCoroutinesErrorRenderer
+    )
+
+    // ============================================================
+    // Grace-period advisory (#68, ADR-7)
+    // ============================================================
+
+    /**
+     * Compilation-wide advisory naming every rule deferred by [PluginConfiguration.deferredTightenings].
+     * Reported once per compilation from the plugin registrar (not a FIR checker), so it has no
+     * source location — a [KtSourcelessDiagnosticFactory], not a [KtDiagnosticFactory0].
+     */
+    val GRACE_PERIOD_ADVISORY: KtSourcelessDiagnosticFactory = KtSourcelessDiagnosticFactory(
+        name = "GRACE_PERIOD_ADVISORY",
+        severity = Severity.WARNING,
         rendererFactory = StructuredCoroutinesErrorRenderer
     )
 

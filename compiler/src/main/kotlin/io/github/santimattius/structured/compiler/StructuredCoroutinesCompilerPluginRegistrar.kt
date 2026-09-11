@@ -9,11 +9,9 @@
  */
 package io.github.santimattius.structured.compiler
 
-import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
-import org.jetbrains.kotlin.cli.common.messages.MessageCollector
+import org.jetbrains.kotlin.cli.report
 import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
-import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrarAdapter
 
@@ -106,22 +104,15 @@ class StructuredCoroutinesCompilerPluginRegistrar : CompilerPluginRegistrar() {
     }
 
     /**
-     * Emits one [MessageCollector.WARNING][CompilerMessageSeverity.WARNING] per compilation
-     * naming every rule in [PluginConfiguration.deferredTightenings] (#68, ADR-7). No-op when the
-     * list is empty — relaxations never defer, and nothing is deferred under
+     * Emits one [Severity.WARNING][org.jetbrains.kotlin.diagnostics.Severity.WARNING] diagnostic
+     * per compilation naming every rule in [PluginConfiguration.deferredTightenings] (#68, ADR-7).
+     * No-op when the list is empty — relaxations never defer, and nothing is deferred under
      * [EnforcementPolicy.STRICT].
      */
     private fun emitGracePeriodAdvisory(pluginConfig: PluginConfiguration, configuration: CompilerConfiguration) {
         val deferred = pluginConfig.deferredTightenings
         if (deferred.isEmpty()) return
-        // Kotlin 2.4.20 flags this direct MessageCollector access as an error; the suggested
-        // replacement (CompilerConfiguration.report) only accepts a KtSourcelessDiagnosticFactory
-        // and has no plain-WARNING overload, so switching would mean either introducing new
-        // diagnostic-factory infra or downgrading this advisory to INFO — a real behavior change,
-        // not a mechanical forward-compat swap. Deferred past this slice; forwardCompatTest fails
-        // on this line only, tracked as a known gap.
-        val messageCollector = configuration.get(CommonConfigurationKeys.MESSAGE_COLLECTOR_KEY, MessageCollector.NONE)
         val message = deferred.joinToString(separator = "\n") { it.advisoryText() }
-        messageCollector.report(CompilerMessageSeverity.WARNING, message)
+        configuration.report(StructuredCoroutinesErrors.GRACE_PERIOD_ADVISORY, message)
     }
 }
