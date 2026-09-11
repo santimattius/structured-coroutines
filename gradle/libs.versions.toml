@@ -1,5 +1,13 @@
 [versions]
 kotlin = "2.4.0"
+# Test-scope-only forward-compat pin. NEVER used by production compilation or
+# any kotlin-jvm/kotlin-multiplatform plugin alias — see compiler/build.gradle.kts
+# forwardCompatTest source set and docs/KOTLIN_2_4_READINESS_CHECKLIST.md.
+# Named without a "kotlin-" prefix on purpose: Gradle's type-safe catalog
+# accessors nest dash-separated segments, and "kotlin-next" would turn the
+# existing bare "kotlin" version accessor into a group (breaking every
+# `libs.versions.kotlin.get()` call site).
+forward-compat-kotlin = "2.4.20"
 detekt = "1.23.7"
 maven-publish-plugin = "0.36.0"
 lint = "31.4.0"
@@ -16,6 +24,11 @@ intellij-ide = "2026.1"
 kotlin-compiler-embeddable = { group = "org.jetbrains.kotlin", name = "kotlin-compiler-embeddable", version.ref = "kotlin" }
 kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlin" }
 kotlin-gradle-plugin-api = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin-api", version.ref = "kotlin" }
+# Test-scope-only forward-compat coordinate — see forward-compat-kotlin above.
+# Named without a "kotlin-compiler-embeddable" prefix on purpose: that exact
+# prefix is already a leaf library accessor (libs.kotlin.compiler.embeddable);
+# extending it would force every existing call site to add .asProvider().
+forward-compat-kotlin-compiler-embeddable = { group = "org.jetbrains.kotlin", name = "kotlin-compiler-embeddable", version.ref = "forward-compat-kotlin" }
 
 # Detekt
 detekt-api = { group = "io.gitlab.arturbosch.detekt", name = "detekt-api", version.ref = "detekt" }
