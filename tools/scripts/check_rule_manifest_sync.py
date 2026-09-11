@@ -110,17 +110,27 @@ def extract_compiler_ids() -> set[str]:
     return set(re.findall(r'^\s{4}([A-Z][A-Z0-9_]*)\("', text, re.MULTILINE))
 
 
+ID_PATTERNS = (
+    # Lint detectors: `id = "..."` (Lint's `Issue.create(id = "...", ...)`).
+    re.compile(r'^\s*id = "([^"]+)"', re.MULTILINE),
+    # Detekt 2.0 rules: `ruleName: RuleName get() = RuleName("...")` -- detekt 1.x's string
+    # `id = "..."` property was replaced by a typed `RuleName` in the 2.0.0-alpha.6 API migration.
+    re.compile(r'RuleName\("([^"]+)"\)'),
+)
+
+
 def resolve_ids_from_classes(class_names: set[str], classes_dir: Path) -> set[str]:
-    """For each registered `*Rule`/`*Detector` class, read its file and extract `id = "..."`."""
+    """For each registered `*Rule`/`*Detector` class, read its file and extract its id
+    (`id = "..."` for lint detectors, `RuleName("...")` for detekt 2.0 rules)."""
     ids: set[str] = set()
     for class_name in class_names:
         class_file = classes_dir / f"{class_name}.kt"
         text = read_text(class_file)
-        match = re.search(r'^\s*id = "([^"]+)"', text, re.MULTILINE)
+        match = next((p.search(text) for p in ID_PATTERNS if p.search(text)), None)
         if match is None:
             print(
-                f"ERROR: could not find `id = \"...\"` in {class_file} "
-                f"(registered as {class_name})",
+                f"ERROR: could not find an `id = \"...\"` or `RuleName(\"...\")` declaration in "
+                f"{class_file} (registered as {class_name})",
                 file=sys.stderr,
             )
             sys.exit(1)
@@ -130,9 +140,11 @@ def resolve_ids_from_classes(class_names: set[str], classes_dir: Path) -> set[st
 
 def extract_detekt_ids() -> set[str]:
     """Registered `*Rule` classes in `StructuredCoroutinesRuleSetProvider`'s `listOf(...)`,
-    resolved to each rule's `id = "..."`."""
+    resolved to each rule's `id = "..."`. Constructor references (`::SomeRule`), matching the
+    detekt 2.0 `RuleSet(ruleSetId, List<(Config) -> Rule>)` shape -- detekt 1.x's per-rule
+    `SomeRule(config)` calls were migrated away in the detekt 2.0.0-alpha.6 API-shape migration."""
     text = read_text(DETEKT_PROVIDER)
-    class_names = set(re.findall(r"(\w+Rule)\(config\)", text))
+    class_names = set(re.findall(r"::(\w+Rule)\b", text))
     return resolve_ids_from_classes(class_names, DETEKT_RULES_DIR)
 
 
