@@ -27,6 +27,21 @@ kotlin {
 
 // Tests use @org.junit.Test (JUnit 4); lint-tests expects JUnit 4. Do not use useJUnitPlatform().
 
+tasks.test {
+    // Guard for TestRuntimeClasspathStdlibVersionTest: expose the catalog's kotlin version and the
+    // kotlin-stdlib version actually resolved on testRuntimeClasspath, so the test can assert they
+    // match instead of silently drifting behind a resolutionStrategy override.
+    systemProperty("catalogKotlinVersion", libs.versions.kotlin.get())
+    doFirst {
+        val resolvedKotlinStdlibVersion = configurations.testRuntimeClasspath.get()
+            .resolvedConfiguration.resolvedArtifacts
+            .firstOrNull { it.moduleVersion.id.group == "org.jetbrains.kotlin" && it.moduleVersion.id.name == "kotlin-stdlib" }
+            ?.moduleVersion?.id?.version
+            ?: error("kotlin-stdlib not found on :lint-rules:testRuntimeClasspath")
+        systemProperty("resolvedKotlinStdlibVersion", resolvedKotlinStdlibVersion)
+    }
+}
+
 // Create JAR with Lint rules
 val lintJar = tasks.register<Jar>("lintJar") {
     archiveBaseName.set("structured-coroutines-lint-rules")
