@@ -16,11 +16,13 @@ import org.jetbrains.kotlin.fir.analysis.checkers.expression.FirTryExpressionChe
 import org.jetbrains.kotlin.fir.expressions.FirBlock
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
+import org.jetbrains.kotlin.fir.expressions.FirPropertyAccessExpression
 import org.jetbrains.kotlin.fir.expressions.FirResolvedQualifier
 import org.jetbrains.kotlin.fir.expressions.FirStatement
 import org.jetbrains.kotlin.fir.expressions.FirTryExpression
 import org.jetbrains.kotlin.fir.references.toResolvedCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirVariableSymbol
 import org.jetbrains.kotlin.fir.types.ConeClassLikeType
 import org.jetbrains.kotlin.fir.types.resolvedType
 import org.jetbrains.kotlin.name.ClassId
@@ -167,12 +169,22 @@ class SuspendInFinallyChecker(
     /**
      * Checks if [expression] resolves to `kotlinx.coroutines.NonCancellable`, whether referenced
      * as a bare imported name, fully qualified, combined via `+` with another
-     * `CoroutineContext`, or through a variable typed as `NonCancellable`.
+     * `CoroutineContext`, through a variable typed as `NonCancellable`, or through a `val`
+     * declared with a wider static type (e.g. `CoroutineContext`) but initialized to
+     * `NonCancellable` (#90 — the pre-#91 crash workaround for the `FirResolvedQualifier.classId`
+     * removal, still in use by call sites that predate the fix).
      *
      * A resolved object reference is a [FirResolvedQualifier], resolved via the shared
      * [resolvedClassId] helper (not a direct `.classId` call — removed as a member in Kotlin
      * 2.4.20, KT-84522). [ConeClassLikeType.lookupTag] is used for the fallback path instead of
      * the unstable `ConeKotlinType.toClassSymbol()` API that changed signature in Kotlin 2.3.20.
+     * The alias case unwraps one level through [FirVariableSymbol.resolvedInitializer] — which
+     * forces resolution to `BODY_RESOLVE` internally instead of reading raw (possibly unresolved)
+     * FIR, avoiding the `@SymbolInternals` opt-in that a direct `.fir` access would require —
+     * and recurses so the alias's initializer is checked by the same rules. Restricted to `val`
+     * (immutable) bindings: a `var`'s initializer is not necessarily its value at the call site,
+     * so trusting it for a mutable binding would silently accept a reassignment away from
+     * `NonCancellable` — the same false-negative risk `#69` tightened against.
      */
     private fun isNonCancellable(expression: FirExpression): Boolean {
         if (expression is FirResolvedQualifier) {
@@ -186,7 +198,17 @@ class SuspendInFinallyChecker(
         }
 
         val classId = (expression.resolvedType as? ConeClassLikeType)?.lookupTag?.classId
-        return classId == NON_CANCELLABLE_CLASS_ID
+        if (classId == NON_CANCELLABLE_CLASS_ID) return true
+
+        if (expression is FirPropertyAccessExpression) {
+            val variableSymbol = expression.calleeReference.toResolvedCallableSymbol() as? FirVariableSymbol<*>
+            if (variableSymbol?.isVal == true) {
+                val initializer = variableSymbol.resolvedInitializer
+                if (initializer != null) return isNonCancellable(initializer)
+            }
+        }
+
+        return false
     }
 
     /**
