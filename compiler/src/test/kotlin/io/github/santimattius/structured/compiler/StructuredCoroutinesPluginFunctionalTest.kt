@@ -1238,6 +1238,77 @@ class StructuredCoroutinesPluginFunctionalTest {
     }
 
     @Test
+    fun `CoroutineContext-typed alias initialized to NonCancellable suppresses SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE`() {
+        // Literal reproduction of variant B from
+        // https://github.com/santimattius/structured-coroutines/issues/90.
+        val sourceCode = """
+            import kotlin.coroutines.CoroutineContext
+            import kotlinx.coroutines.delay
+            import kotlinx.coroutines.withContext
+
+            private val NonCancellable: CoroutineContext = kotlinx.coroutines.NonCancellable
+
+            suspend fun b() {
+                try {
+                    delay(1)
+                } finally {
+                    withContext(NonCancellable) {
+                        delay(1)
+                    }
+                }
+            }
+        """.trimIndent()
+
+        val projectDir = createTestProject(sourceCode)
+        val output = runBuild(projectDir, expectSuccess = true)
+
+        assertTrue(
+            "SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE" !in output && "[CANCEL_004]" !in output,
+            "Did not expect SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE for a CoroutineContext-typed " +
+                "alias initialized to NonCancellable but got:\n$output"
+        )
+    }
+
+    @Test
+    fun `var reassigned away from NonCancellable after initialization still reports SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE`() {
+        // Guards the alias-unwrap fix for #90: a mutable `var`'s initializer must not be trusted
+        // as its value at the call site, or a reassignment away from NonCancellable would be
+        // silently treated as protected — the same false-negative risk #69 tightened against.
+        val sourceCode = """
+            import kotlin.coroutines.CoroutineContext
+            import kotlinx.coroutines.Dispatchers
+            import kotlinx.coroutines.delay
+            import kotlinx.coroutines.withContext
+
+            private var ctx: CoroutineContext = kotlinx.coroutines.NonCancellable
+
+            suspend fun saveToDb() {
+                delay(1)
+            }
+
+            suspend fun cleanupReassigned() {
+                ctx = Dispatchers.IO
+                try {
+                    delay(1)
+                } finally {
+                    withContext(ctx) {
+                        saveToDb()
+                    }
+                }
+            }
+        """.trimIndent()
+
+        val projectDir = createTestProject(sourceCode)
+        val output = runBuild(projectDir, expectSuccess = true)
+
+        assertTrue(
+            "SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE" in output || "[CANCEL_004]" in output,
+            "Expected SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE for a var reassigned away from " +
+                "NonCancellable but got:\n$output"
+        )
+    }
+
+    @Test
     fun `unprotected suspend call in finally still reports SUSPEND_IN_FINALLY_WITHOUT_NON_CANCELLABLE`() {
         val sourceCode = """
             import kotlinx.coroutines.delay
