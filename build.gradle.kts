@@ -53,8 +53,10 @@ tasks.register("testAll") {
         ":detekt-rules:test",
         ":gradle-plugin:test",
         ":lint-rules:test",
-        ":intellij-plugin:test",
     )
+    // :intellij-plugin is a separate included build (see settings.gradle.kts) so its
+    // test task is referenced via the included-build task path, not a root project path.
+    dependsOn(gradle.includedBuild("intellij-plugin").task(":test"))
 }
 
 // Validate that the sample project fails compilation with expected compiler rule codes (run as part of :compiler:test)

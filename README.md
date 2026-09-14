@@ -157,11 +157,12 @@ use the Compiler Plugin or Detekt Rules.
 Install from JetBrains Marketplace or build from source:
 
 ```bash
-# Build the plugin
-./gradlew :intellij-plugin:build
+# Build the plugin — :intellij-plugin is an included build, so its tasks
+# are addressed with -p, not a root project path
+./gradlew -p intellij-plugin build
 
 # Run IDE sandbox for testing
-./gradlew :intellij-plugin:runIde
+./gradlew -p intellij-plugin runIde
 ```
 
 Or install manually:

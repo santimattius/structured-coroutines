@@ -12,7 +12,7 @@ import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.jvm.toolchain.JavaToolchainService
 
 plugins {
-    alias(libs.plugins.kotlin.jvm)
+    kotlin("jvm")
     id("org.jetbrains.intellij.platform") version libs.versions.intellij.platform.get()
 }
 

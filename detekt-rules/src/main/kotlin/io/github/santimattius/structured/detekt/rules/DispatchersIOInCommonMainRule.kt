@@ -10,26 +10,22 @@ package io.github.santimattius.structured.detekt.rules
 import io.github.santimattius.structured.detekt.utils.CoroutineDetektUtils
 import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
-import io.gitlab.arturbosch.detekt.api.CodeSmell
-import io.gitlab.arturbosch.detekt.api.Config
-import io.gitlab.arturbosch.detekt.api.Debt
-import io.gitlab.arturbosch.detekt.api.Entity
-import io.gitlab.arturbosch.detekt.api.Issue
-import io.gitlab.arturbosch.detekt.api.Rule
-import io.gitlab.arturbosch.detekt.api.Severity
+import dev.detekt.api.Config
+import dev.detekt.api.Entity
+import dev.detekt.api.Finding
+import dev.detekt.api.Rule
+import dev.detekt.api.RuleName
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 /**
  * [KMP_001] — `Dispatchers.IO` cannot be referenced from Kotlin/Common source sets targeting Native/JS.
  */
-class DispatchersIOInCommonMainRule(config: Config = Config.empty) : Rule(config) {
-
-    override val issue = Issue(
-        id = "DispatchersIOInCommonMain",
-        severity = Severity.Defect,
-        description = "[KMP_001] `Dispatchers.IO` is JVM/Android-only — inject `CoroutineDispatcher` or use expect/actual. " +
+class DispatchersIOInCommonMainRule(config: Config = Config.empty) : Rule(
+    config,
+    description = "[KMP_001] `Dispatchers.IO` is JVM/Android-only — inject `CoroutineDispatcher` or use expect/actual. " +
             "See: ${DetektDocUrl.buildDocLink("111-kmp_001--dispatchersio-in-commonmain")}",
-        debt = Debt.FIVE_MINS
-    )
+) {
+
+    override val ruleName: RuleName get() = RuleName("DispatchersIOInCommonMain")
 
     override fun visitDotQualifiedExpression(expression: KtDotQualifiedExpression) {
         super.visitDotQualifiedExpression(expression)
@@ -49,8 +45,7 @@ class DispatchersIOInCommonMainRule(config: Config = Config.empty) : Rule(config
         if (!targetsIo || selector != "IO") return
 
         report(
-            CodeSmell(
-                issue = issue,
+            Finding(
                 entity = Entity.from(expression),
                 message = "[KMP_001] `Dispatchers.IO` in common Kotlin source — use dispatcher injection or " +
                     "expect/actual to supply a platform-backed I/O dispatcher. " +

@@ -1,8 +1,8 @@
 package io.github.santimattius.structured.detekt.rules
 
-import io.gitlab.arturbosch.detekt.api.Config
-import io.gitlab.arturbosch.detekt.test.compileAndLint
-import io.gitlab.arturbosch.detekt.test.lint
+import dev.detekt.api.Config
+import dev.detekt.test.lint
+import dev.detekt.test.utils.compileForTest
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.nio.file.Paths
@@ -19,7 +19,7 @@ class RunBlockingInCommonMainRuleTest {
             fun load() = runBlocking { 1 }
         """.trimIndent()
 
-        assertThat(rule.compileAndLint(code)).isEmpty()
+        assertThat(rule.lint(code)).isEmpty()
     }
 
     @Test
@@ -27,7 +27,7 @@ class RunBlockingInCommonMainRuleTest {
         val uri = javaClass.getResource(
             "/detekt-kmp-common-runblocking/src/commonMain/kotlin/UsesRunBlocking.kt",
         )!!
-        val findings = rule.lint(Paths.get(uri.toURI()))
+        val findings = rule.lint(compileForTest(Paths.get(uri.toURI())))
         assertThat(findings).hasSize(1)
         assertThat(findings.single().message).contains("[KMP_002]")
     }
@@ -42,6 +42,6 @@ class RunBlockingInCommonMainRuleTest {
             fun load() = runBlocking { 1 }
         """.trimIndent()
 
-        assertThat(rule.compileAndLint(code)).isEmpty()
+        assertThat(rule.lint(code)).isEmpty()
     }
 }

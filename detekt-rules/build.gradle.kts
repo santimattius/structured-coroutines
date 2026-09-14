@@ -10,6 +10,7 @@ dependencies {
     // Testing
     testImplementation(libs.detekt.api)
     testImplementation(libs.detekt.test)
+    testImplementation(libs.detekt.test.utils)
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.assertj.core)
 }

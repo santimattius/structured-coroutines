@@ -43,8 +43,9 @@ This document provides detailed information about the Structured Coroutines Inte
 git clone https://github.com/santimattius/structured-coroutines.git
 cd structured-coroutines
 
-# Build the plugin ZIP (IntelliJ Platform Gradle Plugin 2.x)
-./gradlew :intellij-plugin:buildPlugin
+# Build the plugin ZIP (IntelliJ Platform Gradle Plugin 2.x) — :intellij-plugin
+# is an included build, so its tasks are addressed with -p, not a root project path
+./gradlew -p intellij-plugin buildPlugin
 
 # The plugin ZIP will be at:
 # intellij-plugin/build/distributions/intellij-plugin-<version>.zip
@@ -466,20 +467,23 @@ suspend fun legacy() {
 ### Commands
 
 ```bash
+# :intellij-plugin is an included build, so its tasks are addressed with -p,
+# not a root project path
+
 # Build the plugin ZIP for local install or distribution
-./gradlew :intellij-plugin:buildPlugin
+./gradlew -p intellij-plugin buildPlugin
 
 # Build and run tests
-./gradlew :intellij-plugin:build
+./gradlew -p intellij-plugin build
 
 # Run tests
-./gradlew :intellij-plugin:test
+./gradlew -p intellij-plugin test
 
 # Verify plugin compatibility
-./gradlew :intellij-plugin:verifyPlugin
+./gradlew -p intellij-plugin verifyPlugin
 
 # Run IDE sandbox for testing
-./gradlew :intellij-plugin:runIde
+./gradlew -p intellij-plugin runIde
 ```
 
 ### Project Structure

@@ -10,28 +10,24 @@ package io.github.santimattius.structured.detekt.rules
 import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.CoroutineDetektUtils
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
-import io.gitlab.arturbosch.detekt.api.CodeSmell
-import io.gitlab.arturbosch.detekt.api.Config
-import io.gitlab.arturbosch.detekt.api.Debt
-import io.gitlab.arturbosch.detekt.api.Entity
-import io.gitlab.arturbosch.detekt.api.Issue
-import io.gitlab.arturbosch.detekt.api.Rule
-import io.gitlab.arturbosch.detekt.api.Severity
+import dev.detekt.api.Config
+import dev.detekt.api.Entity
+import dev.detekt.api.Finding
+import dev.detekt.api.Rule
+import dev.detekt.api.RuleName
 import org.jetbrains.kotlin.psi.KtCallExpression
 
 /**
  * [INTEROP_001] — mirrors the compiler rule: `suspendCoroutine` does not support cancellation.
  */
-class SuspendCoroutineWithoutCancellationRule(config: Config = Config.empty) : Rule(config) {
-
-    override val issue = Issue(
-        id = "SuspendCoroutineWithoutCancellation",
-        severity = Severity.Defect,
-        description = "[INTEROP_001] 'suspendCoroutine' does not support cancellation. " +
+class SuspendCoroutineWithoutCancellationRule(config: Config = Config.empty) : Rule(
+    config,
+    description = "[INTEROP_001] 'suspendCoroutine' does not support cancellation. " +
             "Use 'suspendCancellableCoroutine' and 'invokeOnCancellation'. " +
             "See: ${DetektDocUrl.buildDocLink("101-interop_001--wrapping-callbacks-without-cancellation-support")}",
-        debt = Debt.FIVE_MINS
-    )
+) {
+
+    override val ruleName: RuleName get() = RuleName("SuspendCoroutineWithoutCancellation")
 
     override fun visitCallExpression(expression: KtCallExpression) {
         super.visitCallExpression(expression)
@@ -44,8 +40,7 @@ class SuspendCoroutineWithoutCancellationRule(config: Config = Config.empty) : R
         if (!CoroutineDetektUtils.isSuspendFunction(fn)) return
 
         report(
-            CodeSmell(
-                issue = issue,
+            Finding(
                 entity = Entity.from(expression),
                 message = "[INTEROP_001] 'suspendCoroutine' does not propagate cancellation from the caller. " +
                     "Prefer 'suspendCancellableCoroutine' + 'invokeOnCancellation { }' for callback cleanup. " +

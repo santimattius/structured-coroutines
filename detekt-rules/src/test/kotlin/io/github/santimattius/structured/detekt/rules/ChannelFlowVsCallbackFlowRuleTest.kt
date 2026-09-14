@@ -6,8 +6,8 @@
 
 package io.github.santimattius.structured.detekt.rules
 
-import io.gitlab.arturbosch.detekt.api.Config
-import io.gitlab.arturbosch.detekt.test.compileAndLint
+import dev.detekt.api.Config
+import dev.detekt.test.lint
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -26,7 +26,7 @@ class ChannelFlowVsCallbackFlowRuleTest {
             }
             """.trimIndent()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).hasSize(1)
         assertThat(findings[0].message).contains("[INTEROP_003]")
     }
@@ -46,7 +46,7 @@ class ChannelFlowVsCallbackFlowRuleTest {
             }
             """.trimIndent()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).hasSize(1)
         assertThat(findings[0].message).contains("channelFlow")
     }
@@ -66,7 +66,7 @@ class ChannelFlowVsCallbackFlowRuleTest {
             fun unregister(sensor: Any, cb: Any) {}
             """.trimIndent()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).isEmpty()
     }
 }

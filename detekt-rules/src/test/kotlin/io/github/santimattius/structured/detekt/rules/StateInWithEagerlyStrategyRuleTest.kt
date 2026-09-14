@@ -1,7 +1,7 @@
 package io.github.santimattius.structured.detekt.rules
 
-import io.gitlab.arturbosch.detekt.api.Config
-import io.gitlab.arturbosch.detekt.test.compileAndLint
+import dev.detekt.api.Config
+import dev.detekt.test.lint
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -20,7 +20,7 @@ class StateInWithEagerlyStrategyRuleTest {
             }
         """.trimIndent()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).hasSize(1)
         assertThat(findings[0].message).contains("[FLOW_006]")
     }
@@ -40,7 +40,7 @@ class StateInWithEagerlyStrategyRuleTest {
             }
         """.trimIndent()
 
-        assertThat(rule.compileAndLint(code)).isEmpty()
+        assertThat(rule.lint(code)).isEmpty()
     }
 
     @Test
@@ -56,6 +56,6 @@ class StateInWithEagerlyStrategyRuleTest {
             }
         """.trimIndent()
 
-        assertThat(rule.compileAndLint(code)).isEmpty()
+        assertThat(rule.lint(code)).isEmpty()
     }
 }

@@ -49,9 +49,9 @@ import io.github.santimattius.structured.detekt.rules.SuspendCoroutineWithoutCan
 import io.github.santimattius.structured.detekt.rules.SuspendInFinallyRule
 import io.github.santimattius.structured.detekt.rules.UnusedDeferredRule
 import io.github.santimattius.structured.detekt.rules.WithTimeoutScopeCancellationRule
-import io.gitlab.arturbosch.detekt.api.Config
-import io.gitlab.arturbosch.detekt.api.RuleSet
-import io.gitlab.arturbosch.detekt.api.RuleSetProvider
+import dev.detekt.api.RuleSet
+import dev.detekt.api.RuleSetId
+import dev.detekt.api.RuleSetProvider
 
 /**
  * Detekt RuleSetProvider for Structured Coroutines rules.
@@ -131,63 +131,63 @@ import io.gitlab.arturbosch.detekt.api.RuleSetProvider
  * ```
  */
 class StructuredCoroutinesRuleSetProvider : RuleSetProvider {
-    
-    override val ruleSetId: String = "structured-coroutines"
 
-    override fun instance(config: Config): RuleSet = RuleSet(
+    override val ruleSetId: RuleSetId = RuleSetId("structured-coroutines")
+
+    override fun instance(): RuleSet = RuleSet(
         ruleSetId,
         listOf(
             // Compiler Plugin Rules
-            GlobalScopeUsageRule(config),
-            InlineCoroutineScopeRule(config),
-            RunBlockingInSuspendRule(config),
-            DispatchersUnconfinedRule(config),
-            CancellationExceptionSubclassRule(config),
-            CancellationExceptionSwallowedRule(config),
-            JobInBuilderContextRule(config),
-            RedundantLaunchInCoroutineScopeRule(config),
-            SuspendInFinallyRule(config),
-            UnusedDeferredRule(config),
+            ::GlobalScopeUsageRule,
+            ::InlineCoroutineScopeRule,
+            ::RunBlockingInSuspendRule,
+            ::DispatchersUnconfinedRule,
+            ::CancellationExceptionSubclassRule,
+            ::CancellationExceptionSwallowedRule,
+            ::JobInBuilderContextRule,
+            ::RedundantLaunchInCoroutineScopeRule,
+            ::SuspendInFinallyRule,
+            ::UnusedDeferredRule,
 
             // Detekt-Only Rules
-            BlockingCallInCoroutineRule(config),
-            RunBlockingWithDelayInTestRule(config),
-            ExternalScopeLaunchRule(config),
-            LoopWithoutYieldRule(config),
-            ScopeReuseAfterCancelRule(config),
-            ChannelNotClosedRule(config),
-            ConsumeEachMultipleConsumersRule(config),
-            FlowBlockingCallRule(config),
-            WithTimeoutScopeCancellationRule(config),
-            MissingCatchInFlowRule(config),
+            ::BlockingCallInCoroutineRule,
+            ::RunBlockingWithDelayInTestRule,
+            ::ExternalScopeLaunchRule,
+            ::LoopWithoutYieldRule,
+            ::ScopeReuseAfterCancelRule,
+            ::ChannelNotClosedRule,
+            ::ConsumeEachMultipleConsumersRule,
+            ::FlowBlockingCallRule,
+            ::WithTimeoutScopeCancellationRule,
+            ::MissingCatchInFlowRule,
 
             // Iteration 1 (v0.8.0 plan) — INTEROP, Flow, Concurrency, Testing, KMP
-            SuspendCoroutineWithoutCancellationRule(config),
-            CallbackFlowWithoutAwaitCloseRule(config),
-            MutableFlowExposedRule(config),
-            SequentialAsyncAwaitRule(config),
-            RunBlockingInsteadOfRunTestRule(config),
-            DispatchersIOInCommonMainRule(config),
+            ::SuspendCoroutineWithoutCancellationRule,
+            ::CallbackFlowWithoutAwaitCloseRule,
+            ::MutableFlowExposedRule,
+            ::SequentialAsyncAwaitRule,
+            ::RunBlockingInsteadOfRunTestRule,
+            ::DispatchersIOInCommonMainRule,
 
             // Iteration 2 (v0.9.0) — Phase 1: core rules
-            SynchronizedInCoroutineRule(config),
-            StateInWithEagerlyStrategyRule(config),
-            RunBlockingInCommonMainRule(config),
-            BlockingCallInCoroutineBackendRule(config),
+            ::SynchronizedInCoroutineRule,
+            ::StateInWithEagerlyStrategyRule,
+            ::RunBlockingInCommonMainRule,
+            ::BlockingCallInCoroutineBackendRule,
 
             // Phase 2: heuristic / opt-in rules
-            SharedMutableStateInCoroutineRule(config),
-            RedundantWithContextRule(config),
-            SideEffectInMapOperatorRule(config),
-            MainScopeWithoutCancelRule(config),
-            ThreadLocalNotPropagatedRule(config),
+            ::SharedMutableStateInCoroutineRule,
+            ::RedundantWithContextRule,
+            ::SideEffectInMapOperatorRule,
+            ::MainScopeWithoutCancelRule,
+            ::ThreadLocalNotPropagatedRule,
 
             // Iteration 3 (v1.0.0) — Phase 1 Detekt
-            HardcodedDispatcherInClassRule(config),
-            SharedFlowForOneshotEventsRule(config),
-            ChannelFlowVsCallbackFlowRule(config),
-            BlockingFutureGetRule(config),
-            MissingCoroutineNameRule(config),
+            ::HardcodedDispatcherInClassRule,
+            ::SharedFlowForOneshotEventsRule,
+            ::ChannelFlowVsCallbackFlowRule,
+            ::BlockingFutureGetRule,
+            ::MissingCoroutineNameRule,
         )
     )
 }

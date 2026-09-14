@@ -11,13 +11,11 @@ package io.github.santimattius.structured.detekt.rules
 
 import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
-import io.gitlab.arturbosch.detekt.api.CodeSmell
-import io.gitlab.arturbosch.detekt.api.Config
-import io.gitlab.arturbosch.detekt.api.Debt
-import io.gitlab.arturbosch.detekt.api.Entity
-import io.gitlab.arturbosch.detekt.api.Issue
-import io.gitlab.arturbosch.detekt.api.Rule
-import io.gitlab.arturbosch.detekt.api.Severity
+import dev.detekt.api.Config
+import dev.detekt.api.Entity
+import dev.detekt.api.Finding
+import dev.detekt.api.Rule
+import dev.detekt.api.RuleName
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
@@ -54,16 +52,14 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
  * Heuristic: only checks within the same function. Channels closed in another function
  * or via structured concurrency may still be reported. Suppress when appropriate.
  */
-class ChannelNotClosedRule(config: Config = Config.empty) : Rule(config) {
-
-    override val issue = Issue(
-        id = "ChannelNotClosed",
-        severity = Severity.Warning,
-        description = "[CHANNEL_001] Manual Channel created without close(). " +
+class ChannelNotClosedRule(config: Config = Config.empty) : Rule(
+    config,
+    description = "[CHANNEL_001] Manual Channel created without close(). " +
             "Use produce { } or ensure close() is called. " +
             "See: ${DetektDocUrl.buildDocLink("71-forgetting-to-close-manual-channels")}",
-        debt = Debt.TEN_MINS
-    )
+) {
+
+    override val ruleName: RuleName get() = RuleName("ChannelNotClosed")
 
     override fun visitCallExpression(expression: KtCallExpression) {
         super.visitCallExpression(expression)
@@ -83,8 +79,7 @@ class ChannelNotClosedRule(config: Config = Config.empty) : Rule(config) {
         }
         if (!hasClose) {
             report(
-                CodeSmell(
-                    issue = issue,
+                Finding(
                     entity = Entity.from(expression),
                     message = "[CHANNEL_001] Channel '$variableName' may never be closed. " +
                         "Use produce { } or call $variableName.close(). " +

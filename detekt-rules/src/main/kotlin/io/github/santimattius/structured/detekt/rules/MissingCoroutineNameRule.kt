@@ -9,27 +9,23 @@ package io.github.santimattius.structured.detekt.rules
 import io.github.santimattius.structured.detekt.utils.CoroutineDetektUtils
 import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
-import io.gitlab.arturbosch.detekt.api.CodeSmell
-import io.gitlab.arturbosch.detekt.api.Config
-import io.gitlab.arturbosch.detekt.api.Debt
-import io.gitlab.arturbosch.detekt.api.Entity
-import io.gitlab.arturbosch.detekt.api.Issue
-import io.gitlab.arturbosch.detekt.api.Rule
-import io.gitlab.arturbosch.detekt.api.Severity
+import dev.detekt.api.Config
+import dev.detekt.api.Entity
+import dev.detekt.api.Finding
+import dev.detekt.api.Rule
+import dev.detekt.api.RuleName
 import org.jetbrains.kotlin.psi.KtCallExpression
 
 /**
  * [DEBUG_001] — unnamed [launch]/[async] (opt-in via Detekt `active: false` by default).
  */
-class MissingCoroutineNameRule(config: Config = Config.empty) : Rule(config) {
-
-    override val issue = Issue(
-        id = "MissingCoroutineName",
-        severity = Severity.Minor,
-        description = "[DEBUG_001] Add CoroutineName(\"descriptor\") for easier debugging. " +
+class MissingCoroutineNameRule(config: Config = Config.empty) : Rule(
+    config,
+    description = "[DEBUG_001] Add CoroutineName(\"descriptor\") for easier debugging. " +
             "See: ${DetektDocUrl.buildDocLink("141-debug_001--missing-coroutine-name")}",
-        debt = Debt.FIVE_MINS,
-    )
+) {
+
+    override val ruleName: RuleName get() = RuleName("MissingCoroutineName")
 
     private val builderNames = setOf("launch", "async")
 
@@ -42,8 +38,7 @@ class MissingCoroutineNameRule(config: Config = Config.empty) : Rule(config) {
         if (callHasCoroutineName(expression)) return
 
         report(
-            CodeSmell(
-                issue = issue,
+            Finding(
                 entity = Entity.from(expression),
                 message = "[DEBUG_001] Unnamed coroutine — add CoroutineName(\"descriptor\") to the context " +
                     "for clearer stack traces. See: ${DetektDocUrl.buildDocLink("141-debug_001--missing-coroutine-name")}",

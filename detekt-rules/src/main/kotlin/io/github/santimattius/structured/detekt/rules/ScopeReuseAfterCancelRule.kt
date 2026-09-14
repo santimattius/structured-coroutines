@@ -11,13 +11,11 @@ package io.github.santimattius.structured.detekt.rules
 
 import io.github.santimattius.structured.detekt.utils.CoroutinesImportFilter
 import io.github.santimattius.structured.detekt.utils.DetektDocUrl
-import io.gitlab.arturbosch.detekt.api.CodeSmell
-import io.gitlab.arturbosch.detekt.api.Config
-import io.gitlab.arturbosch.detekt.api.Debt
-import io.gitlab.arturbosch.detekt.api.Entity
-import io.gitlab.arturbosch.detekt.api.Issue
-import io.gitlab.arturbosch.detekt.api.Rule
-import io.gitlab.arturbosch.detekt.api.Severity
+import dev.detekt.api.Config
+import dev.detekt.api.Entity
+import dev.detekt.api.Finding
+import dev.detekt.api.Rule
+import dev.detekt.api.RuleName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -39,16 +37,14 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
  *     active: true
  * ```
  */
-class ScopeReuseAfterCancelRule(config: Config = Config.empty) : Rule(config) {
-
-    override val issue = Issue(
-        id = "ScopeReuseAfterCancel",
-        severity = Severity.Warning,
-        description = "[CANCEL_005] Scope cancelled and then reused. " +
+class ScopeReuseAfterCancelRule(config: Config = Config.empty) : Rule(
+    config,
+    description = "[CANCEL_005] Scope cancelled and then reused. " +
             "Use coroutineContext.job.cancelChildren() instead of cancel() if you need to reuse the scope. " +
             "See: ${DetektDocUrl.buildDocLink("45-cancel_005--reusing-a-cancelled-coroutinescope")}",
-        debt = Debt.TEN_MINS
-    )
+) {
+
+    override val ruleName: RuleName get() = RuleName("ScopeReuseAfterCancel")
 
     private val builderNames = setOf("launch", "async")
 
@@ -70,8 +66,7 @@ class ScopeReuseAfterCancelRule(config: Config = Config.empty) : Rule(config) {
         }
         if (hasReuse) {
             report(
-                CodeSmell(
-                    issue = issue,
+                Finding(
                     entity = Entity.from(expression),
                     message = "[CANCEL_005] Scope '$scopeName' is cancelled and then reused. " +
                         "Use cancelChildren() instead of cancel() if you need to reuse the scope. " +

@@ -41,8 +41,9 @@ cd structured-coroutines
 # Core modules only (matches CI)
 ./gradlew :compiler:test :detekt-rules:test :lint-rules:test
 
-# IntelliJ plugin compilation (matches CI)
-./gradlew :intellij-plugin:compileKotlin :intellij-plugin:instrumentCode
+# IntelliJ plugin compilation (matches CI) — :intellij-plugin is an included build,
+# so its tasks are addressed with -p, not a root project path
+./gradlew -p intellij-plugin compileKotlin instrumentCode
 
 # Detekt sample validation
 ./gradlew :sample-detekt:detekt

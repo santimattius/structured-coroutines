@@ -1,7 +1,7 @@
 package io.github.santimattius.structured.detekt.rules
 
-import io.gitlab.arturbosch.detekt.api.Config
-import io.gitlab.arturbosch.detekt.test.compileAndLint
+import dev.detekt.api.Config
+import dev.detekt.test.lint
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -20,7 +20,7 @@ class SideEffectInMapOperatorRuleTest {
             }
         """.trimIndent()
 
-        val findings = rule.compileAndLint(code)
+        val findings = rule.lint(code)
         assertThat(findings).hasSize(1)
         assertThat(findings[0].message).contains("[FLOW_008]")
     }
@@ -33,7 +33,7 @@ class SideEffectInMapOperatorRuleTest {
             fun pipeline(flow: Flow<Int>) = flow.map { it * 2 }
         """.trimIndent()
 
-        assertThat(rule.compileAndLint(code)).isEmpty()
+        assertThat(rule.lint(code)).isEmpty()
     }
 
     @Test
@@ -49,6 +49,6 @@ class SideEffectInMapOperatorRuleTest {
             }
         """.trimIndent()
 
-        assertThat(rule.compileAndLint(code)).isEmpty()
+        assertThat(rule.lint(code)).isEmpty()
     }
 }
