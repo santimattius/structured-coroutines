@@ -132,13 +132,18 @@ structured-coroutines:
 
   FlowBlockingCall:
     active: true
+
+  # EXCEPT_004 (heuristic, name based)
+  MisplacedTryCatchInScope:
+    active: true
+    severity: warning
 ```
 
 ---
 
 ## Rules Overview
 
-> **v1.0.0:** **40 Detekt rules** covering **51 documented patterns** (not every pattern has a Detekt rule).  
+> **v1.0.0:** **41 Detekt rules** covering **51 documented patterns** (not every pattern has a Detekt rule).  
 > Canonical manifest: [`docs/rule-codes.yml`](../docs/rule-codes.yml) · suppressions: [`docs/SUPPRESSING_RULES.md`](../docs/SUPPRESSING_RULES.md).
 
 ### Summary Table
@@ -163,6 +168,7 @@ structured-coroutines:
 | `ChannelNotClosed` | Detekt-Only | Warning | Detects manual Channel() without close() in same function |
 | `ConsumeEachMultipleConsumers` | Detekt-Only | Warning | Detects same channel used with consumeEach from multiple coroutines |
 | `FlowBlockingCall` | Detekt-Only | Warning | Detects blocking calls inside `flow { }` builder |
+| `MisplacedTryCatchInScope` | Compiler Plugin | Warning | Detects `try/catch` inside `coroutineScope` around `await()`/`join()` of a child created in the same scope |
 
 ### Best Practices Reference
 
@@ -186,6 +192,7 @@ structured-coroutines:
 | `ChannelNotClosed` | 7.1 - Forgetting to Close Manual Channels |
 | `ConsumeEachMultipleConsumers` | 7.2 - Sharing consumeEach Among Multiple Consumers |
 | `FlowBlockingCall` | 9.1 - Blocking Code in flow { } Builder |
+| `MisplacedTryCatchInScope` | 5.4 - Misplaced try-catch Inside coroutineScope |
 
 ---
 
@@ -634,6 +641,43 @@ flow {
     emit(1)
 }.flowOn(Dispatchers.IO)
 ```
+
+**Severity:** Warning
+
+---
+
+### 19. MisplacedTryCatchInScope (EXCEPT_004 — §5.4)
+
+**Detects:** A `try` with at least one `catch` placed inside a `coroutineScope { }` lambda whose try block calls `await()`, `join()`, `awaitAll(...)` or `joinAll(...)` on a child created by `async`/`launch` in that same lambda (a local variable, a simple alias, or an inline `async { }.await()`). The child is a structural child of the scope, so its failure cancels the scope and `coroutineScope` rethrows to its caller; the catch cannot stop it.
+
+**Recommended:** Wrap the whole `coroutineScope` call, catch inside the `async`/`launch` block, or use `supervisorScope`.
+
+```kotlin
+// ❌ BAD: the failure still leaves coroutineScope
+suspend fun bad(): Int = coroutineScope {
+    val d = async<Int> { error("boom") }
+    try { d.await() } catch (e: Exception) { 0 }
+}
+
+// ✅ GOOD: wrap the whole coroutineScope call
+suspend fun good1(): Int =
+    try { coroutineScope { async<Int> { error("boom") }.await() } } catch (e: Exception) { 0 }
+
+// ✅ GOOD: catch inside the child
+suspend fun good2(): Int = coroutineScope {
+    async { try { error("boom") } catch (e: Exception) { 0 } }.await()
+}
+
+// ✅ GOOD: supervisorScope isolates its direct children
+suspend fun good3(): Int = supervisorScope {
+    val d = async<Int> { error("boom") }
+    try { d.await() } catch (e: Exception) { 0 }
+}
+```
+
+**Not reported:** `try/catch` around the whole `coroutineScope`, `supervisorScope`, exceptions caught inside the `async`/`launch` block, a `Deferred` received as a parameter, and `try` with only `finally`. Lambdas of `async`/`launch`, `supervisorScope` and nested `coroutineScope` are not entered (a nested scope is reported once by its own call).
+
+**Limitations (PSI based, no type resolution):** calls are matched by name and tracked children by variable name; smart-cast receivers are not unwrapped; `async`/`launch` arguments are not inspected, so `async(SupervisorJob()) { }` is reported although the catch can be legitimate; a catch that rethrows is still reported.
 
 **Severity:** Warning
 

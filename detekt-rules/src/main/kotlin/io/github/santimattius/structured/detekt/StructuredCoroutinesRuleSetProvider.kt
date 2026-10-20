@@ -19,6 +19,7 @@ import io.github.santimattius.structured.detekt.rules.ChannelNotClosedRule
 import io.github.santimattius.structured.detekt.rules.ConsumeEachMultipleConsumersRule
 import io.github.santimattius.structured.detekt.rules.DispatchersIOInCommonMainRule
 import io.github.santimattius.structured.detekt.rules.HardcodedDispatcherInClassRule
+import io.github.santimattius.structured.detekt.rules.MisplacedTryCatchInScopeRule
 import io.github.santimattius.structured.detekt.rules.MissingCoroutineNameRule
 import io.github.santimattius.structured.detekt.rules.MainScopeWithoutCancelRule
 import io.github.santimattius.structured.detekt.rules.RedundantWithContextRule
@@ -88,6 +89,11 @@ import io.gitlab.arturbosch.detekt.api.RuleSetProvider
  *    - Severity: CodeSmell (configurable)
  *    - Platforms: All
  *
+ * 5b. **MisplacedTryCatchInScopeRule** (Best Practice 5.4, EXCEPT_004)
+ *    - Detects try/catch inside coroutineScope around await()/join() of a child created in the same scope
+ *    - Severity: Warning (heuristic)
+ *    - Platforms: All
+ *
  * ### Detekt-Only Rules
  *
  * 6. **BlockingCallInCoroutineRule** (Best Practice 3.1)
@@ -148,6 +154,7 @@ class StructuredCoroutinesRuleSetProvider : RuleSetProvider {
             RedundantLaunchInCoroutineScopeRule(config),
             SuspendInFinallyRule(config),
             UnusedDeferredRule(config),
+            MisplacedTryCatchInScopeRule(config),
 
             // Detekt-Only Rules
             BlockingCallInCoroutineRule(config),

@@ -35,6 +35,7 @@ You should see **53 findings** from the `structured-coroutines` rule set (the bu
 | RedundantLaunchInCoroutineScope (RUNBLOCK_001) | RedundantLaunchInCoroutineScopeExample.kt | single `launch { }` inside `coroutineScope { }` |
 | SuspendInFinally (CANCEL_004) | SuspendInFinallyExample.kt | `delay()` in `finally` without `NonCancellable` |
 | UnusedDeferred (SCOPE_002) | UnusedDeferredExample.kt | `async { }` result never awaited |
+| MisplacedTryCatchInScope (EXCEPT_004) | MisplacedTryCatchInScopeExample.kt | `try { d.await() } catch` inside `coroutineScope { }` for a child created in it |
 | ScopeReuseAfterCancel (CANCEL_005) | ScopeReuseAfterCancelExample.kt | `scope.cancel()` then `scope.launch { }` |
 | ChannelNotClosed (CHANNEL_001) | ChannelNotClosedExample.kt, ConsumeEachMultipleConsumersExample.kt | `Channel<Int>()` without `close()` |
 | ConsumeEachMultipleConsumers (CHANNEL_002) | ConsumeEachMultipleConsumersExample.kt | same `ch` with `consumeEach` in two `scope.launch { }` |

@@ -47,6 +47,9 @@ structured-coroutines:
     active: true
   UnusedDeferred:
     active: true
+  MisplacedTryCatchInScope:
+    active: true
+    severity: warning
   ScopeReuseAfterCancel:
     active: true
   ChannelNotClosed:
