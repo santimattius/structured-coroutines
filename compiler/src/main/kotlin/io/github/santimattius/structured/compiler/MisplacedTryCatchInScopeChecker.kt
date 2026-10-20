@@ -84,6 +84,12 @@ import org.jetbrains.kotlin.name.Name
  *   child. `var`s that are reassigned are not specially handled.
  * - A `try` that contains the await only inside another builder's lambda (e.g. `withContext`) is
  *   still analyzed, while one inside `async` / `launch` is not.
+ * - Receivers wrapped in a smart cast are not unwrapped, so an await on such a receiver is not
+ *   matched (false negative).
+ * - The arguments of `async` / `launch` are not inspected. A child started with its own parent
+ *   job (e.g. `async(SupervisorJob()) { ... }`) is not a structural child of the scope, so its
+ *   failure does not cancel the scope and the catch is legitimate, yet it is still reported
+ *   (false positive).
  * - Heuristic: a catch that rethrows or intentionally observes the exception is still reported,
  *   hence the WARNING default.
  *
