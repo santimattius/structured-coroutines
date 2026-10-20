@@ -45,6 +45,7 @@ class StructuredCoroutinesIssueRegistry : IssueRegistry() {
             // Fase 3.4: Reglas Adicionales
             UnstructuredLaunchDetector.ISSUE,
             RedundantLaunchInCoroutineScopeDetector.ISSUE,
+            MisplacedTryCatchInScopeDetector.ISSUE,
             RunBlockingWithDelayInTestDetector.ISSUE,
             LoopWithoutYieldDetector.ISSUE,
             ScopeReuseAfterCancelDetector.ISSUE,

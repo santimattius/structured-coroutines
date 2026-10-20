@@ -112,6 +112,7 @@ Configure Android Lint rules in `lint.xml`:
     <!-- Additional Rules -->
     <issue id="UnstructuredLaunch" severity="error" />
     <issue id="RedundantLaunchInCoroutineScope" severity="warning" />
+    <issue id="MisplacedTryCatchInScope" severity="warning" />
     <issue id="RunBlockingWithDelayInTest" severity="warning" />
     <issue id="LoopWithoutYield" severity="warning" />
     <issue id="ScopeReuseAfterCancel" severity="warning" />
@@ -129,7 +130,7 @@ Configure Android Lint rules in `lint.xml`:
 
 ## Rules Overview
 
-> **v1.0.0:** **35 Android Lint detectors** aligned with [`docs/rule-codes.yml`](../docs/rule-codes.yml).  
+> **v1.0.0:** **36 Android Lint detectors** aligned with [`docs/rule-codes.yml`](../docs/rule-codes.yml).  
 > Includes Compose (COMPOSE_001–003), KMP, and interop rules from v0.8–v1.0.
 
 ### Summary Table
@@ -151,6 +152,7 @@ Configure Android Lint rules in `lint.xml`:
 | `LifecycleAwareFlowCollection` | Android-Specific | Warning | Flow collect in lifecycleScope without repeatOnLifecycle (§8.2) |
 | `UnstructuredLaunch` | Additional | Error | Detects launch without structured scope |
 | `RedundantLaunchInCoroutineScope` | Additional | Warning | Detects redundant launch in `coroutineScope` |
+| `MisplacedTryCatchInScope` | Additional | Warning | Detects `try/catch` inside `coroutineScope` around `await()`/`join()` of a child created in that scope (EXCEPT_004) |
 | `RunBlockingWithDelayInTest` | Additional | Warning | Detects `runBlocking` + `delay` in tests |
 | `RunBlockingInsteadOfRunTest` | Additional | Warning | Detects `@Test … = runBlocking { }` (prefer `runTest`) |
 | `DispatchersIOInCommonMain` | Additional | Error | Detects `Dispatchers.IO` in `commonMain` / `commonTest` |
@@ -544,6 +546,35 @@ suspend fun good() = coroutineScope {
     work()  // Direct, without launch
 }
 ```
+
+**Severity:** Warning (configurable)
+
+---
+
+### MisplacedTryCatchInScope (EXCEPT_004 — §5.4)
+
+**Detects:** a `try/catch` placed inside a `coroutineScope { }` lambda around `await()`, `join()`, `awaitAll(...)` or `joinAll(...)` of an `async`/`launch` created in that same lambda. The child is a structural child of the scope, so its failure cancels the scope and `coroutineScope` rethrows to its caller; the catch cannot contain it.
+
+```kotlin
+// ⚠️ WARNING - the catch cannot stop the failure from leaving coroutineScope
+suspend fun bad(): Int = coroutineScope {
+    val d = async<Int> { error("boom") }
+    try { d.await() } catch (e: Exception) { 0 }
+}
+
+// ✅ GOOD - wrap the whole coroutineScope call
+suspend fun good1(): Int =
+    try { coroutineScope { async<Int> { error("boom") }.await() } } catch (e: Exception) { 0 }
+
+// ✅ GOOD - catch inside the child, or use supervisorScope
+suspend fun good2(): Int = coroutineScope {
+    async { try { error("boom") } catch (e: Exception) { 0 } }.await()
+}
+```
+
+**Not reported:** `try/catch` wrapping the whole `coroutineScope`, `supervisorScope`, exceptions caught inside the `async`/`launch` block, a `Deferred` received as a parameter, and `try` with only `finally`.
+
+**Limitations (heuristic):** children are tracked by local variable name (plus simple aliases); smart-cast receivers are not unwrapped; `async`/`launch` arguments are not inspected, so `async(SupervisorJob()) { }` is reported although the catch is legitimate; a catch that rethrows is still reported.
 
 **Severity:** Warning (configurable)
 

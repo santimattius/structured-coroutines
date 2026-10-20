@@ -164,10 +164,10 @@ rules:
     doc_anchor: "54-except_004--misplaced-try-catch-inside-coroutinescope"
     compiler: [MISPLACED_TRY_CATCH_IN_SCOPE]
     detekt: [MisplacedTryCatchInScope]
-    lint: []
+    lint: [MisplacedTryCatchInScope]
     intellij: []
     default_severity: warning
-    notes: "Compiler and Detekt (heuristic, PSI based, name matching); Lint and IntelliJ parity are tracked in issue #100 as follow-ups. Distinct from SCOPE_004 (awaitAll and exception propagation): EXCEPT_004 flags a try/catch placed inside the coroutineScope lambda around await()/join() of a child created in that same lambda."
+    notes: "Compiler, Detekt and Android Lint (the latter two are heuristic, PSI/UAST based, name matching); IntelliJ parity is tracked in issue #100 as a follow-up. Distinct from SCOPE_004 (awaitAll and exception propagation): EXCEPT_004 flags a try/catch placed inside the coroutineScope lambda around await()/join() of a child created in that same lambda."
 
   - code: TEST_001
     section: "6.1"

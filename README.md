@@ -19,7 +19,7 @@ analysis.
 | Compiler Plugin               | ✅ Complete (15 FIR checkers)                            | [gradle-plugin/README.md](gradle-plugin/README.md)                                                          |
 | Gradle Plugin                 | ✅ Complete (profiles incl. Spring/Ktor)                 | [gradle-plugin/README.md](gradle-plugin/README.md)                                                          |
 | Detekt Rules                  | ✅ Complete (41 rules)                                   | [detekt-rules/README.md](detekt-rules/README.md)                                                            |
-| Android Lint                  | ✅ Complete (35 detectors)                               | [lint-rules/README.md](lint-rules/README.md)                                                                |
+| Android Lint                  | ✅ Complete (36 detectors)                               | [lint-rules/README.md](lint-rules/README.md)                                                                |
 | IntelliJ Plugin               | ✅ Complete (35 inspections, tool window, Flow Analyzer) | [intellij-plugin/README.md](intellij-plugin/README.md)                                                    |
 | Annotations                   | ✅ Complete                                              | [annotations/README.md](annotations/README.md)                                                              |
 | Sample                        | ✅ Compilation examples per rule                         | [compilation/README](sample/src/main/kotlin/io/github/santimattius/structured/sample/compilation/README.md) |
@@ -91,7 +91,7 @@ Full descriptions, examples, and suppression IDs: [`docs/BEST_PRACTICES_COROUTIN
 |-------|-------|----------|
 | **Compiler (FIR)** | 15 checkers | 9 errors + 6 warnings (default severities); INTEROP_001/002 in K2 |
 | **Detekt** | 41 rules | KMP source-set aware; backend + Compose profiles |
-| **Android Lint** | 35 detectors | Android/Compose + shared compiler rules |
+| **Android Lint** | 36 detectors | Android/Compose + shared compiler rules |
 | **IntelliJ** | 35 inspections | Real-time analysis, quick fixes, Flow Chain Analyzer |
 
 **v1.0 highlights:** COMPOSE_002/003, TEST_005/006, FLOW_009/011, INTEROP_003/004, DEBUG_001 (opt-in).  
@@ -559,7 +559,7 @@ structured-coroutines/
 |------------------------|----------|-----------------|----|-----------|--------------|
 | **Compiler Plugin**    | Compile  | 15 checkers     | ✅  | ❌         | All (KMP)    |
 | **Detekt Rules**       | Analysis | 41 rules        | ✅  | ❌         | All (KMP)    |
-| **Android Lint Rules** | Analysis | 35 detectors    | ✅  | ❌         | Android only |
+| **Android Lint Rules** | Analysis | 36 detectors    | ✅  | ❌         | Android only |
 | **IDE Plugin**         | Editing  | 35 inspections  | ❌  | ✅         | All          |
 | **Combined (All)**     | All      | 51 patterns     | ✅  | ✅         | -            |
 | Code Review            | Manual   | —               | ❌  | ❌         | -            |
@@ -617,7 +617,7 @@ Each module contains its own detailed documentation:
 |-----------------------------------|----------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
 | **Gradle Plugin**                 | [gradle-plugin/README.md](gradle-plugin/README.md)                                                             | Installation, configuration, severity settings                          |
 | **Detekt Rules**                  | [detekt-rules/README.md](detekt-rules/README.md)                                                               | 41 rules with examples and configuration                                |
-| **Android Lint**                  | [lint-rules/README.md](lint-rules/README.md)                                                                   | 35 detectors, Android/Compose-specific detection                        |
+| **Android Lint**                  | [lint-rules/README.md](lint-rules/README.md)                                                                   | 36 detectors, Android/Compose-specific detection                        |
 | **IntelliJ Plugin**               | [intellij-plugin/README.md](intellij-plugin/README.md)                                                         | 35 inspections, quick fixes, Flow Analyzer, K2 support                  |
 | **Annotations**                   | [annotations/README.md](annotations/README.md)                                                                 | @StructuredScope usage and multiplatform support                        |
 | **Compiler**                      | [compiler/README.md](compiler/README.md)                                                                       | K2/FIR checker implementation details                                   |
