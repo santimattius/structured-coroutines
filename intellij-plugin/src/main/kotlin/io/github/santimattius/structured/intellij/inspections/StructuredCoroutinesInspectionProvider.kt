@@ -56,6 +56,7 @@ class StructuredCoroutinesInspectionProvider : InspectionToolProvider {
             SharedFlowForOneshotEventsInspection::class.java,
             ChannelFlowVsCallbackFlowInspection::class.java,
             BlockingFutureGetInspection::class.java,
+            MisplacedTryCatchInScopeInspection::class.java,
         )
     }
 }

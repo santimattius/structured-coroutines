@@ -338,6 +338,18 @@
             groupPath="Kotlin"
             groupBundle="messages.StructuredCoroutinesBundle"
             groupKey="inspection.group.name"
+            shortName="MisplacedTryCatchInScope"
+            bundle="messages.StructuredCoroutinesBundle"
+            key="inspection.misplaced.try.catch.in.scope.display.name"
+            enabledByDefault="true"
+            level="WARNING"
+            implementationClass="io.github.santimattius.structured.intellij.inspections.MisplacedTryCatchInScopeInspection"/>
+
+        <localInspection
+            language="kotlin"
+            groupPath="Kotlin"
+            groupBundle="messages.StructuredCoroutinesBundle"
+            groupKey="inspection.group.name"
             shortName="SynchronizedInCoroutine"
             bundle="messages.StructuredCoroutinesBundle"
             key="inspection.synchronized.in.coroutine.display.name"

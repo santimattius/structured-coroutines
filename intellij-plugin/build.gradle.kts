@@ -75,6 +75,7 @@ intellijPlatform {
         changeNotes = """
             <p><b>v1.2.0</b></p>
             <ul>
+                <li><b>MisplacedTryCatchInScope (EXCEPT_004, WARNING)</b> — Detects a <code>try/catch</code> inside <code>coroutineScope { }</code> around <code>await()</code>/<code>join()</code> of a child created in the same scope; the catch cannot stop the failure from propagating</li>
                 <li><b>BREAKING — AsyncWithoutAwaitInspection (SCOPE_002) and UnstructuredLaunchInspection (SCOPE_003) now default to ERROR</b> (previously WARNING), matching the compiler, Detekt, and Lint defaults. Findings that previously showed as warnings now show as errors; adjust your inspection profile if you rely on the previous severity.</li>
                 <li><b>SideEffectInMapOperatorInspection (FLOW_008) now defaults to INFO</b> (previously WARNING), matching Detekt's Minor severity for the same check. Previously-warning-level findings now show at the lower INFO severity.</li>
             </ul>

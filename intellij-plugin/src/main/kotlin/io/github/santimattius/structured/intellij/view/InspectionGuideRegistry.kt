@@ -28,6 +28,7 @@ import io.github.santimattius.structured.intellij.inspections.LaunchInWithUnstru
 import io.github.santimattius.structured.intellij.inspections.LifecycleAwareFlowCollectionInspection
 import io.github.santimattius.structured.intellij.inspections.LoopWithoutYieldInspection
 import io.github.santimattius.structured.intellij.inspections.MainDispatcherMisuseInspection
+import io.github.santimattius.structured.intellij.inspections.MisplacedTryCatchInScopeInspection
 import io.github.santimattius.structured.intellij.inspections.MissingCatchInFlowInspection
 import io.github.santimattius.structured.intellij.inspections.MutableFlowExposedInspection
 import io.github.santimattius.structured.intellij.inspections.RedundantWithContextInspection
@@ -205,6 +206,10 @@ object InspectionGuideRegistry {
         BlockingFutureGetInspection::class.java to GuideEntry(
             whatToDo = "Replace Future.get() with await() from kotlinx-coroutines-jdk8 or kotlinx-coroutines-guava.",
             guideUrl = "$BASE_URL#104-interop_004--blocking-future-get"
+        ),
+        MisplacedTryCatchInScopeInspection::class.java to GuideEntry(
+            whatToDo = "Wrap the whole coroutineScope { } call in try/catch, catch inside the async/launch block, or use supervisorScope to isolate children.",
+            guideUrl = "$BASE_URL#54-except_004--misplaced-try-catch-inside-coroutinescope"
         ),
     )
 

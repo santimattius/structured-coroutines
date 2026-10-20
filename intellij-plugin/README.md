@@ -68,7 +68,7 @@ The plugin provides four main feature categories:
 
 ## Inspections
 
-> **v1.0.0:** **35 inspections** aligned with [`docs/rule-codes.yml`](../docs/rule-codes.yml).  
+> **v1.0.0:** **36 inspections** aligned with [`docs/rule-codes.yml`](../docs/rule-codes.yml).  
 > Includes Flow Chain Analyzer intention, Compose/KMP/interop rules from v0.8–v1.0.
 
 ### Overview
@@ -88,6 +88,7 @@ The plugin provides four main feature categories:
 | DispatchersUnconfined | WARNING | Detects `Dispatchers.Unconfined` usage |
 | LifecycleAwareFlowCollection | WARNING | Flow collect in `lifecycleScope` without `repeatOnLifecycle`/`flowWithLifecycle` (§8.2 ARCH_002) |
 | LoopWithoutYield | WARNING | Detects loops in suspend functions without cooperation points |
+| MisplacedTryCatchInScope | WARNING | Detects `try/catch` inside `coroutineScope { }` around `await()`/`join()` of a child created in the same scope (EXCEPT_004) |
 
 ### Detailed Inspection Descriptions
 
@@ -230,6 +231,33 @@ suspend fun work() {
     catch (e: Exception) { log(e) }
 }
 ```
+
+#### MisplacedTryCatchInScope (WARNING)
+
+**Rule:** EXCEPT_004
+
+**Problem:** A `try/catch` placed *inside* a `coroutineScope { }` lambda around `await()`/`join()` of an `async`/`launch` created in that same lambda cannot stop the failure. The child is a structural child of the scope: its failure cancels the scope and `coroutineScope` rethrows to its caller.
+
+```kotlin
+// ❌ BAD
+suspend fun load(): Int = coroutineScope {
+    val d = async<Int> { error("boom") }
+    try { d.await() } catch (e: Exception) { 0 }  // cannot contain the failure
+}
+
+// ✅ GOOD: wrap the whole coroutineScope call
+suspend fun load(): Int =
+    try { coroutineScope { async<Int> { error("boom") }.await() } } catch (e: Exception) { 0 }
+
+// ✅ GOOD: catch inside the child, or use supervisorScope
+suspend fun load(): Int = coroutineScope {
+    async { try { error("boom") } catch (e: Exception) { 0 } }.await()
+}
+```
+
+**Tracking:** local `val`s initialized with `async`/`launch` (plus simple aliases such as `val e = d`) and inline `async { }.await()`. Lambdas of `async`/`launch`, `supervisorScope` and nested `coroutineScope` are not entered. No quick fix.
+
+**Limitations:** children are tracked by name (no type resolution); smart-cast receivers are not unwrapped; `async(SupervisorJob()) { }` is reported even though the catch can be legitimate; a catch that rethrows is still reported.
 
 ---
 
