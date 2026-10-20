@@ -1338,7 +1338,7 @@ class StructuredCoroutinesPluginFunctionalTest {
     // ============================================================================
     // CLI bridge (#68, ADR-3, Phase 0/1) — StructuredCoroutinesCommandLineProcessor +
     // META-INF/services registration. Before this bridge existed, every SubpluginOption the
-    // Gradle plugin emits for the 14 rule keys was silently dropped: no CommandLineProcessor was
+    // Gradle plugin emits for the 15 rule keys was silently dropped: no CommandLineProcessor was
     // registered, so PluginConfiguration.OPTIONS_KEY was never populated in a real build
     // (Ground truth in design.md). This section proves the bridge survives real jar packaging
     // and java.util.ServiceLoader discovery, which unit tests instantiating the classes directly
@@ -1346,12 +1346,12 @@ class StructuredCoroutinesPluginFunctionalTest {
     // ============================================================================
 
     @Test
-    fun `real build with all 14 severity options set via the DSL succeeds through the new CLI bridge`() {
+    fun `real build with all 15 severity options set via the DSL succeeds through the new CLI bridge`() {
         val sourceCode = """
             fun ok() = println("hello")
         """.trimIndent()
 
-        // A mix of error/warning/disabled across all 14 rule keys: if the CLI bridge (the
+        // A mix of error/warning/disabled across all 15 rule keys: if the CLI bridge (the
         // registered StructuredCoroutinesCommandLineProcessor + its META-INF/services file)
         // were broken — wrong pluginId, missing/malformed service file, an option key typo, or
         // an exception thrown from processOption — this real build would fail here, unlike the
@@ -1374,6 +1374,7 @@ class StructuredCoroutinesPluginFunctionalTest {
                     loopWithoutYield.set("error")
                     suspendCoroutineWithoutCancellation.set("warning")
                     callbackFlowWithoutAwaitClose.set("disabled")
+                    misplacedTryCatchInScope.set("disabled")
                 }
             """.trimIndent(),
         )
@@ -1382,7 +1383,7 @@ class StructuredCoroutinesPluginFunctionalTest {
         assertTrue(
             "BUILD SUCCESSFUL" in output || "compileKotlin" in output,
             "Expected the CLI bridge (StructuredCoroutinesCommandLineProcessor + its " +
-                "META-INF/services registration) to accept all 14 severity options — including " +
+                "META-INF/services registration) to accept all 15 severity options — including " +
                 "\"disabled\" — without failing the build, but got:\n$output",
         )
     }
@@ -1557,6 +1558,7 @@ class StructuredCoroutinesPluginFunctionalTest {
                     loopWithoutYield.set("disabled")
                     suspendCoroutineWithoutCancellation.set("disabled")
                     callbackFlowWithoutAwaitClose.set("disabled")
+                    misplacedTryCatchInScope.set("disabled")
                 }
             """.trimIndent(),
         )
@@ -1895,5 +1897,299 @@ class StructuredCoroutinesPluginFunctionalTest {
         )
         val warningOutput = runBuild(warningProjectDir, expectSuccess = true)
         assertMarkerSeverityPrefix(warningOutput, "[SCOPE_001]", "w:")
+    }
+    // ============================================================================
+    // EXCEPT_004 — try/catch inside coroutineScope around await()/join() of a child created in
+    // that same scope (#100). Default severity is WARNING, so positive cases build successfully
+    // and assert on the warning text.
+    // ============================================================================
+
+    private fun assertReportsExcept004(source: String, what: String) {
+        val output = runBuild(createTestProject(source), expectSuccess = true)
+        assertTrue(
+            "[EXCEPT_004]" in output,
+            "Expected [EXCEPT_004] for $what but got:\n$output",
+        )
+    }
+
+    private fun assertNoExcept004(source: String, what: String) {
+        val output = runBuild(createTestProject(source), expectSuccess = true)
+        assertTrue(
+            "MISPLACED_TRY_CATCH_IN_SCOPE" !in output && "[EXCEPT_004]" !in output,
+            "Expected no [EXCEPT_004] for $what but got:\n$output",
+        )
+    }
+
+    @Test
+    fun `try catch around await of async created in the same coroutineScope reports EXCEPT_004`() {
+        assertReportsExcept004(
+            """
+            import kotlinx.coroutines.async
+            import kotlinx.coroutines.coroutineScope
+
+            suspend fun test() = coroutineScope {
+                val d = async<Int> { error("boom") }
+                try {
+                    d.await()
+                } catch (e: Exception) {
+                    0
+                }
+            }
+            """.trimIndent(),
+            "await inside try/catch in coroutineScope",
+        )
+    }
+
+    @Test
+    fun `try catch around join of launch created in the same coroutineScope reports EXCEPT_004`() {
+        assertReportsExcept004(
+            """
+            import kotlinx.coroutines.coroutineScope
+            import kotlinx.coroutines.launch
+
+            suspend fun test() = coroutineScope {
+                val job = launch { error("boom") }
+                try {
+                    job.join()
+                } catch (e: Exception) {
+                    println("caught")
+                }
+            }
+            """.trimIndent(),
+            "join inside try/catch in coroutineScope",
+        )
+    }
+
+    @Test
+    fun `await in a derived expression inside try reports EXCEPT_004`() {
+        assertReportsExcept004(
+            """
+            import kotlinx.coroutines.async
+            import kotlinx.coroutines.coroutineScope
+
+            suspend fun test() = coroutineScope {
+                val d = async<Int> { error("boom") }
+                try {
+                    val r = d.await()
+                    println(r + 1)
+                } catch (e: Exception) {
+                    println("caught")
+                }
+            }
+            """.trimIndent(),
+            "derived await expression inside try",
+        )
+    }
+
+    @Test
+    fun `await through a simple alias inside try reports EXCEPT_004`() {
+        assertReportsExcept004(
+            """
+            import kotlinx.coroutines.async
+            import kotlinx.coroutines.coroutineScope
+
+            suspend fun test() = coroutineScope {
+                val d = async<Int> { error("boom") }
+                val e = d
+                try {
+                    println(e.await())
+                } catch (ex: Exception) {
+                    println("caught")
+                }
+            }
+            """.trimIndent(),
+            "alias of a child awaited inside try",
+        )
+    }
+
+    @Test
+    fun `inline async await inside try reports EXCEPT_004`() {
+        assertReportsExcept004(
+            """
+            import kotlinx.coroutines.async
+            import kotlinx.coroutines.coroutineScope
+
+            suspend fun test() = coroutineScope {
+                try {
+                    async<Int> { error("boom") }.await()
+                } catch (e: Exception) {
+                    0
+                }
+            }
+            """.trimIndent(),
+            "inline async(...).await() inside try",
+        )
+    }
+
+    @Test
+    fun `try catch wrapping the whole coroutineScope does not report EXCEPT_004`() {
+        assertNoExcept004(
+            """
+            import kotlinx.coroutines.async
+            import kotlinx.coroutines.coroutineScope
+
+            suspend fun test(): Int =
+                try {
+                    coroutineScope {
+                        val d = async<Int> { error("boom") }
+                        d.await()
+                    }
+                } catch (e: Exception) {
+                    0
+                }
+            """.trimIndent(),
+            "try/catch wrapping the whole coroutineScope",
+        )
+    }
+
+    @Test
+    fun `supervisorScope enclosing builder does not report EXCEPT_004`() {
+        assertNoExcept004(
+            """
+            import kotlinx.coroutines.async
+            import kotlinx.coroutines.supervisorScope
+
+            suspend fun test() = supervisorScope {
+                val d = async<Int> { error("boom") }
+                try {
+                    d.await()
+                } catch (e: Exception) {
+                    0
+                }
+            }
+            """.trimIndent(),
+            "try/catch inside supervisorScope",
+        )
+    }
+
+    @Test
+    fun `exception caught inside the async block itself does not report EXCEPT_004`() {
+        assertNoExcept004(
+            """
+            import kotlinx.coroutines.async
+            import kotlinx.coroutines.coroutineScope
+
+            suspend fun test() = coroutineScope {
+                val d = async {
+                    try {
+                        error("boom")
+                    } catch (e: Exception) {
+                        0
+                    }
+                }
+                d.await()
+            }
+            """.trimIndent(),
+            "try/catch inside the async block",
+        )
+    }
+
+    @Test
+    fun `await on a Deferred received as parameter does not report EXCEPT_004`() {
+        assertNoExcept004(
+            """
+            import kotlinx.coroutines.Deferred
+            import kotlinx.coroutines.coroutineScope
+
+            suspend fun test(d: Deferred<Int>) = coroutineScope {
+                try {
+                    d.await()
+                } catch (e: Exception) {
+                    0
+                }
+            }
+            """.trimIndent(),
+            "await on a Deferred not created in the scope",
+        )
+    }
+
+    @Test
+    fun `try with only finally around await does not report EXCEPT_004`() {
+        assertNoExcept004(
+            """
+            import kotlinx.coroutines.async
+            import kotlinx.coroutines.coroutineScope
+
+            suspend fun test() = coroutineScope {
+                val d = async<Int> { error("boom") }
+                try {
+                    d.await()
+                } finally {
+                    println("cleanup")
+                }
+            }
+            """.trimIndent(),
+            "try/finally without catch",
+        )
+    }
+
+    @Test
+    fun `a single misplaced try reports EXCEPT_004 exactly once`() {
+        val source = """
+            import kotlinx.coroutines.async
+            import kotlinx.coroutines.coroutineScope
+
+            suspend fun test() = coroutineScope {
+                val d = async<Int> { error("boom") }
+                try {
+                    d.await()
+                } catch (e: Exception) {
+                    0
+                }
+            }
+        """.trimIndent()
+        val output = runBuild(createTestProject(source), expectSuccess = true)
+        val count = output.lines().count { "[EXCEPT_004]" in it }
+        assertTrue(count == 1, "Expected exactly one [EXCEPT_004] report but found $count in:\n$output")
+    }
+
+    @Test
+    fun `nested coroutineScope is analyzed once by its own call and not double reported`() {
+        val source = """
+            import kotlinx.coroutines.async
+            import kotlinx.coroutines.coroutineScope
+
+            suspend fun test() = coroutineScope {
+                coroutineScope {
+                    val d = async<Int> { error("boom") }
+                    try {
+                        d.await()
+                    } catch (e: Exception) {
+                        0
+                    }
+                }
+            }
+        """.trimIndent()
+        val output = runBuild(createTestProject(source), expectSuccess = true)
+        val count = output.lines().count { "[EXCEPT_004]" in it }
+        assertTrue(count == 1, "Expected exactly one [EXCEPT_004] report for nested scopes but found $count in:\n$output")
+    }
+
+    @Test
+    fun `EXCEPT_004 escalated to error with strict enforcement fails the build`() {
+        val source = """
+            import kotlinx.coroutines.async
+            import kotlinx.coroutines.coroutineScope
+
+            suspend fun test() = coroutineScope {
+                val d = async<Int> { error("boom") }
+                try {
+                    d.await()
+                } catch (e: Exception) {
+                    0
+                }
+            }
+        """.trimIndent()
+        val projectDir = createTestProject(
+            source,
+            extensionBlock = """
+                structuredCoroutines {
+                    misplacedTryCatchInScope.set("error")
+                    severityEnforcement.set("strict")
+                }
+            """.trimIndent(),
+        )
+        val output = runBuild(projectDir, expectSuccess = false)
+        assertMarkerSeverityPrefix(output, "[EXCEPT_004]", "e:")
     }
 }

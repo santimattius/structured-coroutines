@@ -90,6 +90,7 @@ abstract class StructuredCoroutinesReportTask : DefaultTask() {
         RuleInfo("cancellationExceptionSubclass", "EXCEPT_002",   "5.2", "Extending CancellationException for Domain Errors",  "52-except_002--extending-cancellationexception-for-domain-errors"),
         RuleInfo("suspendCoroutineWithoutCancellation", "INTEROP_001", "10.1", "Wrapping Callbacks Without Cancellation Support", "101-interop_001--wrapping-callbacks-without-cancellation-support"),
         RuleInfo("callbackFlowWithoutAwaitClose", "INTEROP_002", "10.2", "callbackFlow Without awaitClose", "102-interop_002--callbackflow-without-awaitclose"),
+        RuleInfo("misplacedTryCatchInScope", "EXCEPT_004", "5.4", "Misplaced try-catch Inside coroutineScope", "54-except_004--misplaced-try-catch-inside-coroutinescope"),
     )
 
     private val docBase =
@@ -115,6 +116,7 @@ abstract class StructuredCoroutinesReportTask : DefaultTask() {
     @get:Input abstract val loopWithoutYield: Property<String>
     @get:Input abstract val suspendCoroutineWithoutCancellation: Property<String>
     @get:Input abstract val callbackFlowWithoutAwaitClose: Property<String>
+    @get:Input abstract val misplacedTryCatchInScope: Property<String>
 
     // Exclusions
     @get:Input abstract val excludedSourceSets: ListProperty<String>
@@ -149,6 +151,7 @@ abstract class StructuredCoroutinesReportTask : DefaultTask() {
             "loopWithoutYield"               to loopWithoutYield.get(),
             "suspendCoroutineWithoutCancellation" to suspendCoroutineWithoutCancellation.get(),
             "callbackFlowWithoutAwaitClose"  to callbackFlowWithoutAwaitClose.get(),
+            "misplacedTryCatchInScope"       to misplacedTryCatchInScope.get(),
         )
 
         val format    = reportFormat.getOrElse("all")

@@ -153,6 +153,13 @@ interface StructuredCoroutinesExtension {
     val callbackFlowWithoutAwaitClose: Property<String>
 
     /**
+     * Severity for a `try/catch` inside `coroutineScope` around `await()`/`join()` of a child
+     * created in that scope (EXCEPT_004).
+     * Default: "warning"
+     */
+    val misplacedTryCatchInScope: Property<String>
+
+    /**
      * Grace-period enforcement policy for severity *tightening* (warning -> error) (#68, ADR-7).
      *
      * - `"grace"` (default) - a tightening is deferred one release: the rule keeps reporting at
@@ -233,6 +240,7 @@ interface StructuredCoroutinesExtension {
         loopWithoutYield.set("warning")
         suspendCoroutineWithoutCancellation.set("error")
         callbackFlowWithoutAwaitClose.set("error")
+        misplacedTryCatchInScope.set("warning")
     }
 
     /**
@@ -254,6 +262,7 @@ interface StructuredCoroutinesExtension {
         loopWithoutYield.set("warning")
         suspendCoroutineWithoutCancellation.set("warning")
         callbackFlowWithoutAwaitClose.set("warning")
+        misplacedTryCatchInScope.set("warning")
     }
 
     /**

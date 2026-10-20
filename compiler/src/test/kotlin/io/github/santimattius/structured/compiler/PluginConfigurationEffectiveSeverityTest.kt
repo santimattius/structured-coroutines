@@ -16,7 +16,7 @@ import kotlin.test.assertEquals
 
 /**
  * Task 1.8/1.9 (severity-enforcement, #68): resolution matrix for
- * [PluginConfiguration.effectiveSeverityOf] — 14 rules x {unset, error, warning, disabled,
+ * [PluginConfiguration.effectiveSeverityOf] — 15 rules x {unset, error, warning, disabled,
  * garbage}. This is the tri-state successor to `getSeverity`; unlike `getSeverity`, "disabled"
  * MUST resolve to [RuleSeverity.DISABLED], not silently fall back to a [Severity] value.
  *
@@ -41,7 +41,7 @@ class PluginConfigurationEffectiveSeverityTest {
     }
 
     @Test
-    fun `unset rule resolves to its documented default tri-state, for all 14 rules`() {
+    fun `unset rule resolves to its documented default tri-state, for all 15 rules`() {
         val pluginConfiguration = configOf(emptyMap())
         ScoroutinesRule.entries.forEach { rule ->
             assertEquals(
@@ -53,7 +53,7 @@ class PluginConfigurationEffectiveSeverityTest {
     }
 
     @Test
-    fun `error value resolves to ERROR, for all 14 rules`() {
+    fun `error value resolves to ERROR, for all 15 rules`() {
         ScoroutinesRule.entries.forEach { rule ->
             val pluginConfiguration = configOf(mapOf(rule.optionKey to "error"))
             assertEquals(RuleSeverity.ERROR, pluginConfiguration.effectiveSeverityOf(rule), "rule=${rule.optionKey}")
@@ -61,7 +61,7 @@ class PluginConfigurationEffectiveSeverityTest {
     }
 
     @Test
-    fun `warning value resolves to WARNING, for all 14 rules`() {
+    fun `warning value resolves to WARNING, for all 15 rules`() {
         ScoroutinesRule.entries.forEach { rule ->
             val pluginConfiguration = configOf(mapOf(rule.optionKey to "warning"))
             assertEquals(RuleSeverity.WARNING, pluginConfiguration.effectiveSeverityOf(rule), "rule=${rule.optionKey}")
@@ -69,7 +69,7 @@ class PluginConfigurationEffectiveSeverityTest {
     }
 
     @Test
-    fun `disabled value resolves to the disabled tri-state, not a Severity fallback, for all 14 rules`() {
+    fun `disabled value resolves to the disabled tri-state, not a Severity fallback, for all 15 rules`() {
         ScoroutinesRule.entries.forEach { rule ->
             val pluginConfiguration = configOf(mapOf(rule.optionKey to "disabled"))
             assertEquals(RuleSeverity.DISABLED, pluginConfiguration.effectiveSeverityOf(rule), "rule=${rule.optionKey}")
@@ -77,7 +77,7 @@ class PluginConfigurationEffectiveSeverityTest {
     }
 
     @Test
-    fun `unrecognized garbage value falls back to the documented default with no failure, for all 14 rules`() {
+    fun `unrecognized garbage value falls back to the documented default with no failure, for all 15 rules`() {
         ScoroutinesRule.entries.forEach { rule ->
             val pluginConfiguration = configOf(mapOf(rule.optionKey to "disabed"))
             assertEquals(

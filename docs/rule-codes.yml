@@ -158,6 +158,17 @@ rules:
     default_severity: warning
     notes: "No dedicated tooling rule. Referenced in async-without-await inspection description (§5.3 link)."
 
+  - code: EXCEPT_004
+    section: "5.4"
+    title: "Misplaced try-catch Inside coroutineScope"
+    doc_anchor: "54-except_004--misplaced-try-catch-inside-coroutinescope"
+    compiler: [MISPLACED_TRY_CATCH_IN_SCOPE]
+    detekt: []
+    lint: []
+    intellij: []
+    default_severity: warning
+    notes: "Compiler only for now; detekt/lint/IntelliJ parity is tracked in issue #100 as a follow-up. Distinct from SCOPE_004 (awaitAll and exception propagation): EXCEPT_004 flags a try/catch placed inside the coroutineScope lambda around await()/join() of a child created in that same lambda."
+
   - code: TEST_001
     section: "6.1"
     title: "Slow Tests with Real Delays"

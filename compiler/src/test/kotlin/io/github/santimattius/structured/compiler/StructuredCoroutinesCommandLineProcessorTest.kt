@@ -30,9 +30,9 @@ class StructuredCoroutinesCommandLineProcessorTest {
     }
 
     @Test
-    fun `pluginOptions declares the 14 ScoroutinesRule option keys plus severityEnforcement`() {
+    fun `pluginOptions declares the 15 ScoroutinesRule option keys plus severityEnforcement`() {
         val processor = StructuredCoroutinesCommandLineProcessor()
-        assertEquals(15, processor.pluginOptions.size)
+        assertEquals(16, processor.pluginOptions.size)
         assertEquals(
             ScoroutinesRule.entries.map { it.optionKey }.toSet() + "severityEnforcement",
             processor.pluginOptions.map { it.optionName }.toSet(),

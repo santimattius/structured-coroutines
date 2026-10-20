@@ -49,6 +49,7 @@ class StructuredCoroutinesReportTaskDisabledRenderingTest {
         task.loopWithoutYield.set(loopWithoutYieldSeverity)
         task.suspendCoroutineWithoutCancellation.set("error")
         task.callbackFlowWithoutAwaitClose.set("error")
+        task.misplacedTryCatchInScope.set("warning")
 
         task.excludedSourceSets.set(emptyList())
         task.excludedProjects.set(emptyList())

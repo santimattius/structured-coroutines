@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.fir.analysis.extensions.FirAdditionalCheckersExtensi
  * | [DispatchersUnconfinedChecker] | Dispatchers.Unconfined usage | WARNING |
  * | [UnusedDeferredChecker] | async without await | ERROR |
  * | [RedundantLaunchInCoroutineScopeChecker] | redundant launch in coroutineScope | WARNING |
+ * | [MisplacedTryCatchInScopeChecker] | try/catch around await/join of a child inside coroutineScope (EXCEPT_004) | WARNING |
  *
  * ### Try Expression Checkers ([ExpressionCheckers.tryExpressionCheckers])
  *
@@ -98,6 +99,8 @@ class ScoroutinesCallCheckerExtension(
             UnusedDeferredChecker(configuration),
             // Rule 11: redundant launch in coroutineScope (Best Practice 2.1)
             RedundantLaunchInCoroutineScopeChecker(configuration),
+            // EXCEPT_004: try/catch around await/join of a child inside coroutineScope (Best Practice 5.4)
+            MisplacedTryCatchInScopeChecker(configuration),
             // INTEROP (v0.8.0)
             SuspendCoroutineWithoutCancellationChecker(configuration),
             CallbackFlowWithoutAwaitCloseChecker(configuration),

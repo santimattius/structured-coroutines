@@ -15,8 +15,8 @@ import kotlin.test.assertEquals
 
 /**
  * Task 1.1/1.2 (severity-enforcement, #68, ADR-1): [ScoroutinesRule] is the single registry of
- * the 14 configurable rules, replacing the 14 hand-written `val`s in [PluginConfiguration] and
- * the duplicated key literals in `StructuredCoroutinesGradlePlugin`. This test pins its 14
+ * the 15 configurable rules, replacing the 14 hand-written `val`s in [PluginConfiguration] and
+ * the duplicated key literals in `StructuredCoroutinesGradlePlugin`. This test pins its 15
  * entries against the defaults currently hard-coded in `PluginConfiguration.kt:41-54`.
  */
 class ScoroutinesRuleTest {
@@ -38,11 +38,12 @@ class ScoroutinesRuleTest {
         "loopWithoutYield" to Severity.WARNING,
         "suspendCoroutineWithoutCancellation" to Severity.ERROR,
         "callbackFlowWithoutAwaitClose" to Severity.ERROR,
+        "misplacedTryCatchInScope" to Severity.WARNING,
     )
 
     @Test
-    fun `has exactly 14 entries`() {
-        assertEquals(14, ScoroutinesRule.entries.size)
+    fun `has exactly 15 entries`() {
+        assertEquals(15, ScoroutinesRule.entries.size)
     }
 
     @Test

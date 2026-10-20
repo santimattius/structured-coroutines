@@ -51,6 +51,7 @@ object StructuredCoroutinesErrorRenderer : BaseDiagnosticRendererFactory() {
         MAP.put(StructuredCoroutinesErrors.UNUSED_DEFERRED, CompilerMessages.message("UNUSED_DEFERRED"))
         MAP.put(StructuredCoroutinesErrors.REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE, CompilerMessages.message("REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE"))
         MAP.put(StructuredCoroutinesErrors.LOOP_WITHOUT_YIELD, CompilerMessages.message("LOOP_WITHOUT_YIELD"))
+        MAP.put(StructuredCoroutinesErrors.MISPLACED_TRY_CATCH_IN_SCOPE, CompilerMessages.message("MISPLACED_TRY_CATCH_IN_SCOPE"))
         MAP.put(StructuredCoroutinesErrors.SUSPEND_COROUTINE_WITHOUT_CANCELLATION, CompilerMessages.message("SUSPEND_COROUTINE_WITHOUT_CANCELLATION"))
         MAP.put(StructuredCoroutinesErrors.CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE, CompilerMessages.message("CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE"))
 
@@ -70,6 +71,7 @@ object StructuredCoroutinesErrorRenderer : BaseDiagnosticRendererFactory() {
         MAP.put(StructuredCoroutinesErrors.UNUSED_DEFERRED_WARNING, CompilerMessages.message("UNUSED_DEFERRED"))
         MAP.put(StructuredCoroutinesErrors.REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE_ERROR, CompilerMessages.message("REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE"))
         MAP.put(StructuredCoroutinesErrors.LOOP_WITHOUT_YIELD_ERROR, CompilerMessages.message("LOOP_WITHOUT_YIELD"))
+        MAP.put(StructuredCoroutinesErrors.MISPLACED_TRY_CATCH_IN_SCOPE_ERROR, CompilerMessages.message("MISPLACED_TRY_CATCH_IN_SCOPE"))
         MAP.put(StructuredCoroutinesErrors.SUSPEND_COROUTINE_WITHOUT_CANCELLATION_WARNING, CompilerMessages.message("SUSPEND_COROUTINE_WITHOUT_CANCELLATION"))
         MAP.put(StructuredCoroutinesErrors.CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE_WARNING, CompilerMessages.message("CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE"))
     }
@@ -271,6 +273,15 @@ object StructuredCoroutinesErrors {
         rendererFactory = StructuredCoroutinesErrorRenderer
     )
 
+    /** EXCEPT_004 — try/catch inside coroutineScope around await()/join() of a child created in that scope. */
+    val MISPLACED_TRY_CATCH_IN_SCOPE: KtDiagnosticFactory0 = KtDiagnosticFactory0(
+        name = "MISPLACED_TRY_CATCH_IN_SCOPE",
+        severity = Severity.WARNING,
+        defaultPositioningStrategy = SourceElementPositioningStrategies.DEFAULT,
+        psiType = KtElement::class,
+        rendererFactory = StructuredCoroutinesErrorRenderer
+    )
+
     /** INTEROP_001 — `suspendCoroutine` does not propagate cancellation (use suspendCancellableCoroutine). */
     val SUSPEND_COROUTINE_WITHOUT_CANCELLATION: KtDiagnosticFactory0 = KtDiagnosticFactory0(
         name = "SUSPEND_COROUTINE_WITHOUT_CANCELLATION",
@@ -401,6 +412,14 @@ object StructuredCoroutinesErrors {
         rendererFactory = StructuredCoroutinesErrorRenderer
     )
 
+    val MISPLACED_TRY_CATCH_IN_SCOPE_ERROR: KtDiagnosticFactory0 = KtDiagnosticFactory0(
+        name = "MISPLACED_TRY_CATCH_IN_SCOPE_ERROR",
+        severity = Severity.ERROR,
+        defaultPositioningStrategy = SourceElementPositioningStrategies.DEFAULT,
+        psiType = KtElement::class,
+        rendererFactory = StructuredCoroutinesErrorRenderer
+    )
+
     val SUSPEND_COROUTINE_WITHOUT_CANCELLATION_WARNING: KtDiagnosticFactory0 = KtDiagnosticFactory0(
         name = "SUSPEND_COROUTINE_WITHOUT_CANCELLATION_WARNING",
         severity = Severity.WARNING,
@@ -458,6 +477,8 @@ object StructuredCoroutinesErrors {
             if (severity == Severity.ERROR) REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE_ERROR else REDUNDANT_LAUNCH_IN_COROUTINE_SCOPE
         ScoroutinesRule.LOOP_WITHOUT_YIELD ->
             if (severity == Severity.ERROR) LOOP_WITHOUT_YIELD_ERROR else LOOP_WITHOUT_YIELD
+        ScoroutinesRule.MISPLACED_TRY_CATCH_IN_SCOPE ->
+            if (severity == Severity.ERROR) MISPLACED_TRY_CATCH_IN_SCOPE_ERROR else MISPLACED_TRY_CATCH_IN_SCOPE
     }
 }
 
@@ -595,4 +616,17 @@ fun DiagnosticReporter.reportSuspendCoroutineWithoutCancellation(call: FirCall, 
 /** INTEROP_002 — reports callbackFlow without awaitClose, unless [config] disables it. */
 fun DiagnosticReporter.reportCallbackFlowWithoutAwaitClose(call: FirCall, context: CheckerContext, config: PluginConfiguration) {
     config.report(this, ScoroutinesRule.CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE, call.source, context)
+}
+
+/**
+ * EXCEPT_004 — reports a try/catch placed inside a `coroutineScope` lambda around `await()`/`join()`
+ * of a child created in that same lambda, unless [config] disables it. Takes the try expression's
+ * own source so the diagnostic points at the misplaced `try`.
+ */
+fun DiagnosticReporter.reportMisplacedTryCatchInScope(
+    source: org.jetbrains.kotlin.KtSourceElement?,
+    context: CheckerContext,
+    config: PluginConfiguration,
+) {
+    config.report(this, ScoroutinesRule.MISPLACED_TRY_CATCH_IN_SCOPE, source, context)
 }

@@ -12,7 +12,7 @@ package io.github.santimattius.structured.compiler
 import org.jetbrains.kotlin.diagnostics.Severity
 
 /**
- * Single registry of the 14 configurable Structured Coroutines rules (#68, ADR-1).
+ * Single registry of the 15 configurable Structured Coroutines rules (#68, ADR-1).
  *
  * Each entry carries the Gradle DSL / CLI option key ([optionKey]) and the rule's documented
  * default severity ([defaultSeverity]) when no override is configured. This enum is the single
@@ -39,4 +39,5 @@ enum class ScoroutinesRule(val optionKey: String, val defaultSeverity: Severity)
     LOOP_WITHOUT_YIELD("loopWithoutYield", Severity.WARNING),
     SUSPEND_COROUTINE_WITHOUT_CANCELLATION("suspendCoroutineWithoutCancellation", Severity.ERROR),
     CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE("callbackFlowWithoutAwaitClose", Severity.ERROR),
+    MISPLACED_TRY_CATCH_IN_SCOPE("misplacedTryCatchInScope", Severity.WARNING),
 }

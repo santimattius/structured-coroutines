@@ -43,10 +43,11 @@ class StructuredCoroutinesErrorsFactoryForTest {
         ScoroutinesRule.LOOP_WITHOUT_YIELD to "LOOP_WITHOUT_YIELD",
         ScoroutinesRule.SUSPEND_COROUTINE_WITHOUT_CANCELLATION to "SUSPEND_COROUTINE_WITHOUT_CANCELLATION",
         ScoroutinesRule.CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE to "CALLBACK_FLOW_WITHOUT_AWAIT_CLOSE",
+        ScoroutinesRule.MISPLACED_TRY_CATCH_IN_SCOPE to "MISPLACED_TRY_CATCH_IN_SCOPE",
     )
 
     @Test
-    fun `factoryFor at the rule's default severity keeps the original factory name, for all 14 rules`() {
+    fun `factoryFor at the rule's default severity keeps the original factory name, for all 15 rules`() {
         ScoroutinesRule.entries.forEach { rule ->
             val factory = StructuredCoroutinesErrors.factoryFor(rule, rule.defaultSeverity)
             assertEquals(defaultNameOf.getValue(rule), factory.name, "rule=${rule.optionKey}")
@@ -54,7 +55,7 @@ class StructuredCoroutinesErrorsFactoryForTest {
     }
 
     @Test
-    fun `factoryFor at the opposite severity returns a suffixed twin name, for all 14 rules`() {
+    fun `factoryFor at the opposite severity returns a suffixed twin name, for all 15 rules`() {
         ScoroutinesRule.entries.forEach { rule ->
             val opposite = if (rule.defaultSeverity == Severity.ERROR) Severity.WARNING else Severity.ERROR
             val suffix = if (rule.defaultSeverity == Severity.ERROR) "_WARNING" else "_ERROR"

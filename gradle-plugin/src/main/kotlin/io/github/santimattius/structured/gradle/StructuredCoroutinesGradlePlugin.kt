@@ -66,6 +66,7 @@ class StructuredCoroutinesGradlePlugin : KotlinCompilerPluginSupportPlugin {
         extension.loopWithoutYield.convention("warning")
         extension.suspendCoroutineWithoutCancellation.convention("error")
         extension.callbackFlowWithoutAwaitClose.convention("error")
+        extension.misplacedTryCatchInScope.convention("warning")
         extension.severityEnforcement.convention("grace")
         extension.excludeSourceSets.convention(emptyList())
         extension.excludeProjects.convention(emptyList())
@@ -98,6 +99,7 @@ class StructuredCoroutinesGradlePlugin : KotlinCompilerPluginSupportPlugin {
             task.loopWithoutYield.set(extension.loopWithoutYield)
             task.suspendCoroutineWithoutCancellation.set(extension.suspendCoroutineWithoutCancellation)
             task.callbackFlowWithoutAwaitClose.set(extension.callbackFlowWithoutAwaitClose)
+            task.misplacedTryCatchInScope.set(extension.misplacedTryCatchInScope)
 
             task.excludedSourceSets.set(extension.excludeSourceSets)
             task.excludedProjects.set(extension.excludeProjects)
@@ -196,6 +198,7 @@ class StructuredCoroutinesGradlePlugin : KotlinCompilerPluginSupportPlugin {
                 add(SubpluginOption("loopWithoutYield", extension.loopWithoutYield.get()))
                 add(SubpluginOption("suspendCoroutineWithoutCancellation", extension.suspendCoroutineWithoutCancellation.get()))
                 add(SubpluginOption("callbackFlowWithoutAwaitClose", extension.callbackFlowWithoutAwaitClose.get()))
+                add(SubpluginOption("misplacedTryCatchInScope", extension.misplacedTryCatchInScope.get()))
                 add(SubpluginOption("severityEnforcement", extension.severityEnforcement.get()))
             }
         }
