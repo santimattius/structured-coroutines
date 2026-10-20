@@ -16,7 +16,7 @@ analysis.
 
 | Module                        | Status                                                  | Documentation                                                                                               |
 |-------------------------------|---------------------------------------------------------|-------------------------------------------------------------------------------------------------------------|
-| Compiler Plugin               | ✅ Complete (14 FIR checkers)                            | [gradle-plugin/README.md](gradle-plugin/README.md)                                                          |
+| Compiler Plugin               | ✅ Complete (15 FIR checkers)                            | [gradle-plugin/README.md](gradle-plugin/README.md)                                                          |
 | Gradle Plugin                 | ✅ Complete (profiles incl. Spring/Ktor)                 | [gradle-plugin/README.md](gradle-plugin/README.md)                                                          |
 | Detekt Rules                  | ✅ Complete (40 rules)                                   | [detekt-rules/README.md](detekt-rules/README.md)                                                            |
 | Android Lint                  | ✅ Complete (35 detectors)                               | [lint-rules/README.md](lint-rules/README.md)                                                                |
@@ -89,7 +89,7 @@ Full descriptions, examples, and suppression IDs: [`docs/BEST_PRACTICES_COROUTIN
 
 | Layer | Count | Coverage |
 |-------|-------|----------|
-| **Compiler (FIR)** | 14 checkers | 7 errors + 7 warnings; INTEROP_001/002 in K2 |
+| **Compiler (FIR)** | 15 checkers | 9 errors + 6 warnings (default severities); INTEROP_001/002 in K2 |
 | **Detekt** | 40 rules | KMP source-set aware; backend + Compose profiles |
 | **Android Lint** | 35 detectors | Android/Compose + shared compiler rules |
 | **IntelliJ** | 35 inspections | Real-time analysis, quick fixes, Flow Chain Analyzer |
@@ -557,7 +557,7 @@ structured-coroutines/
 
 | Approach               | When     | Rules (approx.) | CI | Real-time | Platform     |
 |------------------------|----------|-----------------|----|-----------|--------------|
-| **Compiler Plugin**    | Compile  | 14 checkers     | ✅  | ❌         | All (KMP)    |
+| **Compiler Plugin**    | Compile  | 15 checkers     | ✅  | ❌         | All (KMP)    |
 | **Detekt Rules**       | Analysis | 40 rules        | ✅  | ❌         | All (KMP)    |
 | **Android Lint Rules** | Analysis | 35 detectors    | ✅  | ❌         | Android only |
 | **IDE Plugin**         | Editing  | 35 inspections  | ❌  | ✅         | All          |

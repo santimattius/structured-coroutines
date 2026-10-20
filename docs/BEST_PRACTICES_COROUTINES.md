@@ -53,6 +53,7 @@ hyphens, e.g. `#11-using-globalscope-in-production-code`).
 | `EXCEPT_001`   | 5.1 | [Using SupervisorJob as an Argument in a Single Builder](#51-using-supervisorjob-as-an-argument-in-a-single-builder) |
 | `EXCEPT_002`   | 5.2 | [Extending CancellationException for Domain Errors](#52-extending-cancellationexception-for-domain-errors)           |
 | `EXCEPT_003`   | 5.3 | [CoroutineExceptionHandler and launch vs async](#53-coroutineexceptionhandler-and-launch-vs-async)                   |
+| `EXCEPT_004`   | 5.4 | [Misplaced try-catch Inside coroutineScope](#54-except_004--misplaced-try-catch-inside-coroutinescope)                                                                  |
 | `TEST_001`     | 6.1 | [Slow Tests with Real Delays](#61-slow-tests-with-real-delays)                                                       |
 | `TEST_002`     | 6.2 | [Uncontrolled Fire-and-Forget Coroutines in Tests](#62-uncontrolled-fire-and-forget-coroutines-in-tests)             |
 | `TEST_003`     | 6.3 | [Replacing Dispatchers.Main in Tests](#63-replacing-dispatchersmain-in-tests)                                        |
@@ -309,6 +310,40 @@ Tool support: Detekt — rule `ThreadLocalNotPropagated`.
 |------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **Bad Practice** | Assuming that uncaught exceptions in `async` are handled like in `launch`. In `launch`, they go to the scope's `CoroutineExceptionHandler` (or thread uncaught handler). In `async`, the exception is held in the `Deferred` and only thrown on `await()`. Ignoring the `Deferred` hides the exception. |
 | **Recommended**  | Use `CoroutineExceptionHandler` at scope level for uncaught exceptions from `launch`. For `async`, always call `await()` or otherwise handle the `Deferred` so exceptions are not lost.                                                                                                                 |
+
+### 5.4 EXCEPT_004 — Misplaced try-catch Inside coroutineScope
+
+|                  | Description |
+|------------------|-------------|
+| **Bad Practice** | Placing a `try/catch` inside the `coroutineScope { }` lambda around `await()` or `join()` of an `async`/`launch` created in that same lambda. The child is a structural child of the scope: its failure cancels the scope and `coroutineScope` rethrows to its caller, so the catch cannot contain the failure (it may even run, which is misleading, and the code after the `try` never completes normally). |
+| **Recommended**  | Wrap the whole `coroutineScope` call in `try/catch`; or catch inside the `async`/`launch` block; or use `supervisorScope` (only its direct children are isolated; a nested `coroutineScope` inside it still propagates). |
+
+```kotlin
+// Bad: the catch cannot stop the failure from propagating out of coroutineScope
+suspend fun load(): Int = coroutineScope {
+    val d = async<Int> { error("boom") }
+    try {
+        d.await()
+    } catch (e: Exception) {
+        0
+    }
+}
+
+// Good: handle the failure around the whole scope
+suspend fun load(): Int =
+    try {
+        coroutineScope { async<Int> { error("boom") }.await() }
+    } catch (e: Exception) {
+        0
+    }
+
+// Good: handle the failure inside the child
+suspend fun load(): Int = coroutineScope {
+    async { try { error("boom") } catch (e: Exception) { 0 } }.await()
+}
+```
+
+Related but distinct: [SCOPE_004](#14-awaitall-and-exception-propagation) covers `awaitAll` and exception propagation.
 
 ---
 

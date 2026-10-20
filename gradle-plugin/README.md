@@ -109,6 +109,9 @@ structuredCoroutines {
     // Interop rules — v0.8.0 (enforcement active in Phase 2; configurable now)
     suspendCoroutineWithoutCancellation.set("error")   // Default: "error"
     callbackFlowWithoutAwaitClose.set("error")         // Default: "error"
+
+    // Exception handling — EXCEPT_004
+    misplacedTryCatchInScope.set("warning")            // Default: "warning"
 }
 ```
 
@@ -166,9 +169,9 @@ structuredCoroutines {
 
 | Profile              | When to use | Effect |
 |----------------------|-------------|--------|
-| **Strict**           | Greenfield projects; fail the build on any violation | 7 rules → error, 5 rules → warning |
-| **Gradual**          | Migrating legacy code; build must not fail while you fix issues | All 12 rules → **warning** |
-| **Relaxed**          | Same as Gradual | All 12 rules → **warning** |
+| **Strict**           | Greenfield projects; fail the build on any violation | 9 rules → error, 6 rules → warning |
+| **Gradual**          | Migrating legacy code; build must not fail while you fix issues | All 15 rules → **warning** |
+| **Relaxed**          | Same as Gradual | All 15 rules → **warning** |
 | **AndroidCompose**   | Android / Jetpack Compose projects; adds INTEROP rules as errors | Strict + INTEROP_001/002 → error |
 | **KmpCommon**        | KMP common-code modules | Same as AndroidCompose |
 
@@ -190,6 +193,7 @@ structuredCoroutines {
 | `loopWithoutYield`                      | warning | warning           | warning                    |
 | `suspendCoroutineWithoutCancellation` ¹ | error   | warning           | error                      |
 | `callbackFlowWithoutAwaitClose` ¹       | error   | warning           | error                      |
+| `misplacedTryCatchInScope`              | warning | warning           | warning                    |
 
 ¹ Configuration available now; rule enforcement lands in v0.8.0 Phase 2.
 
@@ -246,6 +250,7 @@ This plugin is the **recommended single entry point** for structured-coroutines:
 | `loopWithoutYield`                      | Warning          | Detects loops in suspend functions with no yield point   |
 | `suspendCoroutineWithoutCancellation` ¹ | Error            | Detects `suspendCoroutine` without cancellation support  |
 | `callbackFlowWithoutAwaitClose` ¹       | Error            | Detects `callbackFlow` without `awaitClose`              |
+| `misplacedTryCatchInScope`              | Warning          | Detects `try/catch` around `await`/`join` of a child inside `coroutineScope` |
 
 ¹ Configuration available now; rule enforcement lands in v0.8.0 Phase 2.
 
@@ -254,9 +259,9 @@ This plugin is the **recommended single entry point** for structured-coroutines:
 | Severity                          | Count  |
 |-----------------------------------|--------|
 | Error (default, active)           | 7      |
-| Warning (default, active)         | 5      |
+| Warning (default, active)         | 6      |
 | Error (default, v0.8.0 Phase 2) ¹ | 2      |
-| **Total configurable**            | **14** |
+| **Total configurable**            | **15** |
 
 ---
 
