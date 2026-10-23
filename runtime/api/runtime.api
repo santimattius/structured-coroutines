@@ -24,7 +24,46 @@ public final class io/github/santimattius/structured/runtime/DispatcherProvider$
 	public final fun of (Lkotlinx/coroutines/CoroutineDispatcher;)Lio/github/santimattius/structured/runtime/DispatcherProvider;
 }
 
+public final class io/github/santimattius/structured/runtime/DispatcherStats {
+	public synthetic fun <init> (Ljava/lang/String;JIJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun component1 ()Ljava/lang/String;
+	public final fun component2 ()J
+	public final fun component3 ()I
+	public final fun component4-UwyO8pc ()J
+	public final fun copy-Wn2Vu4Y (Ljava/lang/String;JIJ)Lio/github/santimattius/structured/runtime/DispatcherStats;
+	public static synthetic fun copy-Wn2Vu4Y$default (Lio/github/santimattius/structured/runtime/DispatcherStats;Ljava/lang/String;JIJILjava/lang/Object;)Lio/github/santimattius/structured/runtime/DispatcherStats;
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getLabel ()Ljava/lang/String;
+	public final fun getMaxQueueDelay-UwyO8pc ()J
+	public final fun getPeakConcurrency ()I
+	public final fun getTotalDispatched ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public abstract interface annotation class io/github/santimattius/structured/runtime/ExperimentalStructuredCoroutines : java/lang/annotation/Annotation {
+}
+
+public final class io/github/santimattius/structured/runtime/InstrumentedDispatcher : kotlinx/coroutines/CoroutineDispatcher {
+	public fun <init> (Lkotlinx/coroutines/CoroutineDispatcher;Ljava/lang/String;)V
+	public fun dispatch (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Runnable;)V
+	public final fun getLabel ()Ljava/lang/String;
+	public fun isDispatchNeeded (Lkotlin/coroutines/CoroutineContext;)Z
+	public final fun reset ()V
+	public final fun snapshot ()Lio/github/santimattius/structured/runtime/DispatcherStats;
+}
+
+public final class io/github/santimattius/structured/runtime/InstrumentedDispatcherKt {
+	public static final fun instrumented (Lio/github/santimattius/structured/runtime/DispatcherProvider;)Lio/github/santimattius/structured/runtime/InstrumentedDispatcherProvider;
+}
+
+public final class io/github/santimattius/structured/runtime/InstrumentedDispatcherProvider : io/github/santimattius/structured/runtime/DispatcherProvider {
+	public fun getDefault ()Lkotlinx/coroutines/CoroutineDispatcher;
+	public fun getIo ()Lkotlinx/coroutines/CoroutineDispatcher;
+	public fun getMain ()Lkotlinx/coroutines/CoroutineDispatcher;
+	public fun getUnconfined ()Lkotlinx/coroutines/CoroutineDispatcher;
+	public final fun reset ()V
+	public final fun stats ()Ljava/util/List;
 }
 
 public final class io/github/santimattius/structured/runtime/IoCompat_jvmKt {
