@@ -32,7 +32,7 @@ plugins {
 ```kotlin
 dependencies {
     // Use the version published on Maven Central, or the same version as in this repo (see gradle.properties PROJECT_VERSION)
-    detektPlugins("io.github.santimattius:structured-coroutines-detekt-rules:0.3.0-ALPHA01")
+    detektPlugins("io.github.santimattius:structured-coroutines-detekt-rules:1.1.1")
 }
 ```
 
@@ -722,12 +722,12 @@ Custom rules are loaded only from the `detektPlugins` configuration:
 ```kotlin
 // ✅ Correct
 dependencies {
-    detektPlugins("io.github.santimattius:structured-coroutines-detekt-rules:0.3.0-ALPHA01")
+    detektPlugins("io.github.santimattius:structured-coroutines-detekt-rules:1.1.1")
 }
 
 // ❌ Wrong – rules will not be loaded
 dependencies {
-    implementation("io.github.santimattius:structured-coroutines-detekt-rules:0.3.0-ALPHA01")
+    implementation("io.github.santimattius:structured-coroutines-detekt-rules:1.1.1")
 }
 ```
 

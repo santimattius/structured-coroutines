@@ -4,7 +4,7 @@
 
 # Structured Coroutines
 
-[![Kotlin](https://img.shields.io/badge/Kotlin-2.3.0-blue.svg)](https://kotlinlang.org)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.4.0-blue.svg)](https://kotlinlang.org)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
 [![Multiplatform](https://img.shields.io/badge/Multiplatform-Supported-orange.svg)](https://kotlinlang.org/docs/multiplatform.html)
 
@@ -19,7 +19,7 @@ analysis.
 | Compiler Plugin               | ✅ Complete (15 FIR checkers)                            | [gradle-plugin/README.md](gradle-plugin/README.md)                                                          |
 | Gradle Plugin                 | ✅ Complete (profiles incl. Spring/Ktor)                 | [gradle-plugin/README.md](gradle-plugin/README.md)                                                          |
 | Detekt Rules                  | ✅ Complete (41 rules)                                   | [detekt-rules/README.md](detekt-rules/README.md)                                                            |
-| Android Lint                  | ✅ Complete (36 detectors)                               | [lint-rules/README.md](lint-rules/README.md)                                                                |
+| Android Lint                  | ✅ Complete (33 detectors)                               | [lint-rules/README.md](lint-rules/README.md)                                                                |
 | IntelliJ Plugin               | ✅ Complete (36 inspections, tool window, Flow Analyzer) | [intellij-plugin/README.md](intellij-plugin/README.md)                                                    |
 | Annotations                   | ✅ Complete                                              | [annotations/README.md](annotations/README.md)                                                              |
 | Sample                        | ✅ Compilation examples per rule                         | [compilation/README](sample/src/main/kotlin/io/github/santimattius/structured/sample/compilation/README.md) |
@@ -68,7 +68,7 @@ This toolkit enforces structured concurrency best practices through:
 - ⚠️ **Warning-level diagnostics** for code smells
 - 🎯 **Opt-in model** via `@StructuredScope` annotation
 - 🤖 **Framework-aware** - recognizes `viewModelScope`, `lifecycleScope`, `rememberCoroutineScope()`
-- 🔧 **K2/FIR compatible** - works with Kotlin 2.3+
+- 🔧 **K2/FIR compatible** - works with Kotlin 2.3+ (1.2.0-ALPHA targets 2.4.0)
 - 📦 **Zero runtime overhead** - all checks happen at compile time
 - 🌍 **Kotlin Multiplatform** - supports JVM, JS, Native, WASM
 - 🔎 **Detekt integration** - additional static analysis rules
@@ -91,7 +91,7 @@ Full descriptions, examples, and suppression IDs: [`docs/BEST_PRACTICES_COROUTIN
 |-------|-------|----------|
 | **Compiler (FIR)** | 15 checkers | 9 errors + 6 warnings (default severities); INTEROP_001/002 in K2 |
 | **Detekt** | 41 rules | KMP source-set aware; backend + Compose profiles |
-| **Android Lint** | 36 detectors | Android/Compose + shared compiler rules |
+| **Android Lint** | 33 detectors | Android/Compose + shared compiler rules |
 | **IntelliJ** | 36 inspections | Real-time analysis, quick fixes, Flow Chain Analyzer |
 
 **v1.0 highlights:** COMPOSE_002/003, TEST_005/006, FLOW_009/011, INTEROP_003/004, DEBUG_001 (opt-in).  
@@ -102,6 +102,8 @@ Per-module rule lists and configuration examples: [detekt-rules](detekt-rules/RE
 ---
 
 ## 📦 Installation
+
+> **Pre-release:** `1.2.0-ALPHA03` adds `EXCEPT_004` (`MisplacedTryCatchInScope`) and several false-positive fixes. The snippets below use the latest stable release (`1.1.1`).
 
 ### Compiler Plugin
 
@@ -484,7 +486,9 @@ structured-coroutines/
 │   ├── CancellationExceptionSwallowedChecker
 │   ├── UnusedDeferredChecker
 │   ├── RedundantLaunchInCoroutineScopeChecker
-│   └── LoopWithoutYieldChecker
+│   ├── LoopWithoutYieldChecker
+│   ├── MisplacedTryCatchInScopeChecker
+│   └── ... (13 checker classes; 15 configurable rules)
 ├── detekt-rules/         # Detekt Custom Rules
 │   ├── GlobalScopeUsageRule
 │   ├── InlineCoroutineScopeRule
@@ -498,14 +502,15 @@ structured-coroutines/
 │   ├── ScopeReuseAfterCancelRule
 │   ├── ChannelNotClosedRule
 │   ├── ConsumeEachMultipleConsumersRule
-│   └── FlowBlockingCallRule
+│   ├── MisplacedTryCatchInScopeRule
+│   └── ... (41 rules total)
 ├── lint-rules/           # Android Lint Rules
 │   ├── GlobalScopeUsageDetector
 │   ├── MainDispatcherMisuseDetector
 │   ├── ViewModelScopeLeakDetector
-│   └── ... (21 rules total)
+│   └── ... (33 detectors total)
 ├── intellij-plugin/      # IntelliJ/Android Studio Plugin
-│   ├── inspections/      # 13 real-time inspections (incl. LoopWithoutYield, LifecycleAwareFlowCollection)
+│   ├── inspections/      # 36 real-time inspections (incl. LoopWithoutYield, LifecycleAwareFlowCollection)
 │   ├── quickfixes/       # 12 automatic quick fixes
 │   ├── intentions/       # 6 refactoring intentions (incl. Convert to runTest)
 │   ├── guttericons/      # Scope & dispatcher visualization
@@ -559,7 +564,7 @@ structured-coroutines/
 |------------------------|----------|-----------------|----|-----------|--------------|
 | **Compiler Plugin**    | Compile  | 15 checkers     | ✅  | ❌         | All (KMP)    |
 | **Detekt Rules**       | Analysis | 41 rules        | ✅  | ❌         | All (KMP)    |
-| **Android Lint Rules** | Analysis | 36 detectors    | ✅  | ❌         | Android only |
+| **Android Lint Rules** | Analysis | 33 detectors    | ✅  | ❌         | Android only |
 | **IDE Plugin**         | Editing  | 36 inspections  | ❌  | ✅         | All          |
 | **Combined (All)**     | All      | 51 patterns     | ✅  | ✅         | -            |
 | Code Review            | Manual   | —               | ❌  | ❌         | -            |
@@ -574,7 +579,7 @@ structured-coroutines/
 
 ## 🛠️ Requirements
 
-- Kotlin 2.3.0+
+- Kotlin 2.3.0+ for `1.1.1`; Kotlin 2.4.0+ for `1.2.0-ALPHA` pre-releases
 - K2 compiler (default in Kotlin 2.3+)
 - Gradle 8.0+
 - Detekt 1.23+ (for detekt-rules)
@@ -617,7 +622,7 @@ Each module contains its own detailed documentation:
 |-----------------------------------|----------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|
 | **Gradle Plugin**                 | [gradle-plugin/README.md](gradle-plugin/README.md)                                                             | Installation, configuration, severity settings                          |
 | **Detekt Rules**                  | [detekt-rules/README.md](detekt-rules/README.md)                                                               | 41 rules with examples and configuration                                |
-| **Android Lint**                  | [lint-rules/README.md](lint-rules/README.md)                                                                   | 36 detectors, Android/Compose-specific detection                        |
+| **Android Lint**                  | [lint-rules/README.md](lint-rules/README.md)                                                                   | 33 detectors, Android/Compose-specific detection                        |
 | **IntelliJ Plugin**               | [intellij-plugin/README.md](intellij-plugin/README.md)                                                         | 36 inspections, quick fixes, Flow Analyzer, K2 support                  |
 | **Annotations**                   | [annotations/README.md](annotations/README.md)                                                                 | @StructuredScope usage and multiplatform support                        |
 | **Compiler**                      | [compiler/README.md](compiler/README.md)                                                                       | K2/FIR checker implementation details                                   |
@@ -645,17 +650,6 @@ All user-facing text is externalized for localization:
 
 To add a new language, add a `_<locale>` properties file (e.g. `CompilerBundle_de.properties`) with
 the same keys.
-
-### Internationalization (i18n)
-
-All user-facing text is externalized for localization:
-
-- **Compiler plugin:** Messages are in `compiler/src/main/resources/messages/CompilerBundle*.properties`. **Default language is English** so builds and CI are predictable. To use Spanish (or the JVM default locale), set the system property:
-  - **Spanish:** `-Dstructured.coroutines.compiler.locale=es` (e.g. in `gradle.properties`: `org.gradle.jvmargs=... -Dstructured.coroutines.compiler.locale=es`)
-  - **JVM default:** `-Dstructured.coroutines.compiler.locale=default`
-- **IntelliJ plugin:** Uses `StructuredCoroutinesBundle.properties`; the IDE uses the platform language. Spanish: `StructuredCoroutinesBundle_es.properties`.
-
-To add a new language, add a `_<locale>` properties file (e.g. `CompilerBundle_de.properties`) with the same keys.
 
 ### External Resources
 

@@ -703,7 +703,7 @@ Include:
 
 **Initial Release**
 
-- 13 inspections for coroutine best practices (Loop without yield, Scope reuse, runBlocking, etc.)
+- 36 inspections for coroutine best practices (Loop without yield, Scope reuse, runBlocking, etc.)
 - 9 quick fixes for automatic corrections
 - 5 intentions for refactoring
 - 2 gutter icon providers (scope type and dispatcher context)
