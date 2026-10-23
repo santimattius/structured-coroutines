@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.channelFlow
 /** Demonstrates INTEROP_003: wrong flow builder for the use case. */
 
 // BAD: channelFlow wrapping external callback without awaitClose
-fun badLocationFlow() = channelFlow<Unit> {
+fun badLocationChannelFlow() = channelFlow<Unit> {
     registerListener { trySend(Unit) }
 }
 
