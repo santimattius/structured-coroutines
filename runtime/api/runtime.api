@@ -1,0 +1,3 @@
+public abstract interface annotation class io/github/santimattius/structured/runtime/ExperimentalStructuredCoroutines : java/lang/annotation/Annotation {
+}
+

@@ -1,6 +1,36 @@
+@file:OptIn(kotlinx.validation.ExperimentalBCVApi::class)
+
 plugins {
     alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.kotlin.multiplatform) apply false
+    alias(libs.plugins.binary.compatibility.validator)
+}
+
+// Binary-compatibility validation runs against :runtime's checked-in ABI dump only.
+// Every other module is excluded — most are not libraries with a public-ABI contract in the
+// same sense (compiler plugin, Gradle plugin, IDE tooling, samples). The root project has no
+// `check` lifecycle task in this build (no base/lifecycle plugin applied at root), so the BCV
+// plugin never wires apiCheck into one — apiCheck is run as a dedicated advisory CI step
+// (`:runtime:apiCheck` with `continue-on-error: true`, see .github/workflows/ci.yml) while
+// :runtime is on the @ExperimentalStructuredCoroutines-gated 0.x line. Transition point
+// (design it now, implement at 1.0.0): make apiCheck blocking in CI once the experimental gate
+// is removed — no `check` lifecycle wiring is needed since this repo never runs one at root.
+apiValidation {
+    ignoredProjects.addAll(
+        listOf(
+            "annotations",
+            "compiler",
+            "gradle-plugin",
+            "detekt-rules",
+            "lint-rules",
+            "intellij-plugin",
+            "sample",
+            "sample-detekt",
+        )
+    )
+    klib {
+        enabled = true
+    }
 }
 
 allprojects {
@@ -78,14 +108,19 @@ tasks.register<Exec>("checkSkillRefs") {
     commandLine("python3", "tools/scripts/generate_refs.py", "--check")
 }
 
-// Aggregate task to publish all library modules to Maven Central
+// Aggregate task to publish all vanniktech-published library modules to Maven Central.
+// :lint-rules is intentionally excluded: it applies raw `maven-publish` with a hand-built
+// MavenPublication (lint-JAR packaging), not the vanniktech plugin, so it has no
+// publishToMavenCentral task. It is published independently via its own workflow,
+// .github/workflows/publish-lint-rules.yml.
 tasks.register("publishToMavenCentral") {
     group = "publishing"
-    description = "Publishes all library modules (annotations, compiler, detekt-rules, gradle-plugin, lint-rules) to Maven Central"
+    description = "Publishes all vanniktech-published library modules (annotations, compiler, detekt-rules, gradle-plugin, runtime) to Maven Central"
     dependsOn(
         ":annotations:publishToMavenCentral",
         ":compiler:publishToMavenCentral",
         ":detekt-rules:publishToMavenCentral",
         ":gradle-plugin:publishToMavenCentral",
+        ":runtime:publishToMavenCentral",
     )
 }
