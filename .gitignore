@@ -34,3 +34,5 @@
 /sample-detekt/build/
 local.properties
 /local/
+# Local Pi runtime state
+.atl/
