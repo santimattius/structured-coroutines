@@ -635,13 +635,13 @@ Tool support: Compiler Plugin, Detekt, IntelliJ — rule `CallbackFlowWithoutAwa
 
 |                  | Description                                                                                                                                                                                                                                                                                      |
 |------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Bad Practice** | Using `Dispatchers.IO` in `commonMain` source sets. `Dispatchers.IO` does not exist on Kotlin/Native (iOS, macOS) or Kotlin/JS. Code that uses it in shared sources crashes at runtime with `IllegalStateException: Dispatchers.IO is not supported` on those targets.                          |
+| **Bad Practice** | Using `Dispatchers.IO` in `commonMain` source sets. `Dispatchers.IO` is not part of the common API (it is declared for JVM and Native only; on Native it needs `import kotlinx.coroutines.IO`), so it cannot be used from `commonMain`; JS and Wasm have no IO dispatcher. Referencing it in shared sources fails to compile (`Unresolved reference 'IO'`).                          |
 | **Recommended**  | Option A: Inject the dispatcher as a constructor parameter (default to `Dispatchers.Default` in common, `Dispatchers.IO` in JVM/Android). Option B: Use `expect`/`actual` declarations to provide the correct dispatcher per platform. Either approach keeps `commonMain` code platform-neutral. |
 
 **Example:**
 
 ```kotlin
-// [KMP_001] Dispatchers.IO in commonMain — crash on iOS/JS
+// [KMP_001] Dispatchers.IO in commonMain — unresolved reference (compile error)
 // File: commonMain/src/.../Repository.kt
 suspend fun fetchData(): Data = withContext(Dispatchers.IO) {
     httpClient.get(url)
@@ -663,14 +663,14 @@ actual val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 actual val ioDispatcher: CoroutineDispatcher = Dispatchers.Default
 ```
 
-**Dispatcher availability by platform (kotlinx-coroutines 1.10.2):**
+**Dispatcher availability by platform (kotlinx-coroutines 1.11.0):**
 
 | Platform                 | Dispatchers.Main            | Dispatchers.IO     | Dispatchers.Default |
 |--------------------------|:---------------------------:|:------------------:|:-------------------:|
 | JVM / Android            | yes (coroutines-android)    | yes                | yes                 |
-| iOS / macOS (Native)     | yes (main thread)           | **does not exist** | yes                 |
-| JS / WASM                | yes (microtask queue)       | **does not exist** | yes                 |
-| Linux / Windows (Native) | requires impl               | **does not exist** | yes                 |
+| iOS / macOS (Native)     | yes (main thread)           | yes (needs `import kotlinx.coroutines.IO`) | yes |
+| JS / WASM                | yes (microtask queue)       | **no IO dispatcher** | yes               |
+| Linux / Windows (Native) | requires impl               | yes (needs `import kotlinx.coroutines.IO`) | yes |
 
 Tool support: Detekt, Android Lint — rule `DispatchersIOInCommonMain`.
 

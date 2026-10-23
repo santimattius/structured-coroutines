@@ -264,11 +264,11 @@
     {
       "id": 21,
       "slug": "dispatchers-io-in-commonmain",
-      "prompt": "This shared KMP repository crashes at runtime on iOS. What's wrong?\n\n// commonMain\nclass ArticleRepository(private val api: ArticleApi) {\n    suspend fun fetchArticles(): List<Article> = withContext(Dispatchers.IO) {\n        api.fetchAll()\n    }\n}",
-      "expected_output": "Flags Dispatchers.IO usage inside commonMain (KMP_001): Dispatchers.IO does not exist on Kotlin/Native or Kotlin/JS, so this code fails to compile or crashes on non-JVM targets. Recommends injecting a CoroutineDispatcher as a constructor parameter (supplied per-platform) or defining an expect/actual ioDispatcher so commonMain never references the JVM-only Dispatchers.IO directly.",
+      "prompt": "This shared KMP repository fails to build for iOS. What's wrong?\n\n// commonMain\nclass ArticleRepository(private val api: ArticleApi) {\n    suspend fun fetchArticles(): List<Article> = withContext(Dispatchers.IO) {\n        api.fetchAll()\n    }\n}",
+      "expected_output": "Flags Dispatchers.IO usage inside commonMain (KMP_001): Dispatchers.IO is not part of the common API (it is declared for JVM and Native only; JS and Wasm have no IO dispatcher), so this code fails to compile in commonMain. Recommends injecting a CoroutineDispatcher as a constructor parameter (supplied per-platform) or defining an expect/actual ioDispatcher so commonMain never references the JVM-only Dispatchers.IO directly.",
       "files": [],
       "assertions": [
-        "Identifies Dispatchers.IO as JVM-only and unavailable on Native/JS targets",
+        "Identifies Dispatchers.IO as not part of the common API (JVM and Native only), so it cannot be used from commonMain",
         "Explains this is a commonMain / KMP compatibility problem, not a generic dispatcher mistake",
         "Recommends injecting CoroutineDispatcher as a constructor parameter with per-platform values",
         "Mentions expect/actual as an alternative to constructor injection"
