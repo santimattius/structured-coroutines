@@ -4,7 +4,31 @@ public final class io/github/santimattius/structured/runtime/CancellationSafeKt 
 	public static final fun withCleanup (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public final class io/github/santimattius/structured/runtime/DefaultDispatcherProvider : io/github/santimattius/structured/runtime/DispatcherProvider {
+	public static final field INSTANCE Lio/github/santimattius/structured/runtime/DefaultDispatcherProvider;
+	public fun getDefault ()Lkotlinx/coroutines/CoroutineDispatcher;
+	public fun getIo ()Lkotlinx/coroutines/CoroutineDispatcher;
+	public fun getMain ()Lkotlinx/coroutines/CoroutineDispatcher;
+	public fun getUnconfined ()Lkotlinx/coroutines/CoroutineDispatcher;
+}
+
+public abstract interface class io/github/santimattius/structured/runtime/DispatcherProvider {
+	public static final field Companion Lio/github/santimattius/structured/runtime/DispatcherProvider$Companion;
+	public abstract fun getDefault ()Lkotlinx/coroutines/CoroutineDispatcher;
+	public abstract fun getIo ()Lkotlinx/coroutines/CoroutineDispatcher;
+	public abstract fun getMain ()Lkotlinx/coroutines/CoroutineDispatcher;
+	public abstract fun getUnconfined ()Lkotlinx/coroutines/CoroutineDispatcher;
+}
+
+public final class io/github/santimattius/structured/runtime/DispatcherProvider$Companion {
+	public final fun of (Lkotlinx/coroutines/CoroutineDispatcher;)Lio/github/santimattius/structured/runtime/DispatcherProvider;
+}
+
 public abstract interface annotation class io/github/santimattius/structured/runtime/ExperimentalStructuredCoroutines : java/lang/annotation/Annotation {
+}
+
+public final class io/github/santimattius/structured/runtime/IoCompat_jvmKt {
+	public static final fun getIoCompat (Lkotlinx/coroutines/Dispatchers;)Lkotlinx/coroutines/CoroutineDispatcher;
 }
 
 public final class io/github/santimattius/structured/runtime/ParallelKt {
