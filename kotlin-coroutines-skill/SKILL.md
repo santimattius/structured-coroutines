@@ -72,6 +72,9 @@ conventions and official best practices.
       exception is stored in the `Deferred` and only thrown on `await()`. Always call `await()` on
       `async` blocks to avoid silently losing exceptions.
     - Use `CoroutineExceptionHandler` at scope level for `launch` uncaught exceptions.
+    - Do not wrap `await()`/`join()` in `try/catch` inside the same `coroutineScope { }` as the child:
+      the failure still cancels the scope. Catch around the whole `coroutineScope`, inside the child,
+      or use `supervisorScope`.
 11. In tests use `kotlinx-coroutines-test`: `runTest`, virtual time, `advanceTimeBy`,
     `advanceUntilIdle`, and inject `TestDispatcher`/`StandardTestDispatcher`; avoid real `delay()`
     with `runBlocking`. Replace `Dispatchers.Main` using `Dispatchers.setMain(TestDispatcher())` in
@@ -129,6 +132,7 @@ Each `references/ref-*.md` file is **self-contained** (Bad Practice, Recommended
 | **SupervisorJob() in a single builder**                                                       | [ref-5-1-supervisor-job-single-builder.md](references/ref-5-1-supervisor-job-single-builder.md)                           |
 | **CancellationException for domain errors** (e.g. UserNotFound)                               | [ref-5-2-cancellation-exception-domain-errors.md](references/ref-5-2-cancellation-exception-domain-errors.md)             |
 | **CoroutineExceptionHandler vs async**, exceptions in async stored in Deferred until await() | [ref-5-3-exception-handler-async.md](references/ref-5-3-exception-handler-async.md)                                       |
+| **try/catch around await() inside coroutineScope**, catch does not contain child failure     | [ref-5-4-misplaced-try-catch-in-scope.md](references/ref-5-4-misplaced-try-catch-in-scope.md) |
 | **Slow tests**, real delay() in tests                                                         | [ref-6-1-slow-tests-real-delays.md](references/ref-6-1-slow-tests-real-delays.md)                                         |
 | **Uncontrolled fire-and-forget in tests**, can't wait in tests                                | [ref-6-2-uncontrolled-fire-and-forget-tests.md](references/ref-6-2-uncontrolled-fire-and-forget-tests.md)                 |
 | **Dispatchers.Main in tests**, setMain/resetMain, CI flaky tests                             | [ref-6-3-setmain-resetmain.md](references/ref-6-3-setmain-resetmain.md)                                                   |

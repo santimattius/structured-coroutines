@@ -53,7 +53,7 @@ hyphens, e.g. `#11-using-globalscope-in-production-code`).
 | `EXCEPT_001`   | 5.1 | [Using SupervisorJob as an Argument in a Single Builder](#51-using-supervisorjob-as-an-argument-in-a-single-builder) |
 | `EXCEPT_002`   | 5.2 | [Extending CancellationException for Domain Errors](#52-extending-cancellationexception-for-domain-errors)           |
 | `EXCEPT_003`   | 5.3 | [CoroutineExceptionHandler and launch vs async](#53-coroutineexceptionhandler-and-launch-vs-async)                   |
-| `EXCEPT_004`   | 5.4 | [Misplaced try-catch Inside coroutineScope](#54-except_004--misplaced-try-catch-inside-coroutinescope)                                                                  |
+| `EXCEPT_004`   | 5.4 | [Misplaced try-catch Inside coroutineScope](#54-except_004--misplaced-try-catch-inside-coroutinescope)                |
 | `TEST_001`     | 6.1 | [Slow Tests with Real Delays](#61-slow-tests-with-real-delays)                                                       |
 | `TEST_002`     | 6.2 | [Uncontrolled Fire-and-Forget Coroutines in Tests](#62-uncontrolled-fire-and-forget-coroutines-in-tests)             |
 | `TEST_003`     | 6.3 | [Replacing Dispatchers.Main in Tests](#63-replacing-dispatchersmain-in-tests)                                        |
