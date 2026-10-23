@@ -25,6 +25,54 @@ abstract interface io.github.santimattius.structured.runtime/DispatcherProvider 
     }
 }
 
+final class io.github.santimattius.structured.runtime/DispatcherStats { // io.github.santimattius.structured.runtime/DispatcherStats|null[0]
+    constructor <init>(kotlin/String, kotlin/Long, kotlin/Int, kotlin.time/Duration) // io.github.santimattius.structured.runtime/DispatcherStats.<init>|<init>(kotlin.String;kotlin.Long;kotlin.Int;kotlin.time.Duration){}[0]
+
+    final val label // io.github.santimattius.structured.runtime/DispatcherStats.label|{}label[0]
+        final fun <get-label>(): kotlin/String // io.github.santimattius.structured.runtime/DispatcherStats.label.<get-label>|<get-label>(){}[0]
+    final val maxQueueDelay // io.github.santimattius.structured.runtime/DispatcherStats.maxQueueDelay|{}maxQueueDelay[0]
+        final fun <get-maxQueueDelay>(): kotlin.time/Duration // io.github.santimattius.structured.runtime/DispatcherStats.maxQueueDelay.<get-maxQueueDelay>|<get-maxQueueDelay>(){}[0]
+    final val peakConcurrency // io.github.santimattius.structured.runtime/DispatcherStats.peakConcurrency|{}peakConcurrency[0]
+        final fun <get-peakConcurrency>(): kotlin/Int // io.github.santimattius.structured.runtime/DispatcherStats.peakConcurrency.<get-peakConcurrency>|<get-peakConcurrency>(){}[0]
+    final val totalDispatched // io.github.santimattius.structured.runtime/DispatcherStats.totalDispatched|{}totalDispatched[0]
+        final fun <get-totalDispatched>(): kotlin/Long // io.github.santimattius.structured.runtime/DispatcherStats.totalDispatched.<get-totalDispatched>|<get-totalDispatched>(){}[0]
+
+    final fun component1(): kotlin/String // io.github.santimattius.structured.runtime/DispatcherStats.component1|component1(){}[0]
+    final fun component2(): kotlin/Long // io.github.santimattius.structured.runtime/DispatcherStats.component2|component2(){}[0]
+    final fun component3(): kotlin/Int // io.github.santimattius.structured.runtime/DispatcherStats.component3|component3(){}[0]
+    final fun component4(): kotlin.time/Duration // io.github.santimattius.structured.runtime/DispatcherStats.component4|component4(){}[0]
+    final fun copy(kotlin/String = ..., kotlin/Long = ..., kotlin/Int = ..., kotlin.time/Duration = ...): io.github.santimattius.structured.runtime/DispatcherStats // io.github.santimattius.structured.runtime/DispatcherStats.copy|copy(kotlin.String;kotlin.Long;kotlin.Int;kotlin.time.Duration){}[0]
+    final fun equals(kotlin/Any?): kotlin/Boolean // io.github.santimattius.structured.runtime/DispatcherStats.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // io.github.santimattius.structured.runtime/DispatcherStats.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // io.github.santimattius.structured.runtime/DispatcherStats.toString|toString(){}[0]
+}
+
+final class io.github.santimattius.structured.runtime/InstrumentedDispatcher : kotlinx.coroutines/CoroutineDispatcher { // io.github.santimattius.structured.runtime/InstrumentedDispatcher|null[0]
+    constructor <init>(kotlinx.coroutines/CoroutineDispatcher, kotlin/String) // io.github.santimattius.structured.runtime/InstrumentedDispatcher.<init>|<init>(kotlinx.coroutines.CoroutineDispatcher;kotlin.String){}[0]
+
+    final val label // io.github.santimattius.structured.runtime/InstrumentedDispatcher.label|{}label[0]
+        final fun <get-label>(): kotlin/String // io.github.santimattius.structured.runtime/InstrumentedDispatcher.label.<get-label>|<get-label>(){}[0]
+
+    final fun dispatch(kotlin.coroutines/CoroutineContext, kotlinx.coroutines/Runnable) // io.github.santimattius.structured.runtime/InstrumentedDispatcher.dispatch|dispatch(kotlin.coroutines.CoroutineContext;kotlinx.coroutines.Runnable){}[0]
+    final fun isDispatchNeeded(kotlin.coroutines/CoroutineContext): kotlin/Boolean // io.github.santimattius.structured.runtime/InstrumentedDispatcher.isDispatchNeeded|isDispatchNeeded(kotlin.coroutines.CoroutineContext){}[0]
+    final fun reset() // io.github.santimattius.structured.runtime/InstrumentedDispatcher.reset|reset(){}[0]
+    final fun snapshot(): io.github.santimattius.structured.runtime/DispatcherStats // io.github.santimattius.structured.runtime/InstrumentedDispatcher.snapshot|snapshot(){}[0]
+}
+
+final class io.github.santimattius.structured.runtime/InstrumentedDispatcherProvider : io.github.santimattius.structured.runtime/DispatcherProvider { // io.github.santimattius.structured.runtime/InstrumentedDispatcherProvider|null[0]
+    final val default // io.github.santimattius.structured.runtime/InstrumentedDispatcherProvider.default|{}default[0]
+        final fun <get-default>(): kotlinx.coroutines/CoroutineDispatcher // io.github.santimattius.structured.runtime/InstrumentedDispatcherProvider.default.<get-default>|<get-default>(){}[0]
+    final val io // io.github.santimattius.structured.runtime/InstrumentedDispatcherProvider.io|{}io[0]
+        final fun <get-io>(): kotlinx.coroutines/CoroutineDispatcher // io.github.santimattius.structured.runtime/InstrumentedDispatcherProvider.io.<get-io>|<get-io>(){}[0]
+    final val main // io.github.santimattius.structured.runtime/InstrumentedDispatcherProvider.main|{}main[0]
+        final fun <get-main>(): kotlinx.coroutines/CoroutineDispatcher // io.github.santimattius.structured.runtime/InstrumentedDispatcherProvider.main.<get-main>|<get-main>(){}[0]
+    final val unconfined // io.github.santimattius.structured.runtime/InstrumentedDispatcherProvider.unconfined|{}unconfined[0]
+        final fun <get-unconfined>(): kotlinx.coroutines/CoroutineDispatcher // io.github.santimattius.structured.runtime/InstrumentedDispatcherProvider.unconfined.<get-unconfined>|<get-unconfined>(){}[0]
+
+    final fun reset() // io.github.santimattius.structured.runtime/InstrumentedDispatcherProvider.reset|reset(){}[0]
+    final fun stats(): kotlin.collections/List<io.github.santimattius.structured.runtime/DispatcherStats> // io.github.santimattius.structured.runtime/InstrumentedDispatcherProvider.stats|stats(){}[0]
+}
+
 final object io.github.santimattius.structured.runtime/DefaultDispatcherProvider : io.github.santimattius.structured.runtime/DispatcherProvider { // io.github.santimattius.structured.runtime/DefaultDispatcherProvider|null[0]
     final val default // io.github.santimattius.structured.runtime/DefaultDispatcherProvider.default|{}default[0]
         final fun <get-default>(): kotlinx.coroutines/CoroutineDispatcher // io.github.santimattius.structured.runtime/DefaultDispatcherProvider.default.<get-default>|<get-default>(){}[0]
@@ -39,6 +87,7 @@ final object io.github.santimattius.structured.runtime/DefaultDispatcherProvider
 final val io.github.santimattius.structured.runtime/ioCompat // io.github.santimattius.structured.runtime/ioCompat|@kotlinx.coroutines.Dispatchers{}ioCompat[0]
     final fun (kotlinx.coroutines/Dispatchers).<get-ioCompat>(): kotlinx.coroutines/CoroutineDispatcher // io.github.santimattius.structured.runtime/ioCompat.<get-ioCompat>|<get-ioCompat>@kotlinx.coroutines.Dispatchers(){}[0]
 
+final fun (io.github.santimattius.structured.runtime/DispatcherProvider).io.github.santimattius.structured.runtime/instrumented(): io.github.santimattius.structured.runtime/InstrumentedDispatcherProvider // io.github.santimattius.structured.runtime/instrumented|instrumented@io.github.santimattius.structured.runtime.DispatcherProvider(){}[0]
 final fun <#A: kotlin/Any?> io.github.santimattius.structured.runtime/safeCallbackFlow(kotlin/Function1<kotlinx.coroutines.channels/SendChannel<#A>, kotlinx.coroutines/DisposableHandle>): kotlinx.coroutines.flow/Flow<#A> // io.github.santimattius.structured.runtime/safeCallbackFlow|safeCallbackFlow(kotlin.Function1<kotlinx.coroutines.channels.SendChannel<0:0>,kotlinx.coroutines.DisposableHandle>){0§<kotlin.Any?>}[0]
 final inline fun <#A: kotlin/Any?, #B: kotlin/Any?> (#A).io.github.santimattius.structured.runtime/runCatchingCancellable(kotlin/Function1<#A, #B>): kotlin/Result<#B> // io.github.santimattius.structured.runtime/runCatchingCancellable|runCatchingCancellable@0:0(kotlin.Function1<0:0,0:1>){0§<kotlin.Any?>;1§<kotlin.Any?>}[0]
 final inline fun <#A: kotlin/Any?> io.github.santimattius.structured.runtime/runCatchingCancellable(kotlin/Function0<#A>): kotlin/Result<#A> // io.github.santimattius.structured.runtime/runCatchingCancellable|runCatchingCancellable(kotlin.Function0<0:0>){0§<kotlin.Any?>}[0]
