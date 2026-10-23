@@ -19,7 +19,7 @@ import io.gitlab.arturbosch.detekt.api.Rule
 import io.gitlab.arturbosch.detekt.api.Severity
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 /**
- * [KMP_001] — `Dispatchers.IO` cannot be referenced from Kotlin/Common source sets targeting Native/JS.
+ * [KMP_001] — `Dispatchers.IO` is not part of the common API and cannot be referenced from Kotlin/Common source sets.
  */
 class DispatchersIOInCommonMainRule(config: Config = Config.empty) : Rule(config) {
 

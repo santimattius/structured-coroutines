@@ -26,7 +26,7 @@ Apply these rules in every response. Do not suggest or leave code that violates 
 ### Dispatchers & Context
 
 - **Use explicit, appropriate Dispatchers:** `Dispatchers.Default` for CPU-bound work, `Dispatchers.Main`/`Main.immediate` for UI, `withContext(Dispatchers.IO)` (or limited parallelism) for blocking I/O on JVM/Android. Never perform blocking I/O on `Default` or `Main`.
-- **Never use `Dispatchers.IO` in `commonMain`.** `Dispatchers.IO` does not exist on Kotlin/Native or JS. Inject `CoroutineDispatcher` (default `Dispatchers.Default` in common; `Dispatchers.IO` on JVM/Android via constructor default or `expect`/`actual`).
+- **Never use `Dispatchers.IO` in `commonMain`.** `Dispatchers.IO` is not part of the common API (JVM and Native only; JS and Wasm have no IO dispatcher), so it fails to compile in common code. Inject `CoroutineDispatcher` (default `Dispatchers.Default` in common; `Dispatchers.IO` on JVM/Android via constructor default or `expect`/`actual`).
 - **Make suspend functions main-safe.** A suspend function must be safe to call from any thread including Main. Move blocking work inside `withContext(Dispatchers.IO)` so the caller is never blocked.
 - **Inject `CoroutineDispatcher` as a constructor/function parameter** with a sensible production default. In tests, replace with `StandardTestDispatcher` or `UnconfinedTestDispatcher` for deterministic execution. Do not hardcode `Dispatchers.IO/Default/Main` inside classes.
 - **Do not use `Dispatchers.Unconfined` in production** unless for a rare, documented special case. Prefer Default, Main, IO, or single-thread dispatchers.

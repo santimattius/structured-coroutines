@@ -3,10 +3,10 @@
 
 ## Bad Practice
 
-Using `Dispatchers.IO` in `commonMain` source sets. `Dispatchers.IO` does not exist on Kotlin/Native (iOS, macOS) or Kotlin/JS. Code that uses it in shared sources crashes at runtime with `IllegalStateException: Dispatchers.IO is not supported` on those targets.
+Using `Dispatchers.IO` in `commonMain` source sets. `Dispatchers.IO` is not part of the common API (it is declared for JVM and Native only; on Native it needs `import kotlinx.coroutines.IO`), so it cannot be used from `commonMain`; JS and Wasm have no IO dispatcher. Referencing it in shared sources fails to compile (`Unresolved reference 'IO'`).
 
 ```kotlin
-// [KMP_001] Dispatchers.IO in commonMain — crash on iOS/JS
+// [KMP_001] Dispatchers.IO in commonMain — unresolved reference (compile error)
 // File: commonMain/src/.../Repository.kt
 suspend fun fetchData(): Data = withContext(Dispatchers.IO) {
     httpClient.get(url)
@@ -36,8 +36,10 @@ actual val ioDispatcher: CoroutineDispatcher = Dispatchers.Default
 
 ## Why
 
-`Dispatchers.IO` does not exist on Kotlin/Native or JS. Shared KMP code must inject
-dispatchers or use `expect`/`actual` per platform.
+`Dispatchers.IO` is not part of the common API (it is declared for JVM and Native only; on
+Native it needs `import kotlinx.coroutines.IO`), so it cannot be used from `commonMain`; JS and
+Wasm have no IO dispatcher. Shared KMP code must inject dispatchers or use `expect`/`actual`
+per platform.
 
 ## Quick fix
 
