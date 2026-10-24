@@ -25,6 +25,29 @@ abstract interface io.github.santimattius.structured.runtime/DispatcherProvider 
     }
 }
 
+final class <#A: kotlin/Any?> io.github.santimattius.structured.runtime/EventChannel { // io.github.santimattius.structured.runtime/EventChannel|null[0]
+    constructor <init>(kotlin/Int = ...) // io.github.santimattius.structured.runtime/EventChannel.<init>|<init>(kotlin.Int){}[0]
+
+    final val events // io.github.santimattius.structured.runtime/EventChannel.events|{}events[0]
+        final fun <get-events>(): kotlinx.coroutines.flow/Flow<#A> // io.github.santimattius.structured.runtime/EventChannel.events.<get-events>|<get-events>(){}[0]
+
+    final fun close() // io.github.santimattius.structured.runtime/EventChannel.close|close(){}[0]
+    final fun trySend(#A): kotlin/Boolean // io.github.santimattius.structured.runtime/EventChannel.trySend|trySend(1:0){}[0]
+    final suspend fun send(#A) // io.github.santimattius.structured.runtime/EventChannel.send|send(1:0){}[0]
+}
+
+final class <#A: kotlin/Any?> io.github.santimattius.structured.runtime/StateHolder { // io.github.santimattius.structured.runtime/StateHolder|null[0]
+    constructor <init>(#A) // io.github.santimattius.structured.runtime/StateHolder.<init>|<init>(1:0){}[0]
+
+    final val state // io.github.santimattius.structured.runtime/StateHolder.state|{}state[0]
+        final fun <get-state>(): kotlinx.coroutines.flow/StateFlow<#A> // io.github.santimattius.structured.runtime/StateHolder.state.<get-state>|<get-state>(){}[0]
+    final val value // io.github.santimattius.structured.runtime/StateHolder.value|{}value[0]
+        final fun <get-value>(): #A // io.github.santimattius.structured.runtime/StateHolder.value.<get-value>|<get-value>(){}[0]
+
+    final fun set(#A) // io.github.santimattius.structured.runtime/StateHolder.set|set(1:0){}[0]
+    final fun update(kotlin/Function1<#A, #A>) // io.github.santimattius.structured.runtime/StateHolder.update|update(kotlin.Function1<1:0,1:0>){}[0]
+}
+
 final class io.github.santimattius.structured.runtime/DispatcherStats { // io.github.santimattius.structured.runtime/DispatcherStats|null[0]
     constructor <init>(kotlin/String, kotlin/Long, kotlin/Int, kotlin.time/Duration) // io.github.santimattius.structured.runtime/DispatcherStats.<init>|<init>(kotlin.String;kotlin.Long;kotlin.Int;kotlin.time.Duration){}[0]
 
