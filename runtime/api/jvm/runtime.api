@@ -148,8 +148,26 @@ public final class io/github/santimattius/structured/runtime/ParallelKt {
 	public static synthetic fun supervisedAll$default (Ljava/lang/Iterable;ILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
+public final class io/github/santimattius/structured/runtime/PoolSampler {
+	public fun <init> (Lio/github/santimattius/structured/runtime/StatsSink;Lio/github/santimattius/structured/runtime/TraceSink;Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Lio/github/santimattius/structured/runtime/StatsSink;Lio/github/santimattius/structured/runtime/TraceSink;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun launchIn-HG0u8IE (Lkotlinx/coroutines/CoroutineScope;J)Lkotlinx/coroutines/Job;
+	public final fun sampleOnce ()V
+}
+
 public abstract interface class io/github/santimattius/structured/runtime/PoolSignal {
 	public abstract fun getLabel ()Ljava/lang/String;
+}
+
+public final class io/github/santimattius/structured/runtime/PoolSignal$BacklogGrowing : io/github/santimattius/structured/runtime/PoolSignal {
+	public fun <init> (Ljava/lang/String;IJJ)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFrom ()J
+	public fun getLabel ()Ljava/lang/String;
+	public final fun getSamples ()I
+	public final fun getTo ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class io/github/santimattius/structured/runtime/PoolSignal$LongRunningSegment : io/github/santimattius/structured/runtime/PoolSignal {
@@ -157,6 +175,16 @@ public final class io/github/santimattius/structured/runtime/PoolSignal$LongRunn
 	public fun equals (Ljava/lang/Object;)Z
 	public fun getLabel ()Ljava/lang/String;
 	public final fun getLongestRun-UwyO8pc ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/santimattius/structured/runtime/PoolSignal$PoolSaturated : io/github/santimattius/structured/runtime/PoolSignal {
+	public fun <init> (Ljava/lang/String;II)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getLabel ()Ljava/lang/String;
+	public final fun getParallelism ()I
+	public final fun getSamples ()I
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -198,7 +226,9 @@ public final class io/github/santimattius/structured/runtime/SignalThresholds {
 
 public final class io/github/santimattius/structured/runtime/SignalsKt {
 	public static final fun signals (Lio/github/santimattius/structured/runtime/DispatcherMetrics;Lio/github/santimattius/structured/runtime/SignalThresholds;)Ljava/util/List;
+	public static final fun signals (Ljava/util/List;I)Ljava/util/List;
 	public static synthetic fun signals$default (Lio/github/santimattius/structured/runtime/DispatcherMetrics;Lio/github/santimattius/structured/runtime/SignalThresholds;ILjava/lang/Object;)Ljava/util/List;
+	public static synthetic fun signals$default (Ljava/util/List;IILjava/lang/Object;)Ljava/util/List;
 }
 
 public final class io/github/santimattius/structured/runtime/StateHolder {
@@ -250,6 +280,23 @@ public final class io/github/santimattius/structured/runtime/TraceEvent$Finished
 	public final fun getOutcome ()Lio/github/santimattius/structured/runtime/TraceOutcome;
 	public final fun getRunTimeNanos ()J
 	public final fun getThread ()Lio/github/santimattius/structured/runtime/ThreadInfo;
+	public fun getTimestampNanos ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/santimattius/structured/runtime/TraceEvent$PoolSample : io/github/santimattius/structured/runtime/TraceEvent {
+	public fun <init> (Ljava/lang/String;JJJJJIILjava/lang/Integer;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getDispatcher ()Ljava/lang/String;
+	public final fun getFinished ()J
+	public fun getLevel ()Lio/github/santimattius/structured/runtime/TraceLevel;
+	public final fun getParallelism ()Ljava/lang/Integer;
+	public final fun getPeakRunning ()I
+	public final fun getPending ()J
+	public final fun getQueued ()J
+	public final fun getRunning ()I
+	public final fun getStarted ()J
 	public fun getTimestampNanos ()J
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -341,6 +388,7 @@ public final class io/github/santimattius/structured/runtime/TracingDispatcher :
 }
 
 public final class io/github/santimattius/structured/runtime/TracingDispatcherKt {
+	public static final fun parallelism (Lio/github/santimattius/structured/runtime/TracedDispatcherProvider;Ljava/lang/String;)Ljava/lang/Integer;
 	public static final fun traced (Lio/github/santimattius/structured/runtime/DispatcherProvider;Lio/github/santimattius/structured/runtime/TraceSink;)Lio/github/santimattius/structured/runtime/TracedDispatcherProvider;
 }
 

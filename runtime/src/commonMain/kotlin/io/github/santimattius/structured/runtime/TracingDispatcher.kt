@@ -147,7 +147,7 @@ public class TracingDispatcher internal constructor(
  */
 @ExperimentalStructuredCoroutines
 public class TracedDispatcherProvider internal constructor(
-    private val base: DispatcherProvider,
+    internal val base: DispatcherProvider,
     /** The sink that receives the events of the wrapped dispatchers. */
     public val sink: TraceSink,
 ) : DispatcherProvider {
@@ -178,3 +178,36 @@ public class TracedDispatcherProvider internal constructor(
 @ExperimentalStructuredCoroutines
 public fun DispatcherProvider.traced(sink: TraceSink): TracedDispatcherProvider =
     TracedDispatcherProvider(this, sink)
+
+/**
+ * The maximum concurrency of the traced dispatcher [label], or null when unknown. Meant to feed
+ * [PoolSampler]'s `parallelism` argument.
+ *
+ * Returns a value only for `"default"` and `"io"`, and only when the wrapped base provider is
+ * [DefaultDispatcherProvider]; for any other label (`"main"`) or base (a test provider, a custom
+ * one) it returns null. On targets with no verified source (Native, JS, Wasm) it returns null too.
+ *
+ * The values are INFERRED from documented defaults, not read from the live scheduler: on the JVM
+ * and Android `default` is `max(2, availableProcessors)` and `io` is the
+ * `kotlinx.coroutines.io.parallelism` system property when it is a positive integer, else
+ * `max(64, availableProcessors)`. They can be wrong if the scheduler is configured another way, and
+ * for `limitedParallelism` views. `Dispatchers.Default` and `Dispatchers.IO` share one thread pool
+ * with independent permits, so this is a per-dispatcher limit on concurrent segments, not a
+ * thread count.
+ *
+ * Example:
+ * ```
+ * val stats = StatsSink(TraceLevel.Pool)
+ * val traced = DefaultDispatcherProvider.traced(stats)
+ * val sampler = PoolSampler(stats, sink, traced::parallelism)
+ * ```
+ */
+@ExperimentalStructuredCoroutines
+public fun TracedDispatcherProvider.parallelism(label: String): Int? {
+    if (base !== DefaultDispatcherProvider) return null
+    return when (label) {
+        "default" -> inferredDefaultParallelism()
+        "io" -> inferredIoParallelism()
+        else -> null
+    }
+}

@@ -51,6 +51,7 @@ public class SignalThresholds(
  * when (val signal = metrics.signals().firstOrNull()) {
  *     is PoolSignal.StarvationSuspected -> alert(signal.label)
  *     is PoolSignal.LongRunningSegment -> alert(signal.label)
+ *     is PoolSignal.BacklogGrowing, is PoolSignal.PoolSaturated -> alert(signal.label)
  *     null -> Unit
  * }
  * ```
@@ -98,6 +99,56 @@ public sealed interface PoolSignal {
 
         override fun toString(): String = "LongRunningSegment(label=$label, longestRun=$longestRun)"
     }
+
+    /**
+     * [pending] never decreased across the last [samples] pool samples and rose from [from] to
+     * [to]. Produced by `List<TraceEvent.PoolSample>.signals`.
+     */
+    public class BacklogGrowing(
+        override val label: String,
+        public val samples: Int,
+        public val from: Long,
+        public val to: Long,
+    ) : PoolSignal {
+        override fun equals(other: Any?): Boolean =
+            this === other || (other is BacklogGrowing && label == other.label &&
+                samples == other.samples && from == other.from && to == other.to)
+
+        override fun hashCode(): Int {
+            var h = label.hashCode()
+            h = 31 * h + samples
+            h = 31 * h + from.hashCode()
+            h = 31 * h + to.hashCode()
+            return h
+        }
+
+        override fun toString(): String =
+            "BacklogGrowing(label=$label, samples=$samples, from=$from, to=$to)"
+    }
+
+    /**
+     * Across the last [samples] pool samples the dispatcher ran at its [parallelism] limit while
+     * work was waiting. Produced by `List<TraceEvent.PoolSample>.signals`.
+     */
+    public class PoolSaturated(
+        override val label: String,
+        public val parallelism: Int,
+        public val samples: Int,
+    ) : PoolSignal {
+        override fun equals(other: Any?): Boolean =
+            this === other || (other is PoolSaturated && label == other.label &&
+                parallelism == other.parallelism && samples == other.samples)
+
+        override fun hashCode(): Int {
+            var h = label.hashCode()
+            h = 31 * h + parallelism
+            h = 31 * h + samples
+            return h
+        }
+
+        override fun toString(): String =
+            "PoolSaturated(label=$label, parallelism=$parallelism, samples=$samples)"
+    }
 }
 
 /**
@@ -110,8 +161,8 @@ public sealed interface PoolSignal {
  *   blocking call; see `DISPATCH_001` and `DISPATCH_002` in `docs/BEST_PRACTICES_COROUTINES.md`.
  *
  * These are heuristics, not proof. The queue-delay p95 is a histogram bucket upper bound (up to 2x
- * the real value). Detecting backlog growth needs periodic samples and arrives with the pool
- * sampler in a later release; this function only looks at one snapshot.
+ * the real value). This function only looks at one snapshot; to detect trends over time use
+ * `List<TraceEvent.PoolSample>.signals`, fed by [PoolSampler].
  *
  * Example:
  * ```
@@ -129,6 +180,58 @@ public fun DispatcherMetrics.signals(thresholds: SignalThresholds = SignalThresh
     }
     if (longestRun >= thresholds.longRunningSegment) {
         result.add(PoolSignal.LongRunningSegment(label, longestRun))
+    }
+    return result
+}
+
+/**
+ * Derives heuristic [PoolSignal]s from a chronological series of [TraceEvent.PoolSample]s, such as
+ * those a [PoolSampler] emits. Each label is evaluated on its own over its last [minSamples]
+ * samples; a label with fewer samples yields no signal.
+ *
+ * - [PoolSignal.BacklogGrowing]: `pending` is non-decreasing across the window, ends higher than it
+ *   started and is positive.
+ * - [PoolSignal.PoolSaturated]: in every sample of the window `parallelism` is known,
+ *   `running >= parallelism` and `pending > 0`.
+ *
+ * These are heuristics, not proof: `pending` can overcount (see [TraceEvent.PoolSample]) and
+ * `parallelism` may be inferred. The result is ordered by the first appearance of each label.
+ *
+ * Example:
+ * ```
+ * val samples = ring.snapshot().filterIsInstance<TraceEvent.PoolSample>()
+ * samples.signals().forEach(::println)
+ * ```
+ *
+ * @param minSamples size of the window per label. Must be at least 2.
+ */
+@ExperimentalStructuredCoroutines
+public fun List<TraceEvent.PoolSample>.signals(minSamples: Int = 4): List<PoolSignal> {
+    require(minSamples >= 2) { "minSamples must be >= 2, was $minSamples" }
+    val result = ArrayList<PoolSignal>(2)
+    for ((label, all) in groupBy { it.dispatcher }) {
+        if (all.size < minSamples) continue
+        val window = all.takeLast(minSamples)
+        val from = window.first().pending
+        val to = window.last().pending
+        var nonDecreasing = true
+        for (i in 1 until window.size) {
+            if (window[i].pending < window[i - 1].pending) {
+                nonDecreasing = false
+                break
+            }
+        }
+        if (nonDecreasing && to > from && to > 0) {
+            result.add(PoolSignal.BacklogGrowing(label, window.size, from, to))
+        }
+        val limit = window.last().parallelism
+        if (limit != null && window.all { s ->
+                val p = s.parallelism
+                p != null && s.running >= p && s.pending > 0
+            }
+        ) {
+            result.add(PoolSignal.PoolSaturated(label, limit, window.size))
+        }
     }
     return result
 }
