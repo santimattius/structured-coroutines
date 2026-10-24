@@ -8,6 +8,7 @@ include(
     ":lint-rules",
     ":intellij-plugin",
     ":runtime",
+    ":runtime-test",
     ":sample",
     ":sample-detekt"
 )

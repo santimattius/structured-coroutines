@@ -6,12 +6,12 @@ plugins {
     alias(libs.plugins.binary.compatibility.validator)
 }
 
-// Binary-compatibility validation runs against :runtime's checked-in ABI dump only.
+// Binary-compatibility validation runs against :runtime's and :runtime-test's checked-in ABI dumps only.
 // Every other module is excluded — most are not libraries with a public-ABI contract in the
 // same sense (compiler plugin, Gradle plugin, IDE tooling, samples). The root project has no
 // `check` lifecycle task in this build (no base/lifecycle plugin applied at root), so the BCV
 // plugin never wires apiCheck into one — apiCheck is run as a dedicated advisory CI step
-// (`:runtime:apiCheck` with `continue-on-error: true`, see .github/workflows/ci.yml) while
+// (`:runtime:apiCheck :runtime-test:apiCheck` with `continue-on-error: true`, see .github/workflows/ci.yml) while
 // :runtime is on the @ExperimentalStructuredCoroutines-gated 0.x line. Transition point
 // (design it now, implement at 1.0.0): make apiCheck blocking in CI once the experimental gate
 // is removed — no `check` lifecycle wiring is needed since this repo never runs one at root.
@@ -115,12 +115,13 @@ tasks.register<Exec>("checkSkillRefs") {
 // .github/workflows/publish-lint-rules.yml.
 tasks.register("publishToMavenCentral") {
     group = "publishing"
-    description = "Publishes all vanniktech-published library modules (annotations, compiler, detekt-rules, gradle-plugin, runtime) to Maven Central"
+    description = "Publishes all vanniktech-published library modules (annotations, compiler, detekt-rules, gradle-plugin, runtime, runtime-test) to Maven Central"
     dependsOn(
         ":annotations:publishToMavenCentral",
         ":compiler:publishToMavenCentral",
         ":detekt-rules:publishToMavenCentral",
         ":gradle-plugin:publishToMavenCentral",
         ":runtime:publishToMavenCentral",
+        ":runtime-test:publishToMavenCentral",
     )
 }
