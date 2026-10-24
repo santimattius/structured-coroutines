@@ -1,0 +1,16 @@
+public final class io/github/santimattius/structured/runtime/test/TestDispatcherProvider : io/github/santimattius/structured/runtime/DispatcherProvider {
+	public fun <init> ()V
+	public fun <init> (Lkotlinx/coroutines/test/TestCoroutineScheduler;Z)V
+	public synthetic fun <init> (Lkotlinx/coroutines/test/TestCoroutineScheduler;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun getDefault ()Lkotlinx/coroutines/CoroutineDispatcher;
+	public fun getIo ()Lkotlinx/coroutines/CoroutineDispatcher;
+	public fun getMain ()Lkotlinx/coroutines/CoroutineDispatcher;
+	public final fun getScheduler ()Lkotlinx/coroutines/test/TestCoroutineScheduler;
+	public fun getUnconfined ()Lkotlinx/coroutines/CoroutineDispatcher;
+}
+
+public final class io/github/santimattius/structured/runtime/test/TestDispatcherProviderKt {
+	public static final fun testDispatcherProvider (Lkotlinx/coroutines/test/TestScope;Z)Lio/github/santimattius/structured/runtime/DispatcherProvider;
+	public static synthetic fun testDispatcherProvider$default (Lkotlinx/coroutines/test/TestScope;ZILjava/lang/Object;)Lio/github/santimattius/structured/runtime/DispatcherProvider;
+}
+
