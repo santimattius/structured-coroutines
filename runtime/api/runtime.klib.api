@@ -47,6 +47,39 @@ abstract interface io.github.santimattius.structured.runtime/DispatcherProvider 
     }
 }
 
+sealed interface io.github.santimattius.structured.runtime/PoolSignal { // io.github.santimattius.structured.runtime/PoolSignal|null[0]
+    abstract val label // io.github.santimattius.structured.runtime/PoolSignal.label|{}label[0]
+        abstract fun <get-label>(): kotlin/String // io.github.santimattius.structured.runtime/PoolSignal.label.<get-label>|<get-label>(){}[0]
+
+    final class LongRunningSegment : io.github.santimattius.structured.runtime/PoolSignal { // io.github.santimattius.structured.runtime/PoolSignal.LongRunningSegment|null[0]
+        constructor <init>(kotlin/String, kotlin.time/Duration) // io.github.santimattius.structured.runtime/PoolSignal.LongRunningSegment.<init>|<init>(kotlin.String;kotlin.time.Duration){}[0]
+
+        final val label // io.github.santimattius.structured.runtime/PoolSignal.LongRunningSegment.label|{}label[0]
+            final fun <get-label>(): kotlin/String // io.github.santimattius.structured.runtime/PoolSignal.LongRunningSegment.label.<get-label>|<get-label>(){}[0]
+        final val longestRun // io.github.santimattius.structured.runtime/PoolSignal.LongRunningSegment.longestRun|{}longestRun[0]
+            final fun <get-longestRun>(): kotlin.time/Duration // io.github.santimattius.structured.runtime/PoolSignal.LongRunningSegment.longestRun.<get-longestRun>|<get-longestRun>(){}[0]
+
+        final fun equals(kotlin/Any?): kotlin/Boolean // io.github.santimattius.structured.runtime/PoolSignal.LongRunningSegment.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // io.github.santimattius.structured.runtime/PoolSignal.LongRunningSegment.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // io.github.santimattius.structured.runtime/PoolSignal.LongRunningSegment.toString|toString(){}[0]
+    }
+
+    final class StarvationSuspected : io.github.santimattius.structured.runtime/PoolSignal { // io.github.santimattius.structured.runtime/PoolSignal.StarvationSuspected|null[0]
+        constructor <init>(kotlin/String, kotlin.time/Duration, kotlin/Long) // io.github.santimattius.structured.runtime/PoolSignal.StarvationSuspected.<init>|<init>(kotlin.String;kotlin.time.Duration;kotlin.Long){}[0]
+
+        final val label // io.github.santimattius.structured.runtime/PoolSignal.StarvationSuspected.label|{}label[0]
+            final fun <get-label>(): kotlin/String // io.github.santimattius.structured.runtime/PoolSignal.StarvationSuspected.label.<get-label>|<get-label>(){}[0]
+        final val pending // io.github.santimattius.structured.runtime/PoolSignal.StarvationSuspected.pending|{}pending[0]
+            final fun <get-pending>(): kotlin/Long // io.github.santimattius.structured.runtime/PoolSignal.StarvationSuspected.pending.<get-pending>|<get-pending>(){}[0]
+        final val queueDelayP95 // io.github.santimattius.structured.runtime/PoolSignal.StarvationSuspected.queueDelayP95|{}queueDelayP95[0]
+            final fun <get-queueDelayP95>(): kotlin.time/Duration // io.github.santimattius.structured.runtime/PoolSignal.StarvationSuspected.queueDelayP95.<get-queueDelayP95>|<get-queueDelayP95>(){}[0]
+
+        final fun equals(kotlin/Any?): kotlin/Boolean // io.github.santimattius.structured.runtime/PoolSignal.StarvationSuspected.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // io.github.santimattius.structured.runtime/PoolSignal.StarvationSuspected.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // io.github.santimattius.structured.runtime/PoolSignal.StarvationSuspected.toString|toString(){}[0]
+    }
+}
+
 sealed interface io.github.santimattius.structured.runtime/TraceEvent { // io.github.santimattius.structured.runtime/TraceEvent|null[0]
     abstract val dispatcher // io.github.santimattius.structured.runtime/TraceEvent.dispatcher|{}dispatcher[0]
         abstract fun <get-dispatcher>(): kotlin/String // io.github.santimattius.structured.runtime/TraceEvent.dispatcher.<get-dispatcher>|<get-dispatcher>(){}[0]
@@ -164,6 +197,37 @@ final class io.github.santimattius.structured.runtime/CompositeSink : io.github.
     final fun isEnabled(io.github.santimattius.structured.runtime/TraceLevel): kotlin/Boolean // io.github.santimattius.structured.runtime/CompositeSink.isEnabled|isEnabled(io.github.santimattius.structured.runtime.TraceLevel){}[0]
 }
 
+final class io.github.santimattius.structured.runtime/DispatcherMetrics { // io.github.santimattius.structured.runtime/DispatcherMetrics|null[0]
+    final val failed // io.github.santimattius.structured.runtime/DispatcherMetrics.failed|{}failed[0]
+        final fun <get-failed>(): kotlin/Long // io.github.santimattius.structured.runtime/DispatcherMetrics.failed.<get-failed>|<get-failed>(){}[0]
+    final val finished // io.github.santimattius.structured.runtime/DispatcherMetrics.finished|{}finished[0]
+        final fun <get-finished>(): kotlin/Long // io.github.santimattius.structured.runtime/DispatcherMetrics.finished.<get-finished>|<get-finished>(){}[0]
+    final val label // io.github.santimattius.structured.runtime/DispatcherMetrics.label|{}label[0]
+        final fun <get-label>(): kotlin/String // io.github.santimattius.structured.runtime/DispatcherMetrics.label.<get-label>|<get-label>(){}[0]
+    final val longestRun // io.github.santimattius.structured.runtime/DispatcherMetrics.longestRun|{}longestRun[0]
+        final fun <get-longestRun>(): kotlin.time/Duration // io.github.santimattius.structured.runtime/DispatcherMetrics.longestRun.<get-longestRun>|<get-longestRun>(){}[0]
+    final val peakRunning // io.github.santimattius.structured.runtime/DispatcherMetrics.peakRunning|{}peakRunning[0]
+        final fun <get-peakRunning>(): kotlin/Int // io.github.santimattius.structured.runtime/DispatcherMetrics.peakRunning.<get-peakRunning>|<get-peakRunning>(){}[0]
+    final val pending // io.github.santimattius.structured.runtime/DispatcherMetrics.pending|{}pending[0]
+        final fun <get-pending>(): kotlin/Long // io.github.santimattius.structured.runtime/DispatcherMetrics.pending.<get-pending>|<get-pending>(){}[0]
+    final val queueDelay // io.github.santimattius.structured.runtime/DispatcherMetrics.queueDelay|{}queueDelay[0]
+        final fun <get-queueDelay>(): io.github.santimattius.structured.runtime/HistogramSnapshot // io.github.santimattius.structured.runtime/DispatcherMetrics.queueDelay.<get-queueDelay>|<get-queueDelay>(){}[0]
+    final val queued // io.github.santimattius.structured.runtime/DispatcherMetrics.queued|{}queued[0]
+        final fun <get-queued>(): kotlin/Long // io.github.santimattius.structured.runtime/DispatcherMetrics.queued.<get-queued>|<get-queued>(){}[0]
+    final val runTime // io.github.santimattius.structured.runtime/DispatcherMetrics.runTime|{}runTime[0]
+        final fun <get-runTime>(): io.github.santimattius.structured.runtime/HistogramSnapshot // io.github.santimattius.structured.runtime/DispatcherMetrics.runTime.<get-runTime>|<get-runTime>(){}[0]
+    final val running // io.github.santimattius.structured.runtime/DispatcherMetrics.running|{}running[0]
+        final fun <get-running>(): kotlin/Int // io.github.santimattius.structured.runtime/DispatcherMetrics.running.<get-running>|<get-running>(){}[0]
+    final val started // io.github.santimattius.structured.runtime/DispatcherMetrics.started|{}started[0]
+        final fun <get-started>(): kotlin/Long // io.github.santimattius.structured.runtime/DispatcherMetrics.started.<get-started>|<get-started>(){}[0]
+    final val threadsObserved // io.github.santimattius.structured.runtime/DispatcherMetrics.threadsObserved|{}threadsObserved[0]
+        final fun <get-threadsObserved>(): kotlin/Int // io.github.santimattius.structured.runtime/DispatcherMetrics.threadsObserved.<get-threadsObserved>|<get-threadsObserved>(){}[0]
+
+    final fun equals(kotlin/Any?): kotlin/Boolean // io.github.santimattius.structured.runtime/DispatcherMetrics.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // io.github.santimattius.structured.runtime/DispatcherMetrics.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // io.github.santimattius.structured.runtime/DispatcherMetrics.toString|toString(){}[0]
+}
+
 final class io.github.santimattius.structured.runtime/DispatcherStats { // io.github.santimattius.structured.runtime/DispatcherStats|null[0]
     constructor <init>(kotlin/String, kotlin/Long, kotlin/Int, kotlin.time/Duration) // io.github.santimattius.structured.runtime/DispatcherStats.<init>|<init>(kotlin.String;kotlin.Long;kotlin.Int;kotlin.time.Duration){}[0]
 
@@ -184,6 +248,22 @@ final class io.github.santimattius.structured.runtime/DispatcherStats { // io.gi
     final fun equals(kotlin/Any?): kotlin/Boolean // io.github.santimattius.structured.runtime/DispatcherStats.equals|equals(kotlin.Any?){}[0]
     final fun hashCode(): kotlin/Int // io.github.santimattius.structured.runtime/DispatcherStats.hashCode|hashCode(){}[0]
     final fun toString(): kotlin/String // io.github.santimattius.structured.runtime/DispatcherStats.toString|toString(){}[0]
+}
+
+final class io.github.santimattius.structured.runtime/HistogramSnapshot { // io.github.santimattius.structured.runtime/HistogramSnapshot|null[0]
+    final val bucketCounts // io.github.santimattius.structured.runtime/HistogramSnapshot.bucketCounts|{}bucketCounts[0]
+        final fun <get-bucketCounts>(): kotlin.collections/List<kotlin/Long> // io.github.santimattius.structured.runtime/HistogramSnapshot.bucketCounts.<get-bucketCounts>|<get-bucketCounts>(){}[0]
+    final val bucketUpperBounds // io.github.santimattius.structured.runtime/HistogramSnapshot.bucketUpperBounds|{}bucketUpperBounds[0]
+        final fun <get-bucketUpperBounds>(): kotlin.collections/List<kotlin.time/Duration> // io.github.santimattius.structured.runtime/HistogramSnapshot.bucketUpperBounds.<get-bucketUpperBounds>|<get-bucketUpperBounds>(){}[0]
+    final val count // io.github.santimattius.structured.runtime/HistogramSnapshot.count|{}count[0]
+        final fun <get-count>(): kotlin/Long // io.github.santimattius.structured.runtime/HistogramSnapshot.count.<get-count>|<get-count>(){}[0]
+    final val max // io.github.santimattius.structured.runtime/HistogramSnapshot.max|{}max[0]
+        final fun <get-max>(): kotlin.time/Duration // io.github.santimattius.structured.runtime/HistogramSnapshot.max.<get-max>|<get-max>(){}[0]
+
+    final fun equals(kotlin/Any?): kotlin/Boolean // io.github.santimattius.structured.runtime/HistogramSnapshot.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // io.github.santimattius.structured.runtime/HistogramSnapshot.hashCode|hashCode(){}[0]
+    final fun percentile(kotlin/Double): kotlin.time/Duration // io.github.santimattius.structured.runtime/HistogramSnapshot.percentile|percentile(kotlin.Double){}[0]
+    final fun toString(): kotlin/String // io.github.santimattius.structured.runtime/HistogramSnapshot.toString|toString(){}[0]
 }
 
 final class io.github.santimattius.structured.runtime/InstrumentedDispatcher : kotlinx.coroutines/CoroutineDispatcher, kotlinx.coroutines/Delay { // io.github.santimattius.structured.runtime/InstrumentedDispatcher|null[0]
@@ -238,6 +318,32 @@ final class io.github.santimattius.structured.runtime/RingBufferSink : io.github
     final fun snapshot(): kotlin.collections/List<io.github.santimattius.structured.runtime/TraceEvent> // io.github.santimattius.structured.runtime/RingBufferSink.snapshot|snapshot(){}[0]
 }
 
+final class io.github.santimattius.structured.runtime/SignalThresholds { // io.github.santimattius.structured.runtime/SignalThresholds|null[0]
+    constructor <init>(kotlin.time/Duration = ..., kotlin.time/Duration = ...) // io.github.santimattius.structured.runtime/SignalThresholds.<init>|<init>(kotlin.time.Duration;kotlin.time.Duration){}[0]
+
+    final val longRunningSegment // io.github.santimattius.structured.runtime/SignalThresholds.longRunningSegment|{}longRunningSegment[0]
+        final fun <get-longRunningSegment>(): kotlin.time/Duration // io.github.santimattius.structured.runtime/SignalThresholds.longRunningSegment.<get-longRunningSegment>|<get-longRunningSegment>(){}[0]
+    final val starvationQueueDelayP95 // io.github.santimattius.structured.runtime/SignalThresholds.starvationQueueDelayP95|{}starvationQueueDelayP95[0]
+        final fun <get-starvationQueueDelayP95>(): kotlin.time/Duration // io.github.santimattius.structured.runtime/SignalThresholds.starvationQueueDelayP95.<get-starvationQueueDelayP95>|<get-starvationQueueDelayP95>(){}[0]
+
+    final fun equals(kotlin/Any?): kotlin/Boolean // io.github.santimattius.structured.runtime/SignalThresholds.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // io.github.santimattius.structured.runtime/SignalThresholds.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // io.github.santimattius.structured.runtime/SignalThresholds.toString|toString(){}[0]
+}
+
+final class io.github.santimattius.structured.runtime/StatsSink : io.github.santimattius.structured.runtime/TraceSink { // io.github.santimattius.structured.runtime/StatsSink|null[0]
+    constructor <init>(io.github.santimattius.structured.runtime/TraceLevel = ...) // io.github.santimattius.structured.runtime/StatsSink.<init>|<init>(io.github.santimattius.structured.runtime.TraceLevel){}[0]
+
+    final val maxLevel // io.github.santimattius.structured.runtime/StatsSink.maxLevel|{}maxLevel[0]
+        final fun <get-maxLevel>(): io.github.santimattius.structured.runtime/TraceLevel // io.github.santimattius.structured.runtime/StatsSink.maxLevel.<get-maxLevel>|<get-maxLevel>(){}[0]
+
+    final fun emit(io.github.santimattius.structured.runtime/TraceEvent) // io.github.santimattius.structured.runtime/StatsSink.emit|emit(io.github.santimattius.structured.runtime.TraceEvent){}[0]
+    final fun isEnabled(io.github.santimattius.structured.runtime/TraceLevel): kotlin/Boolean // io.github.santimattius.structured.runtime/StatsSink.isEnabled|isEnabled(io.github.santimattius.structured.runtime.TraceLevel){}[0]
+    final fun metrics(): kotlin.collections/List<io.github.santimattius.structured.runtime/DispatcherMetrics> // io.github.santimattius.structured.runtime/StatsSink.metrics|metrics(){}[0]
+    final fun metrics(kotlin/String): io.github.santimattius.structured.runtime/DispatcherMetrics? // io.github.santimattius.structured.runtime/StatsSink.metrics|metrics(kotlin.String){}[0]
+    final fun reset() // io.github.santimattius.structured.runtime/StatsSink.reset|reset(){}[0]
+}
+
 final class io.github.santimattius.structured.runtime/ThreadInfo { // io.github.santimattius.structured.runtime/ThreadInfo|null[0]
     constructor <init>(kotlin/Long, kotlin/String) // io.github.santimattius.structured.runtime/ThreadInfo.<init>|<init>(kotlin.Long;kotlin.String){}[0]
 
@@ -290,6 +396,7 @@ final object io.github.santimattius.structured.runtime/DefaultDispatcherProvider
 final val io.github.santimattius.structured.runtime/ioCompat // io.github.santimattius.structured.runtime/ioCompat|@kotlinx.coroutines.Dispatchers{}ioCompat[0]
     final fun (kotlinx.coroutines/Dispatchers).<get-ioCompat>(): kotlinx.coroutines/CoroutineDispatcher // io.github.santimattius.structured.runtime/ioCompat.<get-ioCompat>|<get-ioCompat>@kotlinx.coroutines.Dispatchers(){}[0]
 
+final fun (io.github.santimattius.structured.runtime/DispatcherMetrics).io.github.santimattius.structured.runtime/signals(io.github.santimattius.structured.runtime/SignalThresholds = ...): kotlin.collections/List<io.github.santimattius.structured.runtime/PoolSignal> // io.github.santimattius.structured.runtime/signals|signals@io.github.santimattius.structured.runtime.DispatcherMetrics(io.github.santimattius.structured.runtime.SignalThresholds){}[0]
 final fun (io.github.santimattius.structured.runtime/DispatcherProvider).io.github.santimattius.structured.runtime/instrumented(): io.github.santimattius.structured.runtime/InstrumentedDispatcherProvider // io.github.santimattius.structured.runtime/instrumented|instrumented@io.github.santimattius.structured.runtime.DispatcherProvider(){}[0]
 final fun (io.github.santimattius.structured.runtime/DispatcherProvider).io.github.santimattius.structured.runtime/traced(io.github.santimattius.structured.runtime/TraceSink): io.github.santimattius.structured.runtime/TracedDispatcherProvider // io.github.santimattius.structured.runtime/traced|traced@io.github.santimattius.structured.runtime.DispatcherProvider(io.github.santimattius.structured.runtime.TraceSink){}[0]
 final fun <#A: kotlin/Any?> (kotlin.collections/Iterable<kotlin.coroutines/SuspendFunction0<#A>>).io.github.santimattius.structured.runtime/concurrentOrdered(): kotlinx.coroutines.flow/Flow<#A> // io.github.santimattius.structured.runtime/concurrentOrdered|concurrentOrdered@kotlin.collections.Iterable<kotlin.coroutines.SuspendFunction0<0:0>>(){0§<kotlin.Any?>}[0]
