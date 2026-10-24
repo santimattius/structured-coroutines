@@ -4,6 +4,10 @@ public final class io/github/santimattius/structured/runtime/CancellationSafeKt 
 	public static final fun withCleanup (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public final class io/github/santimattius/structured/runtime/ConcurrentOrderedKt {
+	public static final fun concurrentOrdered (Ljava/lang/Iterable;)Lkotlinx/coroutines/flow/Flow;
+}
+
 public final class io/github/santimattius/structured/runtime/DefaultDispatcherProvider : io/github/santimattius/structured/runtime/DispatcherProvider {
 	public static final field INSTANCE Lio/github/santimattius/structured/runtime/DefaultDispatcherProvider;
 	public fun getDefault ()Lkotlinx/coroutines/CoroutineDispatcher;
@@ -60,6 +64,11 @@ public final class io/github/santimattius/structured/runtime/FlowSafetyKt {
 	public static synthetic fun stateInWhileSubscribed$default (Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/CoroutineScope;Ljava/lang/Object;JJILjava/lang/Object;)Lkotlinx/coroutines/flow/StateFlow;
 }
 
+public final class io/github/santimattius/structured/runtime/HedgedKt {
+	public static final fun hedged-rnQQ1Ag (JILkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun hedged-rnQQ1Ag$default (JILkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
 public final class io/github/santimattius/structured/runtime/InstrumentedDispatcher : kotlinx/coroutines/CoroutineDispatcher, kotlinx/coroutines/Delay {
 	public fun <init> (Lkotlinx/coroutines/CoroutineDispatcher;Ljava/lang/String;)V
 	public fun delay (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -111,5 +120,9 @@ public final class io/github/santimattius/structured/runtime/StateHolder {
 public final class io/github/santimattius/structured/runtime/TimeoutsKt {
 	public static final fun withTimeoutResult (JLkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun withTimeoutResult-KLykuaI (JLkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public final class io/github/santimattius/structured/runtime/WarmFlowKt {
+	public static final fun warmIn (Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/CoroutineScope;)Lkotlinx/coroutines/flow/Flow;
 }
 
