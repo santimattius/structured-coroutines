@@ -19,6 +19,7 @@ lifecycle-runtime-compose = "2.8.0"
 intellij-platform = "2.11.0"
 intellij-ide = "2026.1"
 binary-compatibility-validator = "0.18.1"
+agp = "9.4.1"
 
 [libraries]
 # Kotlin
@@ -43,6 +44,7 @@ lint-tests = { group = "com.android.tools.lint", name = "lint-tests", version.re
 
 # Testing
 junit-jupiter = { group = "org.junit.jupiter", name = "junit-jupiter", version.ref = "junit-jupiter" }
+junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher", version = "1.10.2" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 assertj-core = { group = "org.assertj", name = "assertj-core", version.ref = "assertj" }
 
@@ -60,3 +62,4 @@ maven-publish-vanniktech = { id = "com.vanniktech.maven.publish", version.ref = 
 java-library = { id = "java-library" }
 java-gradle-plugin = { id = "java-gradle-plugin" }
 binary-compatibility-validator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "binary-compatibility-validator" }
+android-kotlin-multiplatform-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
