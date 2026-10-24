@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -27,7 +28,8 @@ private class WarmProgress(val count: Int, val done: Boolean, val error: Throwab
  *   before it.
  * - The upstream is never restarted and keeps running even if all collectors leave; it ends
  *   when it completes or when [scope] is cancelled (collectors then receive the cancellation
- *   as a failure instead of hanging).
+ *   as a failure instead of hanging), including when it is cancelled before the upstream
+ *   ever started.
  * - All emitted values are retained in memory: use it for finite, small flows (e.g. an
  *   expensive RPC) only.
  *
@@ -62,6 +64,13 @@ public fun <T> Flow<T>.warmIn(scope: CoroutineScope): Flow<T> {
                 progress.value = WarmProgress(lock.withLock { values.size }, true, failure)
             }
         }
+    }
+    // Completion of the job is the source of truth for "done": if it is cancelled before its
+    // body ever runs (so the body's `finally` never executes), publish the terminal state here.
+    // `count` is read from `progress` itself, which only ever reflects values already stored.
+    // If the body did run, its `finally` already published `done` and this is a no-op.
+    job.invokeOnCompletion { cause ->
+        progress.update { if (it.done) it else WarmProgress(it.count, true, cause) }
     }
     return flow {
         job.start()
