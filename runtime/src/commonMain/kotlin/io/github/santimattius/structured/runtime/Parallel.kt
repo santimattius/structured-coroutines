@@ -21,7 +21,7 @@ import kotlin.coroutines.cancellation.CancellationException
  *
  * Example:
  * ```
- * val (user, metrics) = listOf({ repo.user() }, { repo.metrics() }).parallel()
+ * val (first, second) = listOf<suspend () -> Item>({ repo.a() }, { repo.b() }).parallel()
  * ```
  *
  * Rules: CONCUR_003 (launch all `async` jobs before awaiting), SCOPE_004 (first failure
@@ -52,7 +52,7 @@ public suspend fun <T> Iterable<suspend () -> T>.parallel(
  *
  * Example:
  * ```
- * val results = listOf({ api.a() }, { api.b() }).supervisedAll()
+ * val results = listOf<suspend () -> Item>({ api.a() }, { api.b() }).supervisedAll()
  * val ok = results.mapNotNull { it.getOrNull() }
  * ```
  *
