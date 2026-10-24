@@ -54,6 +54,12 @@ public final class io/github/santimattius/structured/runtime/EventChannel {
 public abstract interface annotation class io/github/santimattius/structured/runtime/ExperimentalStructuredCoroutines : java/lang/annotation/Annotation {
 }
 
+public final class io/github/santimattius/structured/runtime/FlowSafetyKt {
+	public static final fun launchInSafely (Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/CoroutineScope;Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/Job;
+	public static final fun stateInWhileSubscribed (Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/CoroutineScope;Ljava/lang/Object;JJ)Lkotlinx/coroutines/flow/StateFlow;
+	public static synthetic fun stateInWhileSubscribed$default (Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/CoroutineScope;Ljava/lang/Object;JJILjava/lang/Object;)Lkotlinx/coroutines/flow/StateFlow;
+}
+
 public final class io/github/santimattius/structured/runtime/InstrumentedDispatcher : kotlinx/coroutines/CoroutineDispatcher, kotlinx/coroutines/Delay {
 	public fun <init> (Lkotlinx/coroutines/CoroutineDispatcher;Ljava/lang/String;)V
 	public fun delay (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
