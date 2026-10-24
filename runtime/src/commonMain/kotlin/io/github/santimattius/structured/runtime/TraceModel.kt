@@ -7,7 +7,7 @@ package io.github.santimattius.structured.runtime
  * - [Dispatch]: queued, started and finished events per dispatch. The cheapest useful level.
  * - [Coroutine]: additionally populates the coroutine name and the thread identity on run events
  *   (where the platform supports it).
- * - [Pool]: additionally enables periodic pool samples (added in a later release).
+ * - [Pool]: additionally enables periodic [TraceEvent.PoolSample]s, produced by [PoolSampler].
  *
  * New levels can be appended in the future without breaking existing sinks.
  *
@@ -24,7 +24,7 @@ public enum class TraceLevel {
     /** Adds coroutine name and thread identity on run events. */
     Coroutine,
 
-    /** Adds periodic pool samples. */
+    /** Adds periodic pool samples ([TraceEvent.PoolSample]). */
     Pool,
 }
 
@@ -191,5 +191,67 @@ public sealed interface TraceEvent {
         override fun toString(): String =
             "Finished(dispatcher=$dispatcher, timestampNanos=$timestampNanos, " +
                 "runTimeNanos=$runTimeNanos, outcome=$outcome, coroutineName=$coroutineName, thread=$thread)"
+    }
+
+    /**
+     * A periodic snapshot of one dispatcher pool, produced by [PoolSampler] (never by
+     * [TracingDispatcher]) at [TraceLevel.Pool]. A series of samples shows how the pool behaves
+     * over time, which cumulative [DispatcherMetrics] cannot.
+     *
+     * [queued], [started] and [finished] are cumulative counters from [DispatcherMetrics]. [pending]
+     * is `max(0, queued - started)` and can overcount when dangling [Queued] events exist (a
+     * dispatcher that swallows blocks, see [TracingDispatcher]). [running] is `started - finished`
+     * and [peakRunning] the highest concurrency observed so far. [parallelism] is the configured or
+     * inferred maximum concurrency of the pool when known, else null (see
+     * [TracedDispatcherProvider.parallelism]).
+     *
+     * [timestampNanos] is measured from the creation of the [PoolSampler] that produced the sample,
+     * not from the creation of any [TracingDispatcher]: only differences between samples of the same
+     * sampler are meaningful.
+     *
+     * Example:
+     * ```
+     * val sink = TraceSink { event ->
+     *     if (event is TraceEvent.PoolSample) println("${event.dispatcher}: pending=${event.pending}")
+     * }
+     * ```
+     */
+    public class PoolSample(
+        override val dispatcher: String,
+        override val timestampNanos: Long,
+        public val queued: Long,
+        public val started: Long,
+        public val finished: Long,
+        public val pending: Long,
+        public val running: Int,
+        public val peakRunning: Int,
+        public val parallelism: Int?,
+    ) : TraceEvent {
+        override val level: TraceLevel get() = TraceLevel.Pool
+
+        override fun equals(other: Any?): Boolean =
+            this === other || (other is PoolSample && dispatcher == other.dispatcher &&
+                timestampNanos == other.timestampNanos && queued == other.queued &&
+                started == other.started && finished == other.finished && pending == other.pending &&
+                running == other.running && peakRunning == other.peakRunning &&
+                parallelism == other.parallelism)
+
+        override fun hashCode(): Int {
+            var h = dispatcher.hashCode()
+            h = 31 * h + timestampNanos.hashCode()
+            h = 31 * h + queued.hashCode()
+            h = 31 * h + started.hashCode()
+            h = 31 * h + finished.hashCode()
+            h = 31 * h + pending.hashCode()
+            h = 31 * h + running
+            h = 31 * h + peakRunning
+            h = 31 * h + (parallelism ?: 0)
+            return h
+        }
+
+        override fun toString(): String =
+            "PoolSample(dispatcher=$dispatcher, timestampNanos=$timestampNanos, queued=$queued, " +
+                "started=$started, finished=$finished, pending=$pending, running=$running, " +
+                "peakRunning=$peakRunning, parallelism=$parallelism)"
     }
 }

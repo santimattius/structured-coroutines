@@ -197,6 +197,34 @@ Each run segment becomes a slice named `io` or `io:fetch` (when the coroutine ha
 is in flight (they are clamped at zero and re-sync). Counters need API 29+; below it only slices
 are written.
 
+Pool sampling shows how a pool behaves over time instead of only cumulative totals. A
+`PoolSampler` turns a `StatsSink` into periodic `TraceEvent.PoolSample`s (counters, `pending`,
+`running`, `peakRunning`, `parallelism`). Nothing starts implicitly: you launch it in your own
+scope, so it is cancelled with that scope.
+
+```kotlin
+val stats = StatsSink()
+val ring = RingBufferSink(512, TraceLevel.Pool)
+val traced = DefaultDispatcherProvider.traced(stats)
+val sampler = PoolSampler(stats, ring, traced::parallelism)
+val job = sampler.launchIn(scope, 500.milliseconds)
+// later
+ring.snapshot().filterIsInstance<TraceEvent.PoolSample>().signals().forEach(::println)
+```
+
+`List<PoolSample>.signals()` reports `BacklogGrowing` (`pending` never decreased over the last
+samples) and `PoolSaturated` (running at the parallelism limit with work waiting). They are
+heuristics. `pending` can overcount with dangling `Queued` events, and sample timestamps are
+relative to the sampler's creation.
+
+`TracedDispatcherProvider.parallelism(label)` returns an INFERRED limit, only for `default` and
+`io` over `DefaultDispatcherProvider`: `max(2, cpus)` for `default`, and for `io` the
+`kotlinx.coroutines.io.parallelism` property when positive, else `max(64, cpus)`. It is `null` on
+Native, JS and Wasm (no verified source), for `main` and for any other base provider. The values
+can differ if the scheduler is configured otherwise or for `limitedParallelism` views. Default and
+IO share one thread pool with independent permits, so this is a per-dispatcher limit, not a
+thread count.
+
 Limits:
 - Only dispatched segments are visible (not `Dispatchers.Unconfined`, `UNDISPATCHED` first
   segments or same-dispatcher `withContext`); see `TracingDispatcher`.

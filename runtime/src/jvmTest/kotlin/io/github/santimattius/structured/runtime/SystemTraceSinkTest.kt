@@ -51,6 +51,14 @@ private fun finished(label: String = "io", name: String? = null) =
 class SystemTraceSinkTest {
 
     @Test
+    fun poolSampleIsIgnoredWithoutTouchingSectionsOrCounters() {
+        val api = FakeSystemTrace()
+        val sink = SystemTraceSink(api, TraceLevel.Pool)
+        sink.emit(TraceEvent.PoolSample("io", 0L, 5L, 4L, 3L, 1L, 1, 2, 4))
+        assertEquals(emptyList(), api.calls.toList())
+    }
+
+    @Test
     fun startedAndFinishedProduceBalancedSection() {
         val api = FakeSystemTrace()
         val sink = SystemTraceSink(api)

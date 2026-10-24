@@ -51,6 +51,23 @@ sealed interface io.github.santimattius.structured.runtime/PoolSignal { // io.gi
     abstract val label // io.github.santimattius.structured.runtime/PoolSignal.label|{}label[0]
         abstract fun <get-label>(): kotlin/String // io.github.santimattius.structured.runtime/PoolSignal.label.<get-label>|<get-label>(){}[0]
 
+    final class BacklogGrowing : io.github.santimattius.structured.runtime/PoolSignal { // io.github.santimattius.structured.runtime/PoolSignal.BacklogGrowing|null[0]
+        constructor <init>(kotlin/String, kotlin/Int, kotlin/Long, kotlin/Long) // io.github.santimattius.structured.runtime/PoolSignal.BacklogGrowing.<init>|<init>(kotlin.String;kotlin.Int;kotlin.Long;kotlin.Long){}[0]
+
+        final val from // io.github.santimattius.structured.runtime/PoolSignal.BacklogGrowing.from|{}from[0]
+            final fun <get-from>(): kotlin/Long // io.github.santimattius.structured.runtime/PoolSignal.BacklogGrowing.from.<get-from>|<get-from>(){}[0]
+        final val label // io.github.santimattius.structured.runtime/PoolSignal.BacklogGrowing.label|{}label[0]
+            final fun <get-label>(): kotlin/String // io.github.santimattius.structured.runtime/PoolSignal.BacklogGrowing.label.<get-label>|<get-label>(){}[0]
+        final val samples // io.github.santimattius.structured.runtime/PoolSignal.BacklogGrowing.samples|{}samples[0]
+            final fun <get-samples>(): kotlin/Int // io.github.santimattius.structured.runtime/PoolSignal.BacklogGrowing.samples.<get-samples>|<get-samples>(){}[0]
+        final val to // io.github.santimattius.structured.runtime/PoolSignal.BacklogGrowing.to|{}to[0]
+            final fun <get-to>(): kotlin/Long // io.github.santimattius.structured.runtime/PoolSignal.BacklogGrowing.to.<get-to>|<get-to>(){}[0]
+
+        final fun equals(kotlin/Any?): kotlin/Boolean // io.github.santimattius.structured.runtime/PoolSignal.BacklogGrowing.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // io.github.santimattius.structured.runtime/PoolSignal.BacklogGrowing.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // io.github.santimattius.structured.runtime/PoolSignal.BacklogGrowing.toString|toString(){}[0]
+    }
+
     final class LongRunningSegment : io.github.santimattius.structured.runtime/PoolSignal { // io.github.santimattius.structured.runtime/PoolSignal.LongRunningSegment|null[0]
         constructor <init>(kotlin/String, kotlin.time/Duration) // io.github.santimattius.structured.runtime/PoolSignal.LongRunningSegment.<init>|<init>(kotlin.String;kotlin.time.Duration){}[0]
 
@@ -62,6 +79,21 @@ sealed interface io.github.santimattius.structured.runtime/PoolSignal { // io.gi
         final fun equals(kotlin/Any?): kotlin/Boolean // io.github.santimattius.structured.runtime/PoolSignal.LongRunningSegment.equals|equals(kotlin.Any?){}[0]
         final fun hashCode(): kotlin/Int // io.github.santimattius.structured.runtime/PoolSignal.LongRunningSegment.hashCode|hashCode(){}[0]
         final fun toString(): kotlin/String // io.github.santimattius.structured.runtime/PoolSignal.LongRunningSegment.toString|toString(){}[0]
+    }
+
+    final class PoolSaturated : io.github.santimattius.structured.runtime/PoolSignal { // io.github.santimattius.structured.runtime/PoolSignal.PoolSaturated|null[0]
+        constructor <init>(kotlin/String, kotlin/Int, kotlin/Int) // io.github.santimattius.structured.runtime/PoolSignal.PoolSaturated.<init>|<init>(kotlin.String;kotlin.Int;kotlin.Int){}[0]
+
+        final val label // io.github.santimattius.structured.runtime/PoolSignal.PoolSaturated.label|{}label[0]
+            final fun <get-label>(): kotlin/String // io.github.santimattius.structured.runtime/PoolSignal.PoolSaturated.label.<get-label>|<get-label>(){}[0]
+        final val parallelism // io.github.santimattius.structured.runtime/PoolSignal.PoolSaturated.parallelism|{}parallelism[0]
+            final fun <get-parallelism>(): kotlin/Int // io.github.santimattius.structured.runtime/PoolSignal.PoolSaturated.parallelism.<get-parallelism>|<get-parallelism>(){}[0]
+        final val samples // io.github.santimattius.structured.runtime/PoolSignal.PoolSaturated.samples|{}samples[0]
+            final fun <get-samples>(): kotlin/Int // io.github.santimattius.structured.runtime/PoolSignal.PoolSaturated.samples.<get-samples>|<get-samples>(){}[0]
+
+        final fun equals(kotlin/Any?): kotlin/Boolean // io.github.santimattius.structured.runtime/PoolSignal.PoolSaturated.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // io.github.santimattius.structured.runtime/PoolSignal.PoolSaturated.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // io.github.santimattius.structured.runtime/PoolSignal.PoolSaturated.toString|toString(){}[0]
     }
 
     final class StarvationSuspected : io.github.santimattius.structured.runtime/PoolSignal { // io.github.santimattius.structured.runtime/PoolSignal.StarvationSuspected|null[0]
@@ -109,6 +141,35 @@ sealed interface io.github.santimattius.structured.runtime/TraceEvent { // io.gi
         final fun equals(kotlin/Any?): kotlin/Boolean // io.github.santimattius.structured.runtime/TraceEvent.Finished.equals|equals(kotlin.Any?){}[0]
         final fun hashCode(): kotlin/Int // io.github.santimattius.structured.runtime/TraceEvent.Finished.hashCode|hashCode(){}[0]
         final fun toString(): kotlin/String // io.github.santimattius.structured.runtime/TraceEvent.Finished.toString|toString(){}[0]
+    }
+
+    final class PoolSample : io.github.santimattius.structured.runtime/TraceEvent { // io.github.santimattius.structured.runtime/TraceEvent.PoolSample|null[0]
+        constructor <init>(kotlin/String, kotlin/Long, kotlin/Long, kotlin/Long, kotlin/Long, kotlin/Long, kotlin/Int, kotlin/Int, kotlin/Int?) // io.github.santimattius.structured.runtime/TraceEvent.PoolSample.<init>|<init>(kotlin.String;kotlin.Long;kotlin.Long;kotlin.Long;kotlin.Long;kotlin.Long;kotlin.Int;kotlin.Int;kotlin.Int?){}[0]
+
+        final val dispatcher // io.github.santimattius.structured.runtime/TraceEvent.PoolSample.dispatcher|{}dispatcher[0]
+            final fun <get-dispatcher>(): kotlin/String // io.github.santimattius.structured.runtime/TraceEvent.PoolSample.dispatcher.<get-dispatcher>|<get-dispatcher>(){}[0]
+        final val finished // io.github.santimattius.structured.runtime/TraceEvent.PoolSample.finished|{}finished[0]
+            final fun <get-finished>(): kotlin/Long // io.github.santimattius.structured.runtime/TraceEvent.PoolSample.finished.<get-finished>|<get-finished>(){}[0]
+        final val level // io.github.santimattius.structured.runtime/TraceEvent.PoolSample.level|{}level[0]
+            final fun <get-level>(): io.github.santimattius.structured.runtime/TraceLevel // io.github.santimattius.structured.runtime/TraceEvent.PoolSample.level.<get-level>|<get-level>(){}[0]
+        final val parallelism // io.github.santimattius.structured.runtime/TraceEvent.PoolSample.parallelism|{}parallelism[0]
+            final fun <get-parallelism>(): kotlin/Int? // io.github.santimattius.structured.runtime/TraceEvent.PoolSample.parallelism.<get-parallelism>|<get-parallelism>(){}[0]
+        final val peakRunning // io.github.santimattius.structured.runtime/TraceEvent.PoolSample.peakRunning|{}peakRunning[0]
+            final fun <get-peakRunning>(): kotlin/Int // io.github.santimattius.structured.runtime/TraceEvent.PoolSample.peakRunning.<get-peakRunning>|<get-peakRunning>(){}[0]
+        final val pending // io.github.santimattius.structured.runtime/TraceEvent.PoolSample.pending|{}pending[0]
+            final fun <get-pending>(): kotlin/Long // io.github.santimattius.structured.runtime/TraceEvent.PoolSample.pending.<get-pending>|<get-pending>(){}[0]
+        final val queued // io.github.santimattius.structured.runtime/TraceEvent.PoolSample.queued|{}queued[0]
+            final fun <get-queued>(): kotlin/Long // io.github.santimattius.structured.runtime/TraceEvent.PoolSample.queued.<get-queued>|<get-queued>(){}[0]
+        final val running // io.github.santimattius.structured.runtime/TraceEvent.PoolSample.running|{}running[0]
+            final fun <get-running>(): kotlin/Int // io.github.santimattius.structured.runtime/TraceEvent.PoolSample.running.<get-running>|<get-running>(){}[0]
+        final val started // io.github.santimattius.structured.runtime/TraceEvent.PoolSample.started|{}started[0]
+            final fun <get-started>(): kotlin/Long // io.github.santimattius.structured.runtime/TraceEvent.PoolSample.started.<get-started>|<get-started>(){}[0]
+        final val timestampNanos // io.github.santimattius.structured.runtime/TraceEvent.PoolSample.timestampNanos|{}timestampNanos[0]
+            final fun <get-timestampNanos>(): kotlin/Long // io.github.santimattius.structured.runtime/TraceEvent.PoolSample.timestampNanos.<get-timestampNanos>|<get-timestampNanos>(){}[0]
+
+        final fun equals(kotlin/Any?): kotlin/Boolean // io.github.santimattius.structured.runtime/TraceEvent.PoolSample.equals|equals(kotlin.Any?){}[0]
+        final fun hashCode(): kotlin/Int // io.github.santimattius.structured.runtime/TraceEvent.PoolSample.hashCode|hashCode(){}[0]
+        final fun toString(): kotlin/String // io.github.santimattius.structured.runtime/TraceEvent.PoolSample.toString|toString(){}[0]
     }
 
     final class Queued : io.github.santimattius.structured.runtime/TraceEvent { // io.github.santimattius.structured.runtime/TraceEvent.Queued|null[0]
@@ -304,6 +365,13 @@ final class io.github.santimattius.structured.runtime/LoggingSink : io.github.sa
     final fun isEnabled(io.github.santimattius.structured.runtime/TraceLevel): kotlin/Boolean // io.github.santimattius.structured.runtime/LoggingSink.isEnabled|isEnabled(io.github.santimattius.structured.runtime.TraceLevel){}[0]
 }
 
+final class io.github.santimattius.structured.runtime/PoolSampler { // io.github.santimattius.structured.runtime/PoolSampler|null[0]
+    constructor <init>(io.github.santimattius.structured.runtime/StatsSink, io.github.santimattius.structured.runtime/TraceSink, kotlin/Function1<kotlin/String, kotlin/Int?> = ...) // io.github.santimattius.structured.runtime/PoolSampler.<init>|<init>(io.github.santimattius.structured.runtime.StatsSink;io.github.santimattius.structured.runtime.TraceSink;kotlin.Function1<kotlin.String,kotlin.Int?>){}[0]
+
+    final fun launchIn(kotlinx.coroutines/CoroutineScope, kotlin.time/Duration): kotlinx.coroutines/Job // io.github.santimattius.structured.runtime/PoolSampler.launchIn|launchIn(kotlinx.coroutines.CoroutineScope;kotlin.time.Duration){}[0]
+    final fun sampleOnce() // io.github.santimattius.structured.runtime/PoolSampler.sampleOnce|sampleOnce(){}[0]
+}
+
 final class io.github.santimattius.structured.runtime/RingBufferSink : io.github.santimattius.structured.runtime/TraceSink { // io.github.santimattius.structured.runtime/RingBufferSink|null[0]
     constructor <init>(kotlin/Int, io.github.santimattius.structured.runtime/TraceLevel = ...) // io.github.santimattius.structured.runtime/RingBufferSink.<init>|<init>(kotlin.Int;io.github.santimattius.structured.runtime.TraceLevel){}[0]
 
@@ -399,6 +467,8 @@ final val io.github.santimattius.structured.runtime/ioCompat // io.github.santim
 final fun (io.github.santimattius.structured.runtime/DispatcherMetrics).io.github.santimattius.structured.runtime/signals(io.github.santimattius.structured.runtime/SignalThresholds = ...): kotlin.collections/List<io.github.santimattius.structured.runtime/PoolSignal> // io.github.santimattius.structured.runtime/signals|signals@io.github.santimattius.structured.runtime.DispatcherMetrics(io.github.santimattius.structured.runtime.SignalThresholds){}[0]
 final fun (io.github.santimattius.structured.runtime/DispatcherProvider).io.github.santimattius.structured.runtime/instrumented(): io.github.santimattius.structured.runtime/InstrumentedDispatcherProvider // io.github.santimattius.structured.runtime/instrumented|instrumented@io.github.santimattius.structured.runtime.DispatcherProvider(){}[0]
 final fun (io.github.santimattius.structured.runtime/DispatcherProvider).io.github.santimattius.structured.runtime/traced(io.github.santimattius.structured.runtime/TraceSink): io.github.santimattius.structured.runtime/TracedDispatcherProvider // io.github.santimattius.structured.runtime/traced|traced@io.github.santimattius.structured.runtime.DispatcherProvider(io.github.santimattius.structured.runtime.TraceSink){}[0]
+final fun (io.github.santimattius.structured.runtime/TracedDispatcherProvider).io.github.santimattius.structured.runtime/parallelism(kotlin/String): kotlin/Int? // io.github.santimattius.structured.runtime/parallelism|parallelism@io.github.santimattius.structured.runtime.TracedDispatcherProvider(kotlin.String){}[0]
+final fun (kotlin.collections/List<io.github.santimattius.structured.runtime/TraceEvent.PoolSample>).io.github.santimattius.structured.runtime/signals(kotlin/Int = ...): kotlin.collections/List<io.github.santimattius.structured.runtime/PoolSignal> // io.github.santimattius.structured.runtime/signals|signals@kotlin.collections.List<io.github.santimattius.structured.runtime.TraceEvent.PoolSample>(kotlin.Int){}[0]
 final fun <#A: kotlin/Any?> (kotlin.collections/Iterable<kotlin.coroutines/SuspendFunction0<#A>>).io.github.santimattius.structured.runtime/concurrentOrdered(): kotlinx.coroutines.flow/Flow<#A> // io.github.santimattius.structured.runtime/concurrentOrdered|concurrentOrdered@kotlin.collections.Iterable<kotlin.coroutines.SuspendFunction0<0:0>>(){0§<kotlin.Any?>}[0]
 final fun <#A: kotlin/Any?> (kotlinx.coroutines.flow/Flow<#A>).io.github.santimattius.structured.runtime/launchInSafely(kotlinx.coroutines/CoroutineScope, kotlin/Function1<kotlin/Throwable, kotlin/Unit>): kotlinx.coroutines/Job // io.github.santimattius.structured.runtime/launchInSafely|launchInSafely@kotlinx.coroutines.flow.Flow<0:0>(kotlinx.coroutines.CoroutineScope;kotlin.Function1<kotlin.Throwable,kotlin.Unit>){0§<kotlin.Any?>}[0]
 final fun <#A: kotlin/Any?> (kotlinx.coroutines.flow/Flow<#A>).io.github.santimattius.structured.runtime/stateInWhileSubscribed(kotlinx.coroutines/CoroutineScope, #A, kotlin/Long = ..., kotlin/Long = ...): kotlinx.coroutines.flow/StateFlow<#A> // io.github.santimattius.structured.runtime/stateInWhileSubscribed|stateInWhileSubscribed@kotlinx.coroutines.flow.Flow<0:0>(kotlinx.coroutines.CoroutineScope;0:0;kotlin.Long;kotlin.Long){0§<kotlin.Any?>}[0]
