@@ -251,6 +251,31 @@ final class io.github.santimattius.structured.runtime/ThreadInfo { // io.github.
     final fun toString(): kotlin/String // io.github.santimattius.structured.runtime/ThreadInfo.toString|toString(){}[0]
 }
 
+final class io.github.santimattius.structured.runtime/TracedDispatcherProvider : io.github.santimattius.structured.runtime/DispatcherProvider { // io.github.santimattius.structured.runtime/TracedDispatcherProvider|null[0]
+    final val default // io.github.santimattius.structured.runtime/TracedDispatcherProvider.default|{}default[0]
+        final fun <get-default>(): kotlinx.coroutines/CoroutineDispatcher // io.github.santimattius.structured.runtime/TracedDispatcherProvider.default.<get-default>|<get-default>(){}[0]
+    final val io // io.github.santimattius.structured.runtime/TracedDispatcherProvider.io|{}io[0]
+        final fun <get-io>(): kotlinx.coroutines/CoroutineDispatcher // io.github.santimattius.structured.runtime/TracedDispatcherProvider.io.<get-io>|<get-io>(){}[0]
+    final val main // io.github.santimattius.structured.runtime/TracedDispatcherProvider.main|{}main[0]
+        final fun <get-main>(): kotlinx.coroutines/CoroutineDispatcher // io.github.santimattius.structured.runtime/TracedDispatcherProvider.main.<get-main>|<get-main>(){}[0]
+    final val sink // io.github.santimattius.structured.runtime/TracedDispatcherProvider.sink|{}sink[0]
+        final fun <get-sink>(): io.github.santimattius.structured.runtime/TraceSink // io.github.santimattius.structured.runtime/TracedDispatcherProvider.sink.<get-sink>|<get-sink>(){}[0]
+    final val unconfined // io.github.santimattius.structured.runtime/TracedDispatcherProvider.unconfined|{}unconfined[0]
+        final fun <get-unconfined>(): kotlinx.coroutines/CoroutineDispatcher // io.github.santimattius.structured.runtime/TracedDispatcherProvider.unconfined.<get-unconfined>|<get-unconfined>(){}[0]
+}
+
+final class io.github.santimattius.structured.runtime/TracingDispatcher : kotlinx.coroutines/CoroutineDispatcher, kotlinx.coroutines/Delay { // io.github.santimattius.structured.runtime/TracingDispatcher|null[0]
+    constructor <init>(kotlinx.coroutines/CoroutineDispatcher, kotlin/String, io.github.santimattius.structured.runtime/TraceSink) // io.github.santimattius.structured.runtime/TracingDispatcher.<init>|<init>(kotlinx.coroutines.CoroutineDispatcher;kotlin.String;io.github.santimattius.structured.runtime.TraceSink){}[0]
+
+    final val label // io.github.santimattius.structured.runtime/TracingDispatcher.label|{}label[0]
+        final fun <get-label>(): kotlin/String // io.github.santimattius.structured.runtime/TracingDispatcher.label.<get-label>|<get-label>(){}[0]
+
+    final fun dispatch(kotlin.coroutines/CoroutineContext, kotlinx.coroutines/Runnable) // io.github.santimattius.structured.runtime/TracingDispatcher.dispatch|dispatch(kotlin.coroutines.CoroutineContext;kotlinx.coroutines.Runnable){}[0]
+    final fun invokeOnTimeout(kotlin/Long, kotlinx.coroutines/Runnable, kotlin.coroutines/CoroutineContext): kotlinx.coroutines/DisposableHandle // io.github.santimattius.structured.runtime/TracingDispatcher.invokeOnTimeout|invokeOnTimeout(kotlin.Long;kotlinx.coroutines.Runnable;kotlin.coroutines.CoroutineContext){}[0]
+    final fun isDispatchNeeded(kotlin.coroutines/CoroutineContext): kotlin/Boolean // io.github.santimattius.structured.runtime/TracingDispatcher.isDispatchNeeded|isDispatchNeeded(kotlin.coroutines.CoroutineContext){}[0]
+    final fun scheduleResumeAfterDelay(kotlin/Long, kotlinx.coroutines/CancellableContinuation<kotlin/Unit>) // io.github.santimattius.structured.runtime/TracingDispatcher.scheduleResumeAfterDelay|scheduleResumeAfterDelay(kotlin.Long;kotlinx.coroutines.CancellableContinuation<kotlin.Unit>){}[0]
+}
+
 final object io.github.santimattius.structured.runtime/DefaultDispatcherProvider : io.github.santimattius.structured.runtime/DispatcherProvider { // io.github.santimattius.structured.runtime/DefaultDispatcherProvider|null[0]
     final val default // io.github.santimattius.structured.runtime/DefaultDispatcherProvider.default|{}default[0]
         final fun <get-default>(): kotlinx.coroutines/CoroutineDispatcher // io.github.santimattius.structured.runtime/DefaultDispatcherProvider.default.<get-default>|<get-default>(){}[0]
@@ -266,6 +291,7 @@ final val io.github.santimattius.structured.runtime/ioCompat // io.github.santim
     final fun (kotlinx.coroutines/Dispatchers).<get-ioCompat>(): kotlinx.coroutines/CoroutineDispatcher // io.github.santimattius.structured.runtime/ioCompat.<get-ioCompat>|<get-ioCompat>@kotlinx.coroutines.Dispatchers(){}[0]
 
 final fun (io.github.santimattius.structured.runtime/DispatcherProvider).io.github.santimattius.structured.runtime/instrumented(): io.github.santimattius.structured.runtime/InstrumentedDispatcherProvider // io.github.santimattius.structured.runtime/instrumented|instrumented@io.github.santimattius.structured.runtime.DispatcherProvider(){}[0]
+final fun (io.github.santimattius.structured.runtime/DispatcherProvider).io.github.santimattius.structured.runtime/traced(io.github.santimattius.structured.runtime/TraceSink): io.github.santimattius.structured.runtime/TracedDispatcherProvider // io.github.santimattius.structured.runtime/traced|traced@io.github.santimattius.structured.runtime.DispatcherProvider(io.github.santimattius.structured.runtime.TraceSink){}[0]
 final fun <#A: kotlin/Any?> (kotlin.collections/Iterable<kotlin.coroutines/SuspendFunction0<#A>>).io.github.santimattius.structured.runtime/concurrentOrdered(): kotlinx.coroutines.flow/Flow<#A> // io.github.santimattius.structured.runtime/concurrentOrdered|concurrentOrdered@kotlin.collections.Iterable<kotlin.coroutines.SuspendFunction0<0:0>>(){0§<kotlin.Any?>}[0]
 final fun <#A: kotlin/Any?> (kotlinx.coroutines.flow/Flow<#A>).io.github.santimattius.structured.runtime/launchInSafely(kotlinx.coroutines/CoroutineScope, kotlin/Function1<kotlin/Throwable, kotlin/Unit>): kotlinx.coroutines/Job // io.github.santimattius.structured.runtime/launchInSafely|launchInSafely@kotlinx.coroutines.flow.Flow<0:0>(kotlinx.coroutines.CoroutineScope;kotlin.Function1<kotlin.Throwable,kotlin.Unit>){0§<kotlin.Any?>}[0]
 final fun <#A: kotlin/Any?> (kotlinx.coroutines.flow/Flow<#A>).io.github.santimattius.structured.runtime/stateInWhileSubscribed(kotlinx.coroutines/CoroutineScope, #A, kotlin/Long = ..., kotlin/Long = ...): kotlinx.coroutines.flow/StateFlow<#A> // io.github.santimattius.structured.runtime/stateInWhileSubscribed|stateInWhileSubscribed@kotlinx.coroutines.flow.Flow<0:0>(kotlinx.coroutines.CoroutineScope;0:0;kotlin.Long;kotlin.Long){0§<kotlin.Any?>}[0]

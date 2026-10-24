@@ -243,6 +243,28 @@ public final class io/github/santimattius/structured/runtime/TraceSinkKt {
 	public static final fun CompositeSink ([Lio/github/santimattius/structured/runtime/TraceSink;)Lio/github/santimattius/structured/runtime/CompositeSink;
 }
 
+public final class io/github/santimattius/structured/runtime/TracedDispatcherProvider : io/github/santimattius/structured/runtime/DispatcherProvider {
+	public fun getDefault ()Lkotlinx/coroutines/CoroutineDispatcher;
+	public fun getIo ()Lkotlinx/coroutines/CoroutineDispatcher;
+	public fun getMain ()Lkotlinx/coroutines/CoroutineDispatcher;
+	public final fun getSink ()Lio/github/santimattius/structured/runtime/TraceSink;
+	public fun getUnconfined ()Lkotlinx/coroutines/CoroutineDispatcher;
+}
+
+public final class io/github/santimattius/structured/runtime/TracingDispatcher : kotlinx/coroutines/CoroutineDispatcher, kotlinx/coroutines/Delay {
+	public fun <init> (Lkotlinx/coroutines/CoroutineDispatcher;Ljava/lang/String;Lio/github/santimattius/structured/runtime/TraceSink;)V
+	public fun delay (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public fun dispatch (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Runnable;)V
+	public final fun getLabel ()Ljava/lang/String;
+	public fun invokeOnTimeout (JLjava/lang/Runnable;Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/DisposableHandle;
+	public fun isDispatchNeeded (Lkotlin/coroutines/CoroutineContext;)Z
+	public fun scheduleResumeAfterDelay (JLkotlinx/coroutines/CancellableContinuation;)V
+}
+
+public final class io/github/santimattius/structured/runtime/TracingDispatcherKt {
+	public static final fun traced (Lio/github/santimattius/structured/runtime/DispatcherProvider;Lio/github/santimattius/structured/runtime/TraceSink;)Lio/github/santimattius/structured/runtime/TracedDispatcherProvider;
+}
+
 public final class io/github/santimattius/structured/runtime/WarmFlowKt {
 	public static final fun warmIn (Lkotlinx/coroutines/flow/Flow;Lkotlinx/coroutines/CoroutineScope;)Lkotlinx/coroutines/flow/Flow;
 }
