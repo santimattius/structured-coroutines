@@ -97,7 +97,7 @@ class FlowSafetyTest {
     }
 
     @Test
-    fun launchInSafely_cancellationExceptionFromUpstream_doesNotCallOnError() = runTest {
+    fun launchInSafely_cancelDuringUpstreamDelay_doesNotCallOnError() = runTest {
         val parent = Job()
         val scope = CoroutineScope(UnconfinedTestDispatcher(testScheduler) + parent)
         var errorCalls = 0
