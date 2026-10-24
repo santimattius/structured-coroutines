@@ -7,6 +7,7 @@ include(
     ":detekt-rules",
     ":lint-rules",
     ":intellij-plugin",
+    ":runtime",
     ":sample",
     ":sample-detekt"
 )
