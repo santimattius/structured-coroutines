@@ -28,6 +28,8 @@ dependencies {
     testImplementation(libs.kotlin.compiler.embeddable)
     testImplementation(libs.kotlin.test)
     testImplementation(gradleTestKit())
+    // Gradle 9 no longer auto-loads the JUnit Platform launcher
+    testRuntimeOnly(libs.junit.platform.launcher)
 
     // Forward-compat smoke source set - resolves the checker sources against
     // Kotlin 2.4.20 only; never touches the production compileOnly/testImplementation above.

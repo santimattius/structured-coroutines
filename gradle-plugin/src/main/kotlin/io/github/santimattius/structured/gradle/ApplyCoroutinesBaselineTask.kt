@@ -7,18 +7,24 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.InputFile
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.OutputFile
+import org.gradle.api.tasks.PathSensitive
+import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
+import org.gradle.work.DisableCachingByDefault
 
 /**
  * Post-processes a Detekt XML report using [BaselineProcessor] (REPORT_NEW_ONLY → info for baselined hits).
  */
+@DisableCachingByDefault(because = "Writes a user-owned baseline file; not a cacheable build output")
 abstract class ApplyCoroutinesBaselineTask : DefaultTask() {
 
     @get:InputFile
+    @get:PathSensitive(PathSensitivity.NONE)
     @get:Optional
     abstract val baselineFile: RegularFileProperty
 
     @get:InputFile
+    @get:PathSensitive(PathSensitivity.NONE)
     @get:Optional
     abstract val detektReportXml: RegularFileProperty
 

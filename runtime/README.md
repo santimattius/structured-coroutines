@@ -229,14 +229,20 @@ Supports DISPATCH_005 and TEST_005. See [`runtime-test/README.md`](../runtime-te
 Both modules declare the same targets (see `build.gradle.kts`): JVM, JS (browser, Node.js), macOS
 (x64, arm64), iOS (x64, arm64, simulator arm64), watchOS (x64, arm64, simulator arm64), tvOS (x64,
 arm64, simulator arm64), Linux (x64, arm64), Windows (mingwX64), wasmJs (browser, Node.js) and
-wasmWasi (Node.js). No dedicated Android target is declared. The JVM target is built with JVM
-toolchain 17.
+wasmWasi (Node.js). The JVM target is built with JVM toolchain 17.
+
+`:runtime` additionally declares an **Android** target (`minSdk` 23, `compileSdk` 36, built with the
+AGP KMP library plugin `com.android.kotlin.multiplatform.library`). It publishes its own `androidJvm`
+Gradle variants next to the plain `jvm` ones, so Android consumers resolve it without extra setup.
+`:runtime-test` has no Android target. Building `:runtime` needs the Android SDK (platform 36 and
+build-tools 36.0.0; see [CONTRIBUTING.md](../CONTRIBUTING.md)).
 
 `Dispatchers.ioCompat` resolves per target:
 
 | Target                  | `Dispatchers.ioCompat`  |
 |-------------------------|-------------------------|
 | JVM                     | `Dispatchers.IO`        |
+| Android                 | `Dispatchers.IO`        |
 | Native (all)            | `Dispatchers.IO`        |
 | JS, wasmJs, wasmWasi    | `Dispatchers.Default`   |
 
@@ -245,7 +251,10 @@ toolchain 17.
 - **Experimental, 0.x.** The opt-in gate and the `0.x` version signal that API changes can happen
   without notice. Binary-compatibility checking (`apiCheck` against the checked-in dumps in
   `runtime/api` and `runtime-test/api`) runs as an advisory CI step and does not block; it is
-  planned to become blocking once the experimental gate is removed.
+  planned to become blocking once the experimental gate is removed. **The Android variant has no
+  API dump** (Binary Compatibility Validator 0.18.1 does not support the AGP KMP library plugin), so
+  its public surface is not guarded by `apiCheck`. It is currently the same source as the JVM target
+  (shared `jvmAndAndroid` source set), which the JVM dump does cover.
 - **Instrumentation is diagnostic only.** `InstrumentedDispatcher` is opt-in and not meant for
   production: wrapping `Dispatchers.IO` hides its elasticity and `limitedParallelism` hints.
 - **`warmIn` keeps every emitted value in memory** and never restarts upstream, even when all

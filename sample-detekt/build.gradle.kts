@@ -27,3 +27,9 @@ detekt {
 dependencies {
     detektPlugins(project(":detekt-rules"))
 }
+
+// The test sources are rule examples for detekt, not executable tests: Gradle 9 fails
+// test tasks that discover no tests unless this is relaxed.
+tasks.withType<Test> {
+    failOnNoDiscoveredTests = false
+}
