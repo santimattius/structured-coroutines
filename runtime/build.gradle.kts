@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.maven.publish.vanniktech)
 }
 
@@ -13,6 +14,14 @@ kotlin {
 
     // JVM target
     jvm()
+
+    // Android target (AGP 9 KMP library plugin: single variant, no build types/flavors).
+    // Building requires the Android SDK (ANDROID_HOME or sdk.dir in local.properties).
+    android {
+        namespace = "io.github.santimattius.structured.runtime"
+        compileSdk = 36
+        minSdk = 23
+    }
 
     // JavaScript targets
     js(IR) {
@@ -56,6 +65,17 @@ kotlin {
     @OptIn(org.jetbrains.kotlin.gradle.ExperimentalWasmDsl::class)
     wasmWasi {
         nodejs()
+    }
+
+    // Default hierarchy + a custom intermediate source set shared by jvm and android
+    // (hosts the IoCompat actual). Manual dependsOn() would disable the default template.
+    applyDefaultHierarchyTemplate {
+        common {
+            group("jvmAndAndroid") {
+                withJvm()
+                withCompilations { it.platformType == org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType.androidJvm }
+            }
+        }
     }
 
     // JVM toolchain

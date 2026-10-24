@@ -3,10 +3,17 @@
 plugins {
     alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.kotlin.multiplatform) apply false
+    alias(libs.plugins.android.kotlin.multiplatform.library) apply false
     alias(libs.plugins.binary.compatibility.validator)
 }
 
 // Binary-compatibility validation runs against :runtime's and :runtime-test's checked-in ABI dumps only.
+// Dump layout: <module>/api/jvm/<module>.api (JVM, per-target dir because :runtime also has an Android
+// target) and <module>/api/<module>.klib.api (klib targets; :runtime-test keeps the legacy flat
+// <module>/api/<module>.api).
+// NOTE: the Android variant of :runtime has NO API dump and is NOT guarded by apiCheck: BCV 0.18.1
+// does not support the com.android.kotlin.multiplatform.library plugin. Its source is shared with the
+// JVM target (jvmAndAndroid), so the JVM dump covers it for now; revisit when BCV gains support.
 // Every other module is excluded — most are not libraries with a public-ABI contract in the
 // same sense (compiler plugin, Gradle plugin, IDE tooling, samples). The root project has no
 // `check` lifecycle task in this build (no base/lifecycle plugin applied at root), so the BCV
