@@ -168,6 +168,46 @@ dispatchers.stats().forEach(::println)
 
 `DispatcherProvider.of(dispatcher)` returns a provider whose four dispatchers are the same one.
 
+### Tracing
+
+`DispatcherProvider.traced(sink)` wraps `main`, `io` and `default` in a `TracingDispatcher` that
+reports `Queued`, `Started` and `Finished` events to a `TraceSink`. Diagnostics only and opt-in:
+when the sink is disabled the original block is forwarded untouched.
+
+```kotlin
+val stats = StatsSink()
+val dispatchers = DefaultDispatcherProvider.traced(stats)
+UserRepository(dispatchers).load()
+stats.metrics().forEach(::println)
+```
+
+Built-in sinks: `StatsSink` (per-dispatcher counters, concurrency and latency histograms),
+`RingBufferSink` (last N events), `LoggingSink`, and `CompositeSink` to combine them. On Android,
+`AndroidTraceSink` writes to the system trace:
+
+```kotlin
+val dispatchers = DefaultDispatcherProvider.traced(AndroidTraceSink())
+```
+
+Each run segment becomes a slice named `io` or `io:fetch` (when the coroutine has a
+`CoroutineName`) in Perfetto, Android Studio's system trace and Macrobenchmark
+`TraceSectionMetric`. Two counter tracks per dispatcher, `structured.<label>.pending` and
+`structured.<label>.running`, show pool saturation: a `pending` track that keeps growing while
+`running` is flat means the pool is starved. Counters are approximate if a trace starts while work
+is in flight (they are clamped at zero and re-sync). Counters need API 29+; below it only slices
+are written.
+
+Limits:
+- Only dispatched segments are visible (not `Dispatchers.Unconfined`, `UNDISPATCHED` first
+  segments or same-dispatcher `withContext`); see `TracingDispatcher`.
+- `AndroidTraceSink` feeds `android.os.Trace`, which system traces and `TraceSectionMetric` read.
+  It does not feed `androidx.tracing`'s in-process trace file.
+- Queue delay is not drawn as a slice; read it from the `pending` counter.
+- Keep slice names low-cardinality: use stable `CoroutineName`s, not ids or payloads.
+
+Status: experimental. The tracing API may change, and `AndroidTraceSink` has not been validated on
+a device yet.
+
 ### State and events
 
 ```kotlin
@@ -235,7 +275,8 @@ wasmWasi (Node.js). The JVM target is built with JVM toolchain 17.
 AGP KMP library plugin `com.android.kotlin.multiplatform.library`). It publishes its own `androidJvm`
 Gradle variants next to the plain `jvm` ones, so Android consumers resolve it without extra setup.
 `:runtime-test` has no Android target. Building `:runtime` needs the Android SDK (platform 36 and
-build-tools 36.0.0; see [CONTRIBUTING.md](../CONTRIBUTING.md)).
+build-tools 36.0.0; see [CONTRIBUTING.md](../CONTRIBUTING.md)). The Android target also provides
+`AndroidTraceSink` (see [Tracing](#tracing)); the other targets have no system-trace sink.
 
 `Dispatchers.ioCompat` resolves per target:
 
