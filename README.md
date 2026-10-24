@@ -57,6 +57,8 @@ This toolkit enforces structured concurrency best practices through:
 | `lint-rules`      | Android Lint rules             | Android projects       |
 | `intellij-plugin` | IntelliJ/Android Studio Plugin | Real-time IDE analysis |
 | `annotations`     | `@StructuredScope` annotation  | Runtime/Compile        |
+| `runtime`         | Compliant helpers (experimental, 0.x) | Runtime/Compile  |
+| `runtime-test`    | Test doubles for `runtime`     | Tests                  |
 | `gradle-plugin`   | Gradle integration             | Build configuration    |
 
 ---
@@ -511,6 +513,8 @@ structured-coroutines/
 │   ├── guttericons/      # Scope & dispatcher visualization
 │   └── view/             # Tool window (findings list, runner, tree visitor)
 ├── gradle-plugin/        # Gradle Integration
+├── runtime/              # Compliant helpers (Multiplatform, experimental, 0.x)
+├── runtime-test/         # Test doubles for :runtime (TestDispatcherProvider)
 ├── sample/               # Examples
 │   └── compilation/     # One example per compiler rule (errors & warnings)
 └── kotlin-coroutines-skill/  # AI/agent skill for coroutine best practices
@@ -620,6 +624,8 @@ Each module contains its own detailed documentation:
 | **Android Lint**                  | [lint-rules/README.md](lint-rules/README.md)                                                                   | 36 detectors, Android/Compose-specific detection                        |
 | **IntelliJ Plugin**               | [intellij-plugin/README.md](intellij-plugin/README.md)                                                         | 36 inspections, quick fixes, Flow Analyzer, K2 support                  |
 | **Annotations**                   | [annotations/README.md](annotations/README.md)                                                                 | @StructuredScope usage and multiplatform support                        |
+| **Runtime**                       | [runtime/README.md](runtime/README.md)                                                                         | Experimental helpers that replace flagged patterns (0.x, opt-in)        |
+| **Runtime Test**                  | [runtime-test/README.md](runtime-test/README.md)                                                               | `TestDispatcherProvider` for `:runtime`                                 |
 | **Compiler**                      | [compiler/README.md](compiler/README.md)                                                                       | K2/FIR checker implementation details                                   |
 | **Sample (compilation)**          | [compilation/README.md](sample/src/main/kotlin/io/github/santimattius/structured/sample/compilation/README.md) | One example per compiler rule (errors and warnings)                     |
 | **Sample (Detekt)**               | [sample-detekt/README.md](sample-detekt/README.md)                                                             | One example per Detekt rule; run `:sample-detekt:detekt` to validate    |
