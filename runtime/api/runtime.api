@@ -7,7 +7,19 @@ public final class io/github/santimattius/structured/runtime/CancellationSafeKt 
 public abstract interface annotation class io/github/santimattius/structured/runtime/ExperimentalStructuredCoroutines : java/lang/annotation/Annotation {
 }
 
+public final class io/github/santimattius/structured/runtime/ParallelKt {
+	public static final fun parallel (Ljava/lang/Iterable;ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun parallel$default (Ljava/lang/Iterable;ILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static final fun supervisedAll (Ljava/lang/Iterable;ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun supervisedAll$default (Ljava/lang/Iterable;ILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
 public final class io/github/santimattius/structured/runtime/SafeCallbackFlowKt {
 	public static final fun safeCallbackFlow (Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/flow/Flow;
+}
+
+public final class io/github/santimattius/structured/runtime/TimeoutsKt {
+	public static final fun withTimeoutResult (JLkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static final fun withTimeoutResult-KLykuaI (JLkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
