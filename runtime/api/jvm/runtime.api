@@ -4,6 +4,12 @@ public final class io/github/santimattius/structured/runtime/CancellationSafeKt 
 	public static final fun withCleanup (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
+public final class io/github/santimattius/structured/runtime/CompositeSink : io/github/santimattius/structured/runtime/TraceSink {
+	public fun <init> (Ljava/util/List;)V
+	public fun emit (Lio/github/santimattius/structured/runtime/TraceEvent;)V
+	public fun isEnabled (Lio/github/santimattius/structured/runtime/TraceLevel;)Z
+}
+
 public final class io/github/santimattius/structured/runtime/ConcurrentOrderedKt {
 	public static final fun concurrentOrdered (Ljava/lang/Iterable;)Lkotlinx/coroutines/flow/Flow;
 }
@@ -98,11 +104,30 @@ public final class io/github/santimattius/structured/runtime/IoCompat_jvmKt {
 	public static final fun getIoCompat (Lkotlinx/coroutines/Dispatchers;)Lkotlinx/coroutines/CoroutineDispatcher;
 }
 
+public final class io/github/santimattius/structured/runtime/LoggingSink : io/github/santimattius/structured/runtime/TraceSink {
+	public fun <init> (Lio/github/santimattius/structured/runtime/TraceLevel;Lkotlin/jvm/functions/Function1;)V
+	public synthetic fun <init> (Lio/github/santimattius/structured/runtime/TraceLevel;Lkotlin/jvm/functions/Function1;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun emit (Lio/github/santimattius/structured/runtime/TraceEvent;)V
+	public final fun getMaxLevel ()Lio/github/santimattius/structured/runtime/TraceLevel;
+	public fun isEnabled (Lio/github/santimattius/structured/runtime/TraceLevel;)Z
+}
+
 public final class io/github/santimattius/structured/runtime/ParallelKt {
 	public static final fun parallel (Ljava/lang/Iterable;ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static synthetic fun parallel$default (Ljava/lang/Iterable;ILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public static final fun supervisedAll (Ljava/lang/Iterable;ILkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static synthetic fun supervisedAll$default (Ljava/lang/Iterable;ILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+}
+
+public final class io/github/santimattius/structured/runtime/RingBufferSink : io/github/santimattius/structured/runtime/TraceSink {
+	public fun <init> (ILio/github/santimattius/structured/runtime/TraceLevel;)V
+	public synthetic fun <init> (ILio/github/santimattius/structured/runtime/TraceLevel;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun clear ()V
+	public fun emit (Lio/github/santimattius/structured/runtime/TraceEvent;)V
+	public final fun getCapacity ()I
+	public final fun getMaxLevel ()Lio/github/santimattius/structured/runtime/TraceLevel;
+	public fun isEnabled (Lio/github/santimattius/structured/runtime/TraceLevel;)Z
+	public final fun snapshot ()Ljava/util/List;
 }
 
 public final class io/github/santimattius/structured/runtime/SafeCallbackFlowKt {
@@ -117,9 +142,105 @@ public final class io/github/santimattius/structured/runtime/StateHolder {
 	public final fun update (Lkotlin/jvm/functions/Function1;)V
 }
 
+public final class io/github/santimattius/structured/runtime/ThreadInfo {
+	public fun <init> (JLjava/lang/String;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getId ()J
+	public final fun getName ()Ljava/lang/String;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class io/github/santimattius/structured/runtime/TimeoutsKt {
 	public static final fun withTimeoutResult (JLkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public static final fun withTimeoutResult-KLykuaI (JLkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+}
+
+public abstract interface class io/github/santimattius/structured/runtime/TraceEvent {
+	public abstract fun getDispatcher ()Ljava/lang/String;
+	public abstract fun getLevel ()Lio/github/santimattius/structured/runtime/TraceLevel;
+	public abstract fun getTimestampNanos ()J
+}
+
+public final class io/github/santimattius/structured/runtime/TraceEvent$Finished : io/github/santimattius/structured/runtime/TraceEvent {
+	public fun <init> (Ljava/lang/String;JJLio/github/santimattius/structured/runtime/TraceOutcome;Ljava/lang/String;Lio/github/santimattius/structured/runtime/ThreadInfo;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCoroutineName ()Ljava/lang/String;
+	public fun getDispatcher ()Ljava/lang/String;
+	public fun getLevel ()Lio/github/santimattius/structured/runtime/TraceLevel;
+	public final fun getOutcome ()Lio/github/santimattius/structured/runtime/TraceOutcome;
+	public final fun getRunTimeNanos ()J
+	public final fun getThread ()Lio/github/santimattius/structured/runtime/ThreadInfo;
+	public fun getTimestampNanos ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/santimattius/structured/runtime/TraceEvent$Queued : io/github/santimattius/structured/runtime/TraceEvent {
+	public fun <init> (Ljava/lang/String;JLjava/lang/String;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCoroutineName ()Ljava/lang/String;
+	public fun getDispatcher ()Ljava/lang/String;
+	public fun getLevel ()Lio/github/santimattius/structured/runtime/TraceLevel;
+	public fun getTimestampNanos ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/santimattius/structured/runtime/TraceEvent$Started : io/github/santimattius/structured/runtime/TraceEvent {
+	public fun <init> (Ljava/lang/String;JJLjava/lang/String;Lio/github/santimattius/structured/runtime/ThreadInfo;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getCoroutineName ()Ljava/lang/String;
+	public fun getDispatcher ()Ljava/lang/String;
+	public fun getLevel ()Lio/github/santimattius/structured/runtime/TraceLevel;
+	public final fun getQueueDelayNanos ()J
+	public final fun getThread ()Lio/github/santimattius/structured/runtime/ThreadInfo;
+	public fun getTimestampNanos ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/santimattius/structured/runtime/TraceLevel : java/lang/Enum {
+	public static final field Coroutine Lio/github/santimattius/structured/runtime/TraceLevel;
+	public static final field Dispatch Lio/github/santimattius/structured/runtime/TraceLevel;
+	public static final field Pool Lio/github/santimattius/structured/runtime/TraceLevel;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lio/github/santimattius/structured/runtime/TraceLevel;
+	public static fun values ()[Lio/github/santimattius/structured/runtime/TraceLevel;
+}
+
+public abstract interface class io/github/santimattius/structured/runtime/TraceOutcome {
+}
+
+public final class io/github/santimattius/structured/runtime/TraceOutcome$Completed : io/github/santimattius/structured/runtime/TraceOutcome {
+	public static final field INSTANCE Lio/github/santimattius/structured/runtime/TraceOutcome$Completed;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/santimattius/structured/runtime/TraceOutcome$Threw : io/github/santimattius/structured/runtime/TraceOutcome {
+	public fun <init> (Ljava/lang/Throwable;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getError ()Ljava/lang/Throwable;
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public abstract interface class io/github/santimattius/structured/runtime/TraceSink {
+	public static final field Companion Lio/github/santimattius/structured/runtime/TraceSink$Companion;
+	public abstract fun emit (Lio/github/santimattius/structured/runtime/TraceEvent;)V
+	public fun isEnabled (Lio/github/santimattius/structured/runtime/TraceLevel;)Z
+}
+
+public final class io/github/santimattius/structured/runtime/TraceSink$Companion {
+	public final fun getNone ()Lio/github/santimattius/structured/runtime/TraceSink;
+}
+
+public final class io/github/santimattius/structured/runtime/TraceSink$DefaultImpls {
+	public static fun isEnabled (Lio/github/santimattius/structured/runtime/TraceSink;Lio/github/santimattius/structured/runtime/TraceLevel;)Z
+}
+
+public final class io/github/santimattius/structured/runtime/TraceSinkKt {
+	public static final fun CompositeSink ([Lio/github/santimattius/structured/runtime/TraceSink;)Lio/github/santimattius/structured/runtime/CompositeSink;
 }
 
 public final class io/github/santimattius/structured/runtime/WarmFlowKt {
