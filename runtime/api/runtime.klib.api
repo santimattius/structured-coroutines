@@ -47,15 +47,17 @@ final class io.github.santimattius.structured.runtime/DispatcherStats { // io.gi
     final fun toString(): kotlin/String // io.github.santimattius.structured.runtime/DispatcherStats.toString|toString(){}[0]
 }
 
-final class io.github.santimattius.structured.runtime/InstrumentedDispatcher : kotlinx.coroutines/CoroutineDispatcher { // io.github.santimattius.structured.runtime/InstrumentedDispatcher|null[0]
+final class io.github.santimattius.structured.runtime/InstrumentedDispatcher : kotlinx.coroutines/CoroutineDispatcher, kotlinx.coroutines/Delay { // io.github.santimattius.structured.runtime/InstrumentedDispatcher|null[0]
     constructor <init>(kotlinx.coroutines/CoroutineDispatcher, kotlin/String) // io.github.santimattius.structured.runtime/InstrumentedDispatcher.<init>|<init>(kotlinx.coroutines.CoroutineDispatcher;kotlin.String){}[0]
 
     final val label // io.github.santimattius.structured.runtime/InstrumentedDispatcher.label|{}label[0]
         final fun <get-label>(): kotlin/String // io.github.santimattius.structured.runtime/InstrumentedDispatcher.label.<get-label>|<get-label>(){}[0]
 
     final fun dispatch(kotlin.coroutines/CoroutineContext, kotlinx.coroutines/Runnable) // io.github.santimattius.structured.runtime/InstrumentedDispatcher.dispatch|dispatch(kotlin.coroutines.CoroutineContext;kotlinx.coroutines.Runnable){}[0]
+    final fun invokeOnTimeout(kotlin/Long, kotlinx.coroutines/Runnable, kotlin.coroutines/CoroutineContext): kotlinx.coroutines/DisposableHandle // io.github.santimattius.structured.runtime/InstrumentedDispatcher.invokeOnTimeout|invokeOnTimeout(kotlin.Long;kotlinx.coroutines.Runnable;kotlin.coroutines.CoroutineContext){}[0]
     final fun isDispatchNeeded(kotlin.coroutines/CoroutineContext): kotlin/Boolean // io.github.santimattius.structured.runtime/InstrumentedDispatcher.isDispatchNeeded|isDispatchNeeded(kotlin.coroutines.CoroutineContext){}[0]
     final fun reset() // io.github.santimattius.structured.runtime/InstrumentedDispatcher.reset|reset(){}[0]
+    final fun scheduleResumeAfterDelay(kotlin/Long, kotlinx.coroutines/CancellableContinuation<kotlin/Unit>) // io.github.santimattius.structured.runtime/InstrumentedDispatcher.scheduleResumeAfterDelay|scheduleResumeAfterDelay(kotlin.Long;kotlinx.coroutines.CancellableContinuation<kotlin.Unit>){}[0]
     final fun snapshot(): io.github.santimattius.structured.runtime/DispatcherStats // io.github.santimattius.structured.runtime/InstrumentedDispatcher.snapshot|snapshot(){}[0]
 }
 

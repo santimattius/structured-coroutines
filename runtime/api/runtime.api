@@ -44,12 +44,15 @@ public final class io/github/santimattius/structured/runtime/DispatcherStats {
 public abstract interface annotation class io/github/santimattius/structured/runtime/ExperimentalStructuredCoroutines : java/lang/annotation/Annotation {
 }
 
-public final class io/github/santimattius/structured/runtime/InstrumentedDispatcher : kotlinx/coroutines/CoroutineDispatcher {
+public final class io/github/santimattius/structured/runtime/InstrumentedDispatcher : kotlinx/coroutines/CoroutineDispatcher, kotlinx/coroutines/Delay {
 	public fun <init> (Lkotlinx/coroutines/CoroutineDispatcher;Ljava/lang/String;)V
+	public fun delay (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun dispatch (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Runnable;)V
 	public final fun getLabel ()Ljava/lang/String;
+	public fun invokeOnTimeout (JLjava/lang/Runnable;Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/DisposableHandle;
 	public fun isDispatchNeeded (Lkotlin/coroutines/CoroutineContext;)Z
 	public final fun reset ()V
+	public fun scheduleResumeAfterDelay (JLkotlinx/coroutines/CancellableContinuation;)V
 	public final fun snapshot ()Lio/github/santimattius/structured/runtime/DispatcherStats;
 }
 

@@ -1,11 +1,16 @@
 package io.github.santimattius.structured.runtime
 
+import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Delay
+import kotlinx.coroutines.DisposableHandle
+import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.Runnable
 import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.AtomicLong
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.resume
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.TimeSource
@@ -35,6 +40,11 @@ public data class DispatcherStats(
  * `Dispatchers.IO` hides its `limitedParallelism` and elasticity hints from the coroutines
  * machinery, so behavior can differ slightly from the unwrapped dispatcher.
  *
+ * It also forwards [Delay]: when [delegate] has its own delay implementation (for example a
+ * `TestDispatcher`, whose virtual time `delay` and `withTimeout` must honor), timers are scheduled
+ * on it. Otherwise the standard default delay is used. Either way the coroutine resumes through
+ * this dispatcher, so the resume is counted.
+ *
  * Counters are thread-safe and lock-free; read them with [snapshot] and zero them with [reset].
  *
  * Example:
@@ -47,13 +57,13 @@ public data class DispatcherStats(
  * Rules: DISPATCH_005 (dispatchers are injected, so they can be wrapped).
  * See `docs/BEST_PRACTICES_COROUTINES.md` section 3.5.
  */
-@OptIn(ExperimentalAtomicApi::class)
+@OptIn(ExperimentalAtomicApi::class, InternalCoroutinesApi::class)
 @ExperimentalStructuredCoroutines
 public class InstrumentedDispatcher internal constructor(
     private val delegate: CoroutineDispatcher,
     public val label: String,
     private val timeSource: TimeSource,
-) : CoroutineDispatcher() {
+) : CoroutineDispatcher(), Delay {
 
     public constructor(delegate: CoroutineDispatcher, label: String) :
         this(delegate, label, TimeSource.Monotonic)
@@ -79,6 +89,16 @@ public class InstrumentedDispatcher internal constructor(
             }
         })
     }
+
+    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
+        // Resume through this dispatcher (not the delegate's own timer callback) so it is counted.
+        val handle = invokeOnTimeout(timeMillis, Runnable { continuation.resume(Unit) }, continuation.context)
+        continuation.invokeOnCancellation { handle.dispose() }
+    }
+
+    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
+        (delegate as? Delay)?.invokeOnTimeout(timeMillis, block, context)
+            ?: super<Delay>.invokeOnTimeout(timeMillis, block, context)
 
     /** Returns the stats observed so far. */
     public fun snapshot(): DispatcherStats = DispatcherStats(

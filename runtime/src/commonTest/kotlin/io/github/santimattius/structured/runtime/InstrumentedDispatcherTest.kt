@@ -6,7 +6,12 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.test.currentTime
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.CoroutineContext
@@ -182,5 +187,61 @@ class InstrumentedDispatcherTest {
         assertEquals(1L, p.stats().single().totalDispatched)
         p.reset()
         assertEquals(0L, p.stats().single().totalDispatched)
+    }
+
+    @Test
+    fun delay_usesVirtualTimeOfWrappedTestDispatcher() = runTest {
+        val d = InstrumentedDispatcher(StandardTestDispatcher(testScheduler), "t")
+        val start = currentTime
+        withContext(d) { delay(1000) }
+        assertEquals(1000L, currentTime - start)
+    }
+
+    @Test
+    fun delay_resumeGoesThroughInstrumentedDispatchAndIsCounted() = runTest {
+        val d = InstrumentedDispatcher(StandardTestDispatcher(testScheduler), "t")
+        withContext(d) {
+            val before = d.snapshot().totalDispatched
+            delay(500)
+            assertTrue(d.snapshot().totalDispatched > before)
+        }
+    }
+
+    @Test
+    fun withTimeout_respectsVirtualTime() = runTest {
+        val d = InstrumentedDispatcher(StandardTestDispatcher(testScheduler), "t")
+        val start = currentTime
+        assertFailsWith<TimeoutCancellationException> {
+            withContext(d) { withTimeout(300) { delay(10_000) } }
+        }
+        assertEquals(300L, currentTime - start)
+    }
+
+    @Test
+    fun withTimeout_completingInTimeReturnsValue() = runTest {
+        val d = InstrumentedDispatcher(StandardTestDispatcher(testScheduler), "t")
+        assertEquals(7, withContext(d) { withTimeout(300) { delay(100); 7 } })
+        assertEquals(100L, currentTime)
+    }
+
+    @Test
+    fun delay_cancellationIsPropagated() = runTest {
+        val d = InstrumentedDispatcher(StandardTestDispatcher(testScheduler), "t")
+        val job = launch(d) { delay(10_000) }
+        runCurrent()
+        job.cancel()
+        advanceUntilIdle()
+        assertTrue(job.isCancelled)
+        assertEquals(0L, currentTime)
+    }
+
+    @Test
+    fun delay_worksWithNonDelayDelegate() = runTest {
+        val d = InstrumentedDispatcher(object : CoroutineDispatcher() {
+            override fun dispatch(context: CoroutineContext, block: Runnable) =
+                Dispatchers.Default.dispatch(context, block)
+        }, "nd")
+        withContext(d) { delay(20); withTimeout(1000) { delay(5) } }
+        assertTrue(d.snapshot().totalDispatched >= 1L)
     }
 }
