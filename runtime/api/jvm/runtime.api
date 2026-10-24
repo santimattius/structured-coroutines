@@ -22,6 +22,24 @@ public final class io/github/santimattius/structured/runtime/DefaultDispatcherPr
 	public fun getUnconfined ()Lkotlinx/coroutines/CoroutineDispatcher;
 }
 
+public final class io/github/santimattius/structured/runtime/DispatcherMetrics {
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getFailed ()J
+	public final fun getFinished ()J
+	public final fun getLabel ()Ljava/lang/String;
+	public final fun getLongestRun-UwyO8pc ()J
+	public final fun getPeakRunning ()I
+	public final fun getPending ()J
+	public final fun getQueueDelay ()Lio/github/santimattius/structured/runtime/HistogramSnapshot;
+	public final fun getQueued ()J
+	public final fun getRunTime ()Lio/github/santimattius/structured/runtime/HistogramSnapshot;
+	public final fun getRunning ()I
+	public final fun getStarted ()J
+	public final fun getThreadsObserved ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public abstract interface class io/github/santimattius/structured/runtime/DispatcherProvider {
 	public static final field Companion Lio/github/santimattius/structured/runtime/DispatcherProvider$Companion;
 	public abstract fun getDefault ()Lkotlinx/coroutines/CoroutineDispatcher;
@@ -75,6 +93,17 @@ public final class io/github/santimattius/structured/runtime/HedgedKt {
 	public static synthetic fun hedged-rnQQ1Ag$default (JILkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
+public final class io/github/santimattius/structured/runtime/HistogramSnapshot {
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getBucketCounts ()Ljava/util/List;
+	public final fun getBucketUpperBounds ()Ljava/util/List;
+	public final fun getCount ()J
+	public final fun getMax-UwyO8pc ()J
+	public fun hashCode ()I
+	public final fun percentile-5sfh64U (D)J
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class io/github/santimattius/structured/runtime/InstrumentedDispatcher : kotlinx/coroutines/CoroutineDispatcher, kotlinx/coroutines/Delay {
 	public fun <init> (Lkotlinx/coroutines/CoroutineDispatcher;Ljava/lang/String;)V
 	public fun delay (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
@@ -119,6 +148,29 @@ public final class io/github/santimattius/structured/runtime/ParallelKt {
 	public static synthetic fun supervisedAll$default (Ljava/lang/Iterable;ILkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
+public abstract interface class io/github/santimattius/structured/runtime/PoolSignal {
+	public abstract fun getLabel ()Ljava/lang/String;
+}
+
+public final class io/github/santimattius/structured/runtime/PoolSignal$LongRunningSegment : io/github/santimattius/structured/runtime/PoolSignal {
+	public synthetic fun <init> (Ljava/lang/String;JLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getLabel ()Ljava/lang/String;
+	public final fun getLongestRun-UwyO8pc ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/santimattius/structured/runtime/PoolSignal$StarvationSuspected : io/github/santimattius/structured/runtime/PoolSignal {
+	public synthetic fun <init> (Ljava/lang/String;JJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getLabel ()Ljava/lang/String;
+	public final fun getPending ()J
+	public final fun getQueueDelayP95-UwyO8pc ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class io/github/santimattius/structured/runtime/RingBufferSink : io/github/santimattius/structured/runtime/TraceSink {
 	public fun <init> (ILio/github/santimattius/structured/runtime/TraceLevel;)V
 	public synthetic fun <init> (ILio/github/santimattius/structured/runtime/TraceLevel;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -134,12 +186,39 @@ public final class io/github/santimattius/structured/runtime/SafeCallbackFlowKt 
 	public static final fun safeCallbackFlow (Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/flow/Flow;
 }
 
+public final class io/github/santimattius/structured/runtime/SignalThresholds {
+	public synthetic fun <init> (JJILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (JJLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getLongRunningSegment-UwyO8pc ()J
+	public final fun getStarvationQueueDelayP95-UwyO8pc ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/santimattius/structured/runtime/SignalsKt {
+	public static final fun signals (Lio/github/santimattius/structured/runtime/DispatcherMetrics;Lio/github/santimattius/structured/runtime/SignalThresholds;)Ljava/util/List;
+	public static synthetic fun signals$default (Lio/github/santimattius/structured/runtime/DispatcherMetrics;Lio/github/santimattius/structured/runtime/SignalThresholds;ILjava/lang/Object;)Ljava/util/List;
+}
+
 public final class io/github/santimattius/structured/runtime/StateHolder {
 	public fun <init> (Ljava/lang/Object;)V
 	public final fun getState ()Lkotlinx/coroutines/flow/StateFlow;
 	public final fun getValue ()Ljava/lang/Object;
 	public final fun set (Ljava/lang/Object;)V
 	public final fun update (Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class io/github/santimattius/structured/runtime/StatsSink : io/github/santimattius/structured/runtime/TraceSink {
+	public fun <init> ()V
+	public fun <init> (Lio/github/santimattius/structured/runtime/TraceLevel;)V
+	public synthetic fun <init> (Lio/github/santimattius/structured/runtime/TraceLevel;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun emit (Lio/github/santimattius/structured/runtime/TraceEvent;)V
+	public final fun getMaxLevel ()Lio/github/santimattius/structured/runtime/TraceLevel;
+	public fun isEnabled (Lio/github/santimattius/structured/runtime/TraceLevel;)Z
+	public final fun metrics ()Ljava/util/List;
+	public final fun metrics (Ljava/lang/String;)Lio/github/santimattius/structured/runtime/DispatcherMetrics;
+	public final fun reset ()V
 }
 
 public final class io/github/santimattius/structured/runtime/ThreadInfo {
