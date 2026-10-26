@@ -103,7 +103,7 @@ Per-module rule lists and configuration examples: [detekt-rules](detekt-rules/RE
 
 ## 📦 Installation
 
-> **Pre-release:** `1.2.0-ALPHA03` adds `EXCEPT_004` (`MisplacedTryCatchInScope`) and several false-positive fixes. The snippets below use the latest stable release (`1.1.1`).
+> **Pre-release:** `1.2.0-ALPHA04` adds `EXCEPT_004` (`MisplacedTryCatchInScope`) and several false-positive fixes. The snippets below use the latest stable release (`1.1.1`).
 
 ### Compiler Plugin
 
