@@ -286,6 +286,30 @@ PerfettoTraceSession.start(File("build/traces")).use { session ->
 }
 ```
 
+### Writing a platform backend
+
+Everything that differs by platform sits behind two `expect` declarations, so a new target compiles
+and works on day one with degraded behavior and gains fidelity when someone writes its `actual`:
+
+```kotlin
+public expect val platformCapabilities: TraceCapabilities   // what this target can do
+public expect fun platformTraceSink(): TraceSink?           // default system-trace sink, or null
+```
+
+To add a backend for a target:
+
+1. Implement a `TraceSink` (see the contract in its KDoc) over the platform tracer.
+2. Provide the `actual` of `platformCapabilities` with flags that are true only for what your
+   sink really does: `threadIdentity` (run events carry a real `ThreadInfo`), `systemTraceIntegration`
+   (`:runtime` ships a sink for the system tracer; backends in separate artifacts do not count),
+   `counters` (publishes `pending`/`running` tracks) and `flows` (draws `parentSpanId` links).
+3. Return your sink from the `actual` of `platformTraceSink()` if it can be built with no arguments.
+
+The rule: **a missing capability degrades, it never fails.** A sink without thread identity omits
+it, one that cannot draw flows ignores `parentSpanId`, and `platformTraceSink()` returns `null`
+where nothing ships. Today only Android returns a sink (`AndroidTraceSink`, counters on API 29+);
+every other target reports all flags false except the JVM and Android, which have thread identity.
+
 ### State and events
 
 ```kotlin
