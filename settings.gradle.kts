@@ -17,6 +17,7 @@ include(
     ":intellij-plugin",
     ":runtime",
     ":runtime-test",
+    ":runtime-tracing-jvm",
     ":sample",
     ":sample-detekt"
 )

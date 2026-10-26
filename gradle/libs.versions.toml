@@ -20,6 +20,8 @@ intellij-platform = "2.11.0"
 intellij-ide = "2026.1"
 binary-compatibility-validator = "0.18.1"
 agp = "9.4.1"
+# Stable androidx.tracing 2.x (Perfetto in-process tracing); used only by :runtime-tracing-jvm.
+androidx-tracing = "2.0.5"
 
 [libraries]
 # Kotlin
@@ -52,6 +54,10 @@ assertj-core = { group = "org.assertj", name = "assertj-core", version.ref = "as
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle-runtime-compose" }
+
+# Tracing (in-process Perfetto, :runtime-tracing-jvm only)
+androidx-tracing = { group = "androidx.tracing", name = "tracing", version.ref = "androidx-tracing" }
+androidx-tracing-wire = { group = "androidx.tracing", name = "tracing-wire", version.ref = "androidx-tracing" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

@@ -23,6 +23,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 - **`:runtime-test` tracing helpers** — `RecordingSink`, a thread-safe `TraceSink` that records events in order (`events`, `eventsOf<T>()`, `clear()`, configurable `maxLevel`), and `TraceSinkContract`, an annotation-free reusable contract check for any `TraceSink` (never throws, concurrent emit, stable `isEnabled`). See [runtime-test/README.md](runtime-test/README.md).
 
+- **`:runtime-tracing-jvm` module** (`io.github.santimattius:structured-coroutines-runtime-tracing-jvm`) — `PerfettoTraceSink`, a `TraceSink` that writes dispatch slices, `pending`/`running` counter tracks (plus `PoolSample` counters) and span flows through `androidx.tracing` 2.0.5, and `PerfettoTraceSession`, which owns a file-backed driver and writes a `.perfetto-trace` file you can open in ui.perfetto.dev. Mirrors `AndroidTraceSink`'s mapping; never installs a global tracer. Separate artifact so `:runtime` never depends on `androidx.tracing`; requires JDK 11+. Experimental. See [runtime-tracing-jvm/README.md](runtime-tracing-jvm/README.md).
+
 ### Changed
 
 - **Building the toolkit now requires Gradle 9.7.1 and AGP 9.4.1** (wrapper bumped from `9.0-milestone-1`; AGP is a build-time dependency of `:runtime` only), plus the Android SDK (platform 36, build-tools 36.0.0) available via `ANDROID_HOME` or `sdk.dir` in `local.properties`. CI installs the Android SDK with `android-actions/setup-android`. Consumers are unaffected.
