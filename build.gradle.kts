@@ -33,6 +33,7 @@ apiValidation {
             "intellij-plugin",
             "sample",
             "sample-detekt",
+            "runtime-benchmark",
         )
     )
     klib {

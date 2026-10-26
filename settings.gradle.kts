@@ -18,6 +18,7 @@ include(
     ":runtime",
     ":runtime-test",
     ":runtime-tracing-jvm",
+    ":runtime-benchmark",
     ":sample",
     ":sample-detekt"
 )
