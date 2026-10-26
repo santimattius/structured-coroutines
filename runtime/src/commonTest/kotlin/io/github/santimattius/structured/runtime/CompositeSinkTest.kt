@@ -15,6 +15,8 @@ class CompositeSinkTest {
         override fun isEnabled(level: TraceLevel) = max != null && level <= max
     }
 
+    private class FakeVmError : Error("x")
+
     private val queued = TraceEvent.Queued("io", 1L, null)
 
     @Test
@@ -36,8 +38,8 @@ class CompositeSinkTest {
 
     @Test
     fun vmErrorsPropagate() {
-        val bad = object : TraceSink { override fun emit(event: TraceEvent) = throw OutOfMemoryError("x") }
-        assertFailsWith<OutOfMemoryError> { CompositeSink(bad).emit(queued) }
+        val bad = object : TraceSink { override fun emit(event: TraceEvent) = throw FakeVmError() }
+        assertFailsWith<FakeVmError> { CompositeSink(bad).emit(queued) }
     }
 
     @Test
