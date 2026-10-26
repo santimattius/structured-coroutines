@@ -2,7 +2,8 @@
 
 Test helpers for [`:runtime`](../runtime/README.md): `TestDispatcherProvider` and
 `TestScope.testDispatcherProvider()`, a `DispatcherProvider` whose dispatchers share one test
-scheduler (virtual time). It is a separate artifact so production code never pulls
+scheduler (virtual time), plus `RecordingSink` (a `TraceSink` that records events for assertions)
+and `TraceSinkContract` (reusable checks every `TraceSink` should pass). It is a separate artifact so production code never pulls
 `kotlinx-coroutines-test` transitively.
 
 ```kotlin

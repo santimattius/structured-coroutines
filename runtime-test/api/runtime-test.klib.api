@@ -1,11 +1,44 @@
 // Klib ABI Dump
 // Targets: [iosArm64, iosSimulatorArm64, iosX64, js, linuxArm64, linuxX64, macosArm64, macosX64, mingwX64, tvosArm64, tvosSimulatorArm64, tvosX64, wasmJs, wasmWasi, watchosArm64, watchosSimulatorArm64, watchosX64]
+// Alias: native => [iosArm64, iosSimulatorArm64, iosX64, linuxArm64, linuxX64, macosArm64, macosX64, mingwX64, tvosArm64, tvosSimulatorArm64, tvosX64, watchosArm64, watchosSimulatorArm64, watchosX64]
 // Rendering settings:
 // - Signature version: 2
 // - Show manifest properties: true
 // - Show declarations: true
 
 // Library unique name: <io.github.santimattius:runtime-test>
+abstract class io.github.santimattius.structured.runtime.test/TraceSinkContract { // io.github.santimattius.structured.runtime.test/TraceSinkContract|null[0]
+    constructor <init>() // io.github.santimattius.structured.runtime.test/TraceSinkContract.<init>|<init>(){}[0]
+
+    abstract fun createSink(): io.github.santimattius.structured.runtime/TraceSink // io.github.santimattius.structured.runtime.test/TraceSinkContract.createSink|createSink(){}[0]
+    final fun checkEmitNeverThrowsForKnownEvents() // io.github.santimattius.structured.runtime.test/TraceSinkContract.checkEmitNeverThrowsForKnownEvents|checkEmitNeverThrowsForKnownEvents(){}[0]
+    final fun checkEmitToleratesAbsentOptionalFields() // io.github.santimattius.structured.runtime.test/TraceSinkContract.checkEmitToleratesAbsentOptionalFields|checkEmitToleratesAbsentOptionalFields(){}[0]
+    final fun checkIsEnabledAnswersForEveryLevel() // io.github.santimattius.structured.runtime.test/TraceSinkContract.checkIsEnabledAnswersForEveryLevel|checkIsEnabledAnswersForEveryLevel(){}[0]
+    final fun checkIsEnabledIsStable() // io.github.santimattius.structured.runtime.test/TraceSinkContract.checkIsEnabledIsStable|checkIsEnabledIsStable(){}[0]
+    final suspend fun checkEmitToleratesConcurrentCallers() // io.github.santimattius.structured.runtime.test/TraceSinkContract.checkEmitToleratesConcurrentCallers|checkEmitToleratesConcurrentCallers(){}[0]
+    open fun flush(io.github.santimattius.structured.runtime/TraceSink) // io.github.santimattius.structured.runtime.test/TraceSinkContract.flush|flush(io.github.santimattius.structured.runtime.TraceSink){}[0]
+
+    // Targets: [native, wasmWasi]
+    final fun checkAll() // io.github.santimattius.structured.runtime.test/TraceSinkContract.checkAll|checkAll(){}[0]
+
+    // Targets: [js, wasmJs]
+    final fun checkAll(): kotlinx.coroutines.test.internal/JsPromiseInterfaceForTesting // io.github.santimattius.structured.runtime.test/TraceSinkContract.checkAll|checkAll(){}[0]
+}
+
+final class io.github.santimattius.structured.runtime.test/RecordingSink : io.github.santimattius.structured.runtime/TraceSink { // io.github.santimattius.structured.runtime.test/RecordingSink|null[0]
+    constructor <init>(io.github.santimattius.structured.runtime/TraceLevel? = ...) // io.github.santimattius.structured.runtime.test/RecordingSink.<init>|<init>(io.github.santimattius.structured.runtime.TraceLevel?){}[0]
+
+    final val events // io.github.santimattius.structured.runtime.test/RecordingSink.events|{}events[0]
+        final fun <get-events>(): kotlin.collections/List<io.github.santimattius.structured.runtime/TraceEvent> // io.github.santimattius.structured.runtime.test/RecordingSink.events.<get-events>|<get-events>(){}[0]
+    final val maxLevel // io.github.santimattius.structured.runtime.test/RecordingSink.maxLevel|{}maxLevel[0]
+        final fun <get-maxLevel>(): io.github.santimattius.structured.runtime/TraceLevel? // io.github.santimattius.structured.runtime.test/RecordingSink.maxLevel.<get-maxLevel>|<get-maxLevel>(){}[0]
+
+    final fun clear() // io.github.santimattius.structured.runtime.test/RecordingSink.clear|clear(){}[0]
+    final fun emit(io.github.santimattius.structured.runtime/TraceEvent) // io.github.santimattius.structured.runtime.test/RecordingSink.emit|emit(io.github.santimattius.structured.runtime.TraceEvent){}[0]
+    final fun isEnabled(io.github.santimattius.structured.runtime/TraceLevel): kotlin/Boolean // io.github.santimattius.structured.runtime.test/RecordingSink.isEnabled|isEnabled(io.github.santimattius.structured.runtime.TraceLevel){}[0]
+    final inline fun <#A1: reified io.github.santimattius.structured.runtime/TraceEvent> eventsOf(): kotlin.collections/List<#A1> // io.github.santimattius.structured.runtime.test/RecordingSink.eventsOf|eventsOf(){0§<io.github.santimattius.structured.runtime.TraceEvent>}[0]
+}
+
 final class io.github.santimattius.structured.runtime.test/TestDispatcherProvider : io.github.santimattius.structured.runtime/DispatcherProvider { // io.github.santimattius.structured.runtime.test/TestDispatcherProvider|null[0]
     constructor <init>(kotlinx.coroutines.test/TestCoroutineScheduler = ..., kotlin/Boolean = ...) // io.github.santimattius.structured.runtime.test/TestDispatcherProvider.<init>|<init>(kotlinx.coroutines.test.TestCoroutineScheduler;kotlin.Boolean){}[0]
 
