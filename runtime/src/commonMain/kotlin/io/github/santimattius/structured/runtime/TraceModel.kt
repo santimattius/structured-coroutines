@@ -1,5 +1,7 @@
 package io.github.santimattius.structured.runtime
 
+import kotlin.jvm.JvmOverloads
+
 /**
  * How much detail a [TraceSink] wants to receive. Levels are cumulative by ordinal: enabling a
  * level also enables every level below it, so `level <= maxLevel` is the enablement test.
@@ -109,43 +111,55 @@ public sealed interface TraceEvent {
     /** Lowest [TraceLevel] at which this event is produced. */
     public val level: TraceLevel
 
-    /** A block was handed to the dispatcher. */
-    public class Queued(
+    /**
+     * A block was handed to the dispatcher. [spanId] and [parentSpanId] come from the [TraceSpan] in
+     * the dispatch context and are null when there is none (same on [Started] and [Finished]).
+     */
+    public class Queued @JvmOverloads constructor(
         override val dispatcher: String,
         override val timestampNanos: Long,
         public val coroutineName: String?,
+        public val spanId: Long? = null,
+        public val parentSpanId: Long? = null,
     ) : TraceEvent {
         override val level: TraceLevel get() = TraceLevel.Dispatch
 
         override fun equals(other: Any?): Boolean =
             this === other || (other is Queued && dispatcher == other.dispatcher &&
-                timestampNanos == other.timestampNanos && coroutineName == other.coroutineName)
+                timestampNanos == other.timestampNanos && coroutineName == other.coroutineName &&
+                spanId == other.spanId && parentSpanId == other.parentSpanId)
 
         override fun hashCode(): Int {
             var h = dispatcher.hashCode()
             h = 31 * h + timestampNanos.hashCode()
             h = 31 * h + (coroutineName?.hashCode() ?: 0)
+            h = 31 * h + (spanId?.hashCode() ?: 0)
+            h = 31 * h + (parentSpanId?.hashCode() ?: 0)
             return h
         }
 
         override fun toString(): String =
-            "Queued(dispatcher=$dispatcher, timestampNanos=$timestampNanos, coroutineName=$coroutineName)"
+            "Queued(dispatcher=$dispatcher, timestampNanos=$timestampNanos, coroutineName=$coroutineName, " +
+                "spanId=$spanId, parentSpanId=$parentSpanId)"
     }
 
     /** A block began running after waiting [queueDelayNanos] in the queue. */
-    public class Started(
+    public class Started @JvmOverloads constructor(
         override val dispatcher: String,
         override val timestampNanos: Long,
         public val queueDelayNanos: Long,
         public val coroutineName: String?,
         public val thread: ThreadInfo?,
+        public val spanId: Long? = null,
+        public val parentSpanId: Long? = null,
     ) : TraceEvent {
         override val level: TraceLevel get() = TraceLevel.Dispatch
 
         override fun equals(other: Any?): Boolean =
             this === other || (other is Started && dispatcher == other.dispatcher &&
                 timestampNanos == other.timestampNanos && queueDelayNanos == other.queueDelayNanos &&
-                coroutineName == other.coroutineName && thread == other.thread)
+                coroutineName == other.coroutineName && thread == other.thread &&
+                spanId == other.spanId && parentSpanId == other.parentSpanId)
 
         override fun hashCode(): Int {
             var h = dispatcher.hashCode()
@@ -153,22 +167,27 @@ public sealed interface TraceEvent {
             h = 31 * h + queueDelayNanos.hashCode()
             h = 31 * h + (coroutineName?.hashCode() ?: 0)
             h = 31 * h + (thread?.hashCode() ?: 0)
+            h = 31 * h + (spanId?.hashCode() ?: 0)
+            h = 31 * h + (parentSpanId?.hashCode() ?: 0)
             return h
         }
 
         override fun toString(): String =
             "Started(dispatcher=$dispatcher, timestampNanos=$timestampNanos, " +
-                "queueDelayNanos=$queueDelayNanos, coroutineName=$coroutineName, thread=$thread)"
+                "queueDelayNanos=$queueDelayNanos, coroutineName=$coroutineName, thread=$thread, " +
+                "spanId=$spanId, parentSpanId=$parentSpanId)"
     }
 
     /** A block finished after running for [runTimeNanos], with the given [outcome]. */
-    public class Finished(
+    public class Finished @JvmOverloads constructor(
         override val dispatcher: String,
         override val timestampNanos: Long,
         public val runTimeNanos: Long,
         public val outcome: TraceOutcome,
         public val coroutineName: String?,
         public val thread: ThreadInfo?,
+        public val spanId: Long? = null,
+        public val parentSpanId: Long? = null,
     ) : TraceEvent {
         override val level: TraceLevel get() = TraceLevel.Dispatch
 
@@ -176,7 +195,8 @@ public sealed interface TraceEvent {
             this === other || (other is Finished && dispatcher == other.dispatcher &&
                 timestampNanos == other.timestampNanos && runTimeNanos == other.runTimeNanos &&
                 outcome == other.outcome && coroutineName == other.coroutineName &&
-                thread == other.thread)
+                thread == other.thread &&
+                spanId == other.spanId && parentSpanId == other.parentSpanId)
 
         override fun hashCode(): Int {
             var h = dispatcher.hashCode()
@@ -185,12 +205,15 @@ public sealed interface TraceEvent {
             h = 31 * h + outcome.hashCode()
             h = 31 * h + (coroutineName?.hashCode() ?: 0)
             h = 31 * h + (thread?.hashCode() ?: 0)
+            h = 31 * h + (spanId?.hashCode() ?: 0)
+            h = 31 * h + (parentSpanId?.hashCode() ?: 0)
             return h
         }
 
         override fun toString(): String =
             "Finished(dispatcher=$dispatcher, timestampNanos=$timestampNanos, " +
-                "runTimeNanos=$runTimeNanos, outcome=$outcome, coroutineName=$coroutineName, thread=$thread)"
+                "runTimeNanos=$runTimeNanos, outcome=$outcome, coroutineName=$coroutineName, thread=$thread, " +
+                "spanId=$spanId, parentSpanId=$parentSpanId)"
     }
 
     /**

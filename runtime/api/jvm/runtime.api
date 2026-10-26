@@ -273,12 +273,17 @@ public abstract interface class io/github/santimattius/structured/runtime/TraceE
 
 public final class io/github/santimattius/structured/runtime/TraceEvent$Finished : io/github/santimattius/structured/runtime/TraceEvent {
 	public fun <init> (Ljava/lang/String;JJLio/github/santimattius/structured/runtime/TraceOutcome;Ljava/lang/String;Lio/github/santimattius/structured/runtime/ThreadInfo;)V
+	public fun <init> (Ljava/lang/String;JJLio/github/santimattius/structured/runtime/TraceOutcome;Ljava/lang/String;Lio/github/santimattius/structured/runtime/ThreadInfo;Ljava/lang/Long;)V
+	public fun <init> (Ljava/lang/String;JJLio/github/santimattius/structured/runtime/TraceOutcome;Ljava/lang/String;Lio/github/santimattius/structured/runtime/ThreadInfo;Ljava/lang/Long;Ljava/lang/Long;)V
+	public synthetic fun <init> (Ljava/lang/String;JJLio/github/santimattius/structured/runtime/TraceOutcome;Ljava/lang/String;Lio/github/santimattius/structured/runtime/ThreadInfo;Ljava/lang/Long;Ljava/lang/Long;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getCoroutineName ()Ljava/lang/String;
 	public fun getDispatcher ()Ljava/lang/String;
 	public fun getLevel ()Lio/github/santimattius/structured/runtime/TraceLevel;
 	public final fun getOutcome ()Lio/github/santimattius/structured/runtime/TraceOutcome;
+	public final fun getParentSpanId ()Ljava/lang/Long;
 	public final fun getRunTimeNanos ()J
+	public final fun getSpanId ()Ljava/lang/Long;
 	public final fun getThread ()Lio/github/santimattius/structured/runtime/ThreadInfo;
 	public fun getTimestampNanos ()J
 	public fun hashCode ()I
@@ -304,10 +309,15 @@ public final class io/github/santimattius/structured/runtime/TraceEvent$PoolSamp
 
 public final class io/github/santimattius/structured/runtime/TraceEvent$Queued : io/github/santimattius/structured/runtime/TraceEvent {
 	public fun <init> (Ljava/lang/String;JLjava/lang/String;)V
+	public fun <init> (Ljava/lang/String;JLjava/lang/String;Ljava/lang/Long;)V
+	public fun <init> (Ljava/lang/String;JLjava/lang/String;Ljava/lang/Long;Ljava/lang/Long;)V
+	public synthetic fun <init> (Ljava/lang/String;JLjava/lang/String;Ljava/lang/Long;Ljava/lang/Long;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getCoroutineName ()Ljava/lang/String;
 	public fun getDispatcher ()Ljava/lang/String;
 	public fun getLevel ()Lio/github/santimattius/structured/runtime/TraceLevel;
+	public final fun getParentSpanId ()Ljava/lang/Long;
+	public final fun getSpanId ()Ljava/lang/Long;
 	public fun getTimestampNanos ()J
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -315,11 +325,16 @@ public final class io/github/santimattius/structured/runtime/TraceEvent$Queued :
 
 public final class io/github/santimattius/structured/runtime/TraceEvent$Started : io/github/santimattius/structured/runtime/TraceEvent {
 	public fun <init> (Ljava/lang/String;JJLjava/lang/String;Lio/github/santimattius/structured/runtime/ThreadInfo;)V
+	public fun <init> (Ljava/lang/String;JJLjava/lang/String;Lio/github/santimattius/structured/runtime/ThreadInfo;Ljava/lang/Long;)V
+	public fun <init> (Ljava/lang/String;JJLjava/lang/String;Lio/github/santimattius/structured/runtime/ThreadInfo;Ljava/lang/Long;Ljava/lang/Long;)V
+	public synthetic fun <init> (Ljava/lang/String;JJLjava/lang/String;Lio/github/santimattius/structured/runtime/ThreadInfo;Ljava/lang/Long;Ljava/lang/Long;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getCoroutineName ()Ljava/lang/String;
 	public fun getDispatcher ()Ljava/lang/String;
 	public fun getLevel ()Lio/github/santimattius/structured/runtime/TraceLevel;
+	public final fun getParentSpanId ()Ljava/lang/Long;
 	public final fun getQueueDelayNanos ()J
+	public final fun getSpanId ()Ljava/lang/Long;
 	public final fun getThread ()Lio/github/santimattius/structured/runtime/ThreadInfo;
 	public fun getTimestampNanos ()J
 	public fun hashCode ()I
@@ -367,6 +382,21 @@ public final class io/github/santimattius/structured/runtime/TraceSink$DefaultIm
 
 public final class io/github/santimattius/structured/runtime/TraceSinkKt {
 	public static final fun CompositeSink ([Lio/github/santimattius/structured/runtime/TraceSink;)Lio/github/santimattius/structured/runtime/CompositeSink;
+}
+
+public final class io/github/santimattius/structured/runtime/TraceSpan : kotlin/coroutines/AbstractCoroutineContextElement {
+	public static final field Key Lio/github/santimattius/structured/runtime/TraceSpan$Key;
+	public final fun getId ()J
+	public final fun getName ()Ljava/lang/String;
+	public final fun getParentId ()Ljava/lang/Long;
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class io/github/santimattius/structured/runtime/TraceSpan$Key : kotlin/coroutines/CoroutineContext$Key {
+}
+
+public final class io/github/santimattius/structured/runtime/TraceSpanKt {
+	public static final fun withTraceSpan (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class io/github/santimattius/structured/runtime/TracedDispatcherProvider : io/github/santimattius/structured/runtime/DispatcherProvider {
