@@ -7,10 +7,10 @@ plugins {
     alias(libs.plugins.binary.compatibility.validator)
 }
 
-// Binary-compatibility validation runs against :runtime's and :runtime-test's checked-in ABI dumps only.
+// Binary-compatibility validation runs against :runtime's, :runtime-test's and :runtime-tracing-jvm's checked-in ABI dumps only.
 // Dump layout: <module>/api/jvm/<module>.api (JVM, per-target dir because :runtime also has an Android
 // target) and <module>/api/<module>.klib.api (klib targets; :runtime-test keeps the legacy flat
-// <module>/api/<module>.api).
+// <module>/api/<module>.api). :runtime-tracing-jvm is a plain JVM module: <module>/api/<module>.api.
 // NOTE: the Android variant of :runtime has NO API dump and is NOT guarded by apiCheck: BCV 0.18.1
 // does not support the com.android.kotlin.multiplatform.library plugin. Its source is shared with the
 // JVM target (jvmAndAndroid), so the JVM dump covers it for now; revisit when BCV gains support.
@@ -18,7 +18,7 @@ plugins {
 // same sense (compiler plugin, Gradle plugin, IDE tooling, samples). The root project has no
 // `check` lifecycle task in this build (no base/lifecycle plugin applied at root), so the BCV
 // plugin never wires apiCheck into one — apiCheck is run as a dedicated advisory CI step
-// (`:runtime:apiCheck :runtime-test:apiCheck` with `continue-on-error: true`, see .github/workflows/ci.yml) while
+// (`:runtime:apiCheck :runtime-test:apiCheck :runtime-tracing-jvm:apiCheck` with `continue-on-error: true`, see .github/workflows/ci.yml) while
 // :runtime is on the @ExperimentalStructuredCoroutines-gated 0.x line. Transition point
 // (design it now, implement at 1.0.0): make apiCheck blocking in CI once the experimental gate
 // is removed — no `check` lifecycle wiring is needed since this repo never runs one at root.
@@ -122,7 +122,7 @@ tasks.register<Exec>("checkSkillRefs") {
 // .github/workflows/publish-lint-rules.yml.
 tasks.register("publishToMavenCentral") {
     group = "publishing"
-    description = "Publishes all vanniktech-published library modules (annotations, compiler, detekt-rules, gradle-plugin, runtime, runtime-test) to Maven Central"
+    description = "Publishes all vanniktech-published library modules (annotations, compiler, detekt-rules, gradle-plugin, runtime, runtime-test, runtime-tracing-jvm) to Maven Central"
     dependsOn(
         ":annotations:publishToMavenCentral",
         ":compiler:publishToMavenCentral",
@@ -130,5 +130,6 @@ tasks.register("publishToMavenCentral") {
         ":gradle-plugin:publishToMavenCentral",
         ":runtime:publishToMavenCentral",
         ":runtime-test:publishToMavenCentral",
+        ":runtime-tracing-jvm:publishToMavenCentral",
     )
 }

@@ -241,12 +241,25 @@ Limits:
 - Only dispatched segments are visible (not `Dispatchers.Unconfined`, `UNDISPATCHED` first
   segments or same-dispatcher `withContext`); see `TracingDispatcher`.
 - `AndroidTraceSink` feeds `android.os.Trace`, which system traces and `TraceSectionMetric` read.
-  It does not feed `androidx.tracing`'s in-process trace file.
+  It does not feed `androidx.tracing`'s in-process trace file; on the JVM and desktop
+  `PerfettoTraceSink` does (see below).
 - Queue delay is not drawn as a slice; read it from the `pending` counter.
 - Keep slice names low-cardinality: use stable `CoroutineName`s, not ids or payloads.
 
 Status: experimental. The tracing API may change, and `AndroidTraceSink` has not been validated on
 a device yet.
+
+On the JVM and desktop, the separate `:runtime-tracing-jvm` artifact provides `PerfettoTraceSink`,
+which writes the same slices and counters through `androidx.tracing` into a `.perfetto-trace` file
+you can open in [ui.perfetto.dev](https://ui.perfetto.dev). It is a separate artifact so `:runtime`
+never depends on `androidx.tracing`. See [`runtime-tracing-jvm/README.md`](../runtime-tracing-jvm/README.md).
+
+```kotlin
+PerfettoTraceSession.start(File("build/traces")).use { session ->
+    val dispatchers = DefaultDispatcherProvider.traced(session.sink)
+    // ... run work ...
+}
+```
 
 ### State and events
 
@@ -343,7 +356,8 @@ AGP KMP library plugin `com.android.kotlin.multiplatform.library`). It publishes
 Gradle variants next to the plain `jvm` ones, so Android consumers resolve it without extra setup.
 `:runtime-test` has no Android target. Building `:runtime` needs the Android SDK (platform 36 and
 build-tools 36.0.0; see [CONTRIBUTING.md](../CONTRIBUTING.md)). The Android target also provides
-`AndroidTraceSink` (see [Tracing](#tracing)); the other targets have no system-trace sink.
+`AndroidTraceSink` (see [Tracing](#tracing)); the other targets have no system-trace sink (the JVM
+can write a Perfetto file with `:runtime-tracing-jvm`).
 
 `Dispatchers.ioCompat` resolves per target:
 

@@ -44,13 +44,13 @@ jobs:
         run: ./gradlew publishToMavenLocal --no-daemon
 
       - name: Run tests
-        run: ./gradlew :compiler:test :detekt-rules:test :lint-rules:test :runtime:jvmTest :runtime:jsTest :runtime:linuxX64Test :runtime-test:jvmTest :runtime-test:jsTest :runtime-test:linuxX64Test --no-daemon
+        run: ./gradlew :compiler:test :detekt-rules:test :lint-rules:test :runtime:jvmTest :runtime:jsTest :runtime:linuxX64Test :runtime-test:jvmTest :runtime-test:jsTest :runtime-test:linuxX64Test :runtime-tracing-jvm:test --no-daemon
 
-      - name: Check :runtime and :runtime-test binary compatibility (advisory)
+      - name: Check :runtime, :runtime-test and :runtime-tracing-jvm binary compatibility (advisory)
         # :runtime is on the @ExperimentalStructuredCoroutines-gated 0.x line — an ABI diff is
         # surfaced in the job log/PR but must never fail CI. Non-blocking until 1.0.0, when the
         # experimental gate is removed (see build.gradle.kts apiValidation comment).
-        run: ./gradlew :runtime:apiCheck :runtime-test:apiCheck --no-daemon
+        run: ./gradlew :runtime:apiCheck :runtime-test:apiCheck :runtime-tracing-jvm:apiCheck --no-daemon
         continue-on-error: true
 
   # ──────────────────────────────────────────────
