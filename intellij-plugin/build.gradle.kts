@@ -39,8 +39,11 @@ dependencies {
     // (e.g. CloseAction.closeAutoCloseables); pinning avoids NoSuchMethodError with mixed transitive versions.
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.11.4")
-    // IntelliJ Platform testFramework still loads JUnit5TestSessionListener (needs JUnit 4 TestCase).
-    testRuntimeOnly("junit:junit:4.13.2")
+    // IntelliJ Platform testFramework still loads JUnit5TestSessionListener (needs JUnit 4 TestCase),
+    // and BasePlatformTestCase fixture tests extend junit.framework.TestCase at compile time.
+    testImplementation("junit:junit:4.13.2")
+    // Runs the JUnit 3/4 style fixture tests (BasePlatformTestCase) next to the JUnit 5 tests.
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.11.4")
     testImplementation(libs.assertj.core)
 }
 
@@ -50,6 +53,7 @@ configurations.named("testRuntimeClasspath") {
             "org.junit.jupiter:junit-jupiter-api:5.11.4",
             "org.junit.jupiter:junit-jupiter-engine:5.11.4",
             "org.junit.jupiter:junit-jupiter-params:5.11.4",
+            "org.junit.vintage:junit-vintage-engine:5.11.4",
             "org.junit.platform:junit-platform-commons:1.11.4",
             "org.junit.platform:junit-platform-engine:1.11.4",
             "org.junit.platform:junit-platform-launcher:1.11.4",
