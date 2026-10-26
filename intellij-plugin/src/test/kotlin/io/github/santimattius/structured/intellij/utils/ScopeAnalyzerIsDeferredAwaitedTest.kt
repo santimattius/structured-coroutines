@@ -17,8 +17,8 @@ import org.jetbrains.kotlin.psi.KtCallExpression
  * PSI fixture tests for [ScopeAnalyzer.isDeferredAwaited], which backs the SCOPE_002
  * (`AsyncWithoutAwaitInspection`) inspection.
  *
- * Not covered yet: aliases wrapped in a cast, `!!`, `?:` or `if`, and `select { d.onAwait { } }`.
- * The compiler checker recognizes them (UNUSED_DEFERRED) but this PSI port does not.
+ * Covers the same wrapped aliases (`as`, `!!`, `?:`, `if`) and `select { d.onAwait { } }` clause
+ * that the compiler checker recognizes (UNUSED_DEFERRED).
  */
 class ScopeAnalyzerIsDeferredAwaitedTest : BasePlatformTestCase() {
 
@@ -203,6 +203,161 @@ class ScopeAnalyzerIsDeferredAwaitedTest : BasePlatformTestCase() {
             fun test(scope: CoroutineScope, xs: List<Int>) {
                 val defs = xs.map { scope.async { it } }
                 println(defs.size)
+            }
+            """,
+        )
+    }
+
+    fun `test treats await through an alias wrapped in a cast as awaited`() {
+        assertAwaited(
+            """
+            import kotlinx.coroutines.*
+
+            suspend fun test(scope: CoroutineScope, other: Deferred<Int>, flag: Boolean) {
+                val d = scope.async { 1 }
+                val e = d as Deferred<*>
+                e.await()
+            }
+            """,
+        )
+    }
+
+    fun `test treats await through an alias wrapped in a non-null assertion as awaited`() {
+        assertAwaited(
+            """
+            import kotlinx.coroutines.*
+
+            suspend fun test(scope: CoroutineScope, other: Deferred<Int>, flag: Boolean) {
+                val d = scope.async { 1 }
+                val e = d!!
+                e.await()
+            }
+            """,
+        )
+    }
+
+    fun `test treats await through an alias wrapped in an elvis as awaited`() {
+        assertAwaited(
+            """
+            import kotlinx.coroutines.*
+
+            suspend fun test(scope: CoroutineScope, other: Deferred<Int>, flag: Boolean) {
+                val d = scope.async { 1 }
+                val e = d ?: other
+                e.await()
+            }
+            """,
+        )
+    }
+
+    fun `test treats await through an alias wrapped in an if expression as awaited`() {
+        assertAwaited(
+            """
+            import kotlinx.coroutines.*
+
+            suspend fun test(scope: CoroutineScope, other: Deferred<Int>, flag: Boolean) {
+                val d = scope.async { 1 }
+                val e = if (flag) d else other
+                e.await()
+            }
+            """,
+        )
+    }
+
+    fun `test treats onAwait select clause as awaited`() {
+        assertAwaited(
+            """
+            import kotlinx.coroutines.*
+            import kotlinx.coroutines.selects.select
+
+            suspend fun test(scope: CoroutineScope) {
+                val d = scope.async { 1 }
+                select<Int> { d.onAwait { it } }
+            }
+            """,
+        )
+    }
+
+    fun `test treats onAwait on an alias as awaited`() {
+        assertAwaited(
+            """
+            import kotlinx.coroutines.*
+            import kotlinx.coroutines.selects.select
+
+            suspend fun test(scope: CoroutineScope) {
+                val d = scope.async { 1 }
+                val e = d as Deferred<Int>
+                select<Int> { e.onAwait { it } }
+            }
+            """,
+        )
+    }
+
+    fun `test reports a cast alias that is never awaited`() {
+        assertNotAwaited(
+            """
+            import kotlinx.coroutines.*
+
+            suspend fun test(scope: CoroutineScope, other: Deferred<Int>, flag: Boolean) {
+                val d = scope.async { 1 }
+                val e = d as Deferred<*>
+                println(e)
+            }
+            """,
+        )
+    }
+
+    fun `test reports a non-null alias that is never awaited`() {
+        assertNotAwaited(
+            """
+            import kotlinx.coroutines.*
+
+            suspend fun test(scope: CoroutineScope, other: Deferred<Int>, flag: Boolean) {
+                val d = scope.async { 1 }
+                val e = d!!
+                println(e)
+            }
+            """,
+        )
+    }
+
+    fun `test reports an elvis alias that is never awaited`() {
+        assertNotAwaited(
+            """
+            import kotlinx.coroutines.*
+
+            suspend fun test(scope: CoroutineScope, other: Deferred<Int>, flag: Boolean) {
+                val d = scope.async { 1 }
+                val e = d ?: other
+                println(e)
+            }
+            """,
+        )
+    }
+
+    fun `test reports an if alias that is never awaited`() {
+        assertNotAwaited(
+            """
+            import kotlinx.coroutines.*
+
+            suspend fun test(scope: CoroutineScope, other: Deferred<Int>, flag: Boolean) {
+                val d = scope.async { 1 }
+                val e = if (flag) d else other
+                println(e)
+            }
+            """,
+        )
+    }
+
+    fun `test reports async used only as an if condition operand`() {
+        assertNotAwaited(
+            """
+            import kotlinx.coroutines.*
+
+            suspend fun test(scope: CoroutineScope, other: Deferred<Int>) {
+                val d = scope.async { 1 }
+                val e = if (d.isCompleted) other else other
+                e.await()
             }
             """,
         )

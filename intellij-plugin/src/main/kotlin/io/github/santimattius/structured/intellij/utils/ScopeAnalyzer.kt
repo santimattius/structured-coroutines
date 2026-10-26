@@ -10,6 +10,7 @@
 package io.github.santimattius.structured.intellij.utils
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -234,6 +235,9 @@ object ScopeAnalyzer {
 
     private val AWAIT_CALLS = setOf("await", "awaitAll")
 
+    // `select { d.onAwait { } }` consumes the Deferred like an await.
+    private const val ON_AWAIT = "onAwait"
+
     // Climbs from the async call while its value keeps flowing outward (call chains, call arguments,
     // lambda results) and stops at the first await/awaitAll. Intermediate call names don't matter:
     // types guarantee that whatever reaches awaitAll() is a collection of Deferreds.
@@ -246,8 +250,16 @@ object ScopeAnalyzer {
                 parent is KtQualifiedExpression && parent.receiverExpression == current -> {
                     val selector = parent.selectorExpression as? KtCallExpression
                     if (selector?.calleeExpression?.text in AWAIT_CALLS) return true
+                    if (isOnAwaitSelector(parent.selectorExpression)) return true
                     parent
                 }
+                // Wrappers that keep the Deferred as the value: `d as Deferred<*>`, `d!!`, `d ?: other`.
+                parent is KtBinaryExpressionWithTypeRHS && parent.left == current -> parent
+                parent is KtPostfixExpression && parent.baseExpression == current &&
+                    parent.operationToken == KtTokens.EXCLEXCL -> parent
+                parent is KtBinaryExpression && parent.operationToken == KtTokens.ELVIS -> parent
+                // `if (c) d else other`: only the branches carry the value, never the condition.
+                parent is KtContainerNodeForControlStructureBody && parent.parent is KtIfExpression -> parent.parent as KtIfExpression
                 parent is KtParenthesizedExpression -> parent
                 parent is KtValueArgument -> {
                     val call = parent.getParentOfType<KtCallExpression>(strict = true) ?: return false
@@ -269,6 +281,12 @@ object ScopeAnalyzer {
         return scope.collectDescendantsOfType<KtNameReferenceExpression> {
             it.getReferencedName() == name && it.textOffset > property.textOffset
         }.any { flowsToAwait(it) }
+    }
+
+    private fun isOnAwaitSelector(selector: KtExpression?): Boolean = when (selector) {
+        is KtCallExpression -> selector.calleeExpression?.text == ON_AWAIT
+        is KtNameReferenceExpression -> selector.getReferencedName() == ON_AWAIT
+        else -> false
     }
 
     private fun lambdaOwnerCall(lambdaBody: KtBlockExpression): KtCallExpression? {
