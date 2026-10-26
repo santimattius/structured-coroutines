@@ -302,6 +302,33 @@ fun loadsUser() = runTest {
 val provider = TestDispatcherProvider(scheduler = testScheduler, unconfined = true)
 ```
 
+`RecordingSink` is a `TraceSink` that records every emitted event in order (thread-safe), for
+asserting on tracing. It has `events`, `eventsOf<T>()` and `clear()`; `maxLevel` controls what
+`isEnabled` reports (default: every level, `null`: none) to exercise the disabled fast path. It
+records whatever it is handed; filtering by level is the caller's job.
+
+```kotlin
+val sink = RecordingSink()
+val dispatchers = testDispatcherProvider().traced(sink)
+// ... run work on dispatchers ...
+assertEquals(1, sink.eventsOf<TraceEvent.Finished>().size)
+```
+
+`TraceSinkContract` is a reusable check for any `TraceSink`, built-in or third-party: `emit` never
+throws (every event type, absent optional fields), tolerates concurrent callers, and `isEnabled`
+answers for every level and stays stable. It carries no test-framework annotations, so it works on
+every target and framework:
+
+```kotlin
+class MyBackendSinkTest : TraceSinkContract() {
+    override fun createSink(): TraceSink = MyBackendSink()
+    // override fun flush(sink: TraceSink) { ... }  // for sinks that process asynchronously
+
+    @Test
+    fun honoursTheSinkContract() = checkAll()
+}
+```
+
 Supports DISPATCH_005 and TEST_005. See [`runtime-test/README.md`](../runtime-test/README.md).
 
 ## Platform support

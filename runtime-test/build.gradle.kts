@@ -69,6 +69,7 @@ kotlin {
                 // kotlinx-coroutines-test API (TestScope, TestCoroutineScheduler, ...).
                 api(project(":runtime"))
                 api(libs.kotlinx.coroutines.test)
+                implementation(libs.kotlin.test) // TraceSinkContract assertions
             }
         }
         commonTest {
