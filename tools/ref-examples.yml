@@ -287,8 +287,10 @@ INTEROP_004:
 
 KMP_001:
   why: |
-    `Dispatchers.IO` does not exist on Kotlin/Native or JS. Shared KMP code must inject
-    dispatchers or use `expect`/`actual` per platform.
+    `Dispatchers.IO` is not part of the common API (it is declared for JVM and Native only; on
+    Native it needs `import kotlinx.coroutines.IO`), so it cannot be used from `commonMain`; JS and
+    Wasm have no IO dispatcher. Shared KMP code must inject dispatchers or use `expect`/`actual`
+    per platform.
   quick_fix:
     erroneous: "`withContext(Dispatchers.IO)` in commonMain"
     optimized: "inject `CoroutineDispatcher` or `expect`/`actual` ioDispatcher"

@@ -276,7 +276,7 @@ object CoroutineDetektUtils {
     }
 
     /**
-     * Kotlin Multiplatform: source roots where [Dispatchers.IO] is unsupported on Kotlin/Native/JS.
+     * Kotlin Multiplatform: source roots where [Dispatchers.IO] is not part of the common API.
      */
     fun isKotlinCommonLikeSourceVirtualPath(virtualFilePath: String): Boolean {
         val normalized = virtualFilePath.replace('\\', '/')

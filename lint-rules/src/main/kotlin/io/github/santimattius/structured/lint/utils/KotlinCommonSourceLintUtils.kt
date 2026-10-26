@@ -9,7 +9,7 @@ package io.github.santimattius.structured.lint.utils
 
 /**
  * Mirrors Detekt [`CoroutineDetektUtils.isKotlinCommonLikeSourceVirtualPath`]: KMP folders where
- * [kotlinx.coroutines.Dispatchers.IO] is unsupported on Kotlin/Native/JS.
+ * [kotlinx.coroutines.Dispatchers.IO] is not part of the common API.
  */
 object KotlinCommonSourceLintUtils {
 

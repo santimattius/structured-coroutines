@@ -20,7 +20,7 @@ that agents either introduce themselves or fail to catch in review:
   "unrelated feature stopped working" bugs.
 - **Hardcoded or wrong `Dispatchers`** — untestable code (no dispatcher injection) or dispatcher
   misuse across platforms, e.g. `Dispatchers.IO` referenced from Kotlin Multiplatform `commonMain`
-  where it does not exist on Native/JS targets.
+  where it is not part of the common API (JVM and Native only; JS and Wasm have none).
 - **Unhandled `withTimeout` cancellation** — `TimeoutCancellationException` is a
   `CancellationException` subclass; left uncaught it cancels the parent scope, not just the timed
   operation, silently killing sibling coroutines.

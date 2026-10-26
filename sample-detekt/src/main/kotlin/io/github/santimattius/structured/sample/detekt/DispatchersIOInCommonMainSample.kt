@@ -11,12 +11,12 @@ import kotlinx.coroutines.withContext
  * NOTE: This rule applies to files under commonMain source sets in KMP modules.
  * This sample is placed under the JVM main source set because sample-detekt uses the
  * kotlin.jvm plugin. In a real KMP project, the violation occurs in commonMain where
- * Dispatchers.IO does not exist on iOS/JS targets, causing IllegalStateException at runtime.
+ * Dispatchers.IO is not part of the common API (JVM and Native only), so it fails to compile in commonMain.
  *
- * BAD: Dispatchers.IO crashes on iOS and JS (commonMain code)
+ * BAD: Dispatchers.IO is unresolved in commonMain
  */
 
-// BAD: Dispatchers.IO — would crash on iOS and JS if this were commonMain
+// BAD: Dispatchers.IO — would not compile if this were commonMain
 suspend fun badFetchDataKmp(): String = withContext(Dispatchers.IO) {
     "data"
 }
