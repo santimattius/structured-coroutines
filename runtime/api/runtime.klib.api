@@ -437,6 +437,23 @@ final class io.github.santimattius.structured.runtime/ThreadInfo { // io.github.
     final fun toString(): kotlin/String // io.github.santimattius.structured.runtime/ThreadInfo.toString|toString(){}[0]
 }
 
+final class io.github.santimattius.structured.runtime/TraceCapabilities { // io.github.santimattius.structured.runtime/TraceCapabilities|null[0]
+    constructor <init>(kotlin/Boolean, kotlin/Boolean, kotlin/Boolean, kotlin/Boolean) // io.github.santimattius.structured.runtime/TraceCapabilities.<init>|<init>(kotlin.Boolean;kotlin.Boolean;kotlin.Boolean;kotlin.Boolean){}[0]
+
+    final val counters // io.github.santimattius.structured.runtime/TraceCapabilities.counters|{}counters[0]
+        final fun <get-counters>(): kotlin/Boolean // io.github.santimattius.structured.runtime/TraceCapabilities.counters.<get-counters>|<get-counters>(){}[0]
+    final val flows // io.github.santimattius.structured.runtime/TraceCapabilities.flows|{}flows[0]
+        final fun <get-flows>(): kotlin/Boolean // io.github.santimattius.structured.runtime/TraceCapabilities.flows.<get-flows>|<get-flows>(){}[0]
+    final val systemTraceIntegration // io.github.santimattius.structured.runtime/TraceCapabilities.systemTraceIntegration|{}systemTraceIntegration[0]
+        final fun <get-systemTraceIntegration>(): kotlin/Boolean // io.github.santimattius.structured.runtime/TraceCapabilities.systemTraceIntegration.<get-systemTraceIntegration>|<get-systemTraceIntegration>(){}[0]
+    final val threadIdentity // io.github.santimattius.structured.runtime/TraceCapabilities.threadIdentity|{}threadIdentity[0]
+        final fun <get-threadIdentity>(): kotlin/Boolean // io.github.santimattius.structured.runtime/TraceCapabilities.threadIdentity.<get-threadIdentity>|<get-threadIdentity>(){}[0]
+
+    final fun equals(kotlin/Any?): kotlin/Boolean // io.github.santimattius.structured.runtime/TraceCapabilities.equals|equals(kotlin.Any?){}[0]
+    final fun hashCode(): kotlin/Int // io.github.santimattius.structured.runtime/TraceCapabilities.hashCode|hashCode(){}[0]
+    final fun toString(): kotlin/String // io.github.santimattius.structured.runtime/TraceCapabilities.toString|toString(){}[0]
+}
+
 final class io.github.santimattius.structured.runtime/TraceSpan : kotlin.coroutines/AbstractCoroutineContextElement { // io.github.santimattius.structured.runtime/TraceSpan|null[0]
     final val id // io.github.santimattius.structured.runtime/TraceSpan.id|{}id[0]
         final fun <get-id>(): kotlin/Long // io.github.santimattius.structured.runtime/TraceSpan.id.<get-id>|<get-id>(){}[0]
@@ -488,6 +505,8 @@ final object io.github.santimattius.structured.runtime/DefaultDispatcherProvider
 
 final val io.github.santimattius.structured.runtime/ioCompat // io.github.santimattius.structured.runtime/ioCompat|@kotlinx.coroutines.Dispatchers{}ioCompat[0]
     final fun (kotlinx.coroutines/Dispatchers).<get-ioCompat>(): kotlinx.coroutines/CoroutineDispatcher // io.github.santimattius.structured.runtime/ioCompat.<get-ioCompat>|<get-ioCompat>@kotlinx.coroutines.Dispatchers(){}[0]
+final val io.github.santimattius.structured.runtime/platformCapabilities // io.github.santimattius.structured.runtime/platformCapabilities|{}platformCapabilities[0]
+    final fun <get-platformCapabilities>(): io.github.santimattius.structured.runtime/TraceCapabilities // io.github.santimattius.structured.runtime/platformCapabilities.<get-platformCapabilities>|<get-platformCapabilities>(){}[0]
 
 final fun (io.github.santimattius.structured.runtime/DispatcherMetrics).io.github.santimattius.structured.runtime/signals(io.github.santimattius.structured.runtime/SignalThresholds = ...): kotlin.collections/List<io.github.santimattius.structured.runtime/PoolSignal> // io.github.santimattius.structured.runtime/signals|signals@io.github.santimattius.structured.runtime.DispatcherMetrics(io.github.santimattius.structured.runtime.SignalThresholds){}[0]
 final fun (io.github.santimattius.structured.runtime/DispatcherProvider).io.github.santimattius.structured.runtime/instrumented(): io.github.santimattius.structured.runtime/InstrumentedDispatcherProvider // io.github.santimattius.structured.runtime/instrumented|instrumented@io.github.santimattius.structured.runtime.DispatcherProvider(){}[0]
@@ -500,6 +519,7 @@ final fun <#A: kotlin/Any?> (kotlinx.coroutines.flow/Flow<#A>).io.github.santima
 final fun <#A: kotlin/Any?> (kotlinx.coroutines.flow/Flow<#A>).io.github.santimattius.structured.runtime/warmIn(kotlinx.coroutines/CoroutineScope): kotlinx.coroutines.flow/Flow<#A> // io.github.santimattius.structured.runtime/warmIn|warmIn@kotlinx.coroutines.flow.Flow<0:0>(kotlinx.coroutines.CoroutineScope){0§<kotlin.Any?>}[0]
 final fun <#A: kotlin/Any?> io.github.santimattius.structured.runtime/safeCallbackFlow(kotlin/Function1<kotlinx.coroutines.channels/SendChannel<#A>, kotlinx.coroutines/DisposableHandle>): kotlinx.coroutines.flow/Flow<#A> // io.github.santimattius.structured.runtime/safeCallbackFlow|safeCallbackFlow(kotlin.Function1<kotlinx.coroutines.channels.SendChannel<0:0>,kotlinx.coroutines.DisposableHandle>){0§<kotlin.Any?>}[0]
 final fun io.github.santimattius.structured.runtime/CompositeSink(kotlin/Array<out io.github.santimattius.structured.runtime/TraceSink>...): io.github.santimattius.structured.runtime/CompositeSink // io.github.santimattius.structured.runtime/CompositeSink|CompositeSink(kotlin.Array<out|io.github.santimattius.structured.runtime.TraceSink>...){}[0]
+final fun io.github.santimattius.structured.runtime/platformTraceSink(): io.github.santimattius.structured.runtime/TraceSink? // io.github.santimattius.structured.runtime/platformTraceSink|platformTraceSink(){}[0]
 final inline fun <#A: kotlin/Any?, #B: kotlin/Any?> (#A).io.github.santimattius.structured.runtime/runCatchingCancellable(kotlin/Function1<#A, #B>): kotlin/Result<#B> // io.github.santimattius.structured.runtime/runCatchingCancellable|runCatchingCancellable@0:0(kotlin.Function1<0:0,0:1>){0§<kotlin.Any?>;1§<kotlin.Any?>}[0]
 final inline fun <#A: kotlin/Any?> io.github.santimattius.structured.runtime/runCatchingCancellable(kotlin/Function0<#A>): kotlin/Result<#A> // io.github.santimattius.structured.runtime/runCatchingCancellable|runCatchingCancellable(kotlin.Function0<0:0>){0§<kotlin.Any?>}[0]
 final suspend fun <#A: kotlin/Any?> (kotlin.collections/Iterable<kotlin.coroutines/SuspendFunction0<#A>>).io.github.santimattius.structured.runtime/parallel(kotlin/Int = ...): kotlin.collections/List<#A> // io.github.santimattius.structured.runtime/parallel|parallel@kotlin.collections.Iterable<kotlin.coroutines.SuspendFunction0<0:0>>(kotlin.Int){0§<kotlin.Any?>}[0]

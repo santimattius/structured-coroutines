@@ -27,6 +27,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 - **`:runtime-benchmark` module** (not published) — opt-in JVM harness, `./gradlew :runtime-benchmark:tracingBenchmark`, measuring the per-dispatch overhead of `TracingDispatcher` (disabled, no-op sink, `StatsSink`, `RingBufferSink`) against an unwrapped dispatcher. Not part of `build`/`check`/CI and asserts nothing; indicative numbers are in [runtime/README.md](runtime/README.md#overhead).
 
+- **`:runtime` platform capabilities** — the extension seam for new targets: `TraceCapabilities` (`threadIdentity`, `systemTraceIntegration`, `counters`, `flows`), `expect val platformCapabilities` and `expect fun platformTraceSink(): TraceSink?`, with an `actual` on every target. Only Android returns a sink (`AndroidTraceSink`); the rest report none and degrade instead of failing. Additive, experimental. See [runtime/README.md](runtime/README.md#writing-a-platform-backend).
+
 ### Changed
 
 - **Building the toolkit now requires Gradle 9.7.1 and AGP 9.4.1** (wrapper bumped from `9.0-milestone-1`; AGP is a build-time dependency of `:runtime` only), plus the Android SDK (platform 36, build-tools 36.0.0) available via `ANDROID_HOME` or `sdk.dir` in `local.properties`. CI installs the Android SDK with `android-actions/setup-android`. Consumers are unaffected.
