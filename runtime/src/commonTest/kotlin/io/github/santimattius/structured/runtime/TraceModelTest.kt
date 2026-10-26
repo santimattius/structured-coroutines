@@ -44,7 +44,10 @@ class TraceModelTest {
         assertEquals(q.hashCode(), TraceEvent.Queued("io", 10L, "job").hashCode())
         assertNotEquals(q, TraceEvent.Queued("io", 11L, "job"))
         assertNotEquals(q, TraceEvent.Queued("io", 10L, null))
-        assertEquals("Queued(dispatcher=io, timestampNanos=10, coroutineName=job)", q.toString())
+        assertNotEquals(q, TraceEvent.Queued("io", 10L, "job", spanId = 1L))
+        assertNotEquals(q, TraceEvent.Queued("io", 10L, "job", parentSpanId = 1L))
+        assertEquals("Queued(dispatcher=io, timestampNanos=10, coroutineName=job, " +
+            "spanId=null, parentSpanId=null)", q.toString())
         assertEquals(TraceLevel.Dispatch, q.level)
     }
 
@@ -58,7 +61,7 @@ class TraceModelTest {
         assertNotEquals(s, TraceEvent.Started("io", 20L, 5L, "job", null))
         assertEquals(
             "Started(dispatcher=io, timestampNanos=20, queueDelayNanos=5, coroutineName=job, " +
-                "thread=ThreadInfo(id=7, name=w-1))",
+                "thread=ThreadInfo(id=7, name=w-1), spanId=null, parentSpanId=null)",
             s.toString(),
         )
         assertEquals(TraceLevel.Dispatch, s.level)
@@ -70,11 +73,14 @@ class TraceModelTest {
         assertEquals(f, TraceEvent.Finished("io", 30L, 9L, TraceOutcome.Completed, null, null))
         assertEquals(f.hashCode(), TraceEvent.Finished("io", 30L, 9L, TraceOutcome.Completed, null, null).hashCode())
         assertNotEquals(f, TraceEvent.Finished("io", 30L, 9L, TraceOutcome.Threw(RuntimeException()), null, null))
+        assertNotEquals(f, TraceEvent.Finished("io", 30L, 9L, TraceOutcome.Completed, null, null, 2L, 1L))
         assertNull(f.coroutineName)
         assertNull(f.thread)
+        assertNull(f.spanId)
+        assertNull(f.parentSpanId)
         assertEquals(
             "Finished(dispatcher=io, timestampNanos=30, runTimeNanos=9, outcome=Completed, " +
-                "coroutineName=null, thread=null)",
+                "coroutineName=null, thread=null, spanId=null, parentSpanId=null)",
             f.toString(),
         )
         assertEquals(TraceLevel.Dispatch, f.level)

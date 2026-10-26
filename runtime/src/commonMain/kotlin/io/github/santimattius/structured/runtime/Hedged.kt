@@ -33,6 +33,9 @@ private sealed interface HedgeEvent<out T> {
  * - A [CancellationException] thrown by an attempt while the caller is still active counts as
  *   an ordinary failure. Cancelling the caller cancels all attempts and propagates.
  *
+ * When the caller's context has a [TraceSpan], the attempts run in one child span named "hedged";
+ * otherwise nothing changes.
+ *
  * All attempts run in a child `coroutineScope`, so none outlives this call.
  *
  * Example:
@@ -54,6 +57,7 @@ public suspend fun <T> hedged(
 ): T {
     require(maxAttempts > 0) { "maxAttempts must be > 0 but was $maxAttempts" }
     require(!delay.isNegative()) { "delay must not be negative but was $delay" }
+    val span = childSpanContext("hedged")
     return coroutineScope {
         val events = Channel<HedgeEvent<T>>(Channel.UNLIMITED)
         var launched = 0
@@ -62,7 +66,7 @@ public suspend fun <T> hedged(
 
         fun startAttempt() {
             val index = launched++
-            launch {
+            launch(span) {
                 val result = try {
                     Result.success(block(index))
                 } catch (e: CancellationException) {
@@ -77,7 +81,7 @@ public suspend fun <T> hedged(
             timer?.cancel()
             if (launched < maxAttempts) {
                 val current = ++generation
-                timer = launch {
+                timer = launch(span) {
                     delay(delay)
                     events.send(HedgeEvent.Tick(current))
                 }

@@ -20,6 +20,9 @@ import kotlinx.coroutines.flow.flow
  * task failure cancels the remaining tasks and is rethrown to the collector; completing or
  * cancelling the collection early cancels pending tasks.
  *
+ * When the collector's context has a [TraceSpan], the tasks run in one child span named
+ * "concurrentOrdered"; otherwise nothing changes.
+ *
  * Example:
  * ```
  * listOf({ search() }, { loadImage() }, { loadFiles() })
@@ -34,8 +37,9 @@ import kotlinx.coroutines.flow.flow
 public fun <T> Iterable<suspend () -> T>.concurrentOrdered(): Flow<T> {
     val tasks = toList()
     return flow {
+        val span = childSpanContext("concurrentOrdered")
         coroutineScope {
-            val deferred = tasks.map { task -> async { task() } }
+            val deferred = tasks.map { task -> async(span) { task() } }
             for (d in deferred) emit(d.await())
         }
     }

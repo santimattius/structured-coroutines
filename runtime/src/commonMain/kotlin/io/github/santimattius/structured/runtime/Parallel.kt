@@ -19,6 +19,9 @@ import kotlin.coroutines.cancellation.CancellationException
  * [concurrency] limits how many tasks run at once (default: unlimited); it must be greater
  * than zero.
  *
+ * When the caller's context has a [TraceSpan], the tasks run in one child span named "parallel";
+ * otherwise nothing changes.
+ *
  * Example:
  * ```
  * val (first, second) = listOf<suspend () -> Item>({ repo.a() }, { repo.b() }).parallel()
@@ -34,8 +37,9 @@ public suspend fun <T> Iterable<suspend () -> T>.parallel(
 ): List<T> {
     require(concurrency > 0) { "concurrency must be > 0 but was $concurrency" }
     val permits = Semaphore(concurrency)
+    val span = childSpanContext("parallel")
     return coroutineScope {
-        map { task -> async { permits.withPermit { task() } } }.awaitAll()
+        map { task -> async(span) { permits.withPermit { task() } } }.awaitAll()
     }
 }
 
@@ -49,6 +53,9 @@ public suspend fun <T> Iterable<suspend () -> T>.parallel(
  *
  * [concurrency] limits how many tasks run at once (default: unlimited); it must be greater
  * than zero.
+ *
+ * When the caller's context has a [TraceSpan], the tasks run in one child span named
+ * "supervisedAll"; otherwise nothing changes.
  *
  * Example:
  * ```
@@ -65,9 +72,10 @@ public suspend fun <T> Iterable<suspend () -> T>.supervisedAll(
 ): List<Result<T>> {
     require(concurrency > 0) { "concurrency must be > 0 but was $concurrency" }
     val permits = Semaphore(concurrency)
+    val span = childSpanContext("supervisedAll")
     return supervisorScope {
         map { task ->
-            async {
+            async(span) {
                 try {
                     Result.success(permits.withPermit { task() })
                 } catch (e: CancellationException) {

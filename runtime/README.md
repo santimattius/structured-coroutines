@@ -225,6 +225,18 @@ can differ if the scheduler is configured otherwise or for `limitedParallelism` 
 IO share one thread pool with independent permits, so this is a per-dispatcher limit, not a
 thread count.
 
+Spans link events to the work that caused them. `withTraceSpan(name) { }` opens a `TraceSpan`
+in the coroutine context (a plain element, inherited by children); `TracingDispatcher` attaches its
+`spanId` and `parentSpanId` to `Queued`, `Started` and `Finished`. Without a span they are `null`.
+`hedged`, `parallel`, `supervisedAll` and `concurrentOrdered` open a child span only when the
+caller's context already has one, so code that does not use spans is unchanged.
+
+```kotlin
+withTraceSpan("checkout") {
+    listOf<suspend () -> Item>({ repo.a() }, { repo.b() }).parallel() // runs in child span "parallel"
+}
+```
+
 Limits:
 - Only dispatched segments are visible (not `Dispatchers.Unconfined`, `UNDISPATCHED` first
   segments or same-dispatcher `withContext`); see `TracingDispatcher`.

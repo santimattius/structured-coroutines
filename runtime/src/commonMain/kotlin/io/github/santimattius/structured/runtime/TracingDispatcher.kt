@@ -22,6 +22,10 @@ import kotlin.time.TimeSource
  * [TraceLevel.Coroutine]. Every `sink.emit` is guarded: a faulty sink can never break dispatch or
  * change the outcome of the block.
  *
+ * When the dispatch context carries a [TraceSpan], its id and parent id are attached to the three
+ * events; without one they are null. Reading it costs one context lookup, only when the sink is
+ * enabled.
+ *
  * Timestamps are nanoseconds on a monotonic base: the elapsed time since this dispatcher was
  * created. Only differences between timestamps are meaningful.
  *
@@ -86,12 +90,15 @@ public class TracingDispatcher internal constructor(
         }
         val detailed = enabled(TraceLevel.Coroutine)
         val name = if (detailed) context[CoroutineName]?.name else null
+        val span = context[TraceSpan]
+        val spanId = span?.id
+        val parentSpanId = span?.parentId
         val queuedAt = nowNanos()
-        safeEmit(TraceEvent.Queued(label, queuedAt, name))
+        safeEmit(TraceEvent.Queued(label, queuedAt, name, spanId, parentSpanId))
         delegate.dispatch(context, Runnable {
             val startedAt = nowNanos()
             val thread = if (detailed) currentThreadInfo() else null
-            safeEmit(TraceEvent.Started(label, startedAt, startedAt - queuedAt, name, thread))
+            safeEmit(TraceEvent.Started(label, startedAt, startedAt - queuedAt, name, thread, spanId, parentSpanId))
             var outcome: TraceOutcome = TraceOutcome.Completed
             try {
                 block.run()
@@ -100,7 +107,7 @@ public class TracingDispatcher internal constructor(
                 throw t
             } finally {
                 val finishedAt = nowNanos()
-                safeEmit(TraceEvent.Finished(label, finishedAt, finishedAt - startedAt, outcome, name, thread))
+                safeEmit(TraceEvent.Finished(label, finishedAt, finishedAt - startedAt, outcome, name, thread, spanId, parentSpanId))
             }
         })
     }
