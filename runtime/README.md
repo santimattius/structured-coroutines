@@ -249,6 +249,31 @@ Limits:
 Status: experimental. The tracing API may change, and `AndroidTraceSink` has not been validated on
 a device yet.
 
+#### Overhead
+
+Indicative cost `TracingDispatcher.dispatch` adds per call on the JVM, measured with an
+inline delegate (no thread hop, no queueing) so only the wrapper is timed. Apple M5 Pro (18 cores),
+macOS aarch64, Temurin 17.0.10, `-Xms1g -Xmx1g -XX:+UseSerialGC`, 5 warm-up + 10 measured rounds of
+2,000,000 dispatches, single thread, three separate runs:
+
+| Variant | ns/op (median of runs) | bytes/op |
+|---|---|---|
+| Unwrapped dispatcher (baseline) | 1.6 | 0 |
+| Tracing disabled (`TraceSink.None`) | 2.7-2.8 | 0 |
+| No-op sink, `Dispatch` level | 47-48 | 144 |
+| No-op sink, `Coroutine` level | 51-52 | 168 |
+| `StatsSink`, `Dispatch` / `Coroutine` | 52-53 / 57-58 | 144 / 168 |
+| `RingBufferSink(1024)`, `Dispatch` / `Coroutine` | 61-62 / 63 | 216 / 240 |
+
+Disabled costs about 1 ns over the baseline (one `isEnabled` call) and allocates nothing; the
+block is forwarded untouched. Enabled, each dispatch allocates the wrapper `Runnable` plus the
+three events (more for `RingBufferSink`, which also allocates an entry per event) and costs
+roughly 45-60 ns. The spread inside a run was about 1-2 ns, and between runs under 2 ns. These
+numbers are indicative and machine-dependent: they exclude contention, real thread hops and
+sink I/O, and the baseline includes a volatile counter write from the benchmark task. Not a gate:
+no test asserts on them. Reproduce with `./gradlew :runtime-benchmark:tracingBenchmark` (opt-in,
+not part of `build` or `check`; tune with `-PbenchRounds`, `-PbenchOps`, `-PbenchWarmup`).
+
 On the JVM and desktop, the separate `:runtime-tracing-jvm` artifact provides `PerfettoTraceSink`,
 which writes the same slices and counters through `androidx.tracing` into a `.perfetto-trace` file
 you can open in [ui.perfetto.dev](https://ui.perfetto.dev). It is a separate artifact so `:runtime`
