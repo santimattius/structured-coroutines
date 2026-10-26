@@ -13,8 +13,8 @@ import org.junit.jupiter.api.Test
 /**
  * Metadata tests for [MisplacedTryCatchInScopeInspection] (EXCEPT_004).
  *
- * These tests do not exercise the PSI visitor: this module has no PSI fixture test
- * infrastructure (no BasePlatformTestCase/CodeInsightTestFixture usage).
+ * These tests do not exercise the PSI visitor; behavioural cases live in
+ * [MisplacedTryCatchInScopeInspectionFixtureTest].
  *
  * TDD Evidence: RED — written before the implementation exists (unresolved reference).
  */
