@@ -17,6 +17,8 @@ import kotlin.jvm.JvmOverloads
  * ```
  * val enabled = TraceLevel.Dispatch <= TraceLevel.Coroutine // true
  * ```
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
  */
 @ExperimentalStructuredCoroutines
 public enum class TraceLevel {
@@ -38,6 +40,9 @@ public enum class TraceLevel {
  * ```
  * val thread = ThreadInfo(id = 42L, name = "DefaultDispatcher-worker-1")
  * ```
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines]. Only populated on targets with threads
+ * (JVM and Android); see [platformCapabilities].
  *
  * @property id platform thread id.
  * @property name platform thread name.
@@ -65,6 +70,8 @@ public class ThreadInfo(
  *     is TraceOutcome.Threw -> report(finished.outcome.error)
  * }
  * ```
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
  */
 @ExperimentalStructuredCoroutines
 public sealed interface TraceOutcome {
@@ -73,7 +80,11 @@ public sealed interface TraceOutcome {
         override fun toString(): String = "Completed"
     }
 
-    /** The block ended by throwing [error] (including cancellation). */
+    /**
+     * The block ended by throwing [error] (including cancellation).
+     *
+     * @property error the throwable that ended the block.
+     */
     public class Threw(public val error: Throwable) : TraceOutcome {
         override fun equals(other: Any?): Boolean =
             this === other || (other is Threw && error == other.error)
@@ -99,6 +110,10 @@ public sealed interface TraceOutcome {
  *     if (event is TraceEvent.Finished) println("${event.dispatcher} ran ${event.runTimeNanos}ns")
  * }
  * ```
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
+ * @see TraceSink
  */
 @ExperimentalStructuredCoroutines
 public sealed interface TraceEvent {
@@ -114,6 +129,10 @@ public sealed interface TraceEvent {
     /**
      * A block was handed to the dispatcher. [spanId] and [parentSpanId] come from the [TraceSpan] in
      * the dispatch context and are null when there is none (same on [Started] and [Finished]).
+     *
+     * @property coroutineName name from the `CoroutineName` element; null unless [TraceLevel.Coroutine] is enabled.
+     * @property spanId id of the enclosing [TraceSpan], or null.
+     * @property parentSpanId id of that span's parent, or null.
      */
     public class Queued @JvmOverloads constructor(
         override val dispatcher: String,
@@ -143,7 +162,15 @@ public sealed interface TraceEvent {
                 "spanId=$spanId, parentSpanId=$parentSpanId)"
     }
 
-    /** A block began running after waiting [queueDelayNanos] in the queue. */
+    /**
+     * A block began running after waiting [queueDelayNanos] in the queue.
+     *
+     * @property queueDelayNanos time between dispatch and start, in nanoseconds.
+     * @property coroutineName see [Queued.coroutineName].
+     * @property thread thread that runs the block; null unless [TraceLevel.Coroutine] is enabled and the platform has threads.
+     * @property spanId see [Queued.spanId].
+     * @property parentSpanId see [Queued.parentSpanId].
+     */
     public class Started @JvmOverloads constructor(
         override val dispatcher: String,
         override val timestampNanos: Long,
@@ -178,7 +205,16 @@ public sealed interface TraceEvent {
                 "spanId=$spanId, parentSpanId=$parentSpanId)"
     }
 
-    /** A block finished after running for [runTimeNanos], with the given [outcome]. */
+    /**
+     * A block finished after running for [runTimeNanos], with the given [outcome].
+     *
+     * @property runTimeNanos time the block ran, in nanoseconds.
+     * @property outcome how the block ended.
+     * @property coroutineName see [Queued.coroutineName].
+     * @property thread see [Started.thread].
+     * @property spanId see [Queued.spanId].
+     * @property parentSpanId see [Queued.parentSpanId].
+     */
     public class Finished @JvmOverloads constructor(
         override val dispatcher: String,
         override val timestampNanos: Long,
@@ -238,6 +274,14 @@ public sealed interface TraceEvent {
      *     if (event is TraceEvent.PoolSample) println("${event.dispatcher}: pending=${event.pending}")
      * }
      * ```
+     *
+     * @property queued cumulative number of queued events.
+     * @property started cumulative number of started events.
+     * @property finished cumulative number of finished events.
+     * @property pending queued and not yet started segments.
+     * @property running segments currently running.
+     * @property peakRunning highest concurrency observed so far.
+     * @property parallelism configured or inferred concurrency limit, or null when unknown.
      */
     public class PoolSample(
         override val dispatcher: String,

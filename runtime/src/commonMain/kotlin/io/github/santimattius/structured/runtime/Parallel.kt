@@ -30,6 +30,17 @@ import kotlin.coroutines.cancellation.CancellationException
  * Rules: CONCUR_003 (launch all `async` jobs before awaiting), SCOPE_004 (first failure
  * cancels the rest in `coroutineScope`).
  * See `docs/BEST_PRACTICES_COROUTINES.md`.
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
+ * @receiver the task factories to run.
+ * @param concurrency maximum number of tasks running at once; must be greater than zero.
+ * @return one result per task, in input order. An empty receiver yields an empty list.
+ * @throws IllegalArgumentException if [concurrency] is not positive.
+ * @throws Throwable the first task failure, after the remaining tasks were cancelled.
+ * @throws CancellationException if the caller is cancelled.
+ * @see supervisedAll
+ * @see concurrentOrdered
  */
 @ExperimentalStructuredCoroutines
 public suspend fun <T> Iterable<suspend () -> T>.parallel(
@@ -65,6 +76,15 @@ public suspend fun <T> Iterable<suspend () -> T>.parallel(
  *
  * Rules: SCOPE_004 (use `supervisorScope` for independent failure semantics), CONCUR_003.
  * See `docs/BEST_PRACTICES_COROUTINES.md`.
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
+ * @receiver the task factories to run.
+ * @param concurrency maximum number of tasks running at once; must be greater than zero.
+ * @return one [Result] per task, in input order. An empty receiver yields an empty list.
+ * @throws IllegalArgumentException if [concurrency] is not positive.
+ * @throws CancellationException if the caller is cancelled.
+ * @see parallel
  */
 @ExperimentalStructuredCoroutines
 public suspend fun <T> Iterable<suspend () -> T>.supervisedAll(

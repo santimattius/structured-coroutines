@@ -23,8 +23,14 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
  * ring.snapshot().forEach(::println)
  * ```
  *
+ * Once more than [capacity] events were emitted, the oldest ones are overwritten.
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
  * @param capacity maximum number of retained events; must be positive.
  * @param maxLevel highest [TraceLevel] this sink accepts.
+ * @throws IllegalArgumentException if [capacity] is not positive.
+ * @see StatsSink
  */
 @OptIn(ExperimentalAtomicApi::class)
 @ExperimentalStructuredCoroutines
@@ -58,7 +64,10 @@ public class RingBufferSink(
         }
     }
 
-    /** Returns the retained events, oldest first. */
+    /**
+     * Returns a copy of the retained events, oldest first (at most [capacity] elements). The list
+     * is not updated by later events.
+     */
     public fun snapshot(): List<TraceEvent> {
         val cleared = floor.load()
         val entries = ArrayList<Entry>(capacity)

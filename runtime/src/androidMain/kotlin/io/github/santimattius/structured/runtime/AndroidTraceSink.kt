@@ -44,12 +44,20 @@ internal object AndroidSystemTrace : SystemTraceApi {
  *
  * Experimental, diagnostic and opt-in. Not verified here on a device.
  *
+ * Platform availability: Android target only (`android.os.Trace`). It is the Android-specific
+ * `actual` behind [platformTraceSink]; on the JVM use the `:runtime-tracing-jvm` artifact instead.
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
  * Example:
  * ```
  * val provider = DefaultDispatcherProvider.traced(AndroidTraceSink())
  * ```
  *
+ * @constructor Creates a sink that writes to `android.os.Trace`.
  * @param maxLevel highest [TraceLevel] this sink accepts.
+ * @see platformTraceSink
+ * @see TracingDispatcher
  */
 @ExperimentalStructuredCoroutines
 public class AndroidTraceSink(

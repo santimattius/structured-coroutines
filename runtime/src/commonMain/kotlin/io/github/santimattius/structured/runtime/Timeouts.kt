@@ -29,6 +29,16 @@ import kotlin.time.Duration
  * Rules: CANCEL_006 (handle `TimeoutCancellationException` so it does not cancel the scope),
  * CANCEL_007 (clean up resources in `finally`/`NonCancellable` on the timeout path).
  * See `docs/BEST_PRACTICES_COROUTINES.md`.
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
+ * @param timeoutMillis timeout in milliseconds. A value of zero or less fails immediately with a
+ * timeout failure, like [withTimeout].
+ * @param block the work to run; it executes in a child scope with the timeout applied.
+ * @return [Result.success] with the value of [block], or [Result.failure] holding the
+ * [TimeoutCancellationException] when the timeout elapsed.
+ * @throws CancellationException if the caller is cancelled by anything other than this timeout.
+ * @see hedged
  */
 @ExperimentalStructuredCoroutines
 public suspend fun <T> withTimeoutResult(
@@ -65,7 +75,16 @@ public suspend fun <T> withTimeoutResult(
  * val profile = withTimeoutResult(2.seconds) { api.loadProfile() }
  * ```
  *
+ * The duration is converted to whole milliseconds; a positive duration shorter than a millisecond is
+ * rounded up to 1 ms, and zero or negative durations time out immediately.
+ *
  * Rules: CANCEL_006, CANCEL_007. See `docs/BEST_PRACTICES_COROUTINES.md`.
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
+ * @param timeout timeout as a [Duration].
+ * @param block the work to run.
+ * @return see the milliseconds overload.
  */
 @ExperimentalStructuredCoroutines
 public suspend fun <T> withTimeoutResult(

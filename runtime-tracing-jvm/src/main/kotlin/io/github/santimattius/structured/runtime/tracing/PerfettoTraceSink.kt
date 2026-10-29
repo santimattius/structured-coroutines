@@ -55,6 +55,8 @@ private const val FLOW_ID_SPACE = 1L shl 62
  *
  * Experimental, diagnostic and opt-in. Requires JDK 11 or newer (`androidx.tracing` bytecode level).
  *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
  * Example:
  * ```
  * val session = PerfettoTraceSession.start(File("build/traces"))
@@ -63,9 +65,16 @@ private const val FLOW_ID_SPACE = 1L shl 62
  * session.close()
  * ```
  *
+ * Thread-safe: counters use atomics and the open-slice stack is per thread, so [emit] may be called
+ * concurrently as the [TraceSink] contract requires. It never throws.
+ *
+ * Platform availability: JVM only.
+ *
+ * @constructor Creates a sink over [tracer].
  * @param tracer the tracer to write to, or null to use [Tracer.global].
  * @param maxLevel highest [TraceLevel] this sink accepts.
  * @param category the Perfetto category of every slice and counter this sink writes.
+ * @see PerfettoTraceSession
  */
 @ExperimentalStructuredCoroutines
 public class PerfettoTraceSink @JvmOverloads constructor(

@@ -21,6 +21,22 @@ import kotlinx.coroutines.flow.callbackFlow
  * If [register] throws before returning a [DisposableHandle], the exception propagates
  * to the collector unchanged and no dispose is attempted, since registration never
  * produced a handle to dispose.
+ *
+ * Example:
+ * ```
+ * fun locations(client: LocationClient): Flow<Location> = safeCallbackFlow { out ->
+ *     val listener = LocationListener { out.trySend(it) }
+ *     client.register(listener)
+ *     DisposableHandle { client.unregister(listener) }
+ * }
+ * ```
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
+ * @param register wires the callback source to the provided [SendChannel] and returns the handle
+ * that releases it. Called once per collection.
+ * @return a cold [Flow] that registers on collection and disposes on termination.
+ * @see callbackFlow
  */
 @ExperimentalStructuredCoroutines
 public fun <T> safeCallbackFlow(

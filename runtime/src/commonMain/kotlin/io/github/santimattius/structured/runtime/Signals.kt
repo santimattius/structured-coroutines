@@ -16,6 +16,7 @@ import kotlin.time.Duration.Companion.milliseconds
  *   is suspected. Must be greater than zero.
  * @property longRunningSegment longest segment at or above which a long-running segment is
  *   reported. Must be greater than zero.
+ * @throws IllegalArgumentException if either threshold is not positive.
  */
 @ExperimentalStructuredCoroutines
 public class SignalThresholds(
@@ -55,6 +56,10 @@ public class SignalThresholds(
  *     null -> Unit
  * }
  * ```
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
+ * @see signals
  */
 @ExperimentalStructuredCoroutines
 public sealed interface PoolSignal {
@@ -65,6 +70,9 @@ public sealed interface PoolSignal {
      * Work is waiting and waited long: [pending] is positive and the queue-delay p95
      * ([queueDelayP95], a bucket upper bound) reached the threshold. [pending] can overcount, see
      * [DispatcherMetrics.pending].
+     *
+     * @property queueDelayP95 estimated 95th percentile of the queue delay.
+     * @property pending segments queued and not yet started.
      */
     public class StarvationSuspected(
         override val label: String,
@@ -86,7 +94,11 @@ public sealed interface PoolSignal {
             "StarvationSuspected(label=$label, queueDelayP95=$queueDelayP95, pending=$pending)"
     }
 
-    /** A single segment ran for [longestRun], at or above the threshold. */
+    /**
+     * A single segment ran for [longestRun], at or above the threshold.
+     *
+     * @property longestRun longest single segment observed.
+     */
     public class LongRunningSegment(
         override val label: String,
         public val longestRun: Duration,
@@ -101,8 +113,12 @@ public sealed interface PoolSignal {
     }
 
     /**
-     * [pending] never decreased across the last [samples] pool samples and rose from [from] to
+     * `pending` never decreased across the last [samples] pool samples and rose from [from] to
      * [to]. Produced by `List<TraceEvent.PoolSample>.signals`.
+     *
+     * @property samples size of the evaluated window.
+     * @property from `pending` at the start of the window.
+     * @property to `pending` at the end of the window.
      */
     public class BacklogGrowing(
         override val label: String,
@@ -129,6 +145,9 @@ public sealed interface PoolSignal {
     /**
      * Across the last [samples] pool samples the dispatcher ran at its [parallelism] limit while
      * work was waiting. Produced by `List<TraceEvent.PoolSample>.signals`.
+     *
+     * @property parallelism the concurrency limit that was reached.
+     * @property samples size of the evaluated window.
      */
     public class PoolSaturated(
         override val label: String,
@@ -168,6 +187,12 @@ public sealed interface PoolSignal {
  * ```
  * stats.metrics().flatMap { it.signals() }.forEach(::println)
  * ```
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
+ * @receiver the metrics snapshot to evaluate.
+ * @param thresholds limits that decide when a signal fires.
+ * @return the signals that fired, possibly empty.
  */
 @ExperimentalStructuredCoroutines
 public fun DispatcherMetrics.signals(thresholds: SignalThresholds = SignalThresholds()): List<PoolSignal> {
@@ -203,7 +228,10 @@ public fun DispatcherMetrics.signals(thresholds: SignalThresholds = SignalThresh
  * samples.signals().forEach(::println)
  * ```
  *
+ * @receiver chronological samples, possibly from several dispatcher labels.
  * @param minSamples size of the window per label. Must be at least 2.
+ * @return the signals that fired, possibly empty.
+ * @throws IllegalArgumentException if [minSamples] is less than 2.
  */
 @ExperimentalStructuredCoroutines
 public fun List<TraceEvent.PoolSample>.signals(minSamples: Int = 4): List<PoolSignal> {

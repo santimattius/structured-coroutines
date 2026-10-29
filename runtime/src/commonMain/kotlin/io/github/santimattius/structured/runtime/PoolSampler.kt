@@ -32,10 +32,17 @@ import kotlin.time.TimeSource
  * ring.snapshot().filterIsInstance<TraceEvent.PoolSample>().signals().forEach(::println)
  * ```
  *
+ * Thread-safety: [sampleOnce] can be called from any thread; the sampled counters come from the
+ * lock-free [StatsSink].
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
+ * @constructor Creates a sampler.
  * @param stats source of the per-label counters.
  * @param sink receives the samples.
  * @param parallelism maximum concurrency of a dispatcher label when known, else null; see
  *   [TracedDispatcherProvider.parallelism].
+ * @see signals
  */
 @ExperimentalStructuredCoroutines
 public class PoolSampler internal constructor(
@@ -90,6 +97,9 @@ public class PoolSampler internal constructor(
      * scope or the returned [Job] is cancelled. The first sample is taken immediately. The job
      * never swallows cancellation.
      *
+     * @param scope scope that owns the sampling coroutine.
+     * @param interval delay between samples; must be positive.
+     * @return the [Job] of the sampling loop; cancel it to stop sampling.
      * @throws IllegalArgumentException if [interval] is not positive.
      */
     public fun launchIn(scope: CoroutineScope, interval: Duration): Job {

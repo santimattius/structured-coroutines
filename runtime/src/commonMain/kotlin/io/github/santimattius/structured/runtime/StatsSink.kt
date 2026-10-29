@@ -29,7 +29,14 @@ private const val MAX_TRACKED_THREADS = 4096
  * stats.metrics("io")?.signals()?.forEach(::println)
  * ```
  *
- * @param maxLevel highest [TraceLevel] this sink accepts.
+ * Not automatically bounded in time: counters are cumulative until [reset]. Pair it with [PoolSampler]
+ * to observe evolution, or read [metrics] and [signals].
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
+ * @param maxLevel highest [TraceLevel] this sink accepts. Use [TraceLevel.Coroutine] (the default)
+ * to also count distinct threads.
+ * @see RingBufferSink
  */
 @OptIn(ExperimentalAtomicApi::class)
 @ExperimentalStructuredCoroutines
@@ -98,11 +105,18 @@ public class StatsSink(
         }
     }
 
-    /** Returns the metrics of every observed dispatcher label, sorted by label. */
+    /**
+     * Returns the metrics of every observed dispatcher label, sorted by label. Empty when nothing
+     * was observed.
+     */
     public fun metrics(): List<DispatcherMetrics> =
         states.load().entries.sortedBy { it.key }.map { (label, s) -> snapshotOf(label, s) }
 
-    /** Returns the metrics of [label], or null when no event with that label was observed. */
+    /**
+     * Returns the metrics of [label], or null when no event with that label was observed.
+     *
+     * @param label dispatcher label, such as `"io"`.
+     */
     public fun metrics(label: String): DispatcherMetrics? =
         states.load()[label]?.let { snapshotOf(label, it) }
 

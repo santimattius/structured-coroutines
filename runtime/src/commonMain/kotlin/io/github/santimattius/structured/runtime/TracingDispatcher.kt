@@ -62,6 +62,18 @@ import kotlin.time.TimeSource
  * withContext(io + CoroutineName("fetch")) { api.fetch() }
  * sink.snapshot().forEach(::println) // Queued, Started, Finished
  * ```
+ *
+ * Thread-safety: stateless apart from the immutable creation timestamp; safe to share across
+ * coroutines and threads provided [sink] is thread-safe.
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
+ * @constructor Wraps [delegate], emitting events to [sink] labeled [label].
+ * @param delegate dispatcher that actually runs the blocks.
+ * @param label name carried by every emitted [TraceEvent.dispatcher].
+ * @param sink receiver of the events.
+ * @see InstrumentedDispatcher
+ * @see traced
  */
 @OptIn(InternalCoroutinesApi::class)
 @ExperimentalStructuredCoroutines
@@ -151,6 +163,11 @@ public class TracingDispatcher internal constructor(
  * withContext(dispatchers.io) { api.fetch() }
  * dispatchers.sink // the sink that received the events
  * ```
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ * Not constructed directly; use [traced].
+ *
+ * @see TracingDispatcher
  */
 @ExperimentalStructuredCoroutines
 public class TracedDispatcherProvider internal constructor(
@@ -181,6 +198,13 @@ public class TracedDispatcherProvider internal constructor(
  * val dispatchers = DefaultDispatcherProvider.traced(RingBufferSink(256))
  * val repo = UserRepository(dispatchers)
  * ```
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
+ * @receiver the provider whose dispatchers are wrapped.
+ * @param sink receiver of the trace events.
+ * @return a provider that traces `main`, `io` and `default`.
+ * @see instrumented
  */
 @ExperimentalStructuredCoroutines
 public fun DispatcherProvider.traced(sink: TraceSink): TracedDispatcherProvider =
@@ -208,6 +232,12 @@ public fun DispatcherProvider.traced(sink: TraceSink): TracedDispatcherProvider 
  * val traced = DefaultDispatcherProvider.traced(stats)
  * val sampler = PoolSampler(stats, sink, traced::parallelism)
  * ```
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
+ * @receiver the traced provider.
+ * @param label dispatcher label, `"default"` or `"io"`.
+ * @return the inferred maximum concurrency, or null when unknown.
  */
 @ExperimentalStructuredCoroutines
 public fun TracedDispatcherProvider.parallelism(label: String): Int? {

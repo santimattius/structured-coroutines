@@ -32,6 +32,9 @@ private fun newSpanId(): Long = nextSpanId.incrementAndFetch()
  * }
  * ```
  *
+ * Requires opting in to [ExperimentalStructuredCoroutines]. Instances are created by [withTraceSpan];
+ * the constructor is internal.
+ *
  * @property id identifier of this span, unique per process.
  * @property parentId [id] of the enclosing span, or null for a root span.
  * @property name label of this span, such as "checkout". Keep it low-cardinality.
@@ -43,7 +46,7 @@ public class TraceSpan internal constructor(
     public val name: String,
 ) : AbstractCoroutineContextElement(Key) {
 
-    /** Key of [TraceSpan] in a [CoroutineContext]. */
+    /** Key of [TraceSpan] in a [CoroutineContext]. Use `coroutineContext[TraceSpan]` to read it. */
     public companion object Key : CoroutineContext.Key<TraceSpan> {
         internal fun root(name: String): TraceSpan = TraceSpan(newSpanId(), null, name)
     }
@@ -61,6 +64,16 @@ public class TraceSpan internal constructor(
  * ```
  * withTraceSpan("load-profile") { api.loadProfile(userId) }
  * ```
+ *
+ * The span applies through [withContext], so it is inherited by coroutines launched from [block] and
+ * ends when [block] returns. Cancellation and exceptions from [block] propagate unchanged.
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
+ * @param name low-cardinality label of the span.
+ * @param block the work to run inside the span.
+ * @return the value returned by [block].
+ * @see TraceSpan
  */
 @ExperimentalStructuredCoroutines
 public suspend fun <T> withTraceSpan(name: String, block: suspend () -> T): T {

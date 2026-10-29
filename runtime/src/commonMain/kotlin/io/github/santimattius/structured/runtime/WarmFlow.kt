@@ -43,6 +43,16 @@ private class WarmProgress(val count: Int, val done: Boolean, val error: Throwab
  * Pattern: warm flows, so that repeated collection of a cold flow cannot unintentionally
  * multiply calls against a network dependency.
  * Not tied to a lint rule: it is a server-side pattern, not a best-practice diagnostic.
+ *
+ * Cancelling a collector cancels only that collection, never the shared upstream. Values are shared
+ * through a lock and a state flow, so any number of collectors may attach concurrently.
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
+ * @receiver the upstream flow to memoize; collected at most once.
+ * @param scope the scope that owns the upstream collection; cancelling it ends the upstream.
+ * @return a flow that replays all stored values and then follows the live upstream.
+ * @see launchInSafely
  */
 @ExperimentalStructuredCoroutines
 public fun <T> Flow<T>.warmIn(scope: CoroutineScope): Flow<T> {

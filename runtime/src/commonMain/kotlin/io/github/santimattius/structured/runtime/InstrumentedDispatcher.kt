@@ -13,6 +13,8 @@ import kotlin.time.TimeSource
 /**
  * Immutable snapshot of what an [InstrumentedDispatcher] observed.
  *
+ * Produced by [InstrumentedDispatcher.snapshot] and [InstrumentedDispatcherProvider.stats].
+ *
  * @property label name given to the instrumented dispatcher.
  * @property totalDispatched number of blocks dispatched since creation or the last reset.
  * @property peakConcurrency highest number of blocks that were running at the same time.
@@ -57,6 +59,14 @@ public data class DispatcherStats(
  *
  * Rules: DISPATCH_005 (dispatchers are injected, so they can be wrapped).
  * See `docs/BEST_PRACTICES_COROUTINES.md` section 3.5.
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
+ * @constructor Wraps [delegate] and labels it [label] in the recorded stats.
+ * @param delegate the dispatcher that actually runs the blocks.
+ * @param label name reported in [DispatcherStats.label].
+ * @see TracingDispatcher
+ * @see instrumented
  */
 @OptIn(InternalCoroutinesApi::class)
 @ExperimentalStructuredCoroutines
@@ -88,7 +98,10 @@ public class InstrumentedDispatcher internal constructor(
     override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
         tracing.invokeOnTimeout(timeMillis, block, context)
 
-    /** Returns the stats observed so far. */
+    /**
+     * Returns the stats observed so far. Cheap and safe to call from any thread; the returned
+     * [DispatcherStats] is an immutable copy and is not updated afterwards.
+     */
     public fun snapshot(): DispatcherStats {
         val m = stats.metrics(label)
         return DispatcherStats(
@@ -118,6 +131,9 @@ public class InstrumentedDispatcher internal constructor(
  * elasticity and `limitedParallelism` hints.
  *
  * Rules: DISPATCH_005. See `docs/BEST_PRACTICES_COROUTINES.md`.
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ * Not constructed directly; use [instrumented].
  */
 @ExperimentalStructuredCoroutines
 public class InstrumentedDispatcherProvider internal constructor(
@@ -138,7 +154,10 @@ public class InstrumentedDispatcherProvider internal constructor(
     private fun materialized(): List<InstrumentedDispatcher> =
         listOf(mainLazy, ioLazy, defaultLazy, unconfinedLazy).filter { it.isInitialized() }.map { it.value }
 
-    /** Stats of the dispatchers that have been read at least once. */
+    /**
+     * Stats of the dispatchers that have been read at least once, in `main`, `io`, `default`,
+     * `unconfined` order. Dispatchers never accessed are omitted.
+     */
     public fun stats(): List<DispatcherStats> = materialized().map { it.snapshot() }
 
     /** Resets the counters of the dispatchers that have been read at least once. */
@@ -162,6 +181,12 @@ public class InstrumentedDispatcherProvider internal constructor(
  * ```
  *
  * Rules: DISPATCH_005. See `docs/BEST_PRACTICES_COROUTINES.md` section 3.5.
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
+ * @receiver the provider whose dispatchers are wrapped.
+ * @return a provider whose four dispatchers are [InstrumentedDispatcher]s.
+ * @see traced
  */
 @ExperimentalStructuredCoroutines
 public fun DispatcherProvider.instrumented(): InstrumentedDispatcherProvider =

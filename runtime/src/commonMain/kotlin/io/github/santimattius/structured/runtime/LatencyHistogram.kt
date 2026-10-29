@@ -27,6 +27,11 @@ private val UPPER_BOUNDS: List<Duration> = buildList {
  * in order, so it has exactly one element fewer than [bucketCounts]; the last count is the
  * overflow bucket, which has no finite bound.
  *
+ * Instances are immutable and thread-safe; they are obtained from [DispatcherMetrics.queueDelay] and
+ * [DispatcherMetrics.runTime].
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
  * Example:
  * ```
  * val p95 = metrics.queueDelay.percentile(0.95)
@@ -58,6 +63,9 @@ public class HistogramSnapshot internal constructor(
      * val median = snapshot.percentile(0.5)
      * ```
      *
+     * @param p quantile to estimate, between 0.0 and 1.0 inclusive.
+     * @return the upper bound of the bucket containing the quantile, [max] for the overflow bucket,
+     * or [Duration.ZERO] when [count] is zero.
      * @throws IllegalArgumentException if [p] is not within 0.0..1.0.
      */
     public fun percentile(p: Double): Duration {

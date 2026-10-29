@@ -29,6 +29,8 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
  * Rules: DISPATCH_005 (inject dispatchers for testability), TEST_005 (no hardcoded dispatcher in
  * a class). See `docs/BEST_PRACTICES_COROUTINES.md`.
  *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
  * @param scheduler the scheduler shared by every dispatcher; pass `testScheduler` of a
  *   `runTest` block (or use [testDispatcherProvider]) to advance both together.
  * @param unconfined when true, [main], [io] and [default] run eagerly like [unconfined].
@@ -64,7 +66,12 @@ public class TestDispatcherProvider(
  *
  * Rules: DISPATCH_005, TEST_005. See `docs/BEST_PRACTICES_COROUTINES.md`.
  *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
+ * @receiver the test scope whose `testScheduler` is shared.
  * @param unconfined when true, main/io/default run eagerly.
+ * @return a provider bound to this scope's scheduler.
+ * @see TestDispatcherProvider
  */
 @ExperimentalStructuredCoroutines
 public fun TestScope.testDispatcherProvider(unconfined: Boolean = false): DispatcherProvider =
