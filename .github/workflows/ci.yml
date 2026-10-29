@@ -88,8 +88,8 @@ jobs:
         run: ./gradlew :compiler:forwardCompatTest --no-daemon
 
   # ──────────────────────────────────────────────
-  # IntelliJ plugin: compile + instrument
-  # (no test sources; compilation against IJ 2026.1 is the verification)
+  # IntelliJ plugin: compile + instrument + tests
+  # (JUnit 5 metadata tests and BasePlatformTestCase PSI fixture tests)
   # ──────────────────────────────────────────────
   build-intellij:
     name: Build IntelliJ plugin (2026.1)
@@ -116,3 +116,6 @@ jobs:
 
       - name: Compile IntelliJ plugin
         run: ./gradlew :intellij-plugin:compileKotlin :intellij-plugin:instrumentCode --no-daemon
+
+      - name: Test IntelliJ plugin
+        run: ./gradlew :intellij-plugin:test --no-daemon

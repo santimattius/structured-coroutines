@@ -24,7 +24,7 @@ import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UQualifiedReferenceExpression
 
 /**
- * [KMP_001] — references to `Dispatchers.IO` under `commonMain` / `commonTest` are invalid on Native/JS.
+ * [KMP_001] — references to `Dispatchers.IO` under `commonMain` / `commonTest` are invalid: it is not part of the common API.
  */
 class DispatchersIOInCommonMainDetector : Detector(), SourceCodeScanner {
 
@@ -33,7 +33,7 @@ class DispatchersIOInCommonMainDetector : Detector(), SourceCodeScanner {
             id = "DispatchersIOInCommonMain",
             briefDescription = "Dispatchers.IO in Kotlin common source",
             explanation = """
-                [KMP_001] `Dispatchers.IO` is not available in Kotlin/Native or Kotlin/JS. Use an injected
+                [KMP_001] `Dispatchers.IO` is not part of the common API (JVM and Native only; JS and Wasm have no IO dispatcher), so it cannot be used from commonMain. Use an injected
                 `CoroutineDispatcher`, or `expect`/`actual` to provide a platform-backed I/O dispatcher.
 
                 See: ${LintDocUrl.buildDocLink("111-kmp_001--dispatchersio-in-commonmain")}
