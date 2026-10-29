@@ -1,5 +1,6 @@
 package io.github.santimattius.structured.runtime
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.NonCancellable
@@ -27,9 +28,11 @@ private class WarmProgress(val count: Int, val done: Boolean, val error: Throwab
  * - An upstream failure is memoized and rethrown to every collector after the values emitted
  *   before it.
  * - The upstream is never restarted and keeps running even if all collectors leave; it ends
- *   when it completes or when [scope] is cancelled (collectors then receive the cancellation
- *   as a failure instead of hanging), including when it is cancelled before the upstream
- *   ever started.
+ *   when it completes or when [scope] is cancelled (collectors then fail instead of hanging),
+ *   including when it is cancelled before the upstream ever started. That failure is an
+ *   [IllegalStateException] whose `cause` is the original [CancellationException]: rethrowing the
+ *   cancellation itself into a collector that was not cancelled would end its coroutine silently.
+ *   The same wrapping applies if the upstream throws its own [CancellationException].
  * - All emitted values are retained in memory: use it for finite, small flows (e.g. an
  *   expensive RPC) only.
  *
@@ -91,7 +94,13 @@ public fun <T> Flow<T>.warmIn(scope: CoroutineScope): Flow<T> {
             batch.forEach { emit(it) }
             next += batch.size
             if (snapshot.done && next >= snapshot.count) {
-                snapshot.error?.let { throw it }
+                snapshot.error?.let { error ->
+                    throw if (error is CancellationException) {
+                        IllegalStateException("warmIn upstream was cancelled before it completed", error)
+                    } else {
+                        error
+                    }
+                }
                 return@flow
             }
         }
