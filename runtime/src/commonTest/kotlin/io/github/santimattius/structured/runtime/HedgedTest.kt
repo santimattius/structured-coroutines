@@ -94,6 +94,71 @@ class HedgedTest {
     }
 
     @Test
+    fun hedged_nonHedgeableFailure_failsFastWithoutStartingAnotherAttempt() = runTest {
+        val started = mutableListOf<Int>()
+
+        val e = assertFailsWith<IllegalArgumentException> {
+            hedged<String>(
+                hedgeAfter = 100.milliseconds,
+                maxAttempts = 3,
+                shouldHedge = { it !is IllegalArgumentException },
+            ) { attempt ->
+                started += attempt
+                delay(10)
+                throw IllegalArgumentException("bad request")
+            }
+        }
+
+        assertEquals("bad request", e.message)
+        assertEquals(listOf(0), started)
+        assertEquals(10, currentTime)
+    }
+
+    @Test
+    fun hedged_nonHedgeableFailureWhileAnotherRuns_cancelsTheOtherAndRethrows() = runTest {
+        var primaryCancelled = false
+
+        assertFailsWith<IllegalArgumentException> {
+            hedged<String>(
+                hedgeAfter = 100.milliseconds,
+                maxAttempts = 2,
+                shouldHedge = { it !is IllegalArgumentException },
+            ) { attempt ->
+                if (attempt == 0) {
+                    try {
+                        awaitCancellation()
+                    } finally {
+                        primaryCancelled = true
+                    }
+                }
+                delay(10)
+                throw IllegalArgumentException("bad request")
+            }
+        }
+
+        assertEquals(110, currentTime)
+        assertTrue(primaryCancelled)
+    }
+
+    @Test
+    fun hedged_hedgeableFailure_stillStartsTheNextAttemptImmediately() = runTest {
+        val result = hedged(
+            hedgeAfter = 1_000.milliseconds,
+            maxAttempts = 2,
+            shouldHedge = { it is HedgedBoom },
+        ) { attempt ->
+            if (attempt == 0) {
+                delay(10)
+                throw HedgedBoom("primary", 0)
+            }
+            "hedge"
+        }
+
+        assertEquals("hedge", result)
+        assertEquals(10, currentTime)
+    }
+
+    @Test
     fun hedged_allAttemptsFail_rethrowsFirstFailureWithOthersSuppressed() = runTest {
         val e = assertFailsWith<HedgedBoom> {
             hedged<Int>(100.milliseconds, maxAttempts = 3) { attempt ->

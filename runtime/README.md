@@ -142,7 +142,7 @@ val all: List<Item> = tasks.parallel(concurrency = 2)            // fail-fast, i
 val each: List<Result<Item>> = tasks.supervisedAll()              // failures isolated
 tasks.concurrentOrdered().collect { response.write(it) }          // cold Flow, input order
 
-val profile = hedged(delay = 50.milliseconds, maxAttempts = 3) { attempt ->
+val profile = hedged(hedgeAfter = 50.milliseconds, maxAttempts = 3) { attempt ->
     api.loadProfile(userId)                                       // first success wins
 }
 ```
@@ -150,7 +150,7 @@ val profile = hedged(delay = 50.milliseconds, maxAttempts = 3) { attempt ->
 - `parallel` / `supervisedAll`: `concurrency` defaults to unlimited and must be `> 0`.
 - `concurrentOrdered`: starts every task at collection time, emits results in input order as each
   turn is ready, and is fail-fast.
-- `hedged`: `maxAttempts` defaults to `2`; `delay` must not be negative. A failing attempt never wins,
+- `hedged`: `maxAttempts` defaults to `2`; `hedgeAfter` must not be negative. Failures for which `shouldHedge` returns `false` are rethrown immediately. Keep attempts cancellable and idempotent. A failing attempt never wins,
   and if all attempts fail the first failure is rethrown with the others suppressed.
 
 ### Dispatchers

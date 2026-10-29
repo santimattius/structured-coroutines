@@ -89,8 +89,8 @@ public final class io/github/santimattius/structured/runtime/FlowSafetyKt {
 }
 
 public final class io/github/santimattius/structured/runtime/HedgedKt {
-	public static final fun hedged-rnQQ1Ag (JILkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static synthetic fun hedged-rnQQ1Ag$default (JILkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public static final fun hedged-gRj5Bb8 (JILkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun hedged-gRj5Bb8$default (JILkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 }
 
 public final class io/github/santimattius/structured/runtime/HistogramSnapshot {
