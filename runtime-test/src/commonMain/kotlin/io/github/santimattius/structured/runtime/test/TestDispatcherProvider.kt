@@ -26,6 +26,12 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
  * }
  * ```
  *
+ * Caveats: `TestDispatcherProvider()` with no argument creates its OWN scheduler, which `runTest`
+ * does not advance; inside `runTest` use [testDispatcherProvider] (or pass `testScheduler`).
+ * [main], [io] and [default] are the same dispatcher instance, so a test cannot detect code that
+ * hops to the wrong one. This provider does not call `Dispatchers.setMain`: code that reads
+ * `Dispatchers.Main` directly is not covered.
+ *
  * Rules: DISPATCH_005 (inject dispatchers for testability), TEST_005 (no hardcoded dispatcher in
  * a class). See `docs/BEST_PRACTICES_COROUTINES.md`.
  *

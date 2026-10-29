@@ -88,4 +88,32 @@ class ConcurrentOrderedTest {
         assertEquals(1, tasks.concurrentOrdered().first())
         assertEquals(true, cancelled)
     }
+
+    @Test
+    fun concurrentOrdered_concurrencyLimit_neverRunsMoreTasksAtOnceAndKeepsInputOrder() = runTest {
+        var running = 0
+        var peak = 0
+        val tasks = List(5) { i ->
+            suspend {
+                running++
+                peak = maxOf(peak, running)
+                delay(100)
+                running--
+                i
+            }
+        }
+
+        val result = tasks.concurrentOrdered(concurrency = 2).toList()
+
+        assertEquals(listOf(0, 1, 2, 3, 4), result)
+        assertEquals(2, peak)
+        assertEquals(300, currentTime) // ceil(5 / 2) waves of 100ms
+    }
+
+    @Test
+    fun concurrentOrdered_invalidConcurrency_throwsWhenCalled() = runTest {
+        val tasks = listOf<suspend () -> Int>({ 1 })
+
+        assertFailsWith<IllegalArgumentException> { tasks.concurrentOrdered(concurrency = 0) }
+    }
 }

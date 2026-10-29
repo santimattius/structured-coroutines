@@ -12,6 +12,10 @@ import kotlin.time.TimeSource
  * Periodically turns the cumulative state of a [StatsSink] into [TraceEvent.PoolSample]s so a pool
  * can be watched over time. One sample is emitted per dispatcher label that [stats] knows.
  *
+ * The sampling loop never ends by itself. In `runTest`, launch it in `backgroundScope` (a plain
+ * `TestScope.launch` would keep the test from finishing), and do not run it on a dispatcher that
+ * this same sampler measures: its own `delay` resumes would show up in the stats.
+ *
  * Nothing runs by itself: no coroutine is created until [launchIn] is called, and then it runs in
  * the caller's scope and is cancelled with it. Call [sampleOnce] to sample manually. Samples are
  * emitted at [TraceLevel.Pool] and skipped entirely when [sink] is not enabled for it; feed a sink
