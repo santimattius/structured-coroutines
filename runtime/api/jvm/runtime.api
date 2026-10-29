@@ -217,7 +217,8 @@ public final class io/github/santimattius/structured/runtime/RingBufferSink : io
 }
 
 public final class io/github/santimattius/structured/runtime/SafeCallbackFlowKt {
-	public static final fun safeCallbackFlow (Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/flow/Flow;
+	public static final fun safeCallbackFlow (ILkotlinx/coroutines/channels/BufferOverflow;Lkotlin/jvm/functions/Function1;)Lkotlinx/coroutines/flow/Flow;
+	public static synthetic fun safeCallbackFlow$default (ILkotlinx/coroutines/channels/BufferOverflow;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lkotlinx/coroutines/flow/Flow;
 }
 
 public final class io/github/santimattius/structured/runtime/SignalThresholds {

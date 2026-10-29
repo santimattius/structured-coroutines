@@ -4,6 +4,8 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.DisposableHandle
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
@@ -12,6 +14,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 @OptIn(ExperimentalStructuredCoroutines::class)
 class SafeCallbackFlowTest {
@@ -66,5 +69,47 @@ class SafeCallbackFlowTest {
         disposed.await()
 
         assertEquals(1, disposeCalls)
+    }
+
+    @Test
+    fun unlimitedBuffer_acceptsEveryCallbackEmission() = runTest {
+        var accepted = 0
+        val flow = safeCallbackFlow<Int>(buffer = Channel.UNLIMITED) { channel ->
+            repeat(500) { if (channel.trySend(it).isSuccess) accepted++ }
+            channel.close()
+            DisposableHandle { }
+        }
+
+        val result = flow.toList()
+
+        assertEquals(500, accepted)
+        assertEquals((0 until 500).toList(), result)
+    }
+
+    @Test
+    fun dropOldest_keepsTheLatestValuesWhenTheCollectorIsSlow() = runTest {
+        val flow = safeCallbackFlow<Int>(buffer = 2, onBufferOverflow = BufferOverflow.DROP_OLDEST) { channel ->
+            repeat(5) { channel.trySend(it + 1) }
+            channel.close()
+            DisposableHandle { }
+        }
+
+        val result = flow.toList()
+
+        assertEquals(5, result.last(), "the most recent value must survive")
+        assertTrue(result.size < 5, "older values are dropped, got $result")
+    }
+
+    @Test
+    fun closingTheChannelFromTheCallback_completesTheFlowAndDisposes() = runTest {
+        var disposed = 0
+        val flow = safeCallbackFlow<Int> { channel ->
+            channel.trySend(1)
+            channel.close()
+            DisposableHandle { disposed++ }
+        }
+
+        assertEquals(listOf(1), flow.toList())
+        assertEquals(1, disposed)
     }
 }

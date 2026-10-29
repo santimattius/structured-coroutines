@@ -104,6 +104,11 @@ fun locations(source: LocationSource): Flow<Location> = safeCallbackFlow { chann
 }
 ```
 
+Callbacks cannot suspend, so `trySend` drops the value when the buffer (64 by default) is full. Pick
+the policy for bursty sources: `safeCallbackFlow(buffer = Channel.CONFLATED)` (latest wins),
+`safeCallbackFlow(buffer = 8, onBufferOverflow = BufferOverflow.DROP_OLDEST)` (freshest N) or
+`safeCallbackFlow(buffer = Channel.UNLIMITED)` (every event, unbounded memory).
+
 ### Cancellation
 
 `runCatchingCancellable` behaves like `runCatching` but rethrows `CancellationException`.
