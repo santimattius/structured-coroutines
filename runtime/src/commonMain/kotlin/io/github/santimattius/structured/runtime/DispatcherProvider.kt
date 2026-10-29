@@ -20,19 +20,27 @@ import kotlinx.coroutines.Dispatchers
  * Rules: DISPATCH_005 (inject dispatchers for testability), KMP_001 (no `Dispatchers.IO` in
  * commonMain; see [ioCompat]), TEST_005 (no hardcoded dispatcher in a class).
  * See `docs/BEST_PRACTICES_COROUTINES.md` sections 3.5, 11.1 and 6.5.
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines]. Any provider can be wrapped by
+ * [traced] (event tracing) or [instrumented] (basic diagnostics).
+ *
+ * @see DefaultDispatcherProvider
  */
 @ExperimentalStructuredCoroutines
 public interface DispatcherProvider {
-    /** UI dispatcher. May be unavailable on platforms without a main dispatcher. */
+    /**
+     * UI dispatcher. May be unavailable on platforms without a main dispatcher (for example a plain
+     * JVM process without a UI toolkit); in that case accessing it fails the way [Dispatchers.Main] does.
+     */
     public val main: CoroutineDispatcher
 
-    /** Dispatcher for blocking IO. */
+    /** Dispatcher for blocking IO. The default implementation resolves it through [ioCompat]. */
     public val io: CoroutineDispatcher
 
     /** Dispatcher for CPU-bound work. */
     public val default: CoroutineDispatcher
 
-    /** Unconfined dispatcher. */
+    /** Unconfined dispatcher. Runs in the caller thread until the first suspension; avoid for work that needs thread affinity. */
     public val unconfined: CoroutineDispatcher
 
     public companion object {
@@ -41,6 +49,9 @@ public interface DispatcherProvider {
          * `DispatcherProvider.of(StandardTestDispatcher(testScheduler))`.
          *
          * Rules: DISPATCH_005, TEST_005. See `docs/BEST_PRACTICES_COROUTINES.md`.
+         *
+         * @param dispatcher the dispatcher returned for [main], [io], [default] and [unconfined].
+         * @return an immutable provider that always returns [dispatcher].
          */
         public fun of(dispatcher: CoroutineDispatcher): DispatcherProvider = SingleDispatcherProvider(dispatcher)
     }
@@ -66,6 +77,10 @@ private class SingleDispatcherProvider(dispatcher: CoroutineDispatcher) : Dispat
  * ```
  *
  * Rules: DISPATCH_005, KMP_001, TEST_005. See `docs/BEST_PRACTICES_COROUTINES.md`.
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines]. Stateless and thread-safe.
+ *
+ * @see DispatcherProvider.of
  */
 @ExperimentalStructuredCoroutines
 public object DefaultDispatcherProvider : DispatcherProvider {

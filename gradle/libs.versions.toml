@@ -20,6 +20,8 @@ intellij-platform = "2.11.0"
 intellij-ide = "2026.1"
 binary-compatibility-validator = "0.18.1"
 agp = "9.4.1"
+# Dokka Gradle Plugin v2; applied only to :runtime (API reference on GitHub Pages).
+dokka = "2.2.0"
 # Stable androidx.tracing 2.x (Perfetto in-process tracing); used only by :runtime-tracing-jvm.
 androidx-tracing = "2.0.5"
 
@@ -69,3 +71,4 @@ java-library = { id = "java-library" }
 java-gradle-plugin = { id = "java-gradle-plugin" }
 binary-compatibility-validator = { id = "org.jetbrains.kotlinx.binary-compatibility-validator", version.ref = "binary-compatibility-validator" }
 android-kotlin-multiplatform-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
+dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }

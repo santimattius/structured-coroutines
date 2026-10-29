@@ -43,8 +43,13 @@ import kotlin.test.fail
  * }
  * ```
  *
- * Individual `check*` functions are public so they can be run one by one. [createSink] is called once per check. Sinks that buffer asynchronously can override [flush] to
- * wait for the buffer to drain, so a failure in the background worker is still seen by the test.
+ * Individual `check*` functions are public so they can be run one by one. [createSink] is called
+ * once per check. Sinks that buffer asynchronously can override [flush] to wait for the buffer to
+ * drain, so a failure in the background worker is still seen by the test.
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
+ * @see TraceSink
  */
 @ExperimentalStructuredCoroutines
 public abstract class TraceSinkContract {
@@ -58,7 +63,12 @@ public abstract class TraceSinkContract {
      */
     protected open fun flush(sink: TraceSink) {}
 
-    /** Runs every check below. Returns a [TestResult] so it can be the body of a test on every target. */
+    /**
+     * Runs every check below inside `runTest`. Returns a [TestResult] so it can be the body of a test
+     * on every target.
+     *
+     * @throws AssertionError if a check fails.
+     */
     public fun checkAll(): TestResult = runTest {
         checkEmitNeverThrowsForKnownEvents()
         checkEmitToleratesAbsentOptionalFields()
@@ -67,7 +77,11 @@ public abstract class TraceSinkContract {
         checkIsEnabledIsStable()
     }
 
-    /** Rule 1: `emit` does not throw for any known [TraceEvent] subtype, including a threw outcome. */
+    /**
+     * Rule 1: `emit` does not throw for any known [TraceEvent] subtype, including a threw outcome.
+     *
+     * @throws AssertionError if the sink throws.
+     */
     public fun checkEmitNeverThrowsForKnownEvents() {
         val sink = createSink()
         val thread = ThreadInfo(id = 1L, name = "contract-thread")
@@ -83,7 +97,11 @@ public abstract class TraceSinkContract {
         flush(sink)
     }
 
-    /** Optional capabilities absent (no name, thread, span, parallelism) must not break the sink. */
+    /**
+     * Optional capabilities absent (no name, thread, span, parallelism) must not break the sink.
+     *
+     * @throws AssertionError if the sink throws.
+     */
     public fun checkEmitToleratesAbsentOptionalFields() {
         val sink = createSink()
 
@@ -97,7 +115,11 @@ public abstract class TraceSinkContract {
         flush(sink)
     }
 
-    /** Rule 3: many coroutines on `Dispatchers.Default` emit concurrently; no ordering is asserted. */
+    /**
+     * Rule 3: many coroutines on `Dispatchers.Default` emit concurrently; no ordering is asserted.
+     *
+     * @throws AssertionError if the sink throws.
+     */
     public suspend fun checkEmitToleratesConcurrentCallers() {
         val sink = createSink()
         val coroutines = 32
@@ -120,13 +142,21 @@ public abstract class TraceSinkContract {
         flush(sink)
     }
 
-    /** [TraceSink.isEnabled] answers for every [TraceLevel] without throwing. */
+    /**
+     * [TraceSink.isEnabled] answers for every [TraceLevel] without throwing.
+     *
+     * @throws AssertionError if the sink throws.
+     */
     public fun checkIsEnabledAnswersForEveryLevel() {
         val sink = createSink()
         for (level in TraceLevel.entries) assertDoesNotThrow("isEnabled($level)") { sink.isEnabled(level) }
     }
 
-    /** [TraceSink.isEnabled] is unchanged by emitting events (no reconfiguration happened). */
+    /**
+     * [TraceSink.isEnabled] is unchanged by emitting events (no reconfiguration happened).
+     *
+     * @throws AssertionError if the answers change.
+     */
     public fun checkIsEnabledIsStable() {
         val sink = createSink()
         val before = TraceLevel.entries.associateWith { sink.isEnabled(it) }

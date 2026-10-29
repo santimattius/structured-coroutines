@@ -25,6 +25,14 @@ import kotlinx.coroutines.flow.update
  *
  * Rules: FLOW_010 (never expose `MutableStateFlow`/`MutableSharedFlow` publicly).
  * See `docs/BEST_PRACTICES_COROUTINES.md` section 9.5.
+ *
+ * Thread-safe: reads, [set] and [update] may be used from any thread.
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
+ * @param T the state type.
+ * @param initial the initial state.
+ * @see EventChannel
  */
 @ExperimentalStructuredCoroutines
 public class StateHolder<T>(initial: T) {
@@ -33,18 +41,23 @@ public class StateHolder<T>(initial: T) {
     /** Read-only view of the state. It is not a [MutableStateFlow] and cannot be cast back to one. */
     public val state: StateFlow<T> = _state.asStateFlow()
 
-    /** Current value. */
+    /** Current value; same as `state.value`. */
     public val value: T get() = _state.value
 
     /**
      * Atomically replaces the value with `transform(current)`. [transform] may be re-invoked if
      * another thread updates concurrently, so it must be side-effect free.
+     *
+     * @param transform pure function from the current value to the new value.
      */
     public fun update(transform: (T) -> T) {
         _state.update(transform)
     }
 
-    /** Replaces the value. Prefer [update] when the new value depends on the current one. */
+    /**
+     * Replaces the value. Prefer [update] when the new value depends on the current one.
+     * Like [MutableStateFlow], equal values are conflated and not re-emitted.
+     */
     public fun set(value: T) {
         _state.value = value
     }

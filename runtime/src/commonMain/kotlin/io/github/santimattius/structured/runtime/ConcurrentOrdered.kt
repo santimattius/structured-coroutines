@@ -32,6 +32,13 @@ import kotlinx.coroutines.flow.flow
  *
  * Pattern: fan-in with server-side ordering (`async` + ordered `await`).
  * Rules: CONCUR_003 (launch all `async` jobs before awaiting). See `docs/BEST_PRACTICES_COROUTINES.md`.
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
+ * @receiver the task factories; snapshotted into a list when this function is called.
+ * @return a cold [Flow] that emits one result per task, in input order. An empty receiver yields
+ * an empty flow.
+ * @see parallel
  */
 @ExperimentalStructuredCoroutines
 public fun <T> Iterable<suspend () -> T>.concurrentOrdered(): Flow<T> {

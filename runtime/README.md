@@ -8,6 +8,11 @@ the toolkit ships the safe version.
 > `@ExperimentalStructuredCoroutines`. The API may change or be removed without notice until the
 > gate is lifted. See [Stability](#stability-and-caveats).
 
+## API reference
+
+Full KDoc-generated API reference (all platforms): <https://santimattius.github.io/structured-coroutines/>.
+Build it locally with `./gradlew :runtime:dokkaGeneratePublicationHtml` (output in `runtime/build/dokka/html`).
+
 ## Installation
 
 Artifacts (group `io.github.santimattius`):

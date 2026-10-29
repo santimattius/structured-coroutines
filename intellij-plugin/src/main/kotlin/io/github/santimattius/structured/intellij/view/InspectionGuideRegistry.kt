@@ -136,7 +136,7 @@ object InspectionGuideRegistry {
             guideUrl = "$BASE_URL#64-test_004--runblocking-instead-of-runtest"
         ),
         DispatchersIOInCommonMainInspection::class.java to GuideEntry(
-            whatToDo = "Inject CoroutineDispatcher from platform code or use expect/actual — Dispatchers.IO is not available in Kotlin/Common on Native/JS.",
+            whatToDo = "Inject CoroutineDispatcher from platform code or use expect/actual — Dispatchers.IO is not part of the common API (JVM and Native only), so it cannot be used from commonMain.",
             guideUrl = "$BASE_URL#111-kmp_001--dispatchersio-in-commonmain"
         ),
         SuspendCoroutineWithoutCancellationInspection::class.java to GuideEntry(

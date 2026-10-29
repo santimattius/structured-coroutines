@@ -28,8 +28,11 @@ import kotlin.concurrent.atomics.ExperimentalAtomicApi
  * assertEquals(1, sink.eventsOf<TraceEvent.Finished>().size)
  * ```
  *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
  * @param maxLevel highest [TraceLevel] reported as enabled by [isEnabled]; levels are cumulative.
  *   Defaults to [TraceLevel.Pool] (every level enabled); `null` disables every level.
+ * @see TraceSinkContract
  */
 @OptIn(ExperimentalAtomicApi::class)
 @ExperimentalStructuredCoroutines
@@ -39,14 +42,21 @@ public class RecordingSink(
 
     private val recorded = AtomicReference<List<TraceEvent>>(emptyList())
 
-    /** A snapshot of the recorded events, oldest first. Later emits do not change it. */
+    /**
+     * A snapshot of the recorded events, oldest first. Later emits do not change it. Each read
+     * returns the current immutable list.
+     */
     public val events: List<TraceEvent>
         get() = recorded.load()
 
-    /** The recorded events that are instances of [T], oldest first. */
+    /**
+     * The recorded events that are instances of [T], oldest first.
+     *
+     * @param T the [TraceEvent] subtype to select, for example [TraceEvent.Finished].
+     */
     public inline fun <reified T : TraceEvent> eventsOf(): List<T> = events.filterIsInstance<T>()
 
-    /** Drops every recorded event. */
+    /** Drops every recorded event. Events emitted concurrently with the call may survive it. */
     public fun clear() {
         recorded.store(emptyList())
     }

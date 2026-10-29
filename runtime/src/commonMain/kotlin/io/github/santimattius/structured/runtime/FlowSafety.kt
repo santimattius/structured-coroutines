@@ -28,6 +28,14 @@ import kotlinx.coroutines.flow.stateIn
  *
  * Rules: FLOW_005 (missing `catch` in a Flow chain).
  * See `docs/BEST_PRACTICES_COROUTINES.md` section 9.6.
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
+ * @receiver the upstream flow to collect.
+ * @param scope the scope in which collection is launched; the returned job is its child.
+ * @param onError invoked with any non-cancellation upstream failure. It is not invoked on cancellation.
+ * @return the [Job] of the launched collection.
+ * @see stateInWhileSubscribed
  */
 @ExperimentalStructuredCoroutines
 public fun <T> Flow<T>.launchInSafely(scope: CoroutineScope, onError: (Throwable) -> Unit): Job =
@@ -51,6 +59,17 @@ public fun <T> Flow<T>.launchInSafely(scope: CoroutineScope, onError: (Throwable
  *
  * Rules: FLOW_006 (`stateIn` with `Eagerly` on a lifecycle scope).
  * See `docs/BEST_PRACTICES_COROUTINES.md` section 9.7.
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
+ * @receiver the upstream flow to share.
+ * @param scope the scope that owns the sharing coroutine; cancelling it stops the [StateFlow] updates.
+ * @param initialValue value exposed before the first upstream emission.
+ * @param stopTimeoutMillis delay, in milliseconds, before upstream is stopped after the last subscriber leaves.
+ * @param replayExpirationMillis delay, in milliseconds, before the replayed value is reset after upstream
+ * stops; [Long.MAX_VALUE] keeps it forever.
+ * @return a [StateFlow] holding the latest upstream value.
+ * @see launchInSafely
  */
 @ExperimentalStructuredCoroutines
 public fun <T> Flow<T>.stateInWhileSubscribed(

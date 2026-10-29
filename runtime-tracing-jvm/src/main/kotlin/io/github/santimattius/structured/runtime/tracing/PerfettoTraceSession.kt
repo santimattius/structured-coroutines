@@ -23,6 +23,11 @@ import java.io.File
  * Sessions are not reusable: after [close] the sink silently drops events. Experimental,
  * diagnostic and opt-in.
  *
+ * Platform availability: JVM only (this artifact is `kotlin("jvm")`). On Android use `AndroidTraceSink`
+ * from `:runtime`.
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
  * Example:
  * ```
  * PerfettoTraceSession.start(File("build/traces")).use { session ->
@@ -30,6 +35,8 @@ import java.io.File
  *     runBlocking { withContext(provider.io + CoroutineName("fetch")) { api.fetch() } }
  * }
  * ```
+ *
+ * @see PerfettoTraceSink
  */
 @ExperimentalStructuredCoroutines
 public class PerfettoTraceSession private constructor(
@@ -60,6 +67,7 @@ public class PerfettoTraceSession private constructor(
         driver.close()
     }
 
+    /** Factory for [PerfettoTraceSession]. */
     public companion object {
         /**
          * Starts a session that writes a new `perfetto-<timestamp>-<n>.perfetto-trace` file in
@@ -67,6 +75,7 @@ public class PerfettoTraceSession private constructor(
          *
          * @param directory where the trace file is created.
          * @param maxLevel highest [TraceLevel] the sink accepts.
+         * @return the started session; the caller must [close] it.
          */
         @JvmOverloads
         public fun start(directory: File, maxLevel: TraceLevel = TraceLevel.Coroutine): PerfettoTraceSession {

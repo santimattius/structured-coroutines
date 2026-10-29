@@ -1345,6 +1345,7 @@ class StructuredCoroutinesPluginFunctionalTest {
         // statements that were themselves calls or blocks, and compared variables by name.
         val sourceCode = """
             import kotlinx.coroutines.*
+            import kotlinx.coroutines.selects.select
             import io.github.santimattius.structured.annotations.StructuredScope
 
             suspend fun awaitIntoVal(@StructuredScope scope: CoroutineScope) {
@@ -1393,6 +1394,43 @@ class StructuredCoroutinesPluginFunctionalTest {
                 e.await()
             }
 
+            suspend fun awaitThroughSmartCastAlias(@StructuredScope scope: CoroutineScope) {
+                val d: Any = scope.async { 1 }
+                if (d is Deferred<*>) {
+                    val e = d
+                    e.await()
+                }
+            }
+
+            suspend fun awaitThroughCastAlias(@StructuredScope scope: CoroutineScope) {
+                val d: Any = scope.async { 1 }
+                val e = d as Deferred<*>
+                e.await()
+            }
+
+            suspend fun awaitThroughNotNullAlias(@StructuredScope scope: CoroutineScope) {
+                val d: Deferred<Int>? = scope.async { 1 }
+                val e = d!!
+                e.await()
+            }
+
+            suspend fun awaitThroughElvisAlias(@StructuredScope scope: CoroutineScope, other: Deferred<Int>) {
+                val d: Deferred<Int>? = scope.async { 1 }
+                val e = d ?: other
+                e.await()
+            }
+
+            suspend fun awaitThroughIfAlias(@StructuredScope scope: CoroutineScope, flag: Boolean, other: Deferred<Int>) {
+                val d = scope.async { 1 }
+                val e = if (flag) d else other
+                e.await()
+            }
+
+            suspend fun awaitInSelect(@StructuredScope scope: CoroutineScope) {
+                val d = scope.async { 1 }
+                select<Int> { d.onAwait { it } }
+            }
+
             fun awaitInsideLaunch(@StructuredScope scope: CoroutineScope) {
                 val d = scope.async { 1 }
                 scope.launch { d.await() }
@@ -1430,6 +1468,12 @@ class StructuredCoroutinesPluginFunctionalTest {
                 val other = scope.async { 2 }
                 other.await()
             }
+
+            suspend fun mentionedOnlyInsideAnotherAsync(@StructuredScope scope: CoroutineScope) {
+                val d = scope.async { 1 }
+                val other = scope.async { d.cancel(); 2 }
+                other.await()
+            }
         """.trimIndent()
 
         val projectDir = createTestProject(sourceCode)
@@ -1440,7 +1484,7 @@ class StructuredCoroutinesPluginFunctionalTest {
             .map { it.groupValues[1].toInt() }
             .toSet()
         assertEquals(
-            setOf(5, 9, 14),
+            setOf(5, 9, 14, 20),
             reportedLines,
             "Expected UNUSED_DEFERRED exactly on the unawaited `d` in each function but got:\n$output"
         )

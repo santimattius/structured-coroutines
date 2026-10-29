@@ -12,6 +12,9 @@ import kotlin.time.Duration
  * `Dispatchers.Unconfined` on `yield()`) leaves dangling [TraceEvent.Queued] events, so [pending]
  * can overcount.
  *
+ * Instances are produced by [StatsSink.metrics]; the constructor is internal.
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
  * Example:
  * ```
  * val io = stats.metrics("io")

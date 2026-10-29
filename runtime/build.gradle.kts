@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.maven.publish.vanniktech)
+    alias(libs.plugins.dokka)
 }
 
 // :runtime versions independently on its own 0.x line, decoupled from the toolkit's
@@ -105,4 +106,29 @@ mavenPublishing {
         artifactId = "structured-coroutines-runtime",
         version = project.version.toString()
     )
+}
+
+// API reference (published to GitHub Pages by .github/workflows/docs-api.yml).
+// Output: runtime/build/dokka/html (task: dokkaGeneratePublicationHtml).
+dokka {
+    moduleName.set("structured-coroutines-runtime")
+
+    dokkaSourceSets.configureEach {
+        includes.from("Module.md")
+        // Missing KDoc must never fail the docs build; undocumented API is only reported.
+        reportUndocumented.set(false)
+        suppressGeneratedFiles.set(true)
+        jdkVersion.set(17)
+
+        sourceLink {
+            localDirectory.set(rootDir)
+            remoteUrl("https://github.com/santimattius/structured-coroutines/blob/main/")
+            remoteLineSuffix.set("#L")
+        }
+
+        externalDocumentationLinks.register("kotlinx-coroutines") {
+            url("https://kotlinlang.org/api/kotlinx.coroutines/")
+            packageListUrl("https://kotlinlang.org/api/kotlinx.coroutines/package-list")
+        }
+    }
 }

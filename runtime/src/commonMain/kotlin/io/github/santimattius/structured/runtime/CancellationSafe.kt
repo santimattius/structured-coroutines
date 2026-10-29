@@ -17,8 +17,19 @@ import kotlin.coroutines.cancellation.CancellationException
  *     .getOrElse { fallbackUser }
  * ```
  *
+ * The function is `inline`, so [block] may contain non-local returns and suspend calls when
+ * invoked from a suspend context. It is the safe replacement for [runCatching] in suspending code.
+ *
  * Rule: CANCEL_003 (do not catch `CancellationException` without rethrowing).
  * See `docs/BEST_PRACTICES_COROUTINES.md`.
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
+ * @param block the computation to run.
+ * @return [Result.success] with the value of [block], or [Result.failure] with any non-cancellation
+ * [Throwable] it threw.
+ * @throws CancellationException if [block] throws one (rethrown unchanged).
+ * @see withCleanup
  */
 @ExperimentalStructuredCoroutines
 public inline fun <T> runCatchingCancellable(block: () -> T): Result<T> =
@@ -41,6 +52,14 @@ public inline fun <T> runCatchingCancellable(block: () -> T): Result<T> =
  *
  * Rule: CANCEL_003 (do not catch `CancellationException` without rethrowing).
  * See `docs/BEST_PRACTICES_COROUTINES.md`.
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
+ * @receiver the object passed to [block] as `this`.
+ * @param block the computation to run with the receiver as `this`.
+ * @return [Result.success] with the value of [block], or [Result.failure] with any non-cancellation
+ * [Throwable] it threw.
+ * @throws CancellationException if [block] throws one (rethrown unchanged).
  */
 @ExperimentalStructuredCoroutines
 public inline fun <T, R> T.runCatchingCancellable(block: T.() -> R): Result<R> =
@@ -68,8 +87,20 @@ public inline fun <T, R> T.runCatchingCancellable(block: T.() -> R): Result<R> =
  * }
  * ```
  *
+ * Cancellation of [block] is not swallowed: after [cleanup] has run, the original
+ * [CancellationException] is rethrown like any other exception from [block].
+ *
  * Rule: CANCEL_004 (cleanup in `finally` that suspends must use `NonCancellable`).
  * See `docs/BEST_PRACTICES_COROUTINES.md`.
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
+ * @param cleanup suspending cleanup, always executed in a [NonCancellable] context.
+ * @param block the main work.
+ * @return the value returned by [block].
+ * @throws Throwable whatever [block] threw (including [CancellationException]), or the exception
+ * from [cleanup] when [block] succeeded.
+ * @see runCatchingCancellable
  */
 @ExperimentalStructuredCoroutines
 public suspend fun <T> withCleanup(

@@ -26,17 +26,30 @@ import kotlinx.coroutines.flow.receiveAsFlow
  * Rules: FLOW_011 (no replay-0 SharedFlow for one-shot events).
  * See `docs/BEST_PRACTICES_COROUTINES.md` section 9.11.
  *
+ * Requires opting in to [ExperimentalStructuredCoroutines]. Thread-safe: [send] and [trySend] may be
+ * called from any thread or coroutine.
+ *
+ * @param T the event type.
  * @param capacity buffer capacity, [Channel.BUFFERED] by default. When the buffer is full [send]
  * suspends and [trySend] returns `false`; events are never silently dropped.
+ * @see StateHolder
  */
 @ExperimentalStructuredCoroutines
 public class EventChannel<T>(capacity: Int = Channel.BUFFERED) {
     private val channel = Channel<T>(capacity)
 
-    /** Events as a cold-looking flow; each event is received by exactly one collector. */
+    /**
+     * Events as a flow backed by [receiveAsFlow]; each event is received by exactly one collector.
+     * Cancelling a collector does not close the channel.
+     */
     public val events: Flow<T> = channel.receiveAsFlow()
 
-    /** Sends [event], suspending while the buffer is full. Fails if the channel is closed. */
+    /**
+     * Sends [event], suspending while the buffer is full.
+     *
+     * @throws kotlinx.coroutines.channels.ClosedSendChannelException if the channel was closed with [close].
+     * @throws kotlin.coroutines.cancellation.CancellationException if the calling coroutine is cancelled while suspended.
+     */
     public suspend fun send(event: T) {
         channel.send(event)
     }

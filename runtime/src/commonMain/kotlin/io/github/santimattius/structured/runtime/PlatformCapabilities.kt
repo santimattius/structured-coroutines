@@ -19,6 +19,11 @@ package io.github.santimattius.structured.runtime
  *   [platformTraceSink]). Backends in separate artifacts, such as `:runtime-tracing-jvm`, do not count.
  * @property counters that default sink publishes `pending`/`running` counter tracks.
  * @property flows that default sink draws span links from `parentSpanId`.
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ * Obtain the current target's value from [platformCapabilities].
+ *
+ * @constructor Creates a capability descriptor; mainly useful for custom platform backends and tests.
  */
 @ExperimentalStructuredCoroutines
 public class TraceCapabilities(
@@ -55,6 +60,14 @@ public class TraceCapabilities(
  * ```
  * val canShowThreads = platformCapabilities.threadIdentity
  * ```
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
+ * Platform availability (`expect`/`actual`): declared for every target. Values: Android reports
+ * thread identity, system-trace integration, and counters from API 29; JVM reports thread identity
+ * only; JS, Native and Wasm targets report no capability.
+ *
+ * @see platformTraceSink
  */
 @ExperimentalStructuredCoroutines
 public expect val platformCapabilities: TraceCapabilities
@@ -68,6 +81,16 @@ public expect val platformCapabilities: TraceCapabilities
  * val sink = platformTraceSink() ?: LoggingSink(log = ::println)
  * val dispatchers = DefaultDispatcherProvider.traced(sink)
  * ```
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
+ * Platform availability (`expect`/`actual`): returns an `AndroidTraceSink` on Android and `null` on
+ * every other target (JVM, JS, Native, Wasm). On the JVM use the separate `:runtime-tracing-jvm`
+ * artifact for Perfetto output.
+ *
+ * @return a new sink for the target's system tracer, or `null` when none ships with `:runtime`.
+ * @see platformCapabilities
+ * @see traced
  */
 @ExperimentalStructuredCoroutines
 public expect fun platformTraceSink(): TraceSink?

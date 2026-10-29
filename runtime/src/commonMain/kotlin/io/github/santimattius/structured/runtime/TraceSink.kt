@@ -16,15 +16,31 @@ package io.github.santimattius.structured.runtime
  * ```
  * val sink = TraceSink { event -> println(event) }
  * ```
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
+ * @see CompositeSink
+ * @see RingBufferSink
+ * @see StatsSink
+ * @see LoggingSink
  */
 @ExperimentalStructuredCoroutines
 public fun interface TraceSink {
-    /** Receives one [event]. See the contract in the type documentation. */
+    /**
+     * Receives one [event]. See the contract in the type documentation.
+     *
+     * @param event the observation to record.
+     */
     public fun emit(event: TraceEvent)
 
-    /** Whether this sink wants events of [level]. Defaults to true for every level. */
+    /**
+     * Whether this sink wants events of [level]. Defaults to true for every level.
+     *
+     * @param level the detail level about to be produced.
+     */
     public fun isEnabled(level: TraceLevel): Boolean = true
 
+    /** Constants for [TraceSink]. */
     public companion object {
         /** A sink that is disabled for every level and ignores every event. */
         public val None: TraceSink = object : TraceSink {
@@ -44,6 +60,13 @@ public fun interface TraceSink {
  * ```
  * val sink = CompositeSink(RingBufferSink(256), LoggingSink(log = ::println))
  * ```
+ *
+ * The list is copied at construction, so later changes to it have no effect. Events are delivered to
+ * the sinks in list order on the emitting thread.
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
+ * @param sinks the sinks to fan out to.
  */
 @ExperimentalStructuredCoroutines
 public class CompositeSink(sinks: List<TraceSink>) : TraceSink {
@@ -70,6 +93,10 @@ public class CompositeSink(sinks: List<TraceSink>) : TraceSink {
         }
 }
 
-/** Creates a [CompositeSink] over [sinks]. */
+/**
+ * Creates a [CompositeSink] over [sinks].
+ *
+ * @param sinks the sinks to fan out to.
+ */
 @ExperimentalStructuredCoroutines
 public fun CompositeSink(vararg sinks: TraceSink): CompositeSink = CompositeSink(sinks.toList())

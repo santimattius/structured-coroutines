@@ -1,0 +1,35 @@
+name: Notify docs site
+
+on:
+  release:
+    types: [released]
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    name: Dispatch toolkit-release to docs repo
+    runs-on: ubuntu-latest
+    if: ${{ !github.event.release.prerelease }}
+    steps:
+      - name: Validate release tag
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          if ! [[ "$TAG" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Tag '$TAG' is not a stable X.Y.Z version; skipping."
+            exit 1
+          fi
+
+      - name: Dispatch to structured-coroutines-docs
+        env:
+          GH_TOKEN: ${{ secrets.DOCS_REPO_TOKEN }}
+          TAG: ${{ github.event.release.tag_name }}
+          URL: ${{ github.event.release.html_url }}
+        run: |
+          gh api repos/santimattius/structured-coroutines-docs/dispatches \
+            --method POST \
+            -f event_type=toolkit-release \
+            -f "client_payload[version]=${TAG#v}" \
+            -f "client_payload[url]=$URL"

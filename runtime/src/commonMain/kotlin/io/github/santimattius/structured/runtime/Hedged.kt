@@ -48,6 +48,19 @@ private sealed interface HedgeEvent<out T> {
  * Pattern: hedged requests (redundant identical requests, first success wins, the rest are
  * cancelled by structured concurrency) to mitigate slow or flaky dependencies.
  * Not tied to a lint rule: it is a server-side pattern, not a best-practice diagnostic.
+ *
+ * Requires opting in to [ExperimentalStructuredCoroutines].
+ *
+ * @param delay time to wait for the latest attempt before starting the next one; must not be negative.
+ * @param maxAttempts maximum number of attempts including the primary one; must be positive.
+ * @param block the request, receiving the zero-based attempt index. It must be safe to run concurrently
+ * with itself.
+ * @return the value of the first attempt that completes successfully.
+ * @throws IllegalArgumentException if [maxAttempts] is not positive or [delay] is negative.
+ * @throws Throwable the first failure when every attempt fails, with the others suppressed.
+ * @throws CancellationException if the caller is cancelled.
+ * @see parallel
+ * @see withTimeoutResult
  */
 @ExperimentalStructuredCoroutines
 public suspend fun <T> hedged(

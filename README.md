@@ -105,7 +105,7 @@ Per-module rule lists and configuration examples: [detekt-rules](detekt-rules/RE
 
 ## 📦 Installation
 
-> **Pre-release:** `1.2.0-ALPHA03` adds `EXCEPT_004` (`MisplacedTryCatchInScope`) and several false-positive fixes. The snippets below use the latest stable release (`1.1.1`).
+> **Release:** `1.2.0` adds `EXCEPT_004` (`MisplacedTryCatchInScope`), real `"disabled"`/`"error"`/`"warning"` severity handling and several false-positive fixes. See the [CHANGELOG](CHANGELOG.md).
 
 ### Compiler Plugin
 
