@@ -90,9 +90,19 @@ class LatencyHistogramTest {
         val s = h.snapshot()
         assertEquals((1L shl 11).nanoseconds, s.percentile(0.5))
         assertEquals((1L shl 11).nanoseconds, s.percentile(0.9))
-        assertEquals((1L shl 20).nanoseconds, s.percentile(0.95))
-        assertEquals((1L shl 20).nanoseconds, s.percentile(1.0))
+        // The top bucket's bound (2^20) would exceed the largest recorded value, so max wins.
+        assertEquals(1_000_000L.nanoseconds, s.percentile(0.95))
+        assertEquals(1_000_000L.nanoseconds, s.percentile(1.0))
         assertEquals((1L shl 11).nanoseconds, s.percentile(0.0))
+    }
+
+    @Test
+    fun percentileNeverExceedsTheLargestRecordedValue() {
+        val h = LatencyHistogram()
+        h.record(1_100) // bucket bound is 2048, but nothing above 1100 was ever observed
+        val s = h.snapshot()
+        assertEquals(1_100L.nanoseconds, s.percentile(0.5))
+        assertEquals(1_100L.nanoseconds, s.percentile(1.0))
     }
 
     @Test
