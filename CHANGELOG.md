@@ -8,6 +8,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+### Fixed
+
+- **Detekt false positives (#155)**:
+  - **CANCEL_003** `CancellationExceptionSwallowed` now accepts `ensureActive()` (plain or `currentCoroutineContext().ensureActive()`) in the catch block, matching the compiler checker.
+  - **CANCEL_001** `LoopWithoutYield` now treats `while (currentCoroutineContext().isActive)` and `while (coroutineContext.isActive)` as cooperation points; a bare `while (isActive)` is accepted only inside a scope-builder lambda.
+  - **RUNBLOCK_001** `RedundantLaunchInCoroutineScope` only reports when the single `launch` is the last statement of the scope; a `launch` followed by other work runs concurrently and is no longer reported.
+  - **SCOPE_002 / SCOPE_003** `UnusedDeferred` and `ExternalScopeLaunch` ignore `async()`/`launch()` calls with no arguments (e.g. Lettuce `connection.async()`), since kotlinx builders always take a block.
+  - `CoroutineDetektUtils.isInsideScopeBuilderBlock` now recognizes lambdas passed as trailing arguments (it looked at the wrong PSI parent).
+
 ---
 
 ## [1.2.0] — 2026-10-27
