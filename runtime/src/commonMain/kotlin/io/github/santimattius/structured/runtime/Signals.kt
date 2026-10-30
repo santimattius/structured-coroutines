@@ -180,7 +180,10 @@ public sealed interface PoolSignal {
  *   blocking call; see `DISPATCH_001` and `DISPATCH_002` in `docs/BEST_PRACTICES_COROUTINES.md`.
  *
  * These are heuristics, not proof. The queue-delay p95 is a histogram bucket upper bound (up to 2x
- * the real value). This function only looks at one snapshot; to detect trends over time use
+ * the real value), and queue delay is only recorded when a block STARTS. If every worker is blocked
+ * and nothing starts, the p95 stays at its old value and [PoolSignal.StarvationSuspected] may not
+ * fire; the trend signals ([PoolSignal.BacklogGrowing], [PoolSignal.PoolSaturated]) from
+ * `List<TraceEvent.PoolSample>.signals` do catch that case. This function only looks at one snapshot; to detect trends over time use
  * `List<TraceEvent.PoolSample>.signals`, fed by [PoolSampler].
  *
  * Example:

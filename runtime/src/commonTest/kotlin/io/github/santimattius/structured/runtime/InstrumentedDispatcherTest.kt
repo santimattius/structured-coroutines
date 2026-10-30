@@ -14,6 +14,7 @@ import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import kotlin.coroutines.CoroutineContext
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -147,7 +148,7 @@ class InstrumentedDispatcherTest {
         assertEquals(emptyList(), p.stats())
         assertEquals("io", (p.io as InstrumentedDispatcher).label)
         assertEquals("default", (p.default as InstrumentedDispatcher).label)
-        assertEquals("unconfined", (p.unconfined as InstrumentedDispatcher).label)
+        assertSame(base.unconfined, p.unconfined)
         assertEquals(0, base.mainReads)
     }
 
@@ -168,8 +169,19 @@ class InstrumentedDispatcherTest {
         val base = MainlessProvider()
         val p = base.instrumented()
         p.io
-        p.unconfined
-        assertEquals(setOf("io", "unconfined"), p.stats().map { it.label }.toSet())
+        p.default
+        assertEquals(setOf("io", "default"), p.stats().map { it.label }.toSet())
+    }
+
+    @Test
+    fun unconfined_isNeverWrapped_soYieldCannotLeaveDanglingQueuedCounts() = runTest {
+        val p = MainlessProvider().instrumented()
+
+        // Unconfined never queues; a wrapper would count a Queued on yield() that never starts.
+        withContext(p.unconfined) { repeat(3) { yield() } }
+
+        assertSame(Dispatchers.Unconfined, p.unconfined)
+        assertEquals(emptyList(), p.stats())
     }
 
     @Test
