@@ -124,4 +124,38 @@ class RedundantLaunchInCoroutineScopeRuleTest {
         val findings = rule.compileAndLint(code)
         assertThat(findings).isEmpty()
     }
+
+    @Test
+    fun `does not report launch followed by other work in coroutineScope (issue 155)`() {
+        val code = """
+            import kotlinx.coroutines.coroutineScope
+            import kotlinx.coroutines.launch
+
+            suspend fun startUp(refresh: suspend () -> Unit, bootstrap: suspend () -> String): String =
+                coroutineScope {
+                    launch { refresh() }
+                    bootstrap()
+                }
+        """.trimIndent()
+
+        val findings = rule.compileAndLint(code)
+        assertThat(findings).isEmpty()
+    }
+
+    @Test
+    fun `still reports launch as the last statement of coroutineScope (issue 155)`() {
+        val code = """
+            import kotlinx.coroutines.coroutineScope
+            import kotlinx.coroutines.launch
+
+            suspend fun startUpRedundant(refresh: suspend () -> Unit) {
+                coroutineScope {
+                    launch { refresh() }
+                }
+            }
+        """.trimIndent()
+
+        val findings = rule.compileAndLint(code)
+        assertThat(findings).hasSize(1)
+    }
 }

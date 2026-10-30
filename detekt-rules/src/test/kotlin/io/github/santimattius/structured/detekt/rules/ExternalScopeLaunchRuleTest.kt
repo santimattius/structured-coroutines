@@ -84,4 +84,32 @@ class ExternalScopeLaunchRuleTest {
         // viewModelScope is in the allowed list
         assertThat(findings).isEmpty()
     }
+
+    @Test
+    fun `does not report non-coroutine async method without arguments (issue 155)`() {
+        val code = """
+            import java.util.concurrent.CompletionStage
+            import kotlinx.coroutines.future.await
+
+            interface AsyncCommands {
+                fun get(key: String): CompletionStage<String?>
+            }
+
+            interface Connection {
+                fun async(): AsyncCommands
+            }
+
+            class KeyValueStore(private val connection: Connection) {
+                suspend fun readInline(key: String): String? = connection.async().get(key).await()
+
+                suspend fun readAssigned(key: String): String? {
+                    val commands = connection.async()
+                    return commands.get(key).await()
+                }
+            }
+        """.trimIndent()
+
+        val findings = rule.compileAndLint(code)
+        assertThat(findings).isEmpty()
+    }
 }
