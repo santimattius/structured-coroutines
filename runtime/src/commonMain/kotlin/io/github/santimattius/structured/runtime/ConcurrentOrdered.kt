@@ -4,6 +4,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 
 /**
  * Server-side ordered fan-in: when the returned flow is collected, launches every task
@@ -19,6 +21,10 @@ import kotlinx.coroutines.flow.flow
  * the tasks again. Concurrency starts at collection, not at construction. Fail-fast: the first
  * task failure cancels the remaining tasks and is rethrown to the collector; completing or
  * cancelling the collection early cancels pending tasks.
+ *
+ * [concurrency] limits how many tasks run at once (default: unlimited), like in [parallel]; it
+ * must be greater than zero. Tasks acquire their permit in input order, so with a limit the
+ * earliest tasks start first and results are still emitted in input order.
  *
  * When the collector's context has a [TraceSpan], the tasks run in one child span named
  * "concurrentOrdered"; otherwise nothing changes.
@@ -36,17 +42,21 @@ import kotlinx.coroutines.flow.flow
  * Requires opting in to [ExperimentalStructuredCoroutines].
  *
  * @receiver the task factories; snapshotted into a list when this function is called.
+ * @param concurrency maximum number of tasks running at once; must be greater than zero.
  * @return a cold [Flow] that emits one result per task, in input order. An empty receiver yields
  * an empty flow.
+ * @throws IllegalArgumentException if [concurrency] is not positive (thrown when this function is called).
  * @see parallel
  */
 @ExperimentalStructuredCoroutines
-public fun <T> Iterable<suspend () -> T>.concurrentOrdered(): Flow<T> {
+public fun <T> Iterable<suspend () -> T>.concurrentOrdered(concurrency: Int = Int.MAX_VALUE): Flow<T> {
+    require(concurrency > 0) { "concurrency must be > 0 but was $concurrency" }
     val tasks = toList()
     return flow {
         val span = childSpanContext("concurrentOrdered")
         coroutineScope {
-            val deferred = tasks.map { task -> async(span) { task() } }
+            val permits = Semaphore(concurrency)
+            val deferred = tasks.map { task -> async(span) { permits.withPermit { task() } } }
             for (d in deferred) emit(d.await())
         }
     }

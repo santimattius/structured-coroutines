@@ -11,7 +11,8 @@ public final class io/github/santimattius/structured/runtime/CompositeSink : io/
 }
 
 public final class io/github/santimattius/structured/runtime/ConcurrentOrderedKt {
-	public static final fun concurrentOrdered (Ljava/lang/Iterable;)Lkotlinx/coroutines/flow/Flow;
+	public static final fun concurrentOrdered (Ljava/lang/Iterable;I)Lkotlinx/coroutines/flow/Flow;
+	public static synthetic fun concurrentOrdered$default (Ljava/lang/Iterable;IILjava/lang/Object;)Lkotlinx/coroutines/flow/Flow;
 }
 
 public final class io/github/santimattius/structured/runtime/DefaultDispatcherProvider : io/github/santimattius/structured/runtime/DispatcherProvider {

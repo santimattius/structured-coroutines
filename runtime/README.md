@@ -152,7 +152,7 @@ val profile = hedged(hedgeAfter = 50.milliseconds, maxAttempts = 3) { attempt ->
 }
 ```
 
-- `parallel` / `supervisedAll`: `concurrency` defaults to unlimited and must be `> 0`.
+- `parallel` / `supervisedAll` / `concurrentOrdered`: `concurrency` defaults to unlimited and must be `> 0`.
 - `concurrentOrdered`: starts every task at collection time, emits results in input order as each
   turn is ready, and is fail-fast.
 - `hedged`: `maxAttempts` defaults to `2`; `hedgeAfter` must not be negative. Failures for which `shouldHedge` returns `false` are rethrown immediately. Keep attempts cancellable and idempotent. A failing attempt never wins,
