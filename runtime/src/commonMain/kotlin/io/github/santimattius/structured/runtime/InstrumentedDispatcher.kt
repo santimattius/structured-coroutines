@@ -128,8 +128,10 @@ public class InstrumentedDispatcher internal constructor(
 }
 
 /**
- * A [DispatcherProvider] whose dispatchers are [InstrumentedDispatcher]s, created by
- * [instrumented].
+ * A [DispatcherProvider] whose `main`, `io` and `default` dispatchers are [InstrumentedDispatcher]s,
+ * created by [instrumented]. `unconfined` is returned unwrapped: it never queues work, so its
+ * counters would always read zero, and `yield()` on a wrapped one would count a dispatch that never
+ * starts.
  *
  * Diagnostic tool, opt-in, not meant for production. Wrapping `Dispatchers.IO` loses its
  * elasticity and `limitedParallelism` hints.
@@ -148,19 +150,18 @@ public class InstrumentedDispatcherProvider internal constructor(
     private val mainLazy = lazy { InstrumentedDispatcher(base.main, "main") }
     private val ioLazy = lazy { InstrumentedDispatcher(base.io, "io") }
     private val defaultLazy = lazy { InstrumentedDispatcher(base.default, "default") }
-    private val unconfinedLazy = lazy { InstrumentedDispatcher(base.unconfined, "unconfined") }
 
     override val main: CoroutineDispatcher get() = mainLazy.value
     override val io: CoroutineDispatcher get() = ioLazy.value
     override val default: CoroutineDispatcher get() = defaultLazy.value
-    override val unconfined: CoroutineDispatcher get() = unconfinedLazy.value
+    override val unconfined: CoroutineDispatcher get() = base.unconfined
 
     private fun materialized(): List<InstrumentedDispatcher> =
-        listOf(mainLazy, ioLazy, defaultLazy, unconfinedLazy).filter { it.isInitialized() }.map { it.value }
+        listOf(mainLazy, ioLazy, defaultLazy).filter { it.isInitialized() }.map { it.value }
 
     /**
-     * Stats of the dispatchers that have been read at least once, in `main`, `io`, `default`,
-     * `unconfined` order. Dispatchers never accessed are omitted.
+     * Stats of the dispatchers that have been read at least once, in `main`, `io`, `default`
+     * order. Dispatchers never accessed are omitted.
      */
     public fun stats(): List<DispatcherStats> = materialized().map { it.snapshot() }
 
@@ -169,8 +170,8 @@ public class InstrumentedDispatcherProvider internal constructor(
 }
 
 /**
- * Wraps this provider's dispatchers in [InstrumentedDispatcher]s labeled `main`, `io`,
- * `default` and `unconfined`. Wrapping is lazy: nothing (including `Dispatchers.Main`) is read
+ * Wraps this provider's `main`, `io` and `default` dispatchers in [InstrumentedDispatcher]s with
+ * those labels; `unconfined` is returned as is (see [InstrumentedDispatcherProvider]). Wrapping is lazy: nothing (including `Dispatchers.Main`) is read
  * until the corresponding property is accessed.
  *
  * Diagnostic tool, opt-in, not meant for production. Wrapping `Dispatchers.IO` loses its
@@ -189,7 +190,7 @@ public class InstrumentedDispatcherProvider internal constructor(
  * Requires opting in to [ExperimentalStructuredCoroutines].
  *
  * @receiver the provider whose dispatchers are wrapped.
- * @return a provider whose four dispatchers are [InstrumentedDispatcher]s.
+ * @return a provider whose `main`, `io` and `default` dispatchers are [InstrumentedDispatcher]s.
  * @see traced
  */
 @ExperimentalStructuredCoroutines
