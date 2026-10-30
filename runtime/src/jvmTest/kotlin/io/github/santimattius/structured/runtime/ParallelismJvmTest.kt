@@ -19,6 +19,18 @@ private inline fun <T> withIoProperty(value: String?, block: () -> T): T {
     }
 }
 
+private const val CORE_POOL_PROPERTY = "kotlinx.coroutines.scheduler.core.pool.size"
+
+private inline fun <T> withCorePoolProperty(value: String?, block: () -> T): T {
+    val previous = System.getProperty(CORE_POOL_PROPERTY)
+    try {
+        if (value == null) System.clearProperty(CORE_POOL_PROPERTY) else System.setProperty(CORE_POOL_PROPERTY, value)
+        return block()
+    } finally {
+        if (previous == null) System.clearProperty(CORE_POOL_PROPERTY) else System.setProperty(CORE_POOL_PROPERTY, previous)
+    }
+}
+
 class ParallelismJvmTest {
 
     private val cpus = Runtime.getRuntime().availableProcessors()
@@ -26,6 +38,19 @@ class ParallelismJvmTest {
     @Test
     fun defaultParallelismIsAtLeastTwoAndCpuCount() {
         assertEquals(maxOf(2, cpus), inferredDefaultParallelism())
+    }
+
+    @Test
+    fun defaultParallelismHonorsCorePoolSizeSystemProperty() {
+        withCorePoolProperty("3") { assertEquals(3, inferredDefaultParallelism()) }
+        withCorePoolProperty("1") { assertEquals(1, inferredDefaultParallelism()) }
+    }
+
+    @Test
+    fun defaultParallelismFallsBackOnInvalidOrNonPositiveCorePoolSize() {
+        for (bad in listOf("abc", "", "0", "-3", "1.5", " ")) {
+            withCorePoolProperty(bad) { assertEquals(maxOf(2, cpus), inferredDefaultParallelism(), "value '$bad'") }
+        }
     }
 
     @Test

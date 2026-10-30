@@ -54,9 +54,9 @@ public class HistogramSnapshot internal constructor(
 
     /**
      * Estimates the value at quantile [p] (0.0 to 1.0) as the UPPER BOUND of the bucket that holds
-     * it. Because buckets double in width, the estimate can be up to 2x the real value. When the
-     * quantile falls in the overflow bucket the exact [max] is returned instead. An empty
-     * histogram returns [Duration.ZERO].
+     * it. Because buckets double in width, the estimate can be up to 2x the real value, but it never
+     * exceeds [max], the largest value recorded. When the quantile falls in the overflow bucket the
+     * exact [max] is returned instead. An empty histogram returns [Duration.ZERO].
      *
      * Example:
      * ```
@@ -64,8 +64,8 @@ public class HistogramSnapshot internal constructor(
      * ```
      *
      * @param p quantile to estimate, between 0.0 and 1.0 inclusive.
-     * @return the upper bound of the bucket containing the quantile, [max] for the overflow bucket,
-     * or [Duration.ZERO] when [count] is zero.
+     * @return the upper bound of the bucket containing the quantile (capped at [max]), [max] for the
+     * overflow bucket, or [Duration.ZERO] when [count] is zero.
      * @throws IllegalArgumentException if [p] is not within 0.0..1.0.
      */
     public fun percentile(p: Double): Duration {
@@ -75,7 +75,7 @@ public class HistogramSnapshot internal constructor(
         var cumulative = 0L
         for (i in bucketCounts.indices) {
             cumulative += bucketCounts[i]
-            if (cumulative >= rank) return if (i < UPPER_BOUNDS.size) UPPER_BOUNDS[i] else max
+            if (cumulative >= rank) return if (i < UPPER_BOUNDS.size) minOf(UPPER_BOUNDS[i], max) else max
         }
         return max
     }
