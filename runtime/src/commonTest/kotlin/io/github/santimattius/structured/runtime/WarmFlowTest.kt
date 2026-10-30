@@ -1,5 +1,6 @@
 package io.github.santimattius.structured.runtime
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -192,5 +193,34 @@ class WarmFlowTest {
 
         assertSame(boom, first.await().exceptionOrNull())
         assertSame(boom, runCatching { warm.toList() }.exceptionOrNull())
+    }
+
+    @Test
+    fun warmIn_scopeCancelled_collectorSeesAFailureThatIsNotACancellation() = runTest {
+        val scope = warmScope()
+        val warm = flow { emit(1); delay(10_000); emit(2) }.warmIn(scope)
+
+        val collecting = async { runCatching { warm.toList() } }
+        advanceTimeBy(10)
+        scope.cancel()
+        advanceUntilIdle()
+
+        val error = collecting.await().exceptionOrNull()
+        // A CancellationException escaping a collector that was not cancelled would end its
+        // coroutine silently instead of surfacing the failure.
+        assertFalse(error is CancellationException, "got $error")
+        assertTrue(error?.cause is CancellationException, "the original cancellation is kept as cause")
+    }
+
+    @Test
+    fun warmIn_upstreamThrowsCancellation_collectorSeesAFailureThatIsNotACancellation() = runTest {
+        val scope = warmScope()
+        val own = CancellationException("upstream gave up")
+        val warm = flow<Int> { throw own }.warmIn(scope)
+
+        val error = async { runCatching { warm.toList() } }.also { advanceUntilIdle() }.await().exceptionOrNull()
+
+        assertFalse(error is CancellationException, "got $error")
+        assertSame(own, error?.cause)
     }
 }

@@ -327,7 +327,7 @@ class CounterViewModel {
 class LoginViewModel {
     private val _events = EventChannel<LoginEvent>()
     val events: Flow<LoginEvent> = _events.events
-    fun onLoggedIn() { _events.trySend(LoginEvent.NavigateHome) }
+    suspend fun onLoggedIn() { _events.send(LoginEvent.NavigateHome) }
 }
 ```
 
@@ -435,8 +435,13 @@ can write a Perfetto file with `:runtime-tracing-jvm`).
   production: wrapping `Dispatchers.IO` hides its elasticity and `limitedParallelism` hints.
 - **`warmIn` keeps every emitted value in memory** and never restarts upstream, even when all
   collectors leave. Use it for small, finite flows (for example one RPC).
+  If `appScope` is cancelled, collectors fail with an `IllegalStateException` (cause: the
+  `CancellationException`), never with a bare cancellation.
 - **`EventChannel` is single-consumer.** Each event goes to exactly one collector; with several
   collectors events are distributed, not broadcast. Use a `MutableSharedFlow` when every subscriber
   must see every event.
+- **`EventChannel` is at-most-once.** `trySend` returns `false` when the buffer is full, and an event
+  already handed to a collector that is cancelled before processing it is lost. Prefer `send`, and
+  pass `onUndeliveredElement` if you need to observe lost events.
 - **`DefaultDispatcherProvider.main`** is resolved on each access, so reading it on a platform
   without a main dispatcher (plain JVM) fails.

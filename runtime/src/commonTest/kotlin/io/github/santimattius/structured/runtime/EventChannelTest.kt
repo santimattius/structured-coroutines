@@ -2,11 +2,13 @@ package io.github.santimattius.structured.runtime
 
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -97,5 +99,19 @@ class EventChannelTest {
 
         assertEquals(listOf(1, 2, 3), channel.events.take(3).toList())
         third.await()
+    }
+
+    @Test
+    fun onUndeliveredElement_isInvokedWhenTheCollectorIsCancelledBeforeReceivingTheEvent() = runTest {
+        val undelivered = mutableListOf<Int>()
+        val channel = EventChannel<Int>(onUndeliveredElement = { undelivered += it })
+
+        val collector = launch { channel.events.collect { } }
+        runCurrent() // the collector is now suspended in receive
+        channel.trySend(1) // resumes the receiver, but it has not run yet
+        collector.cancel()
+        advanceUntilIdle()
+
+        assertEquals(listOf(1), undelivered)
     }
 }
