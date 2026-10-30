@@ -150,7 +150,7 @@ object CoroutineDetektUtils {
                 return true
             }
             val lambdaArg = lambda.parent as? KtLambdaArgument
-            val callFromArg = lambdaArg?.parent?.parent as? KtCallExpression
+            val callFromArg = lambdaArg?.parent as? KtCallExpression
             if (callFromArg != null && callFromArg.calleeExpression?.text in SCOPE_BUILDER_NAMES) {
                 return true
             }

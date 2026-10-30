@@ -19,8 +19,10 @@ import io.gitlab.arturbosch.detekt.api.Entity
 import io.gitlab.arturbosch.detekt.api.Issue
 import io.gitlab.arturbosch.detekt.api.Rule
 import io.gitlab.arturbosch.detekt.api.Severity
+import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCatchClause
 import org.jetbrains.kotlin.psi.KtTryExpression
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 
 /**
  * Detekt rule that detects catch(Exception) or catch(Throwable) that may swallow
@@ -119,7 +121,10 @@ class CancellationExceptionSwallowedRule(config: Config = Config.empty) : Rule(c
     }
 
     private fun catchBodyRethrowsCancellationException(catchClause: KtCatchClause): Boolean {
-        val body = catchClause.catchBody?.text ?: return false
+        val catchBody = catchClause.catchBody ?: return false
+        // ensureActive() rethrows the CancellationException when the coroutine was cancelled
+        if (catchBody.collectDescendantsOfType<KtCallExpression>().any { it.calleeExpression?.text == "ensureActive" }) return true
+        val body = catchBody.text
         if (body.contains("throw") && body.contains("CancellationException")) return true
         val paramName = catchClause.catchParameter?.name ?: "e"
         if (body.contains("if") && body.contains("CancellationException") && body.contains("throw $paramName")) return true
