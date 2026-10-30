@@ -108,6 +108,7 @@ public final class io/github/santimattius/structured/runtime/InstrumentedDispatc
 	public fun <init> (Lkotlinx/coroutines/CoroutineDispatcher;Ljava/lang/String;)V
 	public fun delay (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun dispatch (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Runnable;)V
+	public fun dispatchYield (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Runnable;)V
 	public final fun getLabel ()Ljava/lang/String;
 	public fun invokeOnTimeout (JLjava/lang/Runnable;Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/DisposableHandle;
 	public fun isDispatchNeeded (Lkotlin/coroutines/CoroutineContext;)Z
@@ -427,6 +428,7 @@ public final class io/github/santimattius/structured/runtime/TracingDispatcher :
 	public fun <init> (Lkotlinx/coroutines/CoroutineDispatcher;Ljava/lang/String;Lio/github/santimattius/structured/runtime/TraceSink;)V
 	public fun delay (JLkotlin/coroutines/Continuation;)Ljava/lang/Object;
 	public fun dispatch (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Runnable;)V
+	public fun dispatchYield (Lkotlin/coroutines/CoroutineContext;Ljava/lang/Runnable;)V
 	public final fun getLabel ()Ljava/lang/String;
 	public fun invokeOnTimeout (JLjava/lang/Runnable;Lkotlin/coroutines/CoroutineContext;)Lkotlinx/coroutines/DisposableHandle;
 	public fun isDispatchNeeded (Lkotlin/coroutines/CoroutineContext;)Z

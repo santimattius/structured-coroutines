@@ -346,6 +346,7 @@ final class io.github.santimattius.structured.runtime/InstrumentedDispatcher : k
         final fun <get-label>(): kotlin/String // io.github.santimattius.structured.runtime/InstrumentedDispatcher.label.<get-label>|<get-label>(){}[0]
 
     final fun dispatch(kotlin.coroutines/CoroutineContext, kotlinx.coroutines/Runnable) // io.github.santimattius.structured.runtime/InstrumentedDispatcher.dispatch|dispatch(kotlin.coroutines.CoroutineContext;kotlinx.coroutines.Runnable){}[0]
+    final fun dispatchYield(kotlin.coroutines/CoroutineContext, kotlinx.coroutines/Runnable) // io.github.santimattius.structured.runtime/InstrumentedDispatcher.dispatchYield|dispatchYield(kotlin.coroutines.CoroutineContext;kotlinx.coroutines.Runnable){}[0]
     final fun invokeOnTimeout(kotlin/Long, kotlinx.coroutines/Runnable, kotlin.coroutines/CoroutineContext): kotlinx.coroutines/DisposableHandle // io.github.santimattius.structured.runtime/InstrumentedDispatcher.invokeOnTimeout|invokeOnTimeout(kotlin.Long;kotlinx.coroutines.Runnable;kotlin.coroutines.CoroutineContext){}[0]
     final fun isDispatchNeeded(kotlin.coroutines/CoroutineContext): kotlin/Boolean // io.github.santimattius.structured.runtime/InstrumentedDispatcher.isDispatchNeeded|isDispatchNeeded(kotlin.coroutines.CoroutineContext){}[0]
     final fun reset() // io.github.santimattius.structured.runtime/InstrumentedDispatcher.reset|reset(){}[0]
@@ -487,6 +488,7 @@ final class io.github.santimattius.structured.runtime/TracingDispatcher : kotlin
         final fun <get-label>(): kotlin/String // io.github.santimattius.structured.runtime/TracingDispatcher.label.<get-label>|<get-label>(){}[0]
 
     final fun dispatch(kotlin.coroutines/CoroutineContext, kotlinx.coroutines/Runnable) // io.github.santimattius.structured.runtime/TracingDispatcher.dispatch|dispatch(kotlin.coroutines.CoroutineContext;kotlinx.coroutines.Runnable){}[0]
+    final fun dispatchYield(kotlin.coroutines/CoroutineContext, kotlinx.coroutines/Runnable) // io.github.santimattius.structured.runtime/TracingDispatcher.dispatchYield|dispatchYield(kotlin.coroutines.CoroutineContext;kotlinx.coroutines.Runnable){}[0]
     final fun invokeOnTimeout(kotlin/Long, kotlinx.coroutines/Runnable, kotlin.coroutines/CoroutineContext): kotlinx.coroutines/DisposableHandle // io.github.santimattius.structured.runtime/TracingDispatcher.invokeOnTimeout|invokeOnTimeout(kotlin.Long;kotlinx.coroutines.Runnable;kotlin.coroutines.CoroutineContext){}[0]
     final fun isDispatchNeeded(kotlin.coroutines/CoroutineContext): kotlin/Boolean // io.github.santimattius.structured.runtime/TracingDispatcher.isDispatchNeeded|isDispatchNeeded(kotlin.coroutines.CoroutineContext){}[0]
     final fun scheduleResumeAfterDelay(kotlin/Long, kotlinx.coroutines/CancellableContinuation<kotlin/Unit>) // io.github.santimattius.structured.runtime/TracingDispatcher.scheduleResumeAfterDelay|scheduleResumeAfterDelay(kotlin.Long;kotlinx.coroutines.CancellableContinuation<kotlin.Unit>){}[0]

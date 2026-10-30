@@ -96,8 +96,22 @@ public class TracingDispatcher internal constructor(
         delegate.isDispatchNeeded(context)
 
     override fun dispatch(context: CoroutineContext, block: Runnable) {
+        dispatchTraced(context, block, delegate::dispatch)
+    }
+
+    // `yield()` goes through dispatchYield, which Dispatchers.Default and Dispatchers.IO override
+    // to enqueue at the tail of the queue. Forward it so wrapping does not change that fairness.
+    override fun dispatchYield(context: CoroutineContext, block: Runnable) {
+        dispatchTraced(context, block, delegate::dispatchYield)
+    }
+
+    private inline fun dispatchTraced(
+        context: CoroutineContext,
+        block: Runnable,
+        forward: (CoroutineContext, Runnable) -> Unit,
+    ) {
         if (!enabled(TraceLevel.Dispatch)) {
-            delegate.dispatch(context, block)
+            forward(context, block)
             return
         }
         val detailed = enabled(TraceLevel.Coroutine)
@@ -107,7 +121,7 @@ public class TracingDispatcher internal constructor(
         val parentSpanId = span?.parentId
         val queuedAt = nowNanos()
         safeEmit(TraceEvent.Queued(label, queuedAt, name, spanId, parentSpanId))
-        delegate.dispatch(context, Runnable {
+        forward(context, Runnable {
             val startedAt = nowNanos()
             val thread = if (detailed) currentThreadInfo() else null
             safeEmit(TraceEvent.Started(label, startedAt, startedAt - queuedAt, name, thread, spanId, parentSpanId))

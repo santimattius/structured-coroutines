@@ -89,6 +89,10 @@ public class InstrumentedDispatcher internal constructor(
         tracing.dispatch(context, block)
     }
 
+    override fun dispatchYield(context: CoroutineContext, block: Runnable) {
+        tracing.dispatchYield(context, block)
+    }
+
     // The continuation's interceptor is this (outer) dispatcher, so the resume that `tracing`
     // performs goes outer.dispatch -> tracing.dispatch and is counted exactly once.
     override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
