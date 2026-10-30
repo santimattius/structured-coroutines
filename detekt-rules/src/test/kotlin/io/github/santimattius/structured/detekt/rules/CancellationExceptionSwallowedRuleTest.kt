@@ -178,4 +178,45 @@ class CancellationExceptionSwallowedRuleTest {
         val findings = rule.compileAndLint(code)
         assertThat(findings).isEmpty()
     }
+
+    @Test
+    fun `does not report when catch calls currentCoroutineContext ensureActive (issue 155)`() {
+        val code = """
+            import kotlinx.coroutines.currentCoroutineContext
+            import kotlinx.coroutines.ensureActive
+
+            suspend fun loadOrLog(load: suspend () -> Unit) {
+                try {
+                    load()
+                } catch (e: Exception) {
+                    currentCoroutineContext().ensureActive()
+                    println("load failed: ${"$"}e")
+                }
+            }
+        """.trimIndent()
+
+        val findings = rule.compileAndLint(code)
+        assertThat(findings).isEmpty()
+    }
+
+    @Test
+    fun `does not report when catch calls ensureActive inside launch (issue 155)`() {
+        val code = """
+            import kotlinx.coroutines.CoroutineScope
+            import kotlinx.coroutines.ensureActive
+            import kotlinx.coroutines.launch
+
+            fun CoroutineScope.refreshOrLog(load: suspend () -> Unit) = launch {
+                try {
+                    load()
+                } catch (e: Exception) {
+                    ensureActive()
+                    println("refresh failed: ${"$"}e")
+                }
+            }
+        """.trimIndent()
+
+        val findings = rule.compileAndLint(code)
+        assertThat(findings).isEmpty()
+    }
 }

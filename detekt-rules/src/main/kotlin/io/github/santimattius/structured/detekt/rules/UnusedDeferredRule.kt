@@ -64,6 +64,8 @@ class UnusedDeferredRule(config: Config = Config.empty) : Rule(config) {
         if (!CoroutinesImportFilter.elementIsInCoroutinesFile(expression)) return
         val calleeName = expression.calleeExpression?.text ?: return
         if (calleeName != "async") return
+        // kotlinx async always takes a block; a call without arguments is an unrelated method (e.g. Lettuce connection.async())
+        if (expression.valueArguments.isEmpty()) return
 
         val prop = expression.getParentOfType<KtProperty>(strict = false) ?: return
         if (flowsToAwait(expression)) return

@@ -113,6 +113,8 @@ class ExternalScopeLaunchRule(config: Config = Config.empty) : Rule(config) {
         // Check if this is launch or async
         val calleeName = expression.calleeExpression?.text ?: return
         if (calleeName !in setOf("launch", "async")) return
+        // kotlinx launch/async always take a block; a call without arguments is an unrelated method
+        if (expression.valueArguments.isEmpty()) return
 
         // Check if we're inside a suspend function
         val containingFunction = expression.getParentOfType<KtNamedFunction>(strict = true) ?: return

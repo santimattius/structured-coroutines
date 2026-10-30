@@ -20,11 +20,14 @@ import io.gitlab.arturbosch.detekt.api.Issue
 import io.gitlab.arturbosch.detekt.api.Rule
 import io.gitlab.arturbosch.detekt.api.Severity
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.psi.KtLoopExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.KtWhileExpression
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -120,6 +123,9 @@ class LoopWithoutYieldRule(config: Config = Config.empty) : Rule(config) {
         val containingFunction = loop.getParentOfType<KtNamedFunction>(strict = true) ?: return
         if (!CoroutineDetektUtils.isSuspendFunction(containingFunction)) return
 
+        // `while (isActive)` / `while (currentCoroutineContext().isActive)` cooperates through the condition
+        if (loop is KtWhileExpression && loop.condition?.let { checksIsActive(it, loop) } == true) return
+
         // Check if the loop body contains any cooperation points
         val loopBody = loop.body ?: return
         val hasCooperationPoint = bodyHasCooperationPoint(loopBody)
@@ -146,6 +152,33 @@ class LoopWithoutYieldRule(config: Config = Config.empty) : Rule(config) {
                 )
             )
         }
+    }
+
+    /**
+     * True when [condition] observes cancellation through `isActive`.
+     *
+     * Without type resolution a bare `isActive` could be an unrelated property, so it is only
+     * accepted inside a scope-builder lambda (where it is `CoroutineScope.isActive`). The
+     * qualified forms `currentCoroutineContext().isActive` and `coroutineContext.isActive` are
+     * accepted anywhere.
+     */
+    private fun checksIsActive(condition: KtExpression, loop: KtLoopExpression): Boolean {
+        var found = false
+        condition.accept(object : KtTreeVisitorVoid() {
+            override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
+                if (expression.getReferencedName() != "isActive") return
+                val qualified = expression.parent as? KtDotQualifiedExpression
+                if (qualified != null && qualified.selectorExpression == expression) {
+                    val receiver = qualified.receiverExpression
+                    val receiverName = (receiver as? KtCallExpression)?.calleeExpression?.text
+                        ?: (receiver as? KtNameReferenceExpression)?.getReferencedName()
+                    if (receiverName == "currentCoroutineContext" || receiverName == "coroutineContext") found = true
+                } else if (qualified == null && CoroutineDetektUtils.isInsideScopeBuilderBlock(loop)) {
+                    found = true
+                }
+            }
+        })
+        return found
     }
 
     /**
