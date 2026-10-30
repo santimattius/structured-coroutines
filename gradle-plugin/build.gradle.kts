@@ -14,6 +14,8 @@ dependencies {
     testImplementation(libs.kotlin.test)
     testImplementation(libs.junit.jupiter)
     testImplementation(gradleTestKit())
+    // Gradle 9 no longer auto-loads the JUnit Platform launcher
+    testRuntimeOnly(libs.junit.platform.launcher)
 }
 
 kotlin {

@@ -1,0 +1,26 @@
+public final class io/github/santimattius/structured/runtime/tracing/PerfettoTraceSession : java/lang/AutoCloseable {
+	public static final field Companion Lio/github/santimattius/structured/runtime/tracing/PerfettoTraceSession$Companion;
+	public synthetic fun <init> (Ljava/io/File;Landroidx/tracing/wire/TraceDriver;Lio/github/santimattius/structured/runtime/TraceLevel;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun close ()V
+	public final fun flush ()V
+	public final fun getFile ()Ljava/io/File;
+	public final fun getSink ()Lio/github/santimattius/structured/runtime/tracing/PerfettoTraceSink;
+	public final fun getTracer ()Landroidx/tracing/Tracer;
+}
+
+public final class io/github/santimattius/structured/runtime/tracing/PerfettoTraceSession$Companion {
+	public final fun start (Ljava/io/File;)Lio/github/santimattius/structured/runtime/tracing/PerfettoTraceSession;
+	public final fun start (Ljava/io/File;Lio/github/santimattius/structured/runtime/TraceLevel;)Lio/github/santimattius/structured/runtime/tracing/PerfettoTraceSession;
+	public static synthetic fun start$default (Lio/github/santimattius/structured/runtime/tracing/PerfettoTraceSession$Companion;Ljava/io/File;Lio/github/santimattius/structured/runtime/TraceLevel;ILjava/lang/Object;)Lio/github/santimattius/structured/runtime/tracing/PerfettoTraceSession;
+}
+
+public final class io/github/santimattius/structured/runtime/tracing/PerfettoTraceSink : io/github/santimattius/structured/runtime/TraceSink {
+	public fun <init> ()V
+	public fun <init> (Landroidx/tracing/Tracer;)V
+	public fun <init> (Landroidx/tracing/Tracer;Lio/github/santimattius/structured/runtime/TraceLevel;)V
+	public fun <init> (Landroidx/tracing/Tracer;Lio/github/santimattius/structured/runtime/TraceLevel;Ljava/lang/String;)V
+	public synthetic fun <init> (Landroidx/tracing/Tracer;Lio/github/santimattius/structured/runtime/TraceLevel;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun emit (Lio/github/santimattius/structured/runtime/TraceEvent;)V
+	public fun isEnabled (Lio/github/santimattius/structured/runtime/TraceLevel;)Z
+}
+

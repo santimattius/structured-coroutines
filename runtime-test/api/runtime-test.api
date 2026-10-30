@@ -1,0 +1,39 @@
+public final class io/github/santimattius/structured/runtime/test/RecordingSink : io/github/santimattius/structured/runtime/TraceSink {
+	public fun <init> ()V
+	public fun <init> (Lio/github/santimattius/structured/runtime/TraceLevel;)V
+	public synthetic fun <init> (Lio/github/santimattius/structured/runtime/TraceLevel;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun clear ()V
+	public fun emit (Lio/github/santimattius/structured/runtime/TraceEvent;)V
+	public final fun getEvents ()Ljava/util/List;
+	public final fun getMaxLevel ()Lio/github/santimattius/structured/runtime/TraceLevel;
+	public fun isEnabled (Lio/github/santimattius/structured/runtime/TraceLevel;)Z
+}
+
+public final class io/github/santimattius/structured/runtime/test/TestDispatcherProvider : io/github/santimattius/structured/runtime/DispatcherProvider {
+	public fun <init> ()V
+	public fun <init> (Lkotlinx/coroutines/test/TestCoroutineScheduler;Z)V
+	public synthetic fun <init> (Lkotlinx/coroutines/test/TestCoroutineScheduler;ZILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun getDefault ()Lkotlinx/coroutines/CoroutineDispatcher;
+	public fun getIo ()Lkotlinx/coroutines/CoroutineDispatcher;
+	public fun getMain ()Lkotlinx/coroutines/CoroutineDispatcher;
+	public final fun getScheduler ()Lkotlinx/coroutines/test/TestCoroutineScheduler;
+	public fun getUnconfined ()Lkotlinx/coroutines/CoroutineDispatcher;
+}
+
+public final class io/github/santimattius/structured/runtime/test/TestDispatcherProviderKt {
+	public static final fun testDispatcherProvider (Lkotlinx/coroutines/test/TestScope;Z)Lio/github/santimattius/structured/runtime/DispatcherProvider;
+	public static synthetic fun testDispatcherProvider$default (Lkotlinx/coroutines/test/TestScope;ZILjava/lang/Object;)Lio/github/santimattius/structured/runtime/DispatcherProvider;
+}
+
+public abstract class io/github/santimattius/structured/runtime/test/TraceSinkContract {
+	public fun <init> ()V
+	public final fun checkAll ()V
+	public final fun checkEmitNeverThrowsForKnownEvents ()V
+	public final fun checkEmitToleratesAbsentOptionalFields ()V
+	public final fun checkEmitToleratesConcurrentCallers (Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public final fun checkIsEnabledAnswersForEveryLevel ()V
+	public final fun checkIsEnabledIsStable ()V
+	protected abstract fun createSink ()Lio/github/santimattius/structured/runtime/TraceSink;
+	protected fun flush (Lio/github/santimattius/structured/runtime/TraceSink;)V
+}
+

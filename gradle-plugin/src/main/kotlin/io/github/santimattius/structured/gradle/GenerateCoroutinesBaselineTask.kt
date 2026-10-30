@@ -7,6 +7,7 @@ import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputFile
 import org.gradle.api.tasks.TaskAction
+import org.gradle.work.DisableCachingByDefault
 
 /**
  * MVP: documents how to refresh the baseline; merges placeholder when no Detekt XML is wired yet.
@@ -14,6 +15,7 @@ import org.gradle.api.tasks.TaskAction
  * Full multi-subproject merge is deferred — run `./gradlew detektMain --create-baseline` per module
  * and copy fingerprints into [baselineFile], or extend this task in a follow-up.
  */
+@DisableCachingByDefault(because = "Writes a user-owned baseline file; not a cacheable build output")
 abstract class GenerateCoroutinesBaselineTask : DefaultTask() {
 
     @get:OutputFile

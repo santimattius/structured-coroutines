@@ -1,3 +1,11 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
 rootProject.name = "structured-coroutines"
 
 include(
@@ -7,6 +15,10 @@ include(
     ":detekt-rules",
     ":lint-rules",
     ":intellij-plugin",
+    ":runtime",
+    ":runtime-test",
+    ":runtime-tracing-jvm",
+    ":runtime-benchmark",
     ":sample",
     ":sample-detekt"
 )
