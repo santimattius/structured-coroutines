@@ -4,7 +4,10 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.currentTime
@@ -14,7 +17,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
+import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 /** Not copyable by stack-trace recovery, so identity survives coroutine boundaries. */
 private class HedgedBoom(label: String, @Suppress("unused") val tag: Int) : Exception(label)
@@ -252,5 +257,32 @@ class HedgedTest {
         }
         assertEquals("hedge", result)
         assertSame("hedge", result)
+    }
+
+    @Test
+    fun hedged_selfCancellingAttempt_unblocksCoordinatorAndStartsNextAttempt() = runTest {
+        val result = withTimeout(1.seconds) {
+            hedged(1_000.milliseconds, maxAttempts = 2) { attempt ->
+                if (attempt == 0) {
+                    currentCoroutineContext().cancel(CancellationException("self"))
+                    awaitCancellation()
+                }
+                "hedge"
+            }
+        }
+
+        assertEquals("hedge", result)
+    }
+
+    @Test
+    fun hedged_sameFailureInstanceIsNotSuppressedOntoItself() = runTest {
+        val failure = HedgedBoom("same", 1)
+
+        val thrown = assertFailsWith<HedgedBoom> {
+            hedged<Int>(1_000.milliseconds, maxAttempts = 2) { throw failure }
+        }
+
+        assertSame(failure, thrown)
+        assertTrue(thrown.suppressedExceptions.isEmpty())
     }
 }

@@ -43,9 +43,7 @@ import kotlin.coroutines.cancellation.CancellationException
  * @see concurrentOrdered
  */
 @ExperimentalStructuredCoroutines
-public suspend fun <T> Iterable<suspend () -> T>.parallel(
-    concurrency: Int = Int.MAX_VALUE,
-): List<T> {
+public suspend fun <T> Iterable<suspend () -> T>.parallel(concurrency: Int = Int.MAX_VALUE): List<T> {
     require(concurrency > 0) { "concurrency must be > 0 but was $concurrency" }
     val permits = Semaphore(concurrency)
     val span = childSpanContext("parallel")
@@ -87,23 +85,25 @@ public suspend fun <T> Iterable<suspend () -> T>.parallel(
  * @see parallel
  */
 @ExperimentalStructuredCoroutines
-public suspend fun <T> Iterable<suspend () -> T>.supervisedAll(
-    concurrency: Int = Int.MAX_VALUE,
-): List<Result<T>> {
+public suspend fun <T> Iterable<suspend () -> T>.supervisedAll(concurrency: Int = Int.MAX_VALUE): List<Result<T>> {
     require(concurrency > 0) { "concurrency must be > 0 but was $concurrency" }
     val permits = Semaphore(concurrency)
     val span = childSpanContext("supervisedAll")
+    val callerContext = currentCoroutineContext()
     return supervisorScope {
         map { task ->
             async(span) {
-                try {
-                    Result.success(permits.withPermit { task() })
-                } catch (e: CancellationException) {
-                    // Rethrows when the caller was cancelled; otherwise the task cancelled itself.
-                    currentCoroutineContext().ensureActive()
-                    Result.failure(e)
-                } catch (e: Throwable) {
-                    Result.failure(e)
+                supervisorScope {
+                    val taskDeferred = async { permits.withPermit { task() } }
+                    try {
+                        Result.success(taskDeferred.await())
+                    } catch (e: CancellationException) {
+                        // Rethrow caller cancellation, but preserve a task's own cancellation as its Result.
+                        callerContext.ensureActive()
+                        Result.failure(e)
+                    } catch (e: Throwable) {
+                        Result.failure(e)
+                    }
                 }
             }
         }.awaitAll()

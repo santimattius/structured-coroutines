@@ -6,13 +6,17 @@ import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.time.Duration
 
 private sealed interface HedgeEvent<out T> {
-    class Finished<T>(val result: Result<T>) : HedgeEvent<T>
-    class Tick(val generation: Int) : HedgeEvent<Nothing>
+    class Finished<T>(
+        val result: Result<T>,
+    ) : HedgeEvent<T>
+
+    class Tick(
+        val generation: Int,
+    ) : HedgeEvent<Nothing>
 }
 
 /**
@@ -94,24 +98,25 @@ public suspend fun <T> hedged(
         fun startAttempt() {
             val index = launched++
             launch(span) {
-                val result = try {
-                    Result.success(block(index))
-                } catch (e: CancellationException) {
-                    // Rethrow when the caller/scope was cancelled; otherwise the attempt cancelled itself.
-                    if (!isActive) throw e
-                    Result.failure(e)
-                } catch (e: Throwable) {
-                    Result.failure(e)
-                }
-                events.send(HedgeEvent.Finished(result))
+                val result =
+                    try {
+                        Result.success(block(index))
+                    } catch (e: CancellationException) {
+                        Result.failure(e)
+                    } catch (e: Throwable) {
+                        Result.failure(e)
+                    }
+                // A self-cancelled attempt cannot suspend, but its coordinator must still observe completion.
+                events.trySend(HedgeEvent.Finished(result))
             }
             timer?.cancel()
             if (launched < maxAttempts) {
                 val current = ++generation
-                timer = launch(span) {
-                    delay(hedgeAfter)
-                    events.send(HedgeEvent.Tick(current))
-                }
+                timer =
+                    launch(span) {
+                        delay(hedgeAfter)
+                        events.send(HedgeEvent.Tick(current))
+                    }
             }
         }
 
@@ -121,7 +126,10 @@ public suspend fun <T> hedged(
         var winner: Result<T>? = null
         while (winner == null) {
             when (val event = events.receive()) {
-                is HedgeEvent.Tick -> if (event.generation == generation && launched < maxAttempts) startAttempt()
+                is HedgeEvent.Tick -> {
+                    if (event.generation == generation && launched < maxAttempts) startAttempt()
+                }
+
                 is HedgeEvent.Finished -> {
                     if (event.result.isSuccess) {
                         winner = event.result
@@ -129,12 +137,16 @@ public suspend fun <T> hedged(
                     }
                     val failure = event.result.exceptionOrNull()!!
                     if (!shouldHedge(failure)) {
-                        firstFailure?.let { failure.addSuppressed(it) }
+                        firstFailure?.takeIf { it !== failure }?.let { failure.addSuppressed(it) }
                         throw failure
                     }
                     finished++
                     val first = firstFailure
-                    if (first == null) firstFailure = failure else first.addSuppressed(failure)
+                    if (first == null) {
+                        firstFailure = failure
+                    } else if (first !== failure) {
+                        first.addSuppressed(failure)
+                    }
                     if (finished == launched) {
                         if (launched < maxAttempts) startAttempt() else throw firstFailure
                     }
