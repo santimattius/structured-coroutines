@@ -6,14 +6,16 @@ import android.os.Trace
 /** Thin binding of [SystemTraceApi] to `android.os.Trace`, guarded by API level. */
 internal object AndroidSystemTrace : SystemTraceApi {
     // Trace.isEnabled() and Trace.setCounter() are API 29; begin/endSection are API 18 (minSdk is 23).
-    override fun isEnabled(): Boolean =
-        if (Build.VERSION.SDK_INT >= 29) Trace.isEnabled() else true
+    override fun isEnabled(): Boolean = if (Build.VERSION.SDK_INT >= 29) Trace.isEnabled() else true
 
     override fun beginSection(name: String) = Trace.beginSection(name)
 
     override fun endSection() = Trace.endSection()
 
-    override fun setCounter(name: String, value: Long) {
+    override fun setCounter(
+        name: String,
+        value: Long,
+    ) {
         if (Build.VERSION.SDK_INT >= 29) Trace.setCounter(name, value)
     }
 }
@@ -39,8 +41,11 @@ internal object AndroidSystemTrace : SystemTraceApi {
  * - Only dispatched segments are visible; see [TracingDispatcher] for what is not.
  * - It writes to `android.os.Trace`, which is what system traces and `TraceSectionMetric` read.
  *   It does not feed `androidx.tracing`'s in-process trace file.
- * - Queue delay is not drawn as a slice; read it through the `pending` counter.
- * - Slice names must stay low-cardinality: use stable `CoroutineName`s, never ids or payloads.
+ * - Queue delay is not drawn as a slice; read exact values from `Started.queueDelayNanos` events.
+ *   The `pending` counter is a saturation trend, not a per-segment delay, and can overcount
+ *   dangling queued events.
+ * - Slice and span names must stay low-cardinality: use stable `CoroutineName`s and span names,
+ *   never ids or payloads.
  *
  * Experimental, diagnostic and opt-in. Not verified here on a device.
  *

@@ -25,40 +25,56 @@ import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
-import kotlin.time.ExperimentalTime
 import kotlin.time.Duration.Companion.nanoseconds
+import kotlin.time.ExperimentalTime
 import kotlin.time.TestTimeSource
 
 private class RecordingManualDispatcher : CoroutineDispatcher() {
     val received = ArrayList<Runnable>()
     val queue = ArrayDeque<Runnable>()
-    override fun dispatch(context: CoroutineContext, block: Runnable) {
+
+    override fun dispatch(
+        context: CoroutineContext,
+        block: Runnable,
+    ) {
         received.add(block)
         queue.addLast(block)
     }
+
     fun runNext() = queue.removeFirst().run()
 }
 
 /** Immediate-style: runs inline and reports that no dispatch is needed. */
 private class InlineDispatcher : CoroutineDispatcher() {
     override fun isDispatchNeeded(context: CoroutineContext): Boolean = false
-    override fun dispatch(context: CoroutineContext, block: Runnable) = block.run()
+
+    override fun dispatch(
+        context: CoroutineContext,
+        block: Runnable,
+    ) = block.run()
 }
 
-private class ToggleSink(var enabled: Boolean, val inner: RingBufferSink = RingBufferSink(64)) : TraceSink {
+private class ToggleSink(
+    var enabled: Boolean,
+    val inner: RingBufferSink = RingBufferSink(64),
+) : TraceSink {
     override fun emit(event: TraceEvent) = inner.emit(event)
+
     override fun isEnabled(level: TraceLevel): Boolean = enabled
 }
 
-private class MaxLevelSink(max: TraceLevel) : TraceSink {
+private class MaxLevelSink(
+    max: TraceLevel,
+) : TraceSink {
     val ring = RingBufferSink(64, max)
+
     override fun emit(event: TraceEvent) = ring.emit(event)
+
     override fun isEnabled(level: TraceLevel): Boolean = ring.isEnabled(level)
 }
 
 @OptIn(ExperimentalStructuredCoroutines::class, ExperimentalCoroutinesApi::class, ExperimentalTime::class)
 class TracingDispatcherTest {
-
     private val clock = TestTimeSource()
 
     @Test
@@ -151,70 +167,80 @@ class TracingDispatcherTest {
     }
 
     @Test
-    fun childInheritsNameAndWithContextOverrides() = runTest {
-        val sink = RingBufferSink(64)
-        val base = StandardTestDispatcher(testScheduler)
-        val d = TracingDispatcher(base, "t", sink, clock)
-        // A different wrapper so that withContext really dispatches (same dispatcher stays inline).
-        val other = TracingDispatcher(base, "other", sink, clock)
-        launch(d + CoroutineName("parent")) {
-            launch { }
-            withContext(other + CoroutineName("override")) { }
+    fun childInheritsNameAndWithContextOverrides() =
+        runTest {
+            val sink = RingBufferSink(64)
+            val base = StandardTestDispatcher(testScheduler)
+            val d = TracingDispatcher(base, "t", sink, clock)
+            // A different wrapper so that withContext really dispatches (same dispatcher stays inline).
+            val other = TracingDispatcher(base, "other", sink, clock)
+            launch(d + CoroutineName("parent")) {
+                launch { }
+                withContext(other + CoroutineName("override")) { }
+            }
+            testScheduler.advanceUntilIdle()
+            val queued = sink.snapshot().filterIsInstance<TraceEvent.Queued>()
+            assertEquals("parent", queued.first().coroutineName)
+            assertTrue(
+                queued.any { it.dispatcher == "t" && it.coroutineName == "parent" && it !== queued.first() },
+                "child launch inherits the name: $queued",
+            )
+            assertTrue(
+                queued.any { it.dispatcher == "other" && it.coroutineName == "override" },
+                "withContext override is observed: $queued",
+            )
         }
-        testScheduler.advanceUntilIdle()
-        val queued = sink.snapshot().filterIsInstance<TraceEvent.Queued>()
-        assertEquals("parent", queued.first().coroutineName)
-        assertTrue(queued.any { it.dispatcher == "t" && it.coroutineName == "parent" && it !== queued.first() },
-            "child launch inherits the name: $queued")
-        assertTrue(queued.any { it.dispatcher == "other" && it.coroutineName == "override" },
-            "withContext override is observed: $queued")
-    }
 
     @Test
-    fun faultySinkDoesNotBreakCoroutine() = runTest {
-        val faulty = object : TraceSink {
-            override fun emit(event: TraceEvent) = throw IllegalStateException("sink down")
+    fun faultySinkDoesNotBreakCoroutine() =
+        runTest {
+            val faulty =
+                object : TraceSink {
+                    override fun emit(event: TraceEvent) = throw IllegalStateException("sink down")
+                }
+            val d = TracingDispatcher(StandardTestDispatcher(testScheduler), "t", faulty, clock)
+            var ran = false
+            launch(d) { ran = true }
+            testScheduler.advanceUntilIdle()
+            assertTrue(ran)
         }
-        val d = TracingDispatcher(StandardTestDispatcher(testScheduler), "t", faulty, clock)
-        var ran = false
-        launch(d) { ran = true }
-        testScheduler.advanceUntilIdle()
-        assertTrue(ran)
-    }
 
     @Test
-    fun delayAdvancesVirtualTimeAndResumeIsObserved() = runTest {
-        val sink = RingBufferSink(64)
-        val d = TracingDispatcher(StandardTestDispatcher(testScheduler), "t", sink, clock)
-        val job = launch(d) {
-            delay(100)
+    fun delayAdvancesVirtualTimeAndResumeIsObserved() =
+        runTest {
+            val sink = RingBufferSink(64)
+            val d = TracingDispatcher(StandardTestDispatcher(testScheduler), "t", sink, clock)
+            val job =
+                launch(d) {
+                    delay(100)
+                }
+            runCurrent()
+            assertEquals(0L, currentTime)
+            assertEquals(1, sink.snapshot().count { it is TraceEvent.Finished })
+            advanceTimeBy(99)
+            runCurrent()
+            assertEquals(1, sink.snapshot().count { it is TraceEvent.Finished })
+            advanceTimeBy(1)
+            runCurrent()
+            assertEquals(100L, currentTime)
+            job.join()
+            val events = sink.snapshot()
+            assertEquals(2, events.count { it is TraceEvent.Queued }, "initial segment + resume")
+            assertEquals(2, events.count { it is TraceEvent.Started })
+            assertEquals(2, events.count { it is TraceEvent.Finished })
         }
-        runCurrent()
-        assertEquals(0L, currentTime)
-        assertEquals(1, sink.snapshot().count { it is TraceEvent.Finished })
-        advanceTimeBy(99)
-        runCurrent()
-        assertEquals(1, sink.snapshot().count { it is TraceEvent.Finished })
-        advanceTimeBy(1)
-        runCurrent()
-        assertEquals(100L, currentTime)
-        job.join()
-        val events = sink.snapshot()
-        assertEquals(2, events.count { it is TraceEvent.Queued }, "initial segment + resume")
-        assertEquals(2, events.count { it is TraceEvent.Started })
-        assertEquals(2, events.count { it is TraceEvent.Finished })
-    }
 
     @Test
-    fun noDispatchNeededDelegateEmitsNoQueuedForInlineSegment() = runTest {
-        val sink = RingBufferSink(16)
-        val d = TracingDispatcher(InlineDispatcher(), "inline", sink, clock)
-        var ran = false
-        launch(d) { ran = true }
-        testScheduler.advanceUntilIdle()
-        assertTrue(ran)
-        assertTrue(sink.snapshot().isEmpty())
-    }
+    fun noDispatchNeededDelegateEmitsNoQueuedForInlineSegment() =
+        runTest {
+            val sink = RingBufferSink(16)
+            val d = TracingDispatcher(InlineDispatcher(), "inline", sink, clock)
+            var ran = false
+            launch(d) { ran = true }
+            testScheduler.advanceUntilIdle()
+            assertTrue(ran)
+            assertTrue(sink.snapshot().isEmpty())
+        }
 
     @Test
     fun isDispatchNeededDelegates() {
@@ -225,18 +251,76 @@ class TracingDispatcherTest {
     }
 
     @Test
-    fun publicConstructorWorks() = runTest {
+    fun publicConstructorWorks() =
+        runTest {
+            val sink = RingBufferSink(16)
+            val d = TracingDispatcher(StandardTestDispatcher(testScheduler), "pub", sink)
+            launch(d) { }
+            testScheduler.advanceUntilIdle()
+            assertEquals(3, sink.snapshot().size)
+        }
+
+    @Test
+    fun concurrentDispatchesInOneSpanKeepDistinctStableCorrelationIds() {
+        val manual = RecordingManualDispatcher()
         val sink = RingBufferSink(16)
-        val d = TracingDispatcher(StandardTestDispatcher(testScheduler), "pub", sink)
-        launch(d) { }
-        testScheduler.advanceUntilIdle()
-        assertEquals(3, sink.snapshot().size)
+        val dispatcher = TracingDispatcher(manual, "io", sink, clock)
+        val span = TraceSpan.root("checkout")
+
+        dispatcher.dispatch(span, Runnable {})
+        dispatcher.dispatch(span, Runnable {})
+        manual.runNext()
+        manual.runNext()
+
+        val byDispatch =
+            sink.snapshot().groupBy {
+                when (it) {
+                    is TraceEvent.Queued -> it.dispatchId
+                    is TraceEvent.Started -> it.dispatchId
+                    is TraceEvent.Finished -> it.dispatchId
+                    else -> error("unexpected event: $it")
+                }
+            }
+        assertEquals(2, byDispatch.size)
+        assertTrue(byDispatch.keys.none { it == null })
+        assertTrue(
+            byDispatch.values.all { events ->
+                events.map { it::class }.toSet() ==
+                    setOf(
+                        TraceEvent.Queued::class,
+                        TraceEvent.Started::class,
+                        TraceEvent.Finished::class,
+                    )
+            },
+        )
+    }
+
+    @Test
+    fun spanNameIsVisibleOnEveryDispatchEvent() {
+        val manual = RecordingManualDispatcher()
+        val sink = RingBufferSink(16)
+        val dispatcher = TracingDispatcher(manual, "io", sink, clock)
+        val span = TraceSpan.root("checkout")
+
+        dispatcher.dispatch(span, Runnable {})
+        manual.runNext()
+
+        assertEquals(
+            listOf("checkout", "checkout", "checkout"),
+            sink.snapshot().map {
+                when (it) {
+                    is TraceEvent.Queued -> it.spanName
+                    is TraceEvent.Started -> it.spanName
+                    is TraceEvent.Finished -> it.spanName
+                    else -> error("unexpected event: $it")
+                }
+            },
+        )
     }
 }
 
 @OptIn(ExperimentalStructuredCoroutines::class)
 class TracedDispatcherProviderTest {
-
     @Test
     fun mainIsNotTouchedUntilRead() {
         val base = TracingProviderBase()
@@ -256,29 +340,31 @@ class TracedDispatcherProviderTest {
     }
 
     @Test
-    fun wrapsIoAndDefaultWithLabelsAndExposesSink() = kotlinx.coroutines.test.runTest {
-        val sink = RingBufferSink(16)
-        val traced = TracingProviderBase().traced(sink)
-        assertSame(sink, traced.sink)
-        assertTrue(traced.io is TracingDispatcher)
-        assertTrue(traced.default is TracingDispatcher)
-        assertSame(traced.io, traced.io)
-        withContext(traced.io) { }
-        withContext(traced.default) { }
-        val labels = sink.snapshot().map { it.dispatcher }.toSet()
-        assertEquals(setOf("io", "default"), labels)
-    }
+    fun wrapsIoAndDefaultWithLabelsAndExposesSink() =
+        kotlinx.coroutines.test.runTest {
+            val sink = RingBufferSink(16)
+            val traced = TracingProviderBase().traced(sink)
+            assertSame(sink, traced.sink)
+            assertTrue(traced.io is TracingDispatcher)
+            assertTrue(traced.default is TracingDispatcher)
+            assertSame(traced.io, traced.io)
+            withContext(traced.io) { }
+            withContext(traced.default) { }
+            val labels = sink.snapshot().map { it.dispatcher }.toSet()
+            assertEquals(setOf("io", "default"), labels)
+        }
 
     @Test
     fun mainIsWrappedWithMainLabel() {
         val manual = RecordingManualDispatcher()
         val sink = RingBufferSink(16)
-        val provider = object : DispatcherProvider {
-            override val main: CoroutineDispatcher = manual
-            override val io: CoroutineDispatcher = manual
-            override val default: CoroutineDispatcher = manual
-            override val unconfined: CoroutineDispatcher = Dispatchers.Unconfined
-        }
+        val provider =
+            object : DispatcherProvider {
+                override val main: CoroutineDispatcher = manual
+                override val io: CoroutineDispatcher = manual
+                override val default: CoroutineDispatcher = manual
+                override val unconfined: CoroutineDispatcher = Dispatchers.Unconfined
+            }
         val traced = provider.traced(sink)
         traced.main.dispatch(EmptyCoroutineContext, Runnable {})
         assertEquals("main", sink.snapshot().single().dispatcher)
@@ -288,7 +374,10 @@ class TracedDispatcherProviderTest {
 @OptIn(ExperimentalStructuredCoroutines::class)
 private class TracingProviderBase : DispatcherProvider {
     var mainReads = 0
-    override val main: CoroutineDispatcher get() { mainReads++; throw IllegalStateException("no main") }
+    override val main: CoroutineDispatcher get() {
+        mainReads++
+        throw IllegalStateException("no main")
+    }
     override val io: CoroutineDispatcher = Dispatchers.Default
     override val default: CoroutineDispatcher = Dispatchers.Default
     override val unconfined: CoroutineDispatcher = Dispatchers.Unconfined

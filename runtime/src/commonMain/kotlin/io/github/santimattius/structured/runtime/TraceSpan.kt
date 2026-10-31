@@ -17,8 +17,8 @@ private fun newSpanId(): Long = nextSpanId.incrementAndFetch()
 
 /**
  * A unit of traced work, carried in the coroutine context. [TracingDispatcher] reads it from the
- * context of every dispatch and attaches [id] and [parentId] to the run events, so a backend can
- * draw parent-child links between coroutines.
+ * context of every dispatch and attaches [id], [parentId] and [name] to the run events, so a
+ * backend can draw parent-child links and show the span label.
  *
  * A plain context element (not a thread-context element), so it works on every target. It is
  * inherited by child coroutines like any other element. Ids are unique per process, assigned from
@@ -45,7 +45,6 @@ public class TraceSpan internal constructor(
     public val parentId: Long?,
     public val name: String,
 ) : AbstractCoroutineContextElement(Key) {
-
     /** Key of [TraceSpan] in a [CoroutineContext]. Use `coroutineContext[TraceSpan]` to read it. */
     public companion object Key : CoroutineContext.Key<TraceSpan> {
         internal fun root(name: String): TraceSpan = TraceSpan(newSpanId(), null, name)
@@ -76,7 +75,10 @@ public class TraceSpan internal constructor(
  * @see TraceSpan
  */
 @ExperimentalStructuredCoroutines
-public suspend fun <T> withTraceSpan(name: String, block: suspend () -> T): T {
+public suspend fun <T> withTraceSpan(
+    name: String,
+    block: suspend () -> T,
+): T {
     val parent = currentCoroutineContext()[TraceSpan]
     val span = if (parent == null) TraceSpan.root(name) else parent.child(name)
     return withContext(span) { block() }

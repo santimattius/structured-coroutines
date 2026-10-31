@@ -8,6 +8,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+### Changed
+
+- Runtime artifacts now have an independent release train. The ordinary
+  `publishToMavenCentral` task publishes only `PROJECT_VERSION` toolkit artifacts;
+  `:runtime`, `:runtime-test`, and `:runtime-tracing-jvm` publish together through
+  `publishRuntimeToMavenCentral` with their shared `RUNTIME_VERSION`. Runtime releases
+  require a `runtime-v<RUNTIME_VERSION>` tag that is validated before tests, ABI checks,
+  publication-graph verification, or credential use.
+
 ---
 
 ## [1.2.0] — 2026-10-27

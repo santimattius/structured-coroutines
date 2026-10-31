@@ -10,7 +10,6 @@ import kotlin.test.assertTrue
 
 @OptIn(ExperimentalStructuredCoroutines::class)
 class TraceModelTest {
-
     @Test
     fun levelsAreCumulativeByOrdinal() {
         assertTrue(TraceLevel.Dispatch < TraceLevel.Coroutine)
@@ -46,8 +45,11 @@ class TraceModelTest {
         assertNotEquals(q, TraceEvent.Queued("io", 10L, null))
         assertNotEquals(q, TraceEvent.Queued("io", 10L, "job", spanId = 1L))
         assertNotEquals(q, TraceEvent.Queued("io", 10L, "job", parentSpanId = 1L))
-        assertEquals("Queued(dispatcher=io, timestampNanos=10, coroutineName=job, " +
-            "spanId=null, parentSpanId=null)", q.toString())
+        assertEquals(
+            "Queued(dispatcher=io, timestampNanos=10, coroutineName=job, " +
+                "spanId=null, parentSpanId=null, dispatchId=0, spanName=null)",
+            q.toString(),
+        )
         assertEquals(TraceLevel.Dispatch, q.level)
     }
 
@@ -61,7 +63,7 @@ class TraceModelTest {
         assertNotEquals(s, TraceEvent.Started("io", 20L, 5L, "job", null))
         assertEquals(
             "Started(dispatcher=io, timestampNanos=20, queueDelayNanos=5, coroutineName=job, " +
-                "thread=ThreadInfo(id=7, name=w-1), spanId=null, parentSpanId=null)",
+                "thread=ThreadInfo(id=7, name=w-1), spanId=null, parentSpanId=null, dispatchId=0, spanName=null)",
             s.toString(),
         )
         assertEquals(TraceLevel.Dispatch, s.level)
@@ -78,9 +80,11 @@ class TraceModelTest {
         assertNull(f.thread)
         assertNull(f.spanId)
         assertNull(f.parentSpanId)
+        assertEquals(0L, f.dispatchId)
+        assertNull(f.spanName)
         assertEquals(
             "Finished(dispatcher=io, timestampNanos=30, runTimeNanos=9, outcome=Completed, " +
-                "coroutineName=null, thread=null, spanId=null, parentSpanId=null)",
+                "coroutineName=null, thread=null, spanId=null, parentSpanId=null, dispatchId=0, spanName=null)",
             f.toString(),
         )
         assertEquals(TraceLevel.Dispatch, f.level)

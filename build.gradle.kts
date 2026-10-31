@@ -4,6 +4,10 @@ plugins {
     alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.kotlin.multiplatform) apply false
     alias(libs.plugins.android.kotlin.multiplatform.library) apply false
+    // Declared at the root so every module shares one classloader for the plugin; otherwise
+    // :runtime (which also has the AGP KMP plugin) gets its own copy and the shared
+    // MavenCentralBuildService cannot be injected into prepareMavenCentralPublishing.
+    alias(libs.plugins.maven.publish.vanniktech) apply false
     alias(libs.plugins.binary.compatibility.validator)
 }
 
@@ -116,19 +120,25 @@ tasks.register<Exec>("checkSkillRefs") {
     commandLine("python3", "tools/scripts/generate_refs.py", "--check")
 }
 
-// Aggregate task to publish all vanniktech-published library modules to Maven Central.
-// :lint-rules is intentionally excluded: it applies raw `maven-publish` with a hand-built
-// MavenPublication (lint-JAR packaging), not the vanniktech plugin, so it has no
-// publishToMavenCentral task. It is published independently via its own workflow,
+// Toolkit and runtime artifacts have independent release trains. :lint-rules is intentionally
+// excluded: it applies raw `maven-publish` with a hand-built MavenPublication (lint-JAR
+// packaging), so it has no publishToMavenCentral task. It is published independently via
 // .github/workflows/publish-lint-rules.yml.
 tasks.register("publishToMavenCentral") {
     group = "publishing"
-    description = "Publishes all vanniktech-published library modules (annotations, compiler, detekt-rules, gradle-plugin, runtime, runtime-test, runtime-tracing-jvm) to Maven Central"
+    description = "Publishes PROJECT_VERSION toolkit artifacts to Maven Central"
     dependsOn(
         ":annotations:publishToMavenCentral",
         ":compiler:publishToMavenCentral",
         ":detekt-rules:publishToMavenCentral",
         ":gradle-plugin:publishToMavenCentral",
+    )
+}
+
+tasks.register("publishRuntimeToMavenCentral") {
+    group = "publishing"
+    description = "Publishes all RUNTIME_VERSION artifacts to Maven Central"
+    dependsOn(
         ":runtime:publishToMavenCentral",
         ":runtime-test:publishToMavenCentral",
         ":runtime-tracing-jvm:publishToMavenCentral",

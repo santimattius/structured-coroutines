@@ -2,13 +2,13 @@ package io.github.santimattius.structured.runtime.tracing
 
 import androidx.tracing.Tracer
 import androidx.tracing.wire.TraceDriver
-import androidx.tracing.wire.TraceSink as WireTraceSink
 import androidx.tracing.wire.createPerfettoFile
 import io.github.santimattius.structured.runtime.ExperimentalStructuredCoroutines
 import io.github.santimattius.structured.runtime.TraceLevel
 import okio.appendingSink
 import okio.buffer
 import java.io.File
+import androidx.tracing.wire.TraceSink as WireTraceSink
 
 /**
  * An in-process Perfetto trace written to a new `.perfetto-trace` file, with a [PerfettoTraceSink]
@@ -20,7 +20,8 @@ import java.io.File
  * it to write to the same file. Events are serialized on a background thread, so the file is only
  * complete after [flush] (which drains what was emitted so far) or [close].
  *
- * Sessions are not reusable: after [close] the sink silently drops events. Experimental,
+ * Sessions are not reusable: after [close] the sink silently drops events. [flush] and [close]
+ * are safe to call concurrently; they are serialized, and [close] is idempotent. Experimental,
  * diagnostic and opt-in.
  *
  * Platform availability: JVM only (this artifact is `kotlin("jvm")`). On Android use `AndroidTraceSink`
@@ -45,26 +46,30 @@ public class PerfettoTraceSession private constructor(
     private val driver: TraceDriver,
     maxLevel: TraceLevel,
 ) : AutoCloseable {
-
     /** The tracer owned by this session. It is not the global tracer. */
     public val tracer: Tracer = driver.tracer
 
     /** The sink that writes to [tracer]; pass it to `DispatcherProvider.traced`. */
     public val sink: PerfettoTraceSink = PerfettoTraceSink(tracer, maxLevel)
 
-    @Volatile
+    private val lifecycleLock = Any()
     private var closed = false
 
     /** Writes everything emitted so far to [file]. A no-op once the session is closed. */
     public fun flush() {
-        if (!closed) driver.flush()
+        synchronized(lifecycleLock) {
+            if (!closed) driver.flush()
+        }
     }
 
-    /** Flushes and closes [file]. Idempotent; the sink drops events afterwards. */
+    /** Flushes and closes [file]. Serialized with [flush] and idempotent; the sink drops events afterwards. */
     override fun close() {
-        if (closed) return
-        closed = true
-        driver.close()
+        synchronized(lifecycleLock) {
+            if (closed) return
+            closed = true
+            sink.disable()
+            driver.close()
+        }
     }
 
     /** Factory for [PerfettoTraceSession]. */
@@ -78,14 +83,18 @@ public class PerfettoTraceSession private constructor(
          * @return the started session; the caller must [close] it.
          */
         @JvmOverloads
-        public fun start(directory: File, maxLevel: TraceLevel = TraceLevel.Coroutine): PerfettoTraceSession {
+        public fun start(
+            directory: File,
+            maxLevel: TraceLevel = TraceLevel.Coroutine,
+        ): PerfettoTraceSession {
             directory.mkdirs()
             val file = directory.createPerfettoFile()
-            val wireSink = WireTraceSink(
-                sequenceId = 1,
-                bufferedSink = file.appendingSink().buffer(),
-                coroutineContext = kotlinx.coroutines.Dispatchers.IO + kotlinx.coroutines.NonCancellable,
-            )
+            val wireSink =
+                WireTraceSink(
+                    sequenceId = 1,
+                    bufferedSink = file.appendingSink().buffer(),
+                    coroutineContext = kotlinx.coroutines.Dispatchers.IO + kotlinx.coroutines.NonCancellable,
+                )
             return PerfettoTraceSession(file, TraceDriver(sink = wireSink), maxLevel)
         }
     }

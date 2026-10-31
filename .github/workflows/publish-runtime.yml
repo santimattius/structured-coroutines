@@ -1,0 +1,93 @@
+name: Publish Runtime
+
+permissions:
+  contents: read
+
+on:
+  release:
+    types: [released, prereleased]
+
+jobs:
+  publish-runtime:
+    if: ${{ startsWith(github.event.release.tag_name, 'runtime-v') }}
+    name: Release build and publish runtime
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: "zulu"
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4.0.4
+        with:
+          packages: "platforms;android-36 build-tools;36.0.0"
+
+      - name: Validate runtime release tag
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          runtime_version=$(grep '^RUNTIME_VERSION=' \
+            gradle.properties | cut -d= -f2-)
+          expected="runtime-v${runtime_version}"
+          if [ "$RELEASE_TAG" != "$expected" ]; then
+            echo "::error::Runtime release tag must be $expected."
+            exit 1
+          fi
+
+      - name: Run runtime tests
+        run: |
+          ./gradlew :runtime:jvmTest :runtime:jsTest :runtime:linuxX64Test \
+            :runtime-test:jvmTest :runtime-test:jsTest \
+            :runtime-test:linuxX64Test :runtime-tracing-jvm:test --no-daemon
+
+      - name: Check runtime binary compatibility
+        run: |
+          ./gradlew :runtime:apiCheck :runtime-test:apiCheck \
+            :runtime-tracing-jvm:apiCheck --no-daemon
+
+      - name: Verify runtime publication graph without uploads
+        run: |
+          ./gradlew publishRuntimeToMavenCentral --dry-run \
+            --no-configuration-cache
+
+      - name: Validate required secrets
+        env:
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          SIGNING_KEY_ID: ${{ secrets.SIGNING_KEY_ID }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+          GPG_KEY_CONTENTS: ${{ secrets.GPG_KEY_CONTENTS }}
+        run: |
+          if [ -z "$MAVEN_CENTRAL_USERNAME" ] || \
+            [ -z "$MAVEN_CENTRAL_PASSWORD" ]; then
+            echo "::error::Maven Central credentials must be configured."
+            exit 1
+          fi
+          if [ -z "$SIGNING_KEY_ID" ] || [ -z "$SIGNING_PASSWORD" ] || \
+            [ -z "$GPG_KEY_CONTENTS" ]; then
+            echo "::error::Runtime publishing signing credentials are required."
+            exit 1
+          fi
+
+      - name: Publish runtime artifacts to Maven Central
+        env:
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          SIGNING_KEY_ID: ${{ secrets.SIGNING_KEY_ID }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+          GPG_KEY_CONTENTS: ${{ secrets.GPG_KEY_CONTENTS }}
+        run: |
+          export ORG_GRADLE_PROJECT_mavenCentralUsername=\
+            "$MAVEN_CENTRAL_USERNAME"
+          export ORG_GRADLE_PROJECT_mavenCentralPassword=\
+            "$MAVEN_CENTRAL_PASSWORD"
+          export ORG_GRADLE_PROJECT_signingInMemoryKeyId="$SIGNING_KEY_ID"
+          export ORG_GRADLE_PROJECT_signingInMemoryKeyPassword=\
+            "$SIGNING_PASSWORD"
+          export ORG_GRADLE_PROJECT_signingInMemoryKey="$GPG_KEY_CONTENTS"
+          ./gradlew publishRuntimeToMavenCentral --no-configuration-cache

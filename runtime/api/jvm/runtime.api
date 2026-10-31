@@ -294,15 +294,19 @@ public final class io/github/santimattius/structured/runtime/TraceEvent$Finished
 	public fun <init> (Ljava/lang/String;JJLio/github/santimattius/structured/runtime/TraceOutcome;Ljava/lang/String;Lio/github/santimattius/structured/runtime/ThreadInfo;)V
 	public fun <init> (Ljava/lang/String;JJLio/github/santimattius/structured/runtime/TraceOutcome;Ljava/lang/String;Lio/github/santimattius/structured/runtime/ThreadInfo;Ljava/lang/Long;)V
 	public fun <init> (Ljava/lang/String;JJLio/github/santimattius/structured/runtime/TraceOutcome;Ljava/lang/String;Lio/github/santimattius/structured/runtime/ThreadInfo;Ljava/lang/Long;Ljava/lang/Long;)V
-	public synthetic fun <init> (Ljava/lang/String;JJLio/github/santimattius/structured/runtime/TraceOutcome;Ljava/lang/String;Lio/github/santimattius/structured/runtime/ThreadInfo;Ljava/lang/Long;Ljava/lang/Long;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;JJLio/github/santimattius/structured/runtime/TraceOutcome;Ljava/lang/String;Lio/github/santimattius/structured/runtime/ThreadInfo;Ljava/lang/Long;Ljava/lang/Long;J)V
+	public fun <init> (Ljava/lang/String;JJLio/github/santimattius/structured/runtime/TraceOutcome;Ljava/lang/String;Lio/github/santimattius/structured/runtime/ThreadInfo;Ljava/lang/Long;Ljava/lang/Long;JLjava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;JJLio/github/santimattius/structured/runtime/TraceOutcome;Ljava/lang/String;Lio/github/santimattius/structured/runtime/ThreadInfo;Ljava/lang/Long;Ljava/lang/Long;JLjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getCoroutineName ()Ljava/lang/String;
+	public final fun getDispatchId ()J
 	public fun getDispatcher ()Ljava/lang/String;
 	public fun getLevel ()Lio/github/santimattius/structured/runtime/TraceLevel;
 	public final fun getOutcome ()Lio/github/santimattius/structured/runtime/TraceOutcome;
 	public final fun getParentSpanId ()Ljava/lang/Long;
 	public final fun getRunTimeNanos ()J
 	public final fun getSpanId ()Ljava/lang/Long;
+	public final fun getSpanName ()Ljava/lang/String;
 	public final fun getThread ()Lio/github/santimattius/structured/runtime/ThreadInfo;
 	public fun getTimestampNanos ()J
 	public fun hashCode ()I
@@ -330,13 +334,17 @@ public final class io/github/santimattius/structured/runtime/TraceEvent$Queued :
 	public fun <init> (Ljava/lang/String;JLjava/lang/String;)V
 	public fun <init> (Ljava/lang/String;JLjava/lang/String;Ljava/lang/Long;)V
 	public fun <init> (Ljava/lang/String;JLjava/lang/String;Ljava/lang/Long;Ljava/lang/Long;)V
-	public synthetic fun <init> (Ljava/lang/String;JLjava/lang/String;Ljava/lang/Long;Ljava/lang/Long;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;JLjava/lang/String;Ljava/lang/Long;Ljava/lang/Long;J)V
+	public fun <init> (Ljava/lang/String;JLjava/lang/String;Ljava/lang/Long;Ljava/lang/Long;JLjava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;JLjava/lang/String;Ljava/lang/Long;Ljava/lang/Long;JLjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getCoroutineName ()Ljava/lang/String;
+	public final fun getDispatchId ()J
 	public fun getDispatcher ()Ljava/lang/String;
 	public fun getLevel ()Lio/github/santimattius/structured/runtime/TraceLevel;
 	public final fun getParentSpanId ()Ljava/lang/Long;
 	public final fun getSpanId ()Ljava/lang/Long;
+	public final fun getSpanName ()Ljava/lang/String;
 	public fun getTimestampNanos ()J
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
@@ -346,14 +354,18 @@ public final class io/github/santimattius/structured/runtime/TraceEvent$Started 
 	public fun <init> (Ljava/lang/String;JJLjava/lang/String;Lio/github/santimattius/structured/runtime/ThreadInfo;)V
 	public fun <init> (Ljava/lang/String;JJLjava/lang/String;Lio/github/santimattius/structured/runtime/ThreadInfo;Ljava/lang/Long;)V
 	public fun <init> (Ljava/lang/String;JJLjava/lang/String;Lio/github/santimattius/structured/runtime/ThreadInfo;Ljava/lang/Long;Ljava/lang/Long;)V
-	public synthetic fun <init> (Ljava/lang/String;JJLjava/lang/String;Lio/github/santimattius/structured/runtime/ThreadInfo;Ljava/lang/Long;Ljava/lang/Long;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun <init> (Ljava/lang/String;JJLjava/lang/String;Lio/github/santimattius/structured/runtime/ThreadInfo;Ljava/lang/Long;Ljava/lang/Long;J)V
+	public fun <init> (Ljava/lang/String;JJLjava/lang/String;Lio/github/santimattius/structured/runtime/ThreadInfo;Ljava/lang/Long;Ljava/lang/Long;JLjava/lang/String;)V
+	public synthetic fun <init> (Ljava/lang/String;JJLjava/lang/String;Lio/github/santimattius/structured/runtime/ThreadInfo;Ljava/lang/Long;Ljava/lang/Long;JLjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getCoroutineName ()Ljava/lang/String;
+	public final fun getDispatchId ()J
 	public fun getDispatcher ()Ljava/lang/String;
 	public fun getLevel ()Lio/github/santimattius/structured/runtime/TraceLevel;
 	public final fun getParentSpanId ()Ljava/lang/Long;
 	public final fun getQueueDelayNanos ()J
 	public final fun getSpanId ()Ljava/lang/Long;
+	public final fun getSpanName ()Ljava/lang/String;
 	public final fun getThread ()Lio/github/santimattius/structured/runtime/ThreadInfo;
 	public fun getTimestampNanos ()J
 	public fun hashCode ()I

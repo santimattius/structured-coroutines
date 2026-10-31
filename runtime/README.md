@@ -235,11 +235,23 @@ can differ if the scheduler is configured otherwise or for `limitedParallelism` 
 IO share one thread pool with independent permits, so this is a per-dispatcher limit, not a
 thread count.
 
-Spans link events to the work that caused them. `withTraceSpan(name) { }` opens a `TraceSpan`
-in the coroutine context (a plain element, inherited by children); `TracingDispatcher` attaches its
-`spanId` and `parentSpanId` to `Queued`, `Started` and `Finished`. Without a span they are `null`.
-`hedged`, `parallel`, `supervisedAll` and `concurrentOrdered` open a child span only when the
-caller's context already has one, so code that does not use spans is unchanged.
+Each dispatched runnable has one process-unique `dispatchId`, copied unchanged to its `Queued`,
+`Started` and `Finished` events. Group on that ID (not event adjacency: cross-thread event order is
+not global) to reconstruct one dispatched segment. `Started.queueDelayNanos` is the elapsed time
+from that segment's queued timestamp to its start; `Finished.runTimeNanos` is elapsed time from its
+start to finish. A `Queued` event can be dangling when a delegate swallows the runnable, so it has
+no later queue/run duration. IDs are process-local diagnostic values, not coroutine IDs or stable
+business/request identifiers; manually constructed events use the reserved ID `0`.
+
+Spans link related segments to the work that caused them. `withTraceSpan(name) { }` opens a
+`TraceSpan` in the coroutine context (a plain element, inherited by children); `TracingDispatcher`
+attaches its `spanId`, `parentSpanId` and `spanName` to `Queued`, `Started` and `Finished`. The
+span ID identifies the logical parent/child relationship, while `dispatchId` identifies one actual
+runnable; several dispatch IDs can share one span. Without a span these fields are `null`.
+`spanName` is copied for sink/export visibility, so keep it low-cardinality and never put request
+IDs, user data or payloads in it. `hedged`, `parallel`, `supervisedAll` and `concurrentOrdered`
+open a child span only when the caller's context already has one, so code that does not use spans
+is unchanged.
 
 ```kotlin
 withTraceSpan("checkout") {
@@ -253,8 +265,11 @@ Limits:
 - `AndroidTraceSink` feeds `android.os.Trace`, which system traces and `TraceSectionMetric` read.
   It does not feed `androidx.tracing`'s in-process trace file; on the JVM and desktop
   `PerfettoTraceSink` does (see below).
-- Queue delay is not drawn as a slice; read it from the `pending` counter.
-- Keep slice names low-cardinality: use stable `CoroutineName`s, not ids or payloads.
+- Queue delay is not drawn as a slice: read the exact `Started.queueDelayNanos` event field (or
+  `queue_delay_ns` Perfetto argument). The `pending` counter is a useful saturation trend, not a
+  per-segment delay and can overcount dangling queued events.
+- Keep slice and span names low-cardinality: use stable `CoroutineName`s and span names, not ids
+  or payloads.
 
 Status: experimental. The tracing API may change, and `AndroidTraceSink` has not been validated on
 a device yet.

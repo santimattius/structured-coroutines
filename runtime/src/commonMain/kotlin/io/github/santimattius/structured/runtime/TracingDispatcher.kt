@@ -7,9 +7,18 @@ import kotlinx.coroutines.Delay
 import kotlinx.coroutines.DisposableHandle
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.Runnable
+import kotlin.concurrent.atomics.AtomicLong
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.concurrent.atomics.incrementAndFetch
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resume
 import kotlin.time.TimeSource
+
+@OptIn(ExperimentalAtomicApi::class)
+private val nextDispatchId = AtomicLong(0L)
+
+@OptIn(ExperimentalAtomicApi::class)
+private fun newDispatchId(): Long = nextDispatchId.incrementAndFetch()
 
 /**
  * A [CoroutineDispatcher] that wraps [delegate] and emits a [TraceEvent.Queued],
@@ -22,9 +31,10 @@ import kotlin.time.TimeSource
  * [TraceLevel.Coroutine]. Every `sink.emit` is guarded: a faulty sink can never break dispatch or
  * change the outcome of the block.
  *
- * When the dispatch context carries a [TraceSpan], its id and parent id are attached to the three
- * events; without one they are null. Reading it costs one context lookup, only when the sink is
- * enabled.
+ * Every dispatched runnable gets a process-unique `dispatchId`, shared by its queued, started and
+ * finished events. When the dispatch context carries a [TraceSpan], its id, parent id and name are
+ * attached to the three events; without one they are null. Reading it and allocating an id happen
+ * only when the sink is enabled.
  *
  * Timestamps are nanoseconds on a monotonic base: the elapsed time since this dispatcher was
  * created. Only differences between timestamps are meaningful.
@@ -82,8 +92,8 @@ public class TracingDispatcher internal constructor(
     public val label: String,
     private val sink: TraceSink,
     timeSource: TimeSource,
-) : CoroutineDispatcher(), Delay {
-
+) : CoroutineDispatcher(),
+    Delay {
     public constructor(delegate: CoroutineDispatcher, label: String, sink: TraceSink) :
         this(delegate, label, sink, TimeSource.Monotonic)
 
@@ -92,16 +102,21 @@ public class TracingDispatcher internal constructor(
     /** Nanoseconds elapsed since this dispatcher was created (monotonic). */
     private fun nowNanos(): Long = originMark.elapsedNow().inWholeNanoseconds
 
-    override fun isDispatchNeeded(context: CoroutineContext): Boolean =
-        delegate.isDispatchNeeded(context)
+    override fun isDispatchNeeded(context: CoroutineContext): Boolean = delegate.isDispatchNeeded(context)
 
-    override fun dispatch(context: CoroutineContext, block: Runnable) {
+    override fun dispatch(
+        context: CoroutineContext,
+        block: Runnable,
+    ) {
         dispatchTraced(context, block, delegate::dispatch)
     }
 
     // `yield()` goes through dispatchYield, which Dispatchers.Default and Dispatchers.IO override
     // to enqueue at the tail of the queue. Forward it so wrapping does not change that fairness.
-    override fun dispatchYield(context: CoroutineContext, block: Runnable) {
+    override fun dispatchYield(
+        context: CoroutineContext,
+        block: Runnable,
+    ) {
         dispatchTraced(context, block, delegate::dispatchYield)
     }
 
@@ -119,32 +134,69 @@ public class TracingDispatcher internal constructor(
         val span = context[TraceSpan]
         val spanId = span?.id
         val parentSpanId = span?.parentId
+        val spanName = span?.name
+        val dispatchId = newDispatchId()
         val queuedAt = nowNanos()
-        safeEmit(TraceEvent.Queued(label, queuedAt, name, spanId, parentSpanId))
-        forward(context, Runnable {
-            val startedAt = nowNanos()
-            val thread = if (detailed) currentThreadInfo() else null
-            safeEmit(TraceEvent.Started(label, startedAt, startedAt - queuedAt, name, thread, spanId, parentSpanId))
-            var outcome: TraceOutcome = TraceOutcome.Completed
-            try {
-                block.run()
-            } catch (t: Throwable) {
-                outcome = TraceOutcome.Threw(t)
-                throw t
-            } finally {
-                val finishedAt = nowNanos()
-                safeEmit(TraceEvent.Finished(label, finishedAt, finishedAt - startedAt, outcome, name, thread, spanId, parentSpanId))
-            }
-        })
+        safeEmit(TraceEvent.Queued(label, queuedAt, name, spanId, parentSpanId, dispatchId, spanName))
+        forward(
+            context,
+            Runnable {
+                val startedAt = nowNanos()
+                val thread = if (detailed) currentThreadInfo() else null
+                safeEmit(
+                    TraceEvent.Started(
+                        label,
+                        startedAt,
+                        startedAt - queuedAt,
+                        name,
+                        thread,
+                        spanId,
+                        parentSpanId,
+                        dispatchId,
+                        spanName,
+                    ),
+                )
+                var outcome: TraceOutcome = TraceOutcome.Completed
+                try {
+                    block.run()
+                } catch (t: Throwable) {
+                    outcome = TraceOutcome.Threw(t)
+                    throw t
+                } finally {
+                    val finishedAt = nowNanos()
+                    safeEmit(
+                        TraceEvent.Finished(
+                            label,
+                            finishedAt,
+                            finishedAt - startedAt,
+                            outcome,
+                            name,
+                            thread,
+                            spanId,
+                            parentSpanId,
+                            dispatchId,
+                            spanName,
+                        ),
+                    )
+                }
+            },
+        )
     }
 
-    override fun scheduleResumeAfterDelay(timeMillis: Long, continuation: CancellableContinuation<Unit>) {
+    override fun scheduleResumeAfterDelay(
+        timeMillis: Long,
+        continuation: CancellableContinuation<Unit>,
+    ) {
         // Resume through this dispatcher (not the delegate's own timer callback) so it is observed.
         val handle = invokeOnTimeout(timeMillis, Runnable { continuation.resume(Unit) }, continuation.context)
         continuation.invokeOnCancellation { handle.dispose() }
     }
 
-    override fun invokeOnTimeout(timeMillis: Long, block: Runnable, context: CoroutineContext): DisposableHandle =
+    override fun invokeOnTimeout(
+        timeMillis: Long,
+        block: Runnable,
+        context: CoroutineContext,
+    ): DisposableHandle =
         (delegate as? Delay)?.invokeOnTimeout(timeMillis, block, context)
             ?: super<Delay>.invokeOnTimeout(timeMillis, block, context)
 
@@ -189,7 +241,6 @@ public class TracedDispatcherProvider internal constructor(
     /** The sink that receives the events of the wrapped dispatchers. */
     public val sink: TraceSink,
 ) : DispatcherProvider {
-
     // Lazy so that `base.main` is never read (and Dispatchers.Main never touched) until used.
     private val mainLazy = lazy { TracingDispatcher(base.main, "main", sink) }
     private val ioLazy = lazy { TracingDispatcher(base.io, "io", sink) }
@@ -221,8 +272,7 @@ public class TracedDispatcherProvider internal constructor(
  * @see instrumented
  */
 @ExperimentalStructuredCoroutines
-public fun DispatcherProvider.traced(sink: TraceSink): TracedDispatcherProvider =
-    TracedDispatcherProvider(this, sink)
+public fun DispatcherProvider.traced(sink: TraceSink): TracedDispatcherProvider = TracedDispatcherProvider(this, sink)
 
 /**
  * The maximum concurrency of the traced dispatcher [label], or null when unknown. Meant to feed

@@ -107,16 +107,17 @@ public suspend fun <T> withCleanup(
     cleanup: suspend () -> Unit,
     block: suspend () -> T,
 ): T {
-    val result = try {
-        block()
-    } catch (blockError: Throwable) {
+    val result =
         try {
-            withContext(NonCancellable) { cleanup() }
-        } catch (cleanupError: Throwable) {
-            blockError.addSuppressed(cleanupError)
+            block()
+        } catch (blockError: Throwable) {
+            try {
+                withContext(NonCancellable) { cleanup() }
+            } catch (cleanupError: Throwable) {
+                if (cleanupError !== blockError) blockError.addSuppressed(cleanupError)
+            }
+            throw blockError
         }
-        throw blockError
-    }
     withContext(NonCancellable) { cleanup() }
     return result
 }

@@ -107,6 +107,16 @@ Per-module rule lists and configuration examples: [detekt-rules](detekt-rules/RE
 
 > **Release:** `1.2.0` adds `EXCEPT_004` (`MisplacedTryCatchInScope`), real `"disabled"`/`"error"`/`"warning"` severity handling and several false-positive fixes. See the [CHANGELOG](CHANGELOG.md).
 
+### Release trains
+
+The toolkit artifacts use `PROJECT_VERSION` and are released from a `v<PROJECT_VERSION>`
+tag. The runtime family is independent: `structured-coroutines-runtime`,
+`structured-coroutines-runtime-test`, and `structured-coroutines-runtime-tracing-jvm`
+always share `RUNTIME_VERSION` and are released only from a
+`runtime-v<RUNTIME_VERSION>` tag. A release workflow validates the tag against the
+version in `gradle.properties` before it runs publication, so published Maven Central
+coordinates cannot be selected by a mismatched tag.
+
 ### Compiler Plugin
 
 ```kotlin

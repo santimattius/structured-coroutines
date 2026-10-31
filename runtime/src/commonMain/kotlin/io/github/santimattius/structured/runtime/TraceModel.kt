@@ -52,8 +52,7 @@ public class ThreadInfo(
     public val id: Long,
     public val name: String,
 ) {
-    override fun equals(other: Any?): Boolean =
-        this === other || (other is ThreadInfo && id == other.id && name == other.name)
+    override fun equals(other: Any?): Boolean = this === other || (other is ThreadInfo && id == other.id && name == other.name)
 
     override fun hashCode(): Int = 31 * id.hashCode() + name.hashCode()
 
@@ -85,9 +84,10 @@ public sealed interface TraceOutcome {
      *
      * @property error the throwable that ended the block.
      */
-    public class Threw(public val error: Throwable) : TraceOutcome {
-        override fun equals(other: Any?): Boolean =
-            this === other || (other is Threw && error == other.error)
+    public class Threw(
+        public val error: Throwable,
+    ) : TraceOutcome {
+        override fun equals(other: Any?): Boolean = this === other || (other is Threw && error == other.error)
 
         override fun hashCode(): Int = error.hashCode()
 
@@ -127,40 +127,53 @@ public sealed interface TraceEvent {
     public val level: TraceLevel
 
     /**
-     * A block was handed to the dispatcher. [spanId] and [parentSpanId] come from the [TraceSpan] in
-     * the dispatch context and are null when there is none (same on [Started] and [Finished]).
+     * A block was handed to the dispatcher. [dispatchId] identifies this one dispatched runnable
+     * across its [Queued], [Started] and [Finished] events. [spanId], [parentSpanId] and [spanName]
+     * come from the [TraceSpan] in the dispatch context and are null when there is none (same on
+     * [Started] and [Finished]).
      *
      * @property coroutineName name from the `CoroutineName` element; null unless [TraceLevel.Coroutine] is enabled.
      * @property spanId id of the enclosing [TraceSpan], or null.
      * @property parentSpanId id of that span's parent, or null.
+     * @property dispatchId process-unique id of this dispatched runnable. Zero is reserved for manually constructed events.
+     * @property spanName low-cardinality name of the enclosing [TraceSpan], or null.
      */
-    public class Queued @JvmOverloads constructor(
-        override val dispatcher: String,
-        override val timestampNanos: Long,
-        public val coroutineName: String?,
-        public val spanId: Long? = null,
-        public val parentSpanId: Long? = null,
-    ) : TraceEvent {
-        override val level: TraceLevel get() = TraceLevel.Dispatch
+    public class Queued
+        @JvmOverloads
+        constructor(
+            override val dispatcher: String,
+            override val timestampNanos: Long,
+            public val coroutineName: String?,
+            public val spanId: Long? = null,
+            public val parentSpanId: Long? = null,
+            public val dispatchId: Long = 0L,
+            public val spanName: String? = null,
+        ) : TraceEvent {
+            override val level: TraceLevel get() = TraceLevel.Dispatch
 
-        override fun equals(other: Any?): Boolean =
-            this === other || (other is Queued && dispatcher == other.dispatcher &&
-                timestampNanos == other.timestampNanos && coroutineName == other.coroutineName &&
-                spanId == other.spanId && parentSpanId == other.parentSpanId)
+            override fun equals(other: Any?): Boolean =
+                this === other || (
+                    other is Queued && dispatcher == other.dispatcher &&
+                        timestampNanos == other.timestampNanos && coroutineName == other.coroutineName &&
+                        spanId == other.spanId && parentSpanId == other.parentSpanId &&
+                        dispatchId == other.dispatchId && spanName == other.spanName
+                )
 
-        override fun hashCode(): Int {
-            var h = dispatcher.hashCode()
-            h = 31 * h + timestampNanos.hashCode()
-            h = 31 * h + (coroutineName?.hashCode() ?: 0)
-            h = 31 * h + (spanId?.hashCode() ?: 0)
-            h = 31 * h + (parentSpanId?.hashCode() ?: 0)
-            return h
+            override fun hashCode(): Int {
+                var h = dispatcher.hashCode()
+                h = 31 * h + timestampNanos.hashCode()
+                h = 31 * h + (coroutineName?.hashCode() ?: 0)
+                h = 31 * h + (spanId?.hashCode() ?: 0)
+                h = 31 * h + (parentSpanId?.hashCode() ?: 0)
+                h = 31 * h + dispatchId.hashCode()
+                h = 31 * h + (spanName?.hashCode() ?: 0)
+                return h
+            }
+
+            override fun toString(): String =
+                "Queued(dispatcher=$dispatcher, timestampNanos=$timestampNanos, coroutineName=$coroutineName, " +
+                    "spanId=$spanId, parentSpanId=$parentSpanId, dispatchId=$dispatchId, spanName=$spanName)"
         }
-
-        override fun toString(): String =
-            "Queued(dispatcher=$dispatcher, timestampNanos=$timestampNanos, coroutineName=$coroutineName, " +
-                "spanId=$spanId, parentSpanId=$parentSpanId)"
-    }
 
     /**
      * A block began running after waiting [queueDelayNanos] in the queue.
@@ -170,40 +183,51 @@ public sealed interface TraceEvent {
      * @property thread thread that runs the block; null unless [TraceLevel.Coroutine] is enabled and the platform has threads.
      * @property spanId see [Queued.spanId].
      * @property parentSpanId see [Queued.parentSpanId].
+     * @property dispatchId see [Queued.dispatchId].
+     * @property spanName see [Queued.spanName].
      */
-    public class Started @JvmOverloads constructor(
-        override val dispatcher: String,
-        override val timestampNanos: Long,
-        public val queueDelayNanos: Long,
-        public val coroutineName: String?,
-        public val thread: ThreadInfo?,
-        public val spanId: Long? = null,
-        public val parentSpanId: Long? = null,
-    ) : TraceEvent {
-        override val level: TraceLevel get() = TraceLevel.Dispatch
+    public class Started
+        @JvmOverloads
+        constructor(
+            override val dispatcher: String,
+            override val timestampNanos: Long,
+            public val queueDelayNanos: Long,
+            public val coroutineName: String?,
+            public val thread: ThreadInfo?,
+            public val spanId: Long? = null,
+            public val parentSpanId: Long? = null,
+            public val dispatchId: Long = 0L,
+            public val spanName: String? = null,
+        ) : TraceEvent {
+            override val level: TraceLevel get() = TraceLevel.Dispatch
 
-        override fun equals(other: Any?): Boolean =
-            this === other || (other is Started && dispatcher == other.dispatcher &&
-                timestampNanos == other.timestampNanos && queueDelayNanos == other.queueDelayNanos &&
-                coroutineName == other.coroutineName && thread == other.thread &&
-                spanId == other.spanId && parentSpanId == other.parentSpanId)
+            override fun equals(other: Any?): Boolean =
+                this === other || (
+                    other is Started && dispatcher == other.dispatcher &&
+                        timestampNanos == other.timestampNanos && queueDelayNanos == other.queueDelayNanos &&
+                        coroutineName == other.coroutineName && thread == other.thread &&
+                        spanId == other.spanId && parentSpanId == other.parentSpanId &&
+                        dispatchId == other.dispatchId && spanName == other.spanName
+                )
 
-        override fun hashCode(): Int {
-            var h = dispatcher.hashCode()
-            h = 31 * h + timestampNanos.hashCode()
-            h = 31 * h + queueDelayNanos.hashCode()
-            h = 31 * h + (coroutineName?.hashCode() ?: 0)
-            h = 31 * h + (thread?.hashCode() ?: 0)
-            h = 31 * h + (spanId?.hashCode() ?: 0)
-            h = 31 * h + (parentSpanId?.hashCode() ?: 0)
-            return h
+            override fun hashCode(): Int {
+                var h = dispatcher.hashCode()
+                h = 31 * h + timestampNanos.hashCode()
+                h = 31 * h + queueDelayNanos.hashCode()
+                h = 31 * h + (coroutineName?.hashCode() ?: 0)
+                h = 31 * h + (thread?.hashCode() ?: 0)
+                h = 31 * h + (spanId?.hashCode() ?: 0)
+                h = 31 * h + (parentSpanId?.hashCode() ?: 0)
+                h = 31 * h + dispatchId.hashCode()
+                h = 31 * h + (spanName?.hashCode() ?: 0)
+                return h
+            }
+
+            override fun toString(): String =
+                "Started(dispatcher=$dispatcher, timestampNanos=$timestampNanos, " +
+                    "queueDelayNanos=$queueDelayNanos, coroutineName=$coroutineName, thread=$thread, " +
+                    "spanId=$spanId, parentSpanId=$parentSpanId, dispatchId=$dispatchId, spanName=$spanName)"
         }
-
-        override fun toString(): String =
-            "Started(dispatcher=$dispatcher, timestampNanos=$timestampNanos, " +
-                "queueDelayNanos=$queueDelayNanos, coroutineName=$coroutineName, thread=$thread, " +
-                "spanId=$spanId, parentSpanId=$parentSpanId)"
-    }
 
     /**
      * A block finished after running for [runTimeNanos], with the given [outcome].
@@ -214,43 +238,54 @@ public sealed interface TraceEvent {
      * @property thread see [Started.thread].
      * @property spanId see [Queued.spanId].
      * @property parentSpanId see [Queued.parentSpanId].
+     * @property dispatchId see [Queued.dispatchId].
+     * @property spanName see [Queued.spanName].
      */
-    public class Finished @JvmOverloads constructor(
-        override val dispatcher: String,
-        override val timestampNanos: Long,
-        public val runTimeNanos: Long,
-        public val outcome: TraceOutcome,
-        public val coroutineName: String?,
-        public val thread: ThreadInfo?,
-        public val spanId: Long? = null,
-        public val parentSpanId: Long? = null,
-    ) : TraceEvent {
-        override val level: TraceLevel get() = TraceLevel.Dispatch
+    public class Finished
+        @JvmOverloads
+        constructor(
+            override val dispatcher: String,
+            override val timestampNanos: Long,
+            public val runTimeNanos: Long,
+            public val outcome: TraceOutcome,
+            public val coroutineName: String?,
+            public val thread: ThreadInfo?,
+            public val spanId: Long? = null,
+            public val parentSpanId: Long? = null,
+            public val dispatchId: Long = 0L,
+            public val spanName: String? = null,
+        ) : TraceEvent {
+            override val level: TraceLevel get() = TraceLevel.Dispatch
 
-        override fun equals(other: Any?): Boolean =
-            this === other || (other is Finished && dispatcher == other.dispatcher &&
-                timestampNanos == other.timestampNanos && runTimeNanos == other.runTimeNanos &&
-                outcome == other.outcome && coroutineName == other.coroutineName &&
-                thread == other.thread &&
-                spanId == other.spanId && parentSpanId == other.parentSpanId)
+            override fun equals(other: Any?): Boolean =
+                this === other || (
+                    other is Finished && dispatcher == other.dispatcher &&
+                        timestampNanos == other.timestampNanos && runTimeNanos == other.runTimeNanos &&
+                        outcome == other.outcome && coroutineName == other.coroutineName &&
+                        thread == other.thread &&
+                        spanId == other.spanId && parentSpanId == other.parentSpanId &&
+                        dispatchId == other.dispatchId && spanName == other.spanName
+                )
 
-        override fun hashCode(): Int {
-            var h = dispatcher.hashCode()
-            h = 31 * h + timestampNanos.hashCode()
-            h = 31 * h + runTimeNanos.hashCode()
-            h = 31 * h + outcome.hashCode()
-            h = 31 * h + (coroutineName?.hashCode() ?: 0)
-            h = 31 * h + (thread?.hashCode() ?: 0)
-            h = 31 * h + (spanId?.hashCode() ?: 0)
-            h = 31 * h + (parentSpanId?.hashCode() ?: 0)
-            return h
+            override fun hashCode(): Int {
+                var h = dispatcher.hashCode()
+                h = 31 * h + timestampNanos.hashCode()
+                h = 31 * h + runTimeNanos.hashCode()
+                h = 31 * h + outcome.hashCode()
+                h = 31 * h + (coroutineName?.hashCode() ?: 0)
+                h = 31 * h + (thread?.hashCode() ?: 0)
+                h = 31 * h + (spanId?.hashCode() ?: 0)
+                h = 31 * h + (parentSpanId?.hashCode() ?: 0)
+                h = 31 * h + dispatchId.hashCode()
+                h = 31 * h + (spanName?.hashCode() ?: 0)
+                return h
+            }
+
+            override fun toString(): String =
+                "Finished(dispatcher=$dispatcher, timestampNanos=$timestampNanos, " +
+                    "runTimeNanos=$runTimeNanos, outcome=$outcome, coroutineName=$coroutineName, thread=$thread, " +
+                    "spanId=$spanId, parentSpanId=$parentSpanId, dispatchId=$dispatchId, spanName=$spanName)"
         }
-
-        override fun toString(): String =
-            "Finished(dispatcher=$dispatcher, timestampNanos=$timestampNanos, " +
-                "runTimeNanos=$runTimeNanos, outcome=$outcome, coroutineName=$coroutineName, thread=$thread, " +
-                "spanId=$spanId, parentSpanId=$parentSpanId)"
-    }
 
     /**
      * A periodic snapshot of one dispatcher pool, produced by [PoolSampler] (never by
@@ -297,11 +332,13 @@ public sealed interface TraceEvent {
         override val level: TraceLevel get() = TraceLevel.Pool
 
         override fun equals(other: Any?): Boolean =
-            this === other || (other is PoolSample && dispatcher == other.dispatcher &&
-                timestampNanos == other.timestampNanos && queued == other.queued &&
-                started == other.started && finished == other.finished && pending == other.pending &&
-                running == other.running && peakRunning == other.peakRunning &&
-                parallelism == other.parallelism)
+            this === other || (
+                other is PoolSample && dispatcher == other.dispatcher &&
+                    timestampNanos == other.timestampNanos && queued == other.queued &&
+                    started == other.started && finished == other.finished && pending == other.pending &&
+                    running == other.running && peakRunning == other.peakRunning &&
+                    parallelism == other.parallelism
+            )
 
         override fun hashCode(): Int {
             var h = dispatcher.hashCode()
