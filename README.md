@@ -105,7 +105,7 @@ Per-module rule lists and configuration examples: [detekt-rules](detekt-rules/RE
 
 ## 📦 Installation
 
-> **Release:** `1.2.0` adds `EXCEPT_004` (`MisplacedTryCatchInScope`), real `"disabled"`/`"error"`/`"warning"` severity handling and several false-positive fixes. See the [CHANGELOG](CHANGELOG.md).
+> **Release:** `1.2.1` fixes Detekt false positives in `CANCEL_001`, `CANCEL_003`, `RUNBLOCK_001` and `SCOPE_002`/`SCOPE_003` (#155). `1.2.0` added `EXCEPT_004` (`MisplacedTryCatchInScope`) and real `"disabled"`/`"error"`/`"warning"` severity handling. See the [CHANGELOG](CHANGELOG.md).
 
 ### Release trains
 

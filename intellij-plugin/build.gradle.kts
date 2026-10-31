@@ -17,7 +17,7 @@ plugins {
 }
 
 group = "io.github.santimattius"
-version = "1.2.1"
+version = "1.2.2"
 
 repositories {
     mavenCentral()
@@ -77,6 +77,10 @@ intellijPlatform {
             </ul>
         """.trimIndent()
         changeNotes = """
+            <p><b>v1.2.2</b></p>
+            <ul>
+                <li><b>IDE compatibility extended</b> — Now compatible with IntelliJ Platform build 263.* (raised <code>untilBuild</code> from <code>262.*</code> to <code>263.*</code>)</li>
+            </ul>
             <p><b>v1.2.0</b></p>
             <ul>
                 <li><b>MisplacedTryCatchInScope (EXCEPT_004, WARNING)</b> — Detects a <code>try/catch</code> inside <code>coroutineScope { }</code> around <code>await()</code>/<code>join()</code> of a child created in the same scope; the catch cannot stop the failure from propagating</li>
@@ -186,7 +190,7 @@ intellijPlatform {
         """.trimIndent()
         ideaVersion {
             sinceBuild = "243"
-            untilBuild = "262.*"
+            untilBuild = "263.*"
         }
         vendor {
             name = "Santiago Mattiauda"

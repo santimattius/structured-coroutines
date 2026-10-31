@@ -177,4 +177,38 @@ class LoopWithoutYieldRuleTest {
         val findings = rule.compileAndLint(code)
         assertThat(findings).isEmpty()
     }
+
+    @Test
+    fun `does not report while with currentCoroutineContext isActive condition (issue 155)`() {
+        val code = """
+            import kotlinx.coroutines.currentCoroutineContext
+            import kotlinx.coroutines.isActive
+
+            suspend fun spin(step: () -> Unit) {
+                while (currentCoroutineContext().isActive) {
+                    step()
+                }
+            }
+        """.trimIndent()
+
+        val findings = rule.compileAndLint(code)
+        assertThat(findings).isEmpty()
+    }
+
+    @Test
+    fun `does not report while isActive inside coroutineScope builder (issue 155)`() {
+        val code = """
+            import kotlinx.coroutines.coroutineScope
+            import kotlinx.coroutines.isActive
+
+            suspend fun spinInScope(step: () -> Unit) = coroutineScope {
+                while (isActive) {
+                    step()
+                }
+            }
+        """.trimIndent()
+
+        val findings = rule.compileAndLint(code)
+        assertThat(findings).isEmpty()
+    }
 }

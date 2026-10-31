@@ -240,4 +240,32 @@ class UnusedDeferredRuleTest {
         val findings = rule.compileAndLint(code)
         assertThat(findings).hasSize(1)
     }
+
+    @Test
+    fun `does not report non-coroutine async method without arguments (issue 155)`() {
+        val code = """
+            import java.util.concurrent.CompletionStage
+            import kotlinx.coroutines.future.await
+
+            interface AsyncCommands {
+                fun get(key: String): CompletionStage<String?>
+            }
+
+            interface Connection {
+                fun async(): AsyncCommands
+            }
+
+            class KeyValueStore(private val connection: Connection) {
+                suspend fun readBoth(first: String, second: String): List<String?> {
+                    val commands = connection.async()
+                    return listOf(read(commands, first), read(commands, second))
+                }
+
+                private suspend fun read(commands: AsyncCommands, key: String): String? = commands.get(key).await()
+            }
+        """.trimIndent()
+
+        val findings = rule.compileAndLint(code)
+        assertThat(findings).isEmpty()
+    }
 }

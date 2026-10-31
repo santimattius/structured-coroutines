@@ -79,6 +79,9 @@ class RedundantLaunchInCoroutineScopeRule(config: Config = Config.empty) : Rule(
             val singleBuilder = allCalls.firstOrNull { it.calleeExpression?.text in builderNames } ?: return
             // Do not report when the single launch is inside forEach/for/while — it runs multiple times and scope waits for all
             if (isInsideRepeatingContext(singleBuilder, body)) return
+            // Only a launch in the last statement is redundant; earlier statements run concurrently with it
+            val lastStatement = body.statements.lastOrNull() ?: return
+            if (!lastStatement.textRange.contains(singleBuilder.textRange)) return
 
             report(
                 CodeSmell(
