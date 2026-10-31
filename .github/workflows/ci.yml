@@ -2,11 +2,9 @@ name: CI
 
 on:
   pull_request:
-    # TEMPORARY: the feature branch is listed so PRs and pushes into it run CI.
-    # Remove `feat/coroutines-toolkit-runtime` before merging the feature into main.
-    branches: [ main, feat/coroutines-toolkit-runtime ]
+    branches: [ main ]
   push:
-    branches: [ main, feat/coroutines-toolkit-runtime ]
+    branches: [ main ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
