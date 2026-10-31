@@ -121,10 +121,12 @@ sealed interface io.github.santimattius.structured.runtime/TraceEvent { // io.gi
         abstract fun <get-timestampNanos>(): kotlin/Long // io.github.santimattius.structured.runtime/TraceEvent.timestampNanos.<get-timestampNanos>|<get-timestampNanos>(){}[0]
 
     final class Finished : io.github.santimattius.structured.runtime/TraceEvent { // io.github.santimattius.structured.runtime/TraceEvent.Finished|null[0]
-        constructor <init>(kotlin/String, kotlin/Long, kotlin/Long, io.github.santimattius.structured.runtime/TraceOutcome, kotlin/String?, io.github.santimattius.structured.runtime/ThreadInfo?, kotlin/Long? = ..., kotlin/Long? = ...) // io.github.santimattius.structured.runtime/TraceEvent.Finished.<init>|<init>(kotlin.String;kotlin.Long;kotlin.Long;io.github.santimattius.structured.runtime.TraceOutcome;kotlin.String?;io.github.santimattius.structured.runtime.ThreadInfo?;kotlin.Long?;kotlin.Long?){}[0]
+        constructor <init>(kotlin/String, kotlin/Long, kotlin/Long, io.github.santimattius.structured.runtime/TraceOutcome, kotlin/String?, io.github.santimattius.structured.runtime/ThreadInfo?, kotlin/Long? = ..., kotlin/Long? = ..., kotlin/Long = ..., kotlin/String? = ...) // io.github.santimattius.structured.runtime/TraceEvent.Finished.<init>|<init>(kotlin.String;kotlin.Long;kotlin.Long;io.github.santimattius.structured.runtime.TraceOutcome;kotlin.String?;io.github.santimattius.structured.runtime.ThreadInfo?;kotlin.Long?;kotlin.Long?;kotlin.Long;kotlin.String?){}[0]
 
         final val coroutineName // io.github.santimattius.structured.runtime/TraceEvent.Finished.coroutineName|{}coroutineName[0]
             final fun <get-coroutineName>(): kotlin/String? // io.github.santimattius.structured.runtime/TraceEvent.Finished.coroutineName.<get-coroutineName>|<get-coroutineName>(){}[0]
+        final val dispatchId // io.github.santimattius.structured.runtime/TraceEvent.Finished.dispatchId|{}dispatchId[0]
+            final fun <get-dispatchId>(): kotlin/Long // io.github.santimattius.structured.runtime/TraceEvent.Finished.dispatchId.<get-dispatchId>|<get-dispatchId>(){}[0]
         final val dispatcher // io.github.santimattius.structured.runtime/TraceEvent.Finished.dispatcher|{}dispatcher[0]
             final fun <get-dispatcher>(): kotlin/String // io.github.santimattius.structured.runtime/TraceEvent.Finished.dispatcher.<get-dispatcher>|<get-dispatcher>(){}[0]
         final val level // io.github.santimattius.structured.runtime/TraceEvent.Finished.level|{}level[0]
@@ -137,6 +139,8 @@ sealed interface io.github.santimattius.structured.runtime/TraceEvent { // io.gi
             final fun <get-runTimeNanos>(): kotlin/Long // io.github.santimattius.structured.runtime/TraceEvent.Finished.runTimeNanos.<get-runTimeNanos>|<get-runTimeNanos>(){}[0]
         final val spanId // io.github.santimattius.structured.runtime/TraceEvent.Finished.spanId|{}spanId[0]
             final fun <get-spanId>(): kotlin/Long? // io.github.santimattius.structured.runtime/TraceEvent.Finished.spanId.<get-spanId>|<get-spanId>(){}[0]
+        final val spanName // io.github.santimattius.structured.runtime/TraceEvent.Finished.spanName|{}spanName[0]
+            final fun <get-spanName>(): kotlin/String? // io.github.santimattius.structured.runtime/TraceEvent.Finished.spanName.<get-spanName>|<get-spanName>(){}[0]
         final val thread // io.github.santimattius.structured.runtime/TraceEvent.Finished.thread|{}thread[0]
             final fun <get-thread>(): io.github.santimattius.structured.runtime/ThreadInfo? // io.github.santimattius.structured.runtime/TraceEvent.Finished.thread.<get-thread>|<get-thread>(){}[0]
         final val timestampNanos // io.github.santimattius.structured.runtime/TraceEvent.Finished.timestampNanos|{}timestampNanos[0]
@@ -177,10 +181,12 @@ sealed interface io.github.santimattius.structured.runtime/TraceEvent { // io.gi
     }
 
     final class Queued : io.github.santimattius.structured.runtime/TraceEvent { // io.github.santimattius.structured.runtime/TraceEvent.Queued|null[0]
-        constructor <init>(kotlin/String, kotlin/Long, kotlin/String?, kotlin/Long? = ..., kotlin/Long? = ...) // io.github.santimattius.structured.runtime/TraceEvent.Queued.<init>|<init>(kotlin.String;kotlin.Long;kotlin.String?;kotlin.Long?;kotlin.Long?){}[0]
+        constructor <init>(kotlin/String, kotlin/Long, kotlin/String?, kotlin/Long? = ..., kotlin/Long? = ..., kotlin/Long = ..., kotlin/String? = ...) // io.github.santimattius.structured.runtime/TraceEvent.Queued.<init>|<init>(kotlin.String;kotlin.Long;kotlin.String?;kotlin.Long?;kotlin.Long?;kotlin.Long;kotlin.String?){}[0]
 
         final val coroutineName // io.github.santimattius.structured.runtime/TraceEvent.Queued.coroutineName|{}coroutineName[0]
             final fun <get-coroutineName>(): kotlin/String? // io.github.santimattius.structured.runtime/TraceEvent.Queued.coroutineName.<get-coroutineName>|<get-coroutineName>(){}[0]
+        final val dispatchId // io.github.santimattius.structured.runtime/TraceEvent.Queued.dispatchId|{}dispatchId[0]
+            final fun <get-dispatchId>(): kotlin/Long // io.github.santimattius.structured.runtime/TraceEvent.Queued.dispatchId.<get-dispatchId>|<get-dispatchId>(){}[0]
         final val dispatcher // io.github.santimattius.structured.runtime/TraceEvent.Queued.dispatcher|{}dispatcher[0]
             final fun <get-dispatcher>(): kotlin/String // io.github.santimattius.structured.runtime/TraceEvent.Queued.dispatcher.<get-dispatcher>|<get-dispatcher>(){}[0]
         final val level // io.github.santimattius.structured.runtime/TraceEvent.Queued.level|{}level[0]
@@ -189,6 +195,8 @@ sealed interface io.github.santimattius.structured.runtime/TraceEvent { // io.gi
             final fun <get-parentSpanId>(): kotlin/Long? // io.github.santimattius.structured.runtime/TraceEvent.Queued.parentSpanId.<get-parentSpanId>|<get-parentSpanId>(){}[0]
         final val spanId // io.github.santimattius.structured.runtime/TraceEvent.Queued.spanId|{}spanId[0]
             final fun <get-spanId>(): kotlin/Long? // io.github.santimattius.structured.runtime/TraceEvent.Queued.spanId.<get-spanId>|<get-spanId>(){}[0]
+        final val spanName // io.github.santimattius.structured.runtime/TraceEvent.Queued.spanName|{}spanName[0]
+            final fun <get-spanName>(): kotlin/String? // io.github.santimattius.structured.runtime/TraceEvent.Queued.spanName.<get-spanName>|<get-spanName>(){}[0]
         final val timestampNanos // io.github.santimattius.structured.runtime/TraceEvent.Queued.timestampNanos|{}timestampNanos[0]
             final fun <get-timestampNanos>(): kotlin/Long // io.github.santimattius.structured.runtime/TraceEvent.Queued.timestampNanos.<get-timestampNanos>|<get-timestampNanos>(){}[0]
 
@@ -198,10 +206,12 @@ sealed interface io.github.santimattius.structured.runtime/TraceEvent { // io.gi
     }
 
     final class Started : io.github.santimattius.structured.runtime/TraceEvent { // io.github.santimattius.structured.runtime/TraceEvent.Started|null[0]
-        constructor <init>(kotlin/String, kotlin/Long, kotlin/Long, kotlin/String?, io.github.santimattius.structured.runtime/ThreadInfo?, kotlin/Long? = ..., kotlin/Long? = ...) // io.github.santimattius.structured.runtime/TraceEvent.Started.<init>|<init>(kotlin.String;kotlin.Long;kotlin.Long;kotlin.String?;io.github.santimattius.structured.runtime.ThreadInfo?;kotlin.Long?;kotlin.Long?){}[0]
+        constructor <init>(kotlin/String, kotlin/Long, kotlin/Long, kotlin/String?, io.github.santimattius.structured.runtime/ThreadInfo?, kotlin/Long? = ..., kotlin/Long? = ..., kotlin/Long = ..., kotlin/String? = ...) // io.github.santimattius.structured.runtime/TraceEvent.Started.<init>|<init>(kotlin.String;kotlin.Long;kotlin.Long;kotlin.String?;io.github.santimattius.structured.runtime.ThreadInfo?;kotlin.Long?;kotlin.Long?;kotlin.Long;kotlin.String?){}[0]
 
         final val coroutineName // io.github.santimattius.structured.runtime/TraceEvent.Started.coroutineName|{}coroutineName[0]
             final fun <get-coroutineName>(): kotlin/String? // io.github.santimattius.structured.runtime/TraceEvent.Started.coroutineName.<get-coroutineName>|<get-coroutineName>(){}[0]
+        final val dispatchId // io.github.santimattius.structured.runtime/TraceEvent.Started.dispatchId|{}dispatchId[0]
+            final fun <get-dispatchId>(): kotlin/Long // io.github.santimattius.structured.runtime/TraceEvent.Started.dispatchId.<get-dispatchId>|<get-dispatchId>(){}[0]
         final val dispatcher // io.github.santimattius.structured.runtime/TraceEvent.Started.dispatcher|{}dispatcher[0]
             final fun <get-dispatcher>(): kotlin/String // io.github.santimattius.structured.runtime/TraceEvent.Started.dispatcher.<get-dispatcher>|<get-dispatcher>(){}[0]
         final val level // io.github.santimattius.structured.runtime/TraceEvent.Started.level|{}level[0]
@@ -212,6 +222,8 @@ sealed interface io.github.santimattius.structured.runtime/TraceEvent { // io.gi
             final fun <get-queueDelayNanos>(): kotlin/Long // io.github.santimattius.structured.runtime/TraceEvent.Started.queueDelayNanos.<get-queueDelayNanos>|<get-queueDelayNanos>(){}[0]
         final val spanId // io.github.santimattius.structured.runtime/TraceEvent.Started.spanId|{}spanId[0]
             final fun <get-spanId>(): kotlin/Long? // io.github.santimattius.structured.runtime/TraceEvent.Started.spanId.<get-spanId>|<get-spanId>(){}[0]
+        final val spanName // io.github.santimattius.structured.runtime/TraceEvent.Started.spanName|{}spanName[0]
+            final fun <get-spanName>(): kotlin/String? // io.github.santimattius.structured.runtime/TraceEvent.Started.spanName.<get-spanName>|<get-spanName>(){}[0]
         final val thread // io.github.santimattius.structured.runtime/TraceEvent.Started.thread|{}thread[0]
             final fun <get-thread>(): io.github.santimattius.structured.runtime/ThreadInfo? // io.github.santimattius.structured.runtime/TraceEvent.Started.thread.<get-thread>|<get-thread>(){}[0]
         final val timestampNanos // io.github.santimattius.structured.runtime/TraceEvent.Started.timestampNanos|{}timestampNanos[0]

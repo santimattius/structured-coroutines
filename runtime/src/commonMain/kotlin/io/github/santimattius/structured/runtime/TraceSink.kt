@@ -7,7 +7,8 @@ package io.github.santimattius.structured.runtime
  * 1. [emit] must not throw; callers also catch and drop, so a faulty sink never breaks dispatch.
  * 2. [emit] must be cheap and must not suspend or block; heavy work goes behind the sink's own buffer.
  * 3. [emit] can be called concurrently from many threads.
- * 4. Ordering is guaranteed per thread only, not globally.
+ * 4. Ordering is guaranteed per thread only, not globally. Correlate the three lifecycle events of
+ *    one dispatched runnable by their non-zero `dispatchId`, not by adjacency or span id.
  * 5. A sink may ignore unknown event subtypes (new ones can be added in later releases).
  *
  * [isEnabled] is consulted before an event is built, so a disabled level costs no allocation.
@@ -43,11 +44,14 @@ public fun interface TraceSink {
     /** Constants for [TraceSink]. */
     public companion object {
         /** A sink that is disabled for every level and ignores every event. */
-        public val None: TraceSink = object : TraceSink {
-            override fun emit(event: TraceEvent) {}
-            override fun isEnabled(level: TraceLevel): Boolean = false
-            override fun toString(): String = "TraceSink.None"
-        }
+        public val None: TraceSink =
+            object : TraceSink {
+                override fun emit(event: TraceEvent) {}
+
+                override fun isEnabled(level: TraceLevel): Boolean = false
+
+                override fun toString(): String = "TraceSink.None"
+            }
     }
 }
 
@@ -69,7 +73,9 @@ public fun interface TraceSink {
  * @param sinks the sinks to fan out to.
  */
 @ExperimentalStructuredCoroutines
-public class CompositeSink(sinks: List<TraceSink>) : TraceSink {
+public class CompositeSink(
+    sinks: List<TraceSink>,
+) : TraceSink {
     private val sinks: List<TraceSink> = sinks.toList()
 
     override fun emit(event: TraceEvent) {

@@ -18,6 +18,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.file.Files
+import java.util.concurrent.TimeUnit
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -26,7 +27,6 @@ import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 class PerfettoTraceSessionTest {
-
     private val dir: File = Files.createTempDirectory("perfetto-session").toFile()
 
     @AfterTest
@@ -35,7 +35,10 @@ class PerfettoTraceSessionTest {
     }
 
     private fun decode(file: File): List<MutableTrackEvent> =
-        MutableTrace.ADAPTER.decode(file.readBytes()).packet.mapNotNull { it.track_event }
+        MutableTrace.ADAPTER
+            .decode(file.readBytes())
+            .packet
+            .mapNotNull { it.track_event }
 
     @Test
     fun tracedDispatchersProduceANonEmptyPerfettoFileWithSlicesAndCounters() {
@@ -45,9 +48,13 @@ class PerfettoTraceSessionTest {
         runBlocking {
             withTraceSpan("checkout") {
                 coroutineScope {
-                    (1..4).map { i ->
-                        async(provider.io + CoroutineName("fetch")) { Thread.sleep(2); i }
-                    }.awaitAll()
+                    (1..4)
+                        .map { i ->
+                            async(provider.io + CoroutineName("fetch")) {
+                                Thread.sleep(2)
+                                i
+                            }
+                        }.awaitAll()
                 }
                 withContext(provider.default + CoroutineName("render")) { Thread.sleep(2) }
             }
@@ -95,6 +102,32 @@ class PerfettoTraceSessionTest {
         val provider = DefaultDispatcherProvider.traced(session.sink)
         runBlocking { withContext(provider.io) { } }
         session.flush()
+    }
+
+    @Test
+    fun concurrentFlushAndCloseAreSerializedAndCloseIsIdempotent() {
+        val session = PerfettoTraceSession.start(dir)
+        val threads = 8
+        val start = java.util.concurrent.CountDownLatch(1)
+        val pool =
+            java.util.concurrent.Executors
+                .newFixedThreadPool(threads)
+        try {
+            val calls =
+                (0 until threads).map { index ->
+                    pool.submit {
+                        start.await()
+                        repeat(100) {
+                            if ((index + it) % 3 == 0) session.close() else session.flush()
+                        }
+                    }
+                }
+            start.countDown()
+            calls.forEach { it.get(30, TimeUnit.SECONDS) }
+        } finally {
+            pool.shutdownNow()
+            session.close()
+        }
     }
 
     @Test
