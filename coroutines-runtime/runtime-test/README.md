@@ -1,5 +1,7 @@
 # Structured Coroutines Runtime Test
 
+Part of the [runtime family](../README.md) (module map, dependency graph, build and publishing).
+
 Test helpers for [`:runtime`](../runtime/README.md): `TestDispatcherProvider` and
 `TestScope.testDispatcherProvider()`, a `DispatcherProvider` whose dispatchers share one test
 scheduler (virtual time), plus `RecordingSink` (a `TraceSink` that records events for assertions)

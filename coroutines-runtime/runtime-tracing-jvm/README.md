@@ -1,5 +1,7 @@
 # Structured Coroutines Runtime Tracing (JVM)
 
+Part of the [runtime family](../README.md) (module map, dependency graph, build and publishing).
+
 A JVM/desktop `TraceSink` for [`:runtime`](../runtime/README.md): `PerfettoTraceSink` writes
 dispatch activity through [`androidx.tracing`](https://developer.android.com/jetpack/androidx/releases/tracing)
 into an in-process Perfetto trace (`.perfetto-trace`) that opens in

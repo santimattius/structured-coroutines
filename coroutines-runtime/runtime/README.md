@@ -1,5 +1,7 @@
 # Structured Coroutines Runtime
 
+Part of the [runtime family](../README.md) (module map, dependency graph, build and publishing).
+
 Optional multiplatform helpers that are the **compliant replacement** for patterns the compiler
 plugin, Detekt rules and Android Lint rules flag. Instead of only telling you what not to write,
 the toolkit ships the safe version.
@@ -11,7 +13,7 @@ the toolkit ships the safe version.
 ## API reference
 
 Full KDoc-generated API reference (all platforms): <https://santimattius.github.io/structured-coroutines/>.
-Build it locally with `./gradlew :runtime:dokkaGeneratePublicationHtml` (output in `runtime/build/dokka/html`).
+Build it locally with `./gradlew :runtime:dokkaGeneratePublicationHtml` (output in `coroutines-runtime/runtime/build/dokka/html`).
 
 ## Installation
 
@@ -66,7 +68,7 @@ kotlin {
 
 ## Helpers and the rules they support
 
-Rule IDs are defined in [`docs/BEST_PRACTICES_COROUTINES.md`](../docs/BEST_PRACTICES_COROUTINES.md).
+Rule IDs are defined in [`docs/BEST_PRACTICES_COROUTINES.md`](../../docs/BEST_PRACTICES_COROUTINES.md).
 
 | Helper                                                    | Supports                                                    |
 |-----------------------------------------------------------|-------------------------------------------------------------|
@@ -429,7 +431,7 @@ wasmWasi (Node.js). The JVM target is built with JVM toolchain 17.
 AGP KMP library plugin `com.android.kotlin.multiplatform.library`). It publishes its own `androidJvm`
 Gradle variants next to the plain `jvm` ones, so Android consumers resolve it without extra setup.
 `:runtime-test` has no Android target. Building `:runtime` needs the Android SDK (platform 36 and
-build-tools 36.0.0; see [CONTRIBUTING.md](../CONTRIBUTING.md)). The Android target also provides
+build-tools 36.0.0; see [CONTRIBUTING.md](../../CONTRIBUTING.md)). The Android target also provides
 `AndroidTraceSink` (see [Tracing](#tracing)); the other targets have no system-trace sink (the JVM
 can write a Perfetto file with `:runtime-tracing-jvm`).
 

@@ -4,7 +4,7 @@ plugins {
 
 // Opt-in micro-benchmark of TracingDispatcher.dispatch overhead. NOT published, NOT part of
 // `build`/`check`/CI: it only runs through the explicit `tracingBenchmark` task. The numbers are
-// documented in runtime/README.md; nothing asserts on timing.
+// documented in coroutines-runtime/runtime/README.md; nothing asserts on timing.
 kotlin {
     jvmToolchain(17)
 }

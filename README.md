@@ -59,6 +59,9 @@ This toolkit enforces structured concurrency best practices through:
 | `annotations`     | `@StructuredScope` annotation  | Runtime/Compile        |
 | `runtime`         | Compliant helpers (experimental, 0.x) | Runtime/Compile  |
 | `runtime-test`    | Test doubles for `runtime`     | Tests                  |
+
+The runtime modules (`runtime`, `runtime-test`, `runtime-tracing-jvm`, `runtime-benchmark`) live under
+[`coroutines-runtime/`](coroutines-runtime/README.md); their Gradle paths (`:runtime`, ...) are unchanged.
 | `gradle-plugin`   | Gradle integration             | Build configuration    |
 
 ---
@@ -528,8 +531,11 @@ structured-coroutines/
 │   ├── guttericons/      # Scope & dispatcher visualization
 │   └── view/             # Tool window (findings list, runner, tree visitor)
 ├── gradle-plugin/        # Gradle Integration
-├── runtime/              # Compliant helpers (Multiplatform, experimental, 0.x)
-├── runtime-test/         # Test doubles for :runtime (TestDispatcherProvider)
+├── coroutines-runtime/   # Runtime family (see coroutines-runtime/README.md)
+│   ├── runtime/          # Compliant helpers (Multiplatform, experimental, 0.x)
+│   ├── runtime-test/     # Test doubles for :runtime (TestDispatcherProvider)
+│   ├── runtime-tracing-jvm/  # Perfetto trace sink for JVM/desktop
+│   └── runtime-benchmark/    # Opt-in overhead benchmark (not published)
 ├── sample/               # Examples
 │   └── compilation/     # One example per compiler rule (errors & warnings)
 └── kotlin-coroutines-skill/  # AI/agent skill for coroutine best practices
@@ -639,8 +645,9 @@ Each module contains its own detailed documentation:
 | **Android Lint**                  | [lint-rules/README.md](lint-rules/README.md)                                                                   | 33 detectors, Android/Compose-specific detection                        |
 | **IntelliJ Plugin**               | [intellij-plugin/README.md](intellij-plugin/README.md)                                                         | 36 inspections, quick fixes, Flow Analyzer, K2 support                  |
 | **Annotations**                   | [annotations/README.md](annotations/README.md)                                                                 | @StructuredScope usage and multiplatform support                        |
-| **Runtime**                       | [runtime/README.md](runtime/README.md)                                                                         | Experimental helpers that replace flagged patterns (0.x, opt-in)        |
-| **Runtime Test**                  | [runtime-test/README.md](runtime-test/README.md)                                                               | `TestDispatcherProvider` for `:runtime`                                 |
+| **Runtime family**                | [coroutines-runtime/README.md](coroutines-runtime/README.md)                                                   | Overview, module map, build and publishing for the four runtime modules |
+| **Runtime**                       | [runtime/README.md](coroutines-runtime/runtime/README.md)                                                                         | Experimental helpers that replace flagged patterns (0.x, opt-in)        |
+| **Runtime Test**                  | [runtime-test/README.md](coroutines-runtime/runtime-test/README.md)                                                               | `TestDispatcherProvider` for `:runtime`                                 |
 | **Compiler**                      | [compiler/README.md](compiler/README.md)                                                                       | K2/FIR checker implementation details                                   |
 | **Sample (compilation)**          | [compilation/README.md](sample/src/main/kotlin/io/github/santimattius/structured/sample/compilation/README.md) | One example per compiler rule (errors and warnings)                     |
 | **Sample (Detekt)**               | [sample-detekt/README.md](sample-detekt/README.md)                                                             | One example per Detekt rule; run `:sample-detekt:detekt` to validate    |
