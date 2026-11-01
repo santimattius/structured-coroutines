@@ -7,6 +7,7 @@ on:
 
 jobs:
   publish-lint-rules:
+    if: ${{ !startsWith(github.event.release.tag_name, 'runtime-v') }}
     name: Publish lint-rules to Maven Central
     runs-on: ubuntu-latest
     steps:
