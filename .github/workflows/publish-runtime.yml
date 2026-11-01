@@ -76,18 +76,9 @@ jobs:
 
       - name: Publish runtime artifacts to Maven Central
         env:
-          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
-          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
-          SIGNING_KEY_ID: ${{ secrets.SIGNING_KEY_ID }}
-          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
-          GPG_KEY_CONTENTS: ${{ secrets.GPG_KEY_CONTENTS }}
-        run: |
-          export ORG_GRADLE_PROJECT_mavenCentralUsername=\
-            "$MAVEN_CENTRAL_USERNAME"
-          export ORG_GRADLE_PROJECT_mavenCentralPassword=\
-            "$MAVEN_CENTRAL_PASSWORD"
-          export ORG_GRADLE_PROJECT_signingInMemoryKeyId="$SIGNING_KEY_ID"
-          export ORG_GRADLE_PROJECT_signingInMemoryKeyPassword=\
-            "$SIGNING_PASSWORD"
-          export ORG_GRADLE_PROJECT_signingInMemoryKey="$GPG_KEY_CONTENTS"
-          ./gradlew publishRuntimeToMavenCentral --no-configuration-cache
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.SIGNING_KEY_ID }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_KEY_CONTENTS }}
+        run: ./gradlew publishRuntimeToMavenCentral --no-configuration-cache
