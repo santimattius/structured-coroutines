@@ -22,6 +22,7 @@ analysis.
 | Android Lint                  | ✅ Complete (33 detectors)                               | [lint-rules/README.md](lint-rules/README.md)                                                                |
 | IntelliJ Plugin               | ✅ Complete (36 inspections, tool window, Flow Analyzer) | [intellij-plugin/README.md](intellij-plugin/README.md)                                                    |
 | Annotations                   | ✅ Complete                                              | [annotations/README.md](annotations/README.md)                                                              |
+| Runtime family                | 🧪 Experimental (0.x, alpha)                             | [coroutines-runtime/README.md](coroutines-runtime/README.md)                                                |
 | Sample                        | ✅ Compilation examples per rule                         | [compilation/README](sample/src/main/kotlin/io/github/santimattius/structured/sample/compilation/README.md) |
 | Sample (Detekt)               | ✅ Detekt rule validation (30+ examples)                 | [sample-detekt/README.md](sample-detekt/README.md)                                                          |
 | Sample (Severity)             | ✅ Severity DSL demo (standalone build)                  | [sample-severity/README.md](sample-severity/README.md)                                                      |
@@ -57,12 +58,20 @@ This toolkit enforces structured concurrency best practices through:
 | `lint-rules`      | Android Lint rules             | Android projects       |
 | `intellij-plugin` | IntelliJ/Android Studio Plugin | Real-time IDE analysis |
 | `annotations`     | `@StructuredScope` annotation  | Runtime/Compile        |
-| `runtime`         | Compliant helpers (experimental, 0.x) | Runtime/Compile  |
-| `runtime-test`    | Test doubles for `runtime`     | Tests                  |
-
-The runtime modules (`runtime`, `runtime-test`, `runtime-tracing-jvm`, `runtime-benchmark`) live under
-[`coroutines-runtime/`](coroutines-runtime/README.md); their Gradle paths (`:runtime`, ...) are unchanged.
 | `gradle-plugin`   | Gradle integration             | Build configuration    |
+
+### Runtime family
+
+Optional libraries you depend on at runtime. They live under
+[`coroutines-runtime/`](coroutines-runtime/README.md) and are released independently of the
+toolkit above (see [Release trains](#release-trains)).
+
+| Module                | Purpose                                         | When     |
+|-----------------------|-------------------------------------------------|----------|
+| `runtime`             | Compliant helpers (experimental, 0.x)           | Runtime  |
+| `runtime-test`        | Test doubles for `runtime`                      | Tests    |
+| `runtime-tracing-jvm` | Perfetto trace sink for JVM/desktop             | Profiling |
+| `runtime-benchmark`   | Tracing overhead benchmark (not published)      | Internal |
 
 ---
 
@@ -73,7 +82,7 @@ The runtime modules (`runtime`, `runtime-test`, `runtime-tracing-jvm`, `runtime-
 - ⚠️ **Warning-level diagnostics** for code smells
 - 🎯 **Opt-in model** via `@StructuredScope` annotation
 - 🤖 **Framework-aware** - recognizes `viewModelScope`, `lifecycleScope`, `rememberCoroutineScope()`
-- 🔧 **K2/FIR compatible** - works with Kotlin 2.3+ (1.2.0-ALPHA targets 2.4.0)
+- 🔧 **K2/FIR compatible** - `1.2.x` targets Kotlin 2.4.0+; `1.1.x` works with Kotlin 2.3+
 - 📦 **Zero runtime overhead** - all checks happen at compile time
 - 🌍 **Kotlin Multiplatform** - supports JVM, JS, Native, WASM
 - 🔎 **Detekt integration** - additional static analysis rules
@@ -120,6 +129,10 @@ always share `RUNTIME_VERSION` and are released only from a
 version in `gradle.properties` before it runs publication, so published Maven Central
 coordinates cannot be selected by a mismatched tag.
 
+Release the runtime family with `gh release create runtime-v<RUNTIME_VERSION> --prerelease`
+(alphas use a `-ALPHAnn` suffix). Maven Central versions are immutable, so verify with
+`./gradlew publishRuntimeToMavenCentral --dry-run` first.
+
 ### Compiler Plugin
 
 ```kotlin
@@ -135,11 +148,11 @@ pluginManagement {
 // build.gradle.kts
 plugins {
     kotlin("jvm") version "2.3.0"
-    id("io.github.santimattius.structured-coroutines") version "1.1.1"
+    id("io.github.santimattius.structured-coroutines") version "1.2.1"
 }
 
 dependencies {
-    implementation("io.github.santimattius:structured-coroutines-annotations:1.1.1")
+    implementation("io.github.santimattius:structured-coroutines-annotations:1.2.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
 }
 ```
@@ -153,7 +166,7 @@ plugins {
 }
 
 dependencies {
-    detektPlugins("io.github.santimattius:structured-coroutines-detekt-rules:1.1.1")
+    detektPlugins("io.github.santimattius:structured-coroutines-detekt-rules:1.2.1")
 }
 ```
 
@@ -162,12 +175,30 @@ dependencies {
 ```kotlin
 // build.gradle.kts (Android project)
 dependencies {
-    lintChecks("io.github.santimattius:structured-coroutines-lint-rules:1.1.1")
+    lintChecks("io.github.santimattius:structured-coroutines-lint-rules:1.2.1")
 }
 ```
 
 **Note:** Android Lint Rules are only available for Android projects. For multiplatform projects,
 use the Compiler Plugin or Detekt Rules.
+
+### Runtime (optional, experimental)
+
+Versioned independently from the toolkit (`RUNTIME_VERSION`). Check the
+[latest release](https://github.com/santimattius/structured-coroutines/releases) for the current
+`runtime-v*` version.
+
+```kotlin
+// build.gradle.kts
+dependencies {
+    implementation("io.github.santimattius:structured-coroutines-runtime:<runtime-version>")
+    testImplementation("io.github.santimattius:structured-coroutines-runtime-test:<runtime-version>")
+    // JVM/desktop only: Perfetto trace sink
+    implementation("io.github.santimattius:structured-coroutines-runtime-tracing-jvm:<runtime-version>")
+}
+```
+
+See [coroutines-runtime/README.md](coroutines-runtime/README.md) for the module map and usage.
 
 ### IntelliJ/Android Studio Plugin
 
@@ -191,7 +222,7 @@ Or install manually:
 ```kotlin
 plugins {
     kotlin("multiplatform") version "2.3.0"
-    id("io.github.santimattius.structured-coroutines") version "1.1.1"
+    id("io.github.santimattius.structured-coroutines") version "1.2.1"
 }
 
 kotlin {
@@ -203,7 +234,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation("io.github.santimattius:structured-coroutines-annotations:1.1.1")
+                implementation("io.github.santimattius:structured-coroutines-annotations:1.2.1")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
             }
         }
@@ -599,7 +630,7 @@ structured-coroutines/
 
 ## 🛠️ Requirements
 
-- Kotlin 2.3.0+ for `1.1.1`; Kotlin 2.4.0+ for `1.2.0-ALPHA` pre-releases
+- Kotlin 2.4.0+ for `1.2.x`; Kotlin 2.3.0+ for `1.1.x`
 - K2 compiler (default in Kotlin 2.3+)
 - Gradle 8.0+
 - Detekt 1.23+ (for detekt-rules)
@@ -648,6 +679,8 @@ Each module contains its own detailed documentation:
 | **Runtime family**                | [coroutines-runtime/README.md](coroutines-runtime/README.md)                                                   | Overview, module map, build and publishing for the four runtime modules |
 | **Runtime**                       | [runtime/README.md](coroutines-runtime/runtime/README.md)                                                                         | Experimental helpers that replace flagged patterns (0.x, opt-in)        |
 | **Runtime Test**                  | [runtime-test/README.md](coroutines-runtime/runtime-test/README.md)                                                               | `TestDispatcherProvider` for `:runtime`                                 |
+| **Runtime Tracing (JVM)**         | [runtime-tracing-jvm/README.md](coroutines-runtime/runtime-tracing-jvm/README.md)                                                 | Perfetto trace sink for JVM/desktop                                     |
+| **Runtime Benchmark**             | [runtime-benchmark/README.md](coroutines-runtime/runtime-benchmark/README.md)                                                     | Opt-in `TracingDispatcher` overhead benchmark (not published)           |
 | **Compiler**                      | [compiler/README.md](compiler/README.md)                                                                       | K2/FIR checker implementation details                                   |
 | **Sample (compilation)**          | [compilation/README.md](sample/src/main/kotlin/io/github/santimattius/structured/sample/compilation/README.md) | One example per compiler rule (errors and warnings)                     |
 | **Sample (Detekt)**               | [sample-detekt/README.md](sample-detekt/README.md)                                                             | One example per Detekt rule; run `:sample-detekt:detekt` to validate    |
