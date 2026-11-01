@@ -109,7 +109,7 @@ mavenPublishing {
 }
 
 // API reference (published to GitHub Pages by .github/workflows/docs-api.yml).
-// Output: runtime/build/dokka/html (task: dokkaGeneratePublicationHtml).
+// Output: coroutines-runtime/runtime/build/dokka/html (task: dokkaGeneratePublicationHtml).
 dokka {
     moduleName.set("structured-coroutines-runtime")
 

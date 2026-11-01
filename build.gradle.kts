@@ -12,6 +12,7 @@ plugins {
 }
 
 // Binary-compatibility validation runs against :runtime's, :runtime-test's and :runtime-tracing-jvm's checked-in ABI dumps only.
+// Module directories live under coroutines-runtime/ (project paths stay flat, e.g. :runtime).
 // Dump layout: <module>/api/jvm/<module>.api (JVM, per-target dir because :runtime also has an Android
 // target) and <module>/api/<module>.klib.api (klib targets; :runtime-test keeps the legacy flat
 // <module>/api/<module>.api). :runtime-tracing-jvm is a plain JVM module: <module>/api/<module>.api.

@@ -10,6 +10,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ### Changed
 
+- The runtime modules moved under a single `coroutines-runtime/` directory (`coroutines-runtime/runtime`, `runtime-test`, `runtime-tracing-jvm`, `runtime-benchmark`) with a new family README. Gradle project paths (`:runtime`, `:runtime-test`, ...), Maven coordinates and API dumps are unchanged; no behavior change.
+
 - Runtime artifacts now have an independent release train. The ordinary
   `publishToMavenCentral` task publishes only `PROJECT_VERSION` toolkit artifacts;
   `:runtime`, `:runtime-test`, and `:runtime-tracing-jvm` publish together through

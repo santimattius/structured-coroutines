@@ -7,7 +7,7 @@ on:
   push:
     branches: [ main ]
     paths:
-      - "runtime/**"
+      - "coroutines-runtime/runtime/**"
       - "gradle/libs.versions.toml"
       - ".github/workflows/docs-api.yml"
   workflow_dispatch:
@@ -54,7 +54,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: runtime/build/dokka/html
+          path: coroutines-runtime/runtime/build/dokka/html
 
   deploy:
     name: Deploy to GitHub Pages

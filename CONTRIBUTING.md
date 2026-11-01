@@ -64,6 +64,7 @@ cd structured-coroutines
 | `sample/` | Compiler rule compilation examples |
 | `sample-detekt/` | Detekt rule validation samples |
 | `kotlin-coroutines-skill/` | AI/agent skill and reference docs |
+| `coroutines-runtime/` | Runtime family: `runtime`, `runtime-test`, `runtime-tracing-jvm`, `runtime-benchmark` (see [its README](coroutines-runtime/README.md)). Gradle paths stay flat, e.g. `:runtime`. |
 
 ## Adding or Changing Rules
 
