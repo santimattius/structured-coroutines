@@ -24,7 +24,10 @@ participating, you agree to uphold it.
 
 - JDK 21
 - Kotlin 2.3+
-- Gradle 8.0+ (wrapper included)
+- Gradle 9.7.1 (wrapper included)
+- Android SDK with platform 36 and build-tools 36.0.0 (needed to build `:runtime`, which has an Android
+  target). Point to it with the `ANDROID_HOME` environment variable or `sdk.dir=/path/to/sdk` in an
+  untracked `local.properties` at the repository root.
 
 ### Build and test
 
@@ -61,6 +64,7 @@ cd structured-coroutines
 | `sample/` | Compiler rule compilation examples |
 | `sample-detekt/` | Detekt rule validation samples |
 | `kotlin-coroutines-skill/` | AI/agent skill and reference docs |
+| `coroutines-runtime/` | Runtime family: `runtime`, `runtime-test`, `runtime-tracing-jvm`, `runtime-benchmark` (see [its README](coroutines-runtime/README.md)). Gradle paths stay flat, e.g. `:runtime`. |
 
 ## Adding or Changing Rules
 

@@ -7,6 +7,7 @@ on:
 
 jobs:
   publish-lint-rules:
+    if: ${{ !startsWith(github.event.release.tag_name, 'runtime-v') }}
     name: Publish lint-rules to Maven Central
     runs-on: ubuntu-latest
     steps:
@@ -18,6 +19,11 @@ jobs:
         with:
           distribution: "zulu"
           java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4.0.4
+        with:
+          packages: "platforms;android-36 build-tools;36.0.0"
 
       # Central Portal token (from https://central.sonatype.com/usertoken). Old OSSRH credentials return 402.
       - name: Validate required secrets

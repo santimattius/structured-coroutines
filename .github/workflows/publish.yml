@@ -1,11 +1,15 @@
 name: Publish
 
+permissions:
+  contents: read
+
 on:
   release:
     types: [released, prereleased]
 
 jobs:
   publish:
+    if: ${{ !startsWith(github.event.release.tag_name, 'runtime-v') }}
     name: Release build and publish
     runs-on: ubuntu-latest
     steps:
@@ -18,7 +22,26 @@ jobs:
           distribution: "zulu"
           java-version: "17"
 
-      - name: Publish to Maven Central
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4.0.4
+        with:
+          packages: "platforms;android-36 build-tools;36.0.0"
+
+      - name: Validate toolkit release tag
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          project_version=$(grep '^PROJECT_VERSION=' \
+            gradle.properties | cut -d= -f2-)
+          expected="v${project_version}"
+          actual="$RELEASE_TAG"
+          if [ "$actual" != "$expected" ]; then
+            echo "::error::Toolkit release tag must be $expected."
+            echo "Runtime releases use runtime-v<RUNTIME_VERSION>."
+            exit 1
+          fi
+
+      - name: Publish toolkit artifacts to Maven Central
         run: ./gradlew publishToMavenCentral --no-configuration-cache
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}

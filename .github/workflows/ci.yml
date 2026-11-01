@@ -28,6 +28,11 @@ jobs:
           distribution: zulu
           java-version: "21"
 
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4.0.4
+        with:
+          packages: "platforms;android-36 build-tools;36.0.0"
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
@@ -37,7 +42,14 @@ jobs:
         run: ./gradlew publishToMavenLocal --no-daemon
 
       - name: Run tests
-        run: ./gradlew :compiler:test :detekt-rules:test :lint-rules:test --no-daemon
+        run: ./gradlew :compiler:test :detekt-rules:test :lint-rules:test :runtime:jvmTest :runtime:jsTest :runtime:linuxX64Test :runtime-test:jvmTest :runtime-test:jsTest :runtime-test:linuxX64Test :runtime-tracing-jvm:test --no-daemon
+
+      - name: Check :runtime, :runtime-test and :runtime-tracing-jvm binary compatibility (advisory)
+        # :runtime is on the @ExperimentalStructuredCoroutines-gated 0.x line — an ABI diff is
+        # surfaced in the job log/PR but must never fail CI. Non-blocking until 1.0.0, when the
+        # experimental gate is removed (see build.gradle.kts apiValidation comment).
+        run: ./gradlew :runtime:apiCheck :runtime-test:apiCheck :runtime-tracing-jvm:apiCheck --no-daemon
+        continue-on-error: true
 
   # ──────────────────────────────────────────────
   # Kotlin forward-compat smoke signal (readiness only)
@@ -59,6 +71,11 @@ jobs:
         with:
           distribution: zulu
           java-version: "21"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4.0.4
+        with:
+          packages: "platforms;android-36 build-tools;36.0.0"
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -84,6 +101,11 @@ jobs:
         with:
           distribution: zulu
           java-version: "21"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4.0.4
+        with:
+          packages: "platforms;android-36 build-tools;36.0.0"
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
