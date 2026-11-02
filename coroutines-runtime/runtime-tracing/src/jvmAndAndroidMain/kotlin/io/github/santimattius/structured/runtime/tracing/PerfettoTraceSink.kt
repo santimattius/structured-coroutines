@@ -71,7 +71,9 @@ private const val FLOW_ID_SPACE = 1L shl 62
  * Thread-safe: counters use atomics and the open-slice stack is per thread, so [emit] may be called
  * concurrently as the [TraceSink] contract requires. It never throws.
  *
- * Platform availability: JVM only.
+ * Platform availability: JVM and Android. It only needs an `androidx.tracing.Tracer`, so it works with
+ * either platform's `TraceDriver`. On Android it records into the in-process trace, not the system trace
+ * buffer that `AndroidTraceSink` writes to.
  *
  * @constructor Creates a sink over [tracer].
  * @param tracer the tracer to write to, or null to use [Tracer.global].

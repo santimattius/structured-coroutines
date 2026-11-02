@@ -1,23 +1,27 @@
-# Structured Coroutines Runtime Tracing (JVM)
+# Structured Coroutines Runtime Tracing
 
 Part of the [runtime family](../README.md) (module map, dependency graph, build and publishing).
 
-A JVM/desktop `TraceSink` for [`:runtime`](../runtime/README.md): `PerfettoTraceSink` writes
-dispatch activity through [`androidx.tracing`](https://developer.android.com/jetpack/androidx/releases/tracing)
-into an in-process Perfetto trace (`.perfetto-trace`) that opens in
-[ui.perfetto.dev](https://ui.perfetto.dev). It is the desktop counterpart of `AndroidTraceSink` and
-maps events the same way. It is a separate artifact so `:runtime` consumers never get
+A `TraceSink` for [`:runtime`](../runtime/README.md) on the JVM/desktop and on Android:
+`PerfettoTraceSink` writes dispatch activity through
+[`androidx.tracing`](https://developer.android.com/jetpack/androidx/releases/tracing)
+into an in-process Perfetto trace that opens in [ui.perfetto.dev](https://ui.perfetto.dev). On
+Android it complements `AndroidTraceSink`: it adds slice arguments (`queue_delay_ns`, `span_name`, ...)
+and span flows, which `android.os.Trace` cannot express. It is a separate artifact so `:runtime` consumers never get
 `androidx.tracing` transitively.
 
 ```kotlin
 dependencies {
-    implementation("io.github.santimattius:structured-coroutines-runtime-tracing-jvm:0.1.0-ALPHA01")
+    implementation("io.github.santimattius:structured-coroutines-runtime-tracing:0.1.0-ALPHA02")
 }
 ```
 
 Like `:runtime`, the API is gated by `@ExperimentalStructuredCoroutines` and versioned on the
-independent `0.x` line (`RUNTIME_VERSION`). It needs JDK 11 or newer and pulls `androidx.tracing`
-2.0.5 (stable) and its `tracing-wire` serializer.
+independent `0.x` line (`RUNTIME_VERSION`). On the JVM it needs JDK 11 or newer; on Android, minSdk 23.
+It pulls `androidx.tracing` 2.0.5 (stable); `tracing-wire` is only used by `PerfettoTraceSession` on the JVM.
+
+> The artifact was `structured-coroutines-runtime-tracing-jvm` in `0.1.0-ALPHA01`. It is now
+> `structured-coroutines-runtime-tracing` (KMP: the JVM and Android variants resolve automatically).
 
 ## Usage
 
@@ -38,6 +42,32 @@ event; it never calls `setGlobalTracer`, and neither does the session (install o
 want it). With the default stub global tracer every category is off, so the sink reports itself
 disabled and `TracingDispatcher` adds no wrapper.
 
+## Android
+
+`PerfettoTraceSink` takes any `androidx.tracing.Tracer`. On Android you own the driver, which needs
+a `Context`:
+
+```kotlin
+val driver = TraceDriver(
+    context = context,
+    sink = TraceSink(context), // writes under noBackupFilesDir/perfetto_traces
+    // The default only enables categories while a system trace is recording.
+    // Use { true } to record into the in-process file at all times.
+    isCategoryEnabled = { true },
+)
+val dispatchers = DefaultDispatcherProvider.traced(PerfettoTraceSink(driver.tracer))
+// ... run work, then driver.close() to flush
+```
+
+Important differences from `AndroidTraceSink`:
+- It records into `androidx.tracing`'s in-process buffer, **not** the system trace buffer. It does
+  not show up in a plain Perfetto/Studio system trace; merge it afterwards (`PerfettoCapture` /
+  `PerfettoTraceRule`, Benchmark 1.5), or pick `AndroidTraceSink` when you only need slices and
+  counters in the system trace.
+- With the default `isCategoryEnabled`, nothing is recorded unless a system trace is active, and
+  `PerfettoTraceSink.isEnabled` reports false so `TracingDispatcher` adds no wrapper.
+- `PerfettoTraceSession` is JVM-only; it does not exist on Android.
+
 ## What you see
 
 - A slice per run segment on the worker thread, named `io` or `io:fetch`, with `dispatch_id`,
@@ -57,4 +87,6 @@ parent/child work; keep span and slice names low-cardinality and free of request
 Only dispatched segments are visible (see `TracingDispatcher`), and JFR is not supported.
 
 Status: experimental, diagnostic and opt-in. The file output is covered by JVM tests that decode
-it; it has not been opened in the Perfetto UI by the test suite.
+it, and by an instrumented test (`./gradlew :runtime-tracing:connectedAndroidDeviceTest`, needs a
+device or emulator) that decodes the Android file and checks slices, `queue_delay_ns`/`span_name`
+arguments and flows. It has not been opened in the Perfetto UI by the test suite.

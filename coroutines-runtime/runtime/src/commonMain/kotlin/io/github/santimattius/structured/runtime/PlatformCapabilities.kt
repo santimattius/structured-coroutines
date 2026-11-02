@@ -16,7 +16,7 @@ package io.github.santimattius.structured.runtime
  *
  * @property threadIdentity run events carry a real [ThreadInfo] on this target.
  * @property systemTraceIntegration `:runtime` ships a sink for this target's system tracer (see
- *   [platformTraceSink]). Backends in separate artifacts, such as `:runtime-tracing-jvm`, do not count.
+ *   [platformTraceSink]). Backends in separate artifacts, such as `:runtime-tracing`, do not count.
  * @property counters that default sink publishes `pending`/`running` counter tracks.
  * @property flows that default sink draws span links from `parentSpanId`.
  *
@@ -85,7 +85,7 @@ public expect val platformCapabilities: TraceCapabilities
  * Requires opting in to [ExperimentalStructuredCoroutines].
  *
  * Platform availability (`expect`/`actual`): returns an `AndroidTraceSink` on Android and `null` on
- * every other target (JVM, JS, Native, Wasm). On the JVM use the separate `:runtime-tracing-jvm`
+ * every other target (JVM, JS, Native, Wasm). On the JVM use the separate `:runtime-tracing`
  * artifact for Perfetto output.
  *
  * @return a new sink for the target's system tracer, or `null` when none ships with `:runtime`.

@@ -1,6 +1,6 @@
-# Module structured-coroutines-runtime-tracing-jvm
+# Module structured-coroutines-runtime-tracing
 
-JVM-only Perfetto backend for the runtime tracing API. It writes dispatch activity through
+JVM and Android Perfetto backend (`androidx.tracing`) for the runtime tracing API. It writes dispatch activity through
 `androidx.tracing` into an in-process `.perfetto-trace` file that opens in ui.perfetto.dev. It is a
 separate artifact so `structured-coroutines-runtime` consumers do not receive `androidx.tracing`
 transitively. On Android use `AndroidTraceSink` from the runtime module instead.

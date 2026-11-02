@@ -70,7 +70,7 @@ toolkit above (see [Release trains](#release-trains)).
 |-----------------------|-------------------------------------------------|----------|
 | `runtime`             | Compliant helpers (experimental, 0.x)           | Runtime  |
 | `runtime-test`        | Test doubles for `runtime`                      | Tests    |
-| `runtime-tracing-jvm` | Perfetto trace sink for JVM/desktop             | Profiling |
+| `runtime-tracing` | Perfetto trace sink for JVM/desktop             | Profiling |
 | `runtime-benchmark`   | Tracing overhead benchmark (not published)      | Internal |
 
 ---
@@ -123,7 +123,7 @@ Per-module rule lists and configuration examples: [detekt-rules](detekt-rules/RE
 
 The toolkit artifacts use `PROJECT_VERSION` and are released from a `v<PROJECT_VERSION>`
 tag. The runtime family is independent: `structured-coroutines-runtime`,
-`structured-coroutines-runtime-test`, and `structured-coroutines-runtime-tracing-jvm`
+`structured-coroutines-runtime-test`, and `structured-coroutines-runtime-tracing`
 always share `RUNTIME_VERSION` and are released only from a
 `runtime-v<RUNTIME_VERSION>` tag. A release workflow validates the tag against the
 version in `gradle.properties` before it runs publication, so published Maven Central
@@ -194,7 +194,7 @@ dependencies {
     implementation("io.github.santimattius:structured-coroutines-runtime:<runtime-version>")
     testImplementation("io.github.santimattius:structured-coroutines-runtime-test:<runtime-version>")
     // JVM/desktop only: Perfetto trace sink
-    implementation("io.github.santimattius:structured-coroutines-runtime-tracing-jvm:<runtime-version>")
+    implementation("io.github.santimattius:structured-coroutines-runtime-tracing:<runtime-version>")
 }
 ```
 
@@ -565,7 +565,7 @@ structured-coroutines/
 ├── coroutines-runtime/   # Runtime family (see coroutines-runtime/README.md)
 │   ├── runtime/          # Compliant helpers (Multiplatform, experimental, 0.x)
 │   ├── runtime-test/     # Test doubles for :runtime (TestDispatcherProvider)
-│   ├── runtime-tracing-jvm/  # Perfetto trace sink for JVM/desktop
+│   ├── runtime-tracing/  # Perfetto trace sink for JVM/desktop
 │   └── runtime-benchmark/    # Opt-in overhead benchmark (not published)
 ├── sample/               # Examples
 │   └── compilation/     # One example per compiler rule (errors & warnings)
@@ -679,7 +679,7 @@ Each module contains its own detailed documentation:
 | **Runtime family**                | [coroutines-runtime/README.md](coroutines-runtime/README.md)                                                   | Overview, module map, build and publishing for the four runtime modules |
 | **Runtime**                       | [runtime/README.md](coroutines-runtime/runtime/README.md)                                                                         | Experimental helpers that replace flagged patterns (0.x, opt-in)        |
 | **Runtime Test**                  | [runtime-test/README.md](coroutines-runtime/runtime-test/README.md)                                                               | `TestDispatcherProvider` for `:runtime`                                 |
-| **Runtime Tracing (JVM)**         | [runtime-tracing-jvm/README.md](coroutines-runtime/runtime-tracing-jvm/README.md)                                                 | Perfetto trace sink for JVM/desktop                                     |
+| **Runtime Tracing (JVM)**         | [runtime-tracing/README.md](coroutines-runtime/runtime-tracing/README.md)                                                 | Perfetto trace sink for JVM/desktop                                     |
 | **Runtime Benchmark**             | [runtime-benchmark/README.md](coroutines-runtime/runtime-benchmark/README.md)                                                     | Opt-in `TracingDispatcher` overhead benchmark (not published)           |
 | **Compiler**                      | [compiler/README.md](compiler/README.md)                                                                       | K2/FIR checker implementation details                                   |
 | **Sample (compilation)**          | [compilation/README.md](sample/src/main/kotlin/io/github/santimattius/structured/sample/compilation/README.md) | One example per compiler rule (errors and warnings)                     |
