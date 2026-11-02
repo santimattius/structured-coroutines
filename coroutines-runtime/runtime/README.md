@@ -32,10 +32,10 @@ toolkit's `PROJECT_VERSION`.
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("io.github.santimattius:structured-coroutines-runtime:0.1.0-ALPHA02")
+            implementation("io.github.santimattius:structured-coroutines-runtime:0.1.0-ALPHA03")
         }
         commonTest.dependencies {
-            implementation("io.github.santimattius:structured-coroutines-runtime-test:0.1.0-ALPHA02")
+            implementation("io.github.santimattius:structured-coroutines-runtime-test:0.1.0-ALPHA03")
         }
     }
 }

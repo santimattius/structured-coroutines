@@ -10,6 +10,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ### Changed
 
+- Runtime family version bumped to `0.1.0-ALPHA03` (`RUNTIME_VERSION`); install snippets in the runtime READMEs now use it.
+
+### Fixed
+
+- **`AndroidTraceSink` span slices truncated under concurrency**: the async slice `span:<name>` could receive `begin`/`end` out of order when segments of one span started and finished on several threads, which made Perfetto show only the first fraction of the span (observed on an Android 15 emulator: ~110 ms of a 1.3 s span). The span transition and its trace call are now one atomic operation, so `begin`/`end` strictly alternate. Covered by a multi-threaded regression test.
+
+### Changed
+
 - Runtime family version bumped to `0.1.0-ALPHA02` (`RUNTIME_VERSION`); install snippets in the runtime READMEs now use it.
 
 - **`:runtime-tracing-jvm` is now `:runtime-tracing`**, a Kotlin Multiplatform module (JVM + Android) published as `io.github.santimattius:structured-coroutines-runtime-tracing`. `PerfettoTraceSink` now also works on Android with an `androidx.tracing` `Tracer`, adding slice arguments (`queue_delay_ns`, `span_name`, ...) and span flows that `AndroidTraceSink` cannot express (#170). Migration from `0.1.0-ALPHA01`: replace the `...-tracing-jvm` artifact with `...-tracing`; the package and API are unchanged. Verified on an Android 15 emulator by an instrumented test.
