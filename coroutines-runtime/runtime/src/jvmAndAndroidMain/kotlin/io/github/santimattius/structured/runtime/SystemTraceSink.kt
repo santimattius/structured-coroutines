@@ -1,6 +1,8 @@
 package io.github.santimattius.structured.runtime
 
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.atomics.AtomicInt
+import kotlin.concurrent.atomics.AtomicLong
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
@@ -23,11 +25,25 @@ internal interface SystemTraceApi {
 
     /** Publishes a named counter track value. */
     fun setCounter(name: String, value: Long)
+
+    /**
+     * Opens an async slice identified by [name] and [cookie], which may be closed from any thread.
+     * No-op where the platform has no async sections.
+     */
+    fun beginAsyncSection(name: String, cookie: Int)
+
+    /** Closes the async slice opened with the same [name] and [cookie]. */
+    fun endAsyncSection(name: String, cookie: Int)
 }
 
 /**
  * Maps [TraceEvent]s onto a [SystemTraceApi]: `Started` opens a slice, `Finished` closes it and
- * `Queued` only moves the per-dispatcher `pending` counter. Platform independent; see
+ * `Queued` only moves the per-dispatcher `pending` counter. `Started` also publishes the segment's
+ * queue delay in microseconds as `structured.<label>.queue_delay_us` (last value, only written when
+ * it changes) and `structured.<label>.queue_delay_max_us`, the peak delay of the current burst,
+ * which returns to zero when the dispatcher has nothing pending or running. Segments that belong to a [TraceSpan] additionally share one async slice named
+ * `span:<name>` (cookie = span id), open from the first running segment until the last in-flight
+ * segment of that span finishes, so the span stays visible across thread hops. Platform independent; see
  * `AndroidTraceSink` for the public Android binding and its documented limits.
  *
  * `endSection` is only called when this sink opened a section on the same thread (a per-thread
@@ -47,9 +63,16 @@ internal class SystemTraceSink(
         val running = AtomicInt(0)
         val pendingName = "structured.$label.pending"
         val runningName = "structured.$label.running"
+        val queueDelayName = "structured.$label.queue_delay_us"
+        val lastQueueDelayUs = AtomicLong(0L)
+        val queueDelayMaxName = "structured.$label.queue_delay_max_us"
+        val queueDelayMaxUs = AtomicLong(0L)
     }
 
     private val counters = AtomicReference<Map<String, Counters>>(emptyMap())
+
+    /** Running segment count per span id; the async slice is open while an entry exists. */
+    private val activeSpans = ConcurrentHashMap<Long, Int>()
 
     /** Sections this sink has open on the current thread. */
     private val open = object : ThreadLocal<IntArray>() {
@@ -75,17 +98,21 @@ internal class SystemTraceSink(
                     val c = countersFor(event.dispatcher)
                     publish(c.pendingName, c.pending, -1)
                     publish(c.runningName, c.running, +1)
+                    publishQueueDelay(c, event.queueDelayNanos)
                     api.beginSection(sliceName(event.dispatcher, event.coroutineName))
                     open.get()!![0]++
+                    event.spanId?.let { spanStarted(it, event.spanName) }
                 }
                 is TraceEvent.Finished -> {
                     val c = countersFor(event.dispatcher)
                     publish(c.runningName, c.running, -1)
+                    resetQueueDelayMaxIfIdle(c)
                     val depth = open.get()!!
                     if (depth[0] > 0) {
                         depth[0]--
                         api.endSection()
                     }
+                    event.spanId?.let { spanFinished(it, event.spanName) }
                 }
                 else -> Unit
             }
@@ -106,6 +133,44 @@ internal class SystemTraceSink(
         }
     }
 
+    private fun publishQueueDelay(c: Counters, queueDelayNanos: Long) {
+        val micros = (queueDelayNanos / 1_000L).coerceAtLeast(0L)
+        if (c.lastQueueDelayUs.exchange(micros) != micros) api.setCounter(c.queueDelayName, micros)
+        while (true) {
+            val max = c.queueDelayMaxUs.load()
+            if (micros <= max) return
+            if (c.queueDelayMaxUs.compareAndSet(max, micros)) {
+                api.setCounter(c.queueDelayMaxName, micros)
+                return
+            }
+        }
+    }
+
+    /** Ends the burst: with nothing pending or running, the peak goes back to zero. */
+    private fun resetQueueDelayMaxIfIdle(c: Counters) {
+        if (c.pending.load() == 0 && c.running.load() == 0 && c.queueDelayMaxUs.exchange(0L) != 0L) {
+            api.setCounter(c.queueDelayMaxName, 0L)
+        }
+    }
+
+    private fun spanStarted(spanId: Long, spanName: String?) {
+        val count = activeSpans.merge(spanId, 1) { a, b -> a + b }
+        if (count == 1) api.beginAsyncSection(spanSliceName(spanName), spanId.toInt())
+    }
+
+    private fun spanFinished(spanId: Long, spanName: String?) {
+        var closed = false
+        activeSpans.computeIfPresent(spanId) { _, count ->
+            if (count <= 1) {
+                closed = true
+                null
+            } else {
+                count - 1
+            }
+        }
+        if (closed) api.endAsyncSection(spanSliceName(spanName), spanId.toInt())
+    }
+
     private fun countersFor(label: String): Counters {
         while (true) {
             val current = counters.load()
@@ -116,6 +181,8 @@ internal class SystemTraceSink(
     }
 
     internal companion object {
+        fun spanSliceName(spanName: String?): String = sliceName("span", spanName ?: "unnamed")
+
         fun sliceName(label: String, coroutineName: String?): String {
             val raw = if (coroutineName == null) label else "$label:$coroutineName"
             val clean = StringBuilder(minOf(raw.length, MAX_SECTION_NAME))

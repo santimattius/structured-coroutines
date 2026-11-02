@@ -209,6 +209,22 @@ Each run segment becomes a slice named `io` or `io:fetch` (when the coroutine ha
 is in flight (they are clamped at zero and re-sync). Counters need API 29+; below it only slices
 are written.
 
+How to read the trace:
+- `running` counts dispatched runnables (segments), not logical task concurrency. A coroutine that
+  suspends and resumes counts once per segment, so `parallel(concurrency = 4)` can peak above 4
+  while real work never exceeds 4. It is not "permits in use"; use it with `pending` to spot
+  starvation, not to verify a concurrency limit.
+- `structured.<label>.queue_delay_us` is the queue delay of the most recently started segment, in
+  microseconds (written only when it changes), and `structured.<label>.queue_delay_max_us` is the
+  peak delay of the current burst: it rises with the worst delay seen and returns to zero when the
+  dispatcher has nothing pending or running. `android.os.Trace` has no slice arguments, so delay is
+  a counter, not a per-slice arg; exact per-segment values are in `Started.queueDelayNanos`.
+- Segments inside a `withTraceSpan(name)` also share one async slice named `span:<name>` (API 29+),
+  open from the first running segment until the last in-flight segment of that span finishes, so
+  the span is visible by name across thread hops. If a span has idle gaps with nothing running, it
+  appears as several consecutive slices. `android.os.Trace` has no flow events, so segments are
+  grouped, not linked by arrows.
+
 Pool sampling shows how a pool behaves over time instead of only cumulative totals. A
 `PoolSampler` turns a `StatsSink` into periodic `TraceEvent.PoolSample`s (counters, `pending`,
 `running`, `peakRunning`, `parallelism`). Nothing starts implicitly: you launch it in your own
@@ -267,8 +283,10 @@ Limits:
 - `AndroidTraceSink` feeds `android.os.Trace`, which system traces and `TraceSectionMetric` read.
   It does not feed `androidx.tracing`'s in-process trace file; on the JVM and desktop
   `PerfettoTraceSink` does (see below).
-- Queue delay is not drawn as a slice: read the exact `Started.queueDelayNanos` event field (or
-  `queue_delay_ns` Perfetto argument). The `pending` counter is a useful saturation trend, not a
+- On Android, queue delay is the `queue_delay_us` counter (last started segment) plus the
+  `queue_delay_max_us` burst peak; read exact
+  per-segment values from the `Started.queueDelayNanos` event field (or the `queue_delay_ns`
+  Perfetto argument on the JVM). The `pending` counter is a useful saturation trend, not a
   per-segment delay and can overcount dangling queued events.
 - Keep slice and span names low-cardinality: use stable `CoroutineName`s and span names, not ids
   or payloads.
