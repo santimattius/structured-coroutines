@@ -10,11 +10,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ### Changed
 
-- The runtime modules moved under a single `coroutines-runtime/` directory (`coroutines-runtime/runtime`, `runtime-test`, `runtime-tracing-jvm`, `runtime-benchmark`) with a new family README. Gradle project paths (`:runtime`, `:runtime-test`, ...), Maven coordinates and API dumps are unchanged; no behavior change.
+- Runtime family version bumped to `0.1.0-ALPHA02` (`RUNTIME_VERSION`); install snippets in the runtime READMEs now use it.
+
+- **`:runtime-tracing-jvm` is now `:runtime-tracing`**, a Kotlin Multiplatform module (JVM + Android) published as `io.github.santimattius:structured-coroutines-runtime-tracing`. `PerfettoTraceSink` now also works on Android with an `androidx.tracing` `Tracer`, adding slice arguments (`queue_delay_ns`, `span_name`, ...) and span flows that `AndroidTraceSink` cannot express (#170). Migration from `0.1.0-ALPHA01`: replace the `...-tracing-jvm` artifact with `...-tracing`; the package and API are unchanged. Verified on an Android 15 emulator by an instrumented test.
+
+- The runtime modules moved under a single `coroutines-runtime/` directory (`coroutines-runtime/runtime`, `runtime-test`, `runtime-tracing`, `runtime-benchmark`) with a new family README. Gradle project paths (`:runtime`, `:runtime-test`, ...), Maven coordinates and API dumps are unchanged; no behavior change.
 
 - Runtime artifacts now have an independent release train. The ordinary
   `publishToMavenCentral` task publishes only `PROJECT_VERSION` toolkit artifacts;
-  `:runtime`, `:runtime-test`, and `:runtime-tracing-jvm` publish together through
+  `:runtime`, `:runtime-test`, and `:runtime-tracing` publish together through
   `publishRuntimeToMavenCentral` with their shared `RUNTIME_VERSION`. Runtime releases
   require a `runtime-v<RUNTIME_VERSION>` tag that is validated before tests, ABI checks,
   publication-graph verification, or credential use.

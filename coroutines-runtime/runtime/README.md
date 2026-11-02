@@ -32,10 +32,10 @@ toolkit's `PROJECT_VERSION`.
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("io.github.santimattius:structured-coroutines-runtime:0.1.0-ALPHA01")
+            implementation("io.github.santimattius:structured-coroutines-runtime:0.1.0-ALPHA02")
         }
         commonTest.dependencies {
-            implementation("io.github.santimattius:structured-coroutines-runtime-test:0.1.0-ALPHA01")
+            implementation("io.github.santimattius:structured-coroutines-runtime-test:0.1.0-ALPHA02")
         }
     }
 }
@@ -319,10 +319,12 @@ sink I/O, and the baseline includes a volatile counter write from the benchmark 
 no test asserts on them. Reproduce with `./gradlew :runtime-benchmark:tracingBenchmark` (opt-in,
 not part of `build` or `check`; tune with `-PbenchRounds`, `-PbenchOps`, `-PbenchWarmup`).
 
-On the JVM and desktop, the separate `:runtime-tracing-jvm` artifact provides `PerfettoTraceSink`,
+On the JVM and desktop, the separate `:runtime-tracing` artifact provides `PerfettoTraceSink`,
 which writes the same slices and counters through `androidx.tracing` into a `.perfetto-trace` file
 you can open in [ui.perfetto.dev](https://ui.perfetto.dev). It is a separate artifact so `:runtime`
-never depends on `androidx.tracing`. See [`runtime-tracing-jvm/README.md`](../runtime-tracing-jvm/README.md).
+never depends on `androidx.tracing`. On Android the same sink adds slice arguments (`queue_delay_ns`,
+`span_name`) and span flows, which `AndroidTraceSink` cannot express, but records into the
+in-process trace instead of the system trace. See [`runtime-tracing/README.md`](../runtime-tracing/README.md).
 
 ```kotlin
 PerfettoTraceSession.start(File("build/traces")).use { session ->
@@ -451,7 +453,7 @@ Gradle variants next to the plain `jvm` ones, so Android consumers resolve it wi
 `:runtime-test` has no Android target. Building `:runtime` needs the Android SDK (platform 36 and
 build-tools 36.0.0; see [CONTRIBUTING.md](../../CONTRIBUTING.md)). The Android target also provides
 `AndroidTraceSink` (see [Tracing](#tracing)); the other targets have no system-trace sink (the JVM
-can write a Perfetto file with `:runtime-tracing-jvm`).
+can write a Perfetto file with `:runtime-tracing`).
 
 `Dispatchers.ioCompat` resolves per target:
 

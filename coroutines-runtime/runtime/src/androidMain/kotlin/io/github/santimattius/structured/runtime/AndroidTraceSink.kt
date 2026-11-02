@@ -69,7 +69,7 @@ internal object AndroidSystemTrace : SystemTraceApi {
  * Experimental, diagnostic and opt-in. Not verified here on a device.
  *
  * Platform availability: Android target only (`android.os.Trace`). It is the Android-specific
- * `actual` behind [platformTraceSink]; on the JVM use the `:runtime-tracing-jvm` artifact instead.
+ * `actual` behind [platformTraceSink]; on the JVM use the `:runtime-tracing` artifact instead.
  *
  * Requires opting in to [ExperimentalStructuredCoroutines].
  *

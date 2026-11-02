@@ -43,12 +43,12 @@ jobs:
         run: |
           ./gradlew :runtime:jvmTest :runtime:jsTest :runtime:linuxX64Test \
             :runtime-test:jvmTest :runtime-test:jsTest \
-            :runtime-test:linuxX64Test :runtime-tracing-jvm:test --no-daemon
+            :runtime-test:linuxX64Test :runtime-tracing:jvmTest --no-daemon
 
       - name: Check runtime binary compatibility
         run: |
           ./gradlew :runtime:apiCheck :runtime-test:apiCheck \
-            :runtime-tracing-jvm:apiCheck --no-daemon
+            :runtime-tracing:apiCheck --no-daemon
 
       - name: Verify runtime publication graph without uploads
         run: |

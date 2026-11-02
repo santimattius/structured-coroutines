@@ -1,7 +1,7 @@
 # Runtime family (`coroutines-runtime/`)
 
 The four Gradle modules that ship or measure the **runtime** side of Structured Coroutines live
-here. Gradle project paths are flat (`:runtime`, `:runtime-test`, `:runtime-tracing-jvm`,
+here. Gradle project paths are flat (`:runtime`, `:runtime-test`, `:runtime-tracing`,
 `:runtime-benchmark`) and Maven coordinates are unchanged; `settings.gradle.kts` maps each project to
 its directory under `coroutines-runtime/`.
 
@@ -10,7 +10,7 @@ its directory under `coroutines-runtime/`.
 | Side | Modules | What it does |
 |------|---------|--------------|
 | Compile-time / tooling | `compiler`, `gradle-plugin`, `detekt-rules`, `lint-rules`, `intellij-plugin`, `annotations` | Detects unstructured patterns (compiler errors, static analysis, IDE inspections). Nothing from these ships in your app's runtime path. |
-| Runtime (this directory) | `runtime`, `runtime-test`, `runtime-tracing-jvm`, `runtime-benchmark` | Libraries you depend on: the compliant replacements for the flagged patterns, test doubles, and dispatcher tracing. |
+| Runtime (this directory) | `runtime`, `runtime-test`, `runtime-tracing`, `runtime-benchmark` | Libraries you depend on: the compliant replacements for the flagged patterns, test doubles, and dispatcher tracing. |
 
 The runtime modules are optional. The compile-time tools work without them.
 
@@ -20,37 +20,37 @@ The runtime modules are optional. The compile-time tools work without them.
 |--------|-------------|------------|-----------|---------|-------------|
 | [`runtime`](runtime/README.md) | `:runtime` | `structured-coroutines-runtime` | KMP: JVM, Android, JS, wasmJs, wasmWasi, Apple (macOS, iOS, watchOS, tvOS), Linux, Windows | Compliant helpers (`safeCallbackFlow`, `withTimeoutResult`, `parallel`, `DispatcherProvider`, ...) and the tracing core (`TraceSink`, `TracingDispatcher`, `StatsSink`) | Production code that replaces flagged patterns or wants dispatcher diagnostics |
 | [`runtime-test`](runtime-test/README.md) | `:runtime-test` | `structured-coroutines-runtime-test` | KMP: same as `runtime` except Android | `TestDispatcherProvider`, `RecordingSink`, `TraceSinkContract` | Tests of code that takes a `DispatcherProvider`, or of a custom `TraceSink` |
-| [`runtime-tracing-jvm`](runtime-tracing-jvm/README.md) | `:runtime-tracing-jvm` | `structured-coroutines-runtime-tracing-jvm` | JVM / desktop (JDK 11+) | `PerfettoTraceSink`, `PerfettoTraceSession` (writes a `.perfetto-trace` file) | You want to inspect dispatch activity in ui.perfetto.dev outside Android |
+| [`runtime-tracing`](runtime-tracing/README.md) | `:runtime-tracing` | `structured-coroutines-runtime-tracing` | KMP: JVM / desktop (JDK 11+), Android | `PerfettoTraceSink` (JVM and Android), `PerfettoTraceSession` (JVM, writes a `.perfetto-trace` file) | You want slice args and span flows in ui.perfetto.dev, on the JVM or merged with an Android system trace |
 | [`runtime-benchmark`](runtime-benchmark/README.md) | `:runtime-benchmark` | not published | JVM | Opt-in micro-benchmark of `TracingDispatcher` overhead | Measuring tracing cost; not part of `build`, `check` or CI |
 
 ## Dependency graph
 
 ```
 runtime-test ──────────┐
-runtime-tracing-jvm ───┼──► runtime
+runtime-tracing ───┼──► runtime
 runtime-benchmark ─────┘
 ```
 
-- `runtime-test` and `runtime-tracing-jvm` expose `runtime` as an `api` dependency.
+- `runtime-test` and `runtime-tracing` expose `runtime` as an `api` dependency.
 - `runtime-benchmark` depends on `runtime` with `implementation`.
-- `runtime-tracing-jvm` uses `runtime-test` only in its own tests.
+- `runtime-tracing` uses `runtime-test` only in its own tests.
 - `runtime` never depends on the other three (it stays free of `kotlinx-coroutines-test` and
   `androidx.tracing`).
 
 ## Installation
 
 Group `io.github.santimattius`; all published runtime artifacts share the `RUNTIME_VERSION` from
-`gradle.properties` (currently `0.1.0-ALPHA01`).
+`gradle.properties` (currently `0.1.0-ALPHA02`).
 
 ```kotlin
 // build.gradle.kts (Kotlin Multiplatform)
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("io.github.santimattius:structured-coroutines-runtime:0.1.0-ALPHA01")
+            implementation("io.github.santimattius:structured-coroutines-runtime:0.1.0-ALPHA02")
         }
         commonTest.dependencies {
-            implementation("io.github.santimattius:structured-coroutines-runtime-test:0.1.0-ALPHA01")
+            implementation("io.github.santimattius:structured-coroutines-runtime-test:0.1.0-ALPHA02")
         }
     }
 }
@@ -59,7 +59,7 @@ kotlin {
 ```kotlin
 // build.gradle.kts (JVM / desktop tracing)
 dependencies {
-    implementation("io.github.santimattius:structured-coroutines-runtime-tracing-jvm:0.1.0-ALPHA01")
+    implementation("io.github.santimattius:structured-coroutines-runtime-tracing:0.1.0-ALPHA02")
 }
 ```
 
@@ -107,7 +107,7 @@ the sink is disabled the original block is forwarded untouched.
 | `StatsSink` | `runtime` | Per-dispatcher counters, concurrency, queue-delay and run-time histograms |
 | `RingBufferSink`, `LoggingSink`, `CompositeSink` | `runtime` | Last N events, log lines, fan-out |
 | `AndroidTraceSink` | `runtime` (Android target) | `android.os.Trace` slices and counters (Perfetto, Macrobenchmark) |
-| `PerfettoTraceSink` / `PerfettoTraceSession` | `runtime-tracing-jvm` | `.perfetto-trace` file for JVM/desktop |
+| `PerfettoTraceSink` / `PerfettoTraceSession` | `runtime-tracing` | `.perfetto-trace` file (JVM/desktop); in-process Perfetto trace with args and flows (Android) |
 
 ```kotlin
 val stats = StatsSink()
@@ -122,7 +122,7 @@ PerfettoTraceSession.start(File("build/traces")).use { session ->
 ```
 
 Details, pool sampling and how to read slices: [`runtime` README](runtime/README.md#tracing) and
-[`runtime-tracing-jvm` README](runtime-tracing-jvm/README.md).
+[`runtime-tracing` README](runtime-tracing/README.md).
 
 ## Testing utilities overview
 
@@ -152,10 +152,10 @@ Run from the repository root; project paths do not include `coroutines-runtime`.
 |------|---------|
 | Tests (`runtime`) | `./gradlew :runtime:jvmTest :runtime:jsTest :runtime:linuxX64Test` |
 | Tests (`runtime-test`) | `./gradlew :runtime-test:jvmTest :runtime-test:jsTest :runtime-test:linuxX64Test` |
-| Tests (`runtime-tracing-jvm`) | `./gradlew :runtime-tracing-jvm:test` |
-| Compile JVM | `./gradlew :runtime:compileKotlinJvm :runtime-test:compileKotlinJvm :runtime-tracing-jvm:compileKotlin :runtime-benchmark:compileKotlin` |
-| API check | `./gradlew :runtime:apiCheck :runtime-test:apiCheck :runtime-tracing-jvm:apiCheck` |
-| API dump | `./gradlew :runtime:apiDump :runtime-test:apiDump :runtime-tracing-jvm:apiDump` |
+| Tests (`runtime-tracing`) | `./gradlew :runtime-tracing:test` |
+| Compile JVM | `./gradlew :runtime:compileKotlinJvm :runtime-test:compileKotlinJvm :runtime-tracing:compileKotlin :runtime-benchmark:compileKotlin` |
+| API check | `./gradlew :runtime:apiCheck :runtime-test:apiCheck :runtime-tracing:apiCheck` |
+| API dump | `./gradlew :runtime:apiDump :runtime-test:apiDump :runtime-tracing:apiDump` |
 | API docs | `./gradlew :runtime:dokkaGeneratePublicationHtml` |
 
 `apiCheck` is advisory in CI while `runtime` is on the experimental `0.x` line. Dump files live in
@@ -165,7 +165,7 @@ each module's `api/` directory (`runtime/api/jvm/runtime.api` plus `runtime.klib
 
 ## Versioning and publishing
 
-- `runtime`, `runtime-test` and `runtime-tracing-jvm` always share `RUNTIME_VERSION`
+- `runtime`, `runtime-test` and `runtime-tracing` always share `RUNTIME_VERSION`
   (`gradle.properties`), independent of the toolkit's `PROJECT_VERSION`.
 - They are published together from a `runtime-v<RUNTIME_VERSION>` release tag by the
   `publish-runtime` workflow, which validates the tag, runs tests and `apiCheck`, then publishes.
@@ -177,5 +177,5 @@ each module's `api/` directory (`runtime/api/jvm/runtime.api` plus `runtime.klib
 
 - [`runtime/README.md`](runtime/README.md)
 - [`runtime-test/README.md`](runtime-test/README.md)
-- [`runtime-tracing-jvm/README.md`](runtime-tracing-jvm/README.md)
+- [`runtime-tracing/README.md`](runtime-tracing/README.md)
 - [`runtime-benchmark/README.md`](runtime-benchmark/README.md)

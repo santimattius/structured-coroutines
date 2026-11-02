@@ -24,8 +24,9 @@ import androidx.tracing.wire.TraceSink as WireTraceSink
  * are safe to call concurrently; they are serialized, and [close] is idempotent. Experimental,
  * diagnostic and opt-in.
  *
- * Platform availability: JVM only (this artifact is `kotlin("jvm")`). On Android use `AndroidTraceSink`
- * from `:runtime`.
+ * Platform availability: JVM only (file-backed `androidx.tracing` driver). On Android build a
+ * `TraceDriver` with a `Context` yourself and pass its tracer to [PerfettoTraceSink]; see the module
+ * README.
  *
  * Requires opting in to [ExperimentalStructuredCoroutines].
  *
