@@ -18,6 +18,15 @@ internal object AndroidSystemTrace : SystemTraceApi {
     ) {
         if (Build.VERSION.SDK_INT >= 29) Trace.setCounter(name, value)
     }
+
+    // Async sections are API 29 (beginAsyncSection/endAsyncSection).
+    override fun beginAsyncSection(name: String, cookie: Int) {
+        if (Build.VERSION.SDK_INT >= 29) Trace.beginAsyncSection(name, cookie)
+    }
+
+    override fun endAsyncSection(name: String, cookie: Int) {
+        if (Build.VERSION.SDK_INT >= 29) Trace.endAsyncSection(name, cookie)
+    }
 }
 
 /**
@@ -27,7 +36,13 @@ internal object AndroidSystemTrace : SystemTraceApi {
  * Mapping: a run segment becomes a slice on the worker thread, named after the dispatcher label
  * (`io`) or, when the coroutine has a `CoroutineName`, `label:name` (`io:fetch`). Names are
  * sanitized (`|`, newline and NUL become spaces) and cut to 127 UTF-16 units, the platform limit.
- * Each dispatcher also publishes two counter tracks, `structured.<label>.pending` (queued, not yet
+ * Segments that run inside a [TraceSpan] (`withTraceSpan`) also share one async slice named
+ * `span:<name>`, open from the first running segment until the last in-flight segment of that span
+ * finishes, so a span is visible end to end across thread hops (API 29+). `android.os.Trace` has no
+ * flow events or slice arguments, so segments are grouped by the shared async slice, not linked.
+ * Each dispatcher also publishes the counter track `structured.<label>.queue_delay_us`, the queue
+ * delay of the most recently started segment in microseconds, and `queue_delay_max_us`, the peak
+ * delay of the current burst (it returns to zero when nothing is pending or running). Each dispatcher also publishes two counter tracks, `structured.<label>.pending` (queued, not yet
  * started) and `structured.<label>.running`, which show pool saturation. Counters are approximate
  * when a trace starts while work is in flight: they are clamped at zero and re-sync as work
  * drains. A slice is only closed on the thread that opened it by this sink, so starting a trace
@@ -41,9 +56,13 @@ internal object AndroidSystemTrace : SystemTraceApi {
  * - Only dispatched segments are visible; see [TracingDispatcher] for what is not.
  * - It writes to `android.os.Trace`, which is what system traces and `TraceSectionMetric` read.
  *   It does not feed `androidx.tracing`'s in-process trace file.
- * - Queue delay is not drawn as a slice; read exact values from `Started.queueDelayNanos` events.
- *   The `pending` counter is a saturation trend, not a per-segment delay, and can overcount
- *   dangling queued events.
+ * - `queue_delay_us` is the last started segment's delay and `queue_delay_max_us` the burst peak;
+ *   neither is a per-slice argument (the platform has none); read exact per-segment values from `Started.queueDelayNanos` events. The `pending`
+ *   counter is a saturation trend, not a per-segment delay, and can overcount dangling queued
+ *   events.
+ * - `running` counts dispatched runnables (segments), not logical task concurrency: a coroutine
+ *   that suspends and resumes counts once per segment, so `parallel(concurrency = 4)` can peak
+ *   above 4. It is not "permits in use".
  * - Slice and span names must stay low-cardinality: use stable `CoroutineName`s and span names,
  *   never ids or payloads.
  *

@@ -36,8 +36,12 @@ private class FakeSystemTrace(@Volatile var enabled: Boolean = true) : SystemTra
     override fun beginSection(name: String) = record("begin:$name")
     override fun endSection() = record("end")
     override fun setCounter(name: String, value: Long) = record("counter:$name=$value")
+    override fun beginAsyncSection(name: String, cookie: Int) = record("async-begin:$name#$cookie")
+    override fun endAsyncSection(name: String, cookie: Int) = record("async-end:$name#$cookie")
 
-    fun sections(): List<String> = calls.filter { !it.startsWith("counter:") }
+    fun sections(): List<String> =
+        calls.filter { !it.startsWith("counter:") && !it.startsWith("async-") }
+    fun asyncSections(): List<String> = calls.filter { it.startsWith("async-") }
     fun counters(): List<String> = calls.filter { it.startsWith("counter:") }.map { it.removePrefix("counter:") }
 }
 
@@ -46,6 +50,10 @@ private fun started(label: String = "io", name: String? = null) =
     TraceEvent.Started(label, 1L, 1L, name, null)
 private fun finished(label: String = "io", name: String? = null) =
     TraceEvent.Finished(label, 2L, 1L, TraceOutcome.Completed, name, null)
+private fun startedIn(span: Long, spanName: String, delayNanos: Long = 1L) =
+    TraceEvent.Started("io", 1L, delayNanos, null, null, spanId = span, spanName = spanName)
+private fun finishedIn(span: Long, spanName: String) =
+    TraceEvent.Finished("io", 2L, 1L, TraceOutcome.Completed, null, null, spanId = span, spanName = spanName)
 
 @OptIn(ExperimentalStructuredCoroutines::class, ExperimentalCoroutinesApi::class)
 class SystemTraceSinkTest {
@@ -257,7 +265,8 @@ class SystemTraceSinkTest {
                 "structured.io.running=1",
                 "structured.io.running=0",
             ),
-            api.counters(),
+            // queue_delay_us depends on real elapsed time here; it is covered deterministically above.
+            api.counters().filterNot { it.startsWith("structured.io.queue_delay_") },
         )
     }
 
@@ -276,5 +285,89 @@ class SystemTraceSinkTest {
         d.dispatch(kotlin.coroutines.EmptyCoroutineContext, original)
         assertSame(original, seen)
         assertEquals(emptyList(), api.calls.toList())
+    }
+
+    @Test
+    fun spanSegmentsShareOneAsyncSectionAcrossThreadHops() {
+        val api = FakeSystemTrace()
+        val sink = SystemTraceSink(api)
+        sink.emit(startedIn(7L, "checkout"))
+        val hop = Thread { sink.emit(startedIn(7L, "checkout")) }.also { it.start(); it.join() }
+        sink.emit(finishedIn(7L, "checkout"))
+        assertEquals(listOf("async-begin:span:checkout#7"), api.asyncSections())
+        Thread { sink.emit(finishedIn(7L, "checkout")) }.also { it.start(); it.join() }
+        assertEquals(
+            listOf("async-begin:span:checkout#7", "async-end:span:checkout#7"),
+            api.asyncSections(),
+        )
+        assertFalse(hop.isAlive)
+    }
+
+    @Test
+    fun finishWithoutObservedStartNeverClosesAnAsyncSection() {
+        val api = FakeSystemTrace()
+        val sink = SystemTraceSink(api)
+        sink.emit(finishedIn(9L, "late"))
+        assertEquals(emptyList(), api.asyncSections())
+    }
+
+    @Test
+    fun eventsWithoutSpanOpenNoAsyncSection() {
+        val api = FakeSystemTrace()
+        val sink = SystemTraceSink(api)
+        sink.emit(started("io"))
+        sink.emit(finished("io"))
+        assertEquals(emptyList(), api.asyncSections())
+    }
+
+    @Test
+    fun queueDelayIsPublishedAsMicrosecondCounterWhenItChanges() {
+        val api = FakeSystemTrace()
+        val sink = SystemTraceSink(api)
+        sink.emit(startedIn(1L, "s", delayNanos = 1_500_000L))
+        sink.emit(startedIn(1L, "s", delayNanos = 1_500_000L))
+        sink.emit(startedIn(1L, "s", delayNanos = 0L))
+        assertEquals(
+            listOf("structured.io.queue_delay_us=1500", "structured.io.queue_delay_us=0"),
+            api.counters().filter { it.contains("queue_delay_us") },
+        )
+    }
+
+    @Test
+    fun asyncSectionNameIsSanitized() {
+        val api = FakeSystemTrace()
+        val sink = SystemTraceSink(api)
+        sink.emit(startedIn(3L, "a|b\nc"))
+        assertEquals(listOf("async-begin:span:a b c#3"), api.asyncSections())
+    }
+
+    @Test
+    fun queueDelayMaxKeepsTheBurstPeakAndResetsWhenThePoolGoesIdle() {
+        val api = FakeSystemTrace()
+        val sink = SystemTraceSink(api)
+        sink.emit(queued())
+        sink.emit(queued())
+        sink.emit(startedIn(1L, "s", delayNanos = 5_000_000L))
+        sink.emit(startedIn(1L, "s", delayNanos = 2_000_000L)) // lower than the peak: no write
+        sink.emit(finishedIn(1L, "s"))
+        sink.emit(finishedIn(1L, "s")) // pending=0, running=0: burst over
+        assertEquals(
+            listOf("structured.io.queue_delay_max_us=5000", "structured.io.queue_delay_max_us=0"),
+            api.counters().filter { it.contains("queue_delay_max_us") },
+        )
+    }
+
+    @Test
+    fun queueDelayMaxIsNotResetWhileWorkIsStillPending() {
+        val api = FakeSystemTrace()
+        val sink = SystemTraceSink(api)
+        sink.emit(queued())
+        sink.emit(queued())
+        sink.emit(startedIn(1L, "s", delayNanos = 3_000_000L))
+        sink.emit(finishedIn(1L, "s")) // one segment still queued
+        assertEquals(
+            listOf("structured.io.queue_delay_max_us=3000"),
+            api.counters().filter { it.contains("queue_delay_max_us") },
+        )
     }
 }
