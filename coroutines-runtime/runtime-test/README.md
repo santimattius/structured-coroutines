@@ -10,7 +10,7 @@ and `TraceSinkContract` (reusable checks every `TraceSink` should pass). It is a
 
 ```kotlin
 commonTest.dependencies {
-    implementation("io.github.santimattius:structured-coroutines-runtime-test:0.1.0")
+    implementation("io.github.santimattius:structured-coroutines-runtime-test:0.1.0-ALPHA01")
 }
 ```
 

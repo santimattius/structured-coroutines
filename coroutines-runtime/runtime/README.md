@@ -24,7 +24,7 @@ Artifacts (group `io.github.santimattius`):
 | `structured-coroutines-runtime`         | The helpers described below               |
 | `structured-coroutines-runtime-test`    | Test doubles (`TestDispatcherProvider`)   |
 
-Both versions come from the `RUNTIME_VERSION` property (currently `0.1.0`), independent of the
+Both versions come from the `RUNTIME_VERSION` property (currently `0.1.0-ALPHA01`), independent of the
 toolkit's `PROJECT_VERSION`.
 
 ```kotlin
@@ -32,10 +32,10 @@ toolkit's `PROJECT_VERSION`.
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("io.github.santimattius:structured-coroutines-runtime:0.1.0")
+            implementation("io.github.santimattius:structured-coroutines-runtime:0.1.0-ALPHA01")
         }
         commonTest.dependencies {
-            implementation("io.github.santimattius:structured-coroutines-runtime-test:0.1.0")
+            implementation("io.github.santimattius:structured-coroutines-runtime-test:0.1.0-ALPHA01")
         }
     }
 }

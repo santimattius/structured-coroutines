@@ -11,7 +11,7 @@ maps events the same way. It is a separate artifact so `:runtime` consumers neve
 
 ```kotlin
 dependencies {
-    implementation("io.github.santimattius:structured-coroutines-runtime-tracing-jvm:0.1.0")
+    implementation("io.github.santimattius:structured-coroutines-runtime-tracing-jvm:0.1.0-ALPHA01")
 }
 ```
 
