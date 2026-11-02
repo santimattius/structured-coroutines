@@ -370,4 +370,39 @@ class SystemTraceSinkTest {
             api.counters().filter { it.contains("queue_delay_max_us") },
         )
     }
+
+    @Test
+    fun concurrentSegmentsOfOneSpanAlternateBeginAndEndStrictly() {
+        val async = java.util.Collections.synchronizedList(ArrayList<String>())
+        val api = object : SystemTraceApi {
+            override fun isEnabled() = true
+            override fun beginSection(name: String) = Unit
+            override fun endSection() = Unit
+            override fun setCounter(name: String, value: Long) = Unit
+            override fun beginAsyncSection(name: String, cookie: Int) { async += "begin" }
+            override fun endAsyncSection(name: String, cookie: Int) { async += "end" }
+        }
+        val sink = SystemTraceSink(api)
+        val threads = 8
+        val perThread = 5_000
+        val start = CountDownLatch(1)
+        val pool = Executors.newFixedThreadPool(threads)
+        repeat(threads) {
+            pool.execute {
+                start.await()
+                repeat(perThread) {
+                    sink.emit(startedIn(5L, "storm"))
+                    sink.emit(finishedIn(5L, "storm"))
+                }
+            }
+        }
+        start.countDown()
+        pool.shutdown()
+        assertTrue(pool.awaitTermination(60, TimeUnit.SECONDS))
+        val seq = async.toList()
+        // A span is either open or closed: begin/end must alternate, starting with begin.
+        val broken = seq.zipWithNext().count { (a, b) -> a == b }
+        assertEquals(0, broken, "begin/end did not alternate $broken times out of ${seq.size}")
+        assertEquals(seq.size % 2, 0)
+    }
 }

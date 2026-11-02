@@ -153,22 +153,30 @@ internal class SystemTraceSink(
         }
     }
 
+    // The map transition and the matching trace call run inside one atomic per-key operation, so
+    // begin/end reach the tracer in the same order as the 0 -> 1 and 1 -> 0 transitions. Doing the
+    // call after the map update let a concurrent Started overtake a Finished and interleave
+    // begin, begin, end on the same cookie.
     private fun spanStarted(spanId: Long, spanName: String?) {
-        val count = activeSpans.merge(spanId, 1) { a, b -> a + b }
-        if (count == 1) api.beginAsyncSection(spanSliceName(spanName), spanId.toInt())
+        activeSpans.compute(spanId) { _, count ->
+            if (count == null) {
+                runCatching { api.beginAsyncSection(spanSliceName(spanName), spanId.toInt()) }
+                1
+            } else {
+                count + 1
+            }
+        }
     }
 
     private fun spanFinished(spanId: Long, spanName: String?) {
-        var closed = false
         activeSpans.computeIfPresent(spanId) { _, count ->
             if (count <= 1) {
-                closed = true
+                runCatching { api.endAsyncSection(spanSliceName(spanName), spanId.toInt()) }
                 null
             } else {
                 count - 1
             }
         }
-        if (closed) api.endAsyncSection(spanSliceName(spanName), spanId.toInt())
     }
 
     private fun countersFor(label: String): Counters {
