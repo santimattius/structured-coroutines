@@ -8,6 +8,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+### Changed
+
+- Runtime family version bumped to `0.1.0-ALPHA03` (`RUNTIME_VERSION`); install snippets in the runtime READMEs now use it.
+
 ### Fixed
 
 - **`AndroidTraceSink` span slices truncated under concurrency**: the async slice `span:<name>` could receive `begin`/`end` out of order when segments of one span started and finished on several threads, which made Perfetto show only the first fraction of the span (observed on an Android 15 emulator: ~110 ms of a 1.3 s span). The span transition and its trace call are now one atomic operation, so `begin`/`end` strictly alternate. Covered by a multi-threaded regression test.
