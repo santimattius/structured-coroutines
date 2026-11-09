@@ -19,7 +19,8 @@ The runtime modules are optional. The compile-time tools work without them.
 | Module | Gradle path | artifactId | Platforms | Purpose | Use it when |
 |--------|-------------|------------|-----------|---------|-------------|
 | [`runtime`](runtime/README.md) | `:runtime` | `structured-coroutines-runtime` | KMP: JVM, Android, JS, wasmJs, wasmWasi, Apple (macOS, iOS, watchOS, tvOS), Linux, Windows | Compliant helpers (`safeCallbackFlow`, `withTimeoutResult`, `parallel`, `DispatcherProvider`, ...) and the tracing core (`TraceSink`, `TracingDispatcher`, `StatsSink`) | Production code that replaces flagged patterns or wants dispatcher diagnostics |
-| [`runtime-test`](runtime-test/README.md) | `:runtime-test` | `structured-coroutines-runtime-test` | KMP: same as `runtime` except Android | `TestDispatcherProvider`, `RecordingSink`, `TraceSinkContract` | Tests of code that takes a `DispatcherProvider`, or of a custom `TraceSink` |
+| [`runtime-test`](runtime-test/README.md) | `:runtime-test` | `structured-coroutines-runtime-test` | KMP: same as `runtime` except Android | `TestDispatcherProvider`, `runTestWithMain`, `RecordingSink`, `TraceSinkContract` | Tests of code that takes a `DispatcherProvider`, or of a custom `TraceSink` |
+| [`runtime-test-junit4`](runtime-test-junit4/README.md) | `:runtime-test-junit4` | `structured-coroutines-runtime-test-junit4` | JVM only (incl. Android local unit tests) | `MainCoroutinesTestRule` (JUnit4 rule installing a test dispatcher as `Dispatchers.Main`) | JUnit4 tests that prefer `@get:Rule` over `runTestWithMain` |
 | [`runtime-tracing`](runtime-tracing/README.md) | `:runtime-tracing` | `structured-coroutines-runtime-tracing` | KMP: JVM / desktop (JDK 11+), Android | `PerfettoTraceSink` (JVM and Android), `PerfettoTraceSession` (JVM, writes a `.perfetto-trace` file) | You want slice args and span flows in ui.perfetto.dev, on the JVM or merged with an Android system trace |
 | [`runtime-benchmark`](runtime-benchmark/README.md) | `:runtime-benchmark` | not published | JVM | Opt-in micro-benchmark of `TracingDispatcher` overhead | Measuring tracing cost; not part of `build`, `check` or CI |
 
@@ -27,11 +28,13 @@ The runtime modules are optional. The compile-time tools work without them.
 
 ```
 runtime-test ──────────┐
+runtime-test-junit4 ───┤ (via runtime-test)
 runtime-tracing ───┼──► runtime
 runtime-benchmark ─────┘
 ```
 
 - `runtime-test` and `runtime-tracing` expose `runtime` as an `api` dependency.
+- `runtime-test-junit4` exposes `runtime-test` and JUnit4 as `api` dependencies; JUnit4 never reaches `runtime-test`.
 - `runtime-benchmark` depends on `runtime` with `implementation`.
 - `runtime-tracing` uses `runtime-test` only in its own tests.
 - `runtime` never depends on the other three (it stays free of `kotlinx-coroutines-test` and
@@ -152,10 +155,11 @@ Run from the repository root; project paths do not include `coroutines-runtime`.
 |------|---------|
 | Tests (`runtime`) | `./gradlew :runtime:jvmTest :runtime:jsTest :runtime:linuxX64Test` |
 | Tests (`runtime-test`) | `./gradlew :runtime-test:jvmTest :runtime-test:jsTest :runtime-test:linuxX64Test` |
+| Tests (`runtime-test-junit4`) | `./gradlew :runtime-test-junit4:test` |
 | Tests (`runtime-tracing`) | `./gradlew :runtime-tracing:test` |
 | Compile JVM | `./gradlew :runtime:compileKotlinJvm :runtime-test:compileKotlinJvm :runtime-tracing:compileKotlin :runtime-benchmark:compileKotlin` |
-| API check | `./gradlew :runtime:apiCheck :runtime-test:apiCheck :runtime-tracing:apiCheck` |
-| API dump | `./gradlew :runtime:apiDump :runtime-test:apiDump :runtime-tracing:apiDump` |
+| API check | `./gradlew :runtime:apiCheck :runtime-test:apiCheck :runtime-test-junit4:apiCheck :runtime-tracing:apiCheck` |
+| API dump | `./gradlew :runtime:apiDump :runtime-test:apiDump :runtime-test-junit4:apiDump :runtime-tracing:apiDump` |
 | API docs | `./gradlew :runtime:dokkaGeneratePublicationHtml` |
 
 `apiCheck` is advisory in CI while `runtime` is on the experimental `0.x` line. Dump files live in

@@ -8,6 +8,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+### Added
+
+- **`runTestWithMain`** in `:runtime-test` (multiplatform): like `runTest`, but installs a test dispatcher as `Dispatchers.Main` and always resets it, including when the block throws. Defaults to a `StandardTestDispatcher` on the `TestScope`'s scheduler, so `Main` and `testDispatcherProvider()` share one virtual clock (#167).
+- **`:runtime-test-junit4`** (`io.github.santimattius:structured-coroutines-runtime-test-junit4`, JVM only): `MainCoroutinesTestRule`, a JUnit4 `TestWatcher` that sets/resets `Dispatchers.Main`. Separate artifact so `:runtime-test` keeps its no-transitive-test-libraries guarantee (#167).
+
 ### Changed
 
 - Runtime family version bumped to `0.1.0-ALPHA03` (`RUNTIME_VERSION`); install snippets in the runtime READMEs now use it.

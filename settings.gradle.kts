@@ -17,6 +17,7 @@ include(
     ":intellij-plugin",
     ":runtime",
     ":runtime-test",
+    ":runtime-test-junit4",
     ":runtime-tracing",
     ":runtime-benchmark",
     ":sample",
@@ -27,5 +28,6 @@ include(
 // (:runtime, :runtime-test, ...) and Maven coordinates.
 project(":runtime").projectDir = file("coroutines-runtime/runtime")
 project(":runtime-test").projectDir = file("coroutines-runtime/runtime-test")
+project(":runtime-test-junit4").projectDir = file("coroutines-runtime/runtime-test-junit4")
 project(":runtime-tracing").projectDir = file("coroutines-runtime/runtime-tracing")
 project(":runtime-benchmark").projectDir = file("coroutines-runtime/runtime-benchmark")
