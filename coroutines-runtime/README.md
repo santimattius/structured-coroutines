@@ -43,17 +43,17 @@ runtime-benchmark ─────┘
 ## Installation
 
 Group `io.github.santimattius`; all published runtime artifacts share the `RUNTIME_VERSION` from
-`gradle.properties` (currently `0.1.0-ALPHA03`).
+`gradle.properties` (currently `0.1.0-RC01`).
 
 ```kotlin
 // build.gradle.kts (Kotlin Multiplatform)
 kotlin {
     sourceSets {
         commonMain.dependencies {
-            implementation("io.github.santimattius:structured-coroutines-runtime:0.1.0-ALPHA03")
+            implementation("io.github.santimattius:structured-coroutines-runtime:0.1.0-RC01")
         }
         commonTest.dependencies {
-            implementation("io.github.santimattius:structured-coroutines-runtime-test:0.1.0-ALPHA03")
+            implementation("io.github.santimattius:structured-coroutines-runtime-test:0.1.0-RC01")
         }
     }
 }
@@ -62,7 +62,7 @@ kotlin {
 ```kotlin
 // build.gradle.kts (JVM / desktop tracing)
 dependencies {
-    implementation("io.github.santimattius:structured-coroutines-runtime-tracing:0.1.0-ALPHA03")
+    implementation("io.github.santimattius:structured-coroutines-runtime-tracing:0.1.0-RC01")
 }
 ```
 

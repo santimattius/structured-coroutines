@@ -15,7 +15,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ### Changed
 
-- Runtime family version bumped to `0.1.0-ALPHA03` (`RUNTIME_VERSION`); install snippets in the runtime READMEs now use it.
+- Runtime family version bumped to `0.1.0-RC01` (`RUNTIME_VERSION`); install snippets in the runtime READMEs now use it.
 
 ### Fixed
 

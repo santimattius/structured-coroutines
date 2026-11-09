@@ -7,7 +7,7 @@ when the test fails).
 
 ```kotlin
 dependencies {
-    testImplementation("io.github.santimattius:structured-coroutines-runtime-test-junit4:0.1.0-ALPHA03")
+    testImplementation("io.github.santimattius:structured-coroutines-runtime-test-junit4:0.1.0-RC01")
 }
 ```
 
