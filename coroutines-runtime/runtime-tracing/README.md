@@ -12,7 +12,7 @@ and span flows, which `android.os.Trace` cannot express. It is a separate artifa
 
 ```kotlin
 dependencies {
-    implementation("io.github.santimattius:structured-coroutines-runtime-tracing:0.1.0-ALPHA03")
+    implementation("io.github.santimattius:structured-coroutines-runtime-tracing:0.1.0-RC01")
 }
 ```
 
