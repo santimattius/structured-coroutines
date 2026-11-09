@@ -23,7 +23,7 @@ plugins {
 // same sense (compiler plugin, Gradle plugin, IDE tooling, samples). The root project has no
 // `check` lifecycle task in this build (no base/lifecycle plugin applied at root), so the BCV
 // plugin never wires apiCheck into one — apiCheck is run as a dedicated advisory CI step
-// (`:runtime:apiCheck :runtime-test:apiCheck :runtime-tracing:apiCheck` with `continue-on-error: true`, see .github/workflows/ci.yml) while
+// (`:runtime:apiCheck :runtime-test:apiCheck :runtime-test-junit4:apiCheck :runtime-tracing:apiCheck` with `continue-on-error: true`, see .github/workflows/ci.yml) while
 // :runtime is on the @ExperimentalStructuredCoroutines-gated 0.x line. Transition point
 // (design it now, implement at 1.0.0): make apiCheck blocking in CI once the experimental gate
 // is removed — no `check` lifecycle wiring is needed since this repo never runs one at root.
@@ -142,6 +142,7 @@ tasks.register("publishRuntimeToMavenCentral") {
     dependsOn(
         ":runtime:publishToMavenCentral",
         ":runtime-test:publishToMavenCentral",
+        ":runtime-test-junit4:publishToMavenCentral",
         ":runtime-tracing:publishToMavenCentral",
     )
 }

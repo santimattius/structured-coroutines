@@ -7,6 +7,7 @@ opt-in and the `RUNTIME_VERSION` line of the runtime module.
 
 # Package io.github.santimattius.structured.runtime.test
 
-A virtual-time `DispatcherProvider` (`TestDispatcherProvider`, `testDispatcherProvider`), a
+A virtual-time `DispatcherProvider` (`TestDispatcherProvider`, `testDispatcherProvider`), `runTestWithMain` (installs and always resets
+a test `Dispatchers.Main`, `StandardTestDispatcher` by default), a
 recording `TraceSink` (`RecordingSink`) and reusable contract checks for custom sinks
 (`TraceSinkContract`).

@@ -55,3 +55,9 @@ final class io.github.santimattius.structured.runtime.test/TestDispatcherProvide
 }
 
 final fun (kotlinx.coroutines.test/TestScope).io.github.santimattius.structured.runtime.test/testDispatcherProvider(kotlin/Boolean = ...): io.github.santimattius.structured.runtime/DispatcherProvider // io.github.santimattius.structured.runtime.test/testDispatcherProvider|testDispatcherProvider@kotlinx.coroutines.test.TestScope(kotlin.Boolean){}[0]
+
+// Targets: [native, wasmWasi]
+final fun io.github.santimattius.structured.runtime.test/runTestWithMain(kotlinx.coroutines.test/TestDispatcher? = ..., kotlin.coroutines/SuspendFunction1<kotlinx.coroutines.test/TestScope, kotlin/Unit>) // io.github.santimattius.structured.runtime.test/runTestWithMain|runTestWithMain(kotlinx.coroutines.test.TestDispatcher?;kotlin.coroutines.SuspendFunction1<kotlinx.coroutines.test.TestScope,kotlin.Unit>){}[0]
+
+// Targets: [js, wasmJs]
+final fun io.github.santimattius.structured.runtime.test/runTestWithMain(kotlinx.coroutines.test/TestDispatcher? = ..., kotlin.coroutines/SuspendFunction1<kotlinx.coroutines.test/TestScope, kotlin/Unit>): kotlinx.coroutines.test.internal/JsPromiseInterfaceForTesting // io.github.santimattius.structured.runtime.test/runTestWithMain|runTestWithMain(kotlinx.coroutines.test.TestDispatcher?;kotlin.coroutines.SuspendFunction1<kotlinx.coroutines.test.TestScope,kotlin.Unit>){}[0]

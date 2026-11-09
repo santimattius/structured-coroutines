@@ -1,0 +1,9 @@
+public final class io/github/santimattius/structured/runtime/test/junit4/MainCoroutinesTestRule : org/junit/rules/TestWatcher {
+	public fun <init> ()V
+	public fun <init> (Lio/github/santimattius/structured/runtime/test/TestDispatcherProvider;)V
+	public fun <init> (Lkotlinx/coroutines/test/TestCoroutineScheduler;)V
+	public fun <init> (Lkotlinx/coroutines/test/TestDispatcher;)V
+	public synthetic fun <init> (Lkotlinx/coroutines/test/TestDispatcher;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getTestDispatcher ()Lkotlinx/coroutines/test/TestDispatcher;
+}
+
