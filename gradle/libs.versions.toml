@@ -1,4 +1,6 @@
 [versions]
+# Do NOT bump without migrating :compiler. 2.4.21 breaks the FIR checker API
+# (FirSimpleFunctionChecker unresolved) and changes :runtime's binary API dump.
 kotlin = "2.4.0"
 # Test-scope-only forward-compat pin. NEVER used by production compilation or
 # any kotlin-jvm/kotlin-multiplatform plugin alias — see compiler/build.gradle.kts
@@ -8,23 +10,23 @@ kotlin = "2.4.0"
 # existing bare "kotlin" version accessor into a group (breaking every
 # `libs.versions.kotlin.get()` call site).
 forward-compat-kotlin = "2.4.20"
-detekt = "1.23.7"
-maven-publish-plugin = "0.36.0"
+detekt = "1.23.8"
+maven-publish-plugin = "0.37.0"
 lint = "31.4.0"
 junit-jupiter = "5.10.2"
 junit = "4.13.2"
-assertj = "3.25.3"
+assertj = "3.27.7"
 kotlinx-coroutines = "1.11.0"
 lifecycle-runtime-compose = "2.8.0"
 intellij-platform = "2.11.0"
 intellij-ide = "2026.1"
-binary-compatibility-validator = "0.18.1"
+binary-compatibility-validator = "0.18.2"
 agp = "9.4.1"
 # Dokka Gradle Plugin v2; applied only to :runtime (API reference on GitHub Pages).
 dokka = "2.2.0"
 # Stable androidx.tracing 2.x (Perfetto in-process tracing); used only by :runtime-tracing.
 androidx-tracing = "2.0.5"
-androidx-test-runner = "1.6.2"
+androidx-test-runner = "1.7.0"
 
 [libraries]
 # Kotlin
