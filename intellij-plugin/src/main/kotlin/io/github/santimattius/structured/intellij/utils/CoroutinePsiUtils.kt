@@ -129,7 +129,10 @@ object CoroutinePsiUtils {
     /**
      * Checks if a KtCallExpression is a framework scope call (viewModelScope, lifecycleScope, etc.).
      */
-    fun isFrameworkScopeCall(call: KtCallExpression): Boolean {
+    fun isFrameworkScopeCall(
+        call: KtCallExpression,
+        followLocalFunctions: Boolean = false,
+    ): Boolean {
         val parent = call.parent as? KtDotQualifiedExpression ?: return false
         val receiver = parent.receiverExpression
 
@@ -140,7 +143,7 @@ object CoroutinePsiUtils {
             }
             // Check if it's a local variable initialized from a framework scope function
             // e.g. val scope = rememberCoroutineScope(); scope.launch { }
-            if (isLocalVarInitializedFromFrameworkScope(receiver)) return true
+            if (isLocalVarInitializedFromFrameworkScope(receiver, followLocalFunctions)) return true
         }
 
         // Check for qualified access: this.viewModelScope.launch
@@ -166,24 +169,30 @@ object CoroutinePsiUtils {
      * Resolves a name reference to a local variable and checks whether that variable was
      * initialized by a call to a known framework scope function (e.g. rememberCoroutineScope()).
      *
-     * Traverses up through enclosing block expressions (crossing lambda boundaries) to find the
-     * property declaration, stopping at named function boundaries.
+     * Traverses enclosing blocks across lambdas and local functions to find captured properties.
+     * Stops at shadowing parameters and non-local function boundaries.
      */
-    private fun isLocalVarInitializedFromFrameworkScope(reference: KtNameReferenceExpression): Boolean {
+    private fun isLocalVarInitializedFromFrameworkScope(
+        reference: KtNameReferenceExpression,
+        followLocalFunctions: Boolean,
+    ): Boolean {
         val name = reference.getReferencedName()
         var current: com.intellij.psi.PsiElement? = reference.parent
         while (current != null) {
             if (current is KtBlockExpression) {
-                val property = current.statements
-                    .filterIsInstance<KtProperty>()
-                    .find { it.name == name }
+                val property =
+                    current.statements
+                        .filterIsInstance<KtProperty>()
+                        .find { it.name == name }
                 if (property != null) {
                     val initializer = property.initializer as? KtCallExpression ?: return false
                     return initializer.calleeExpression?.text in FRAMEWORK_SCOPE_FUNCTIONS
                 }
             }
-            // Stop at named function boundary — do not look in outer functions
-            if (current is KtNamedFunction) break
+            if (current is KtNamedFunction) {
+                if (current.valueParameters.any { it.name == name }) return false
+                if (!followLocalFunctions || !current.isLocal) break
+            }
             current = current.parent
         }
         return false

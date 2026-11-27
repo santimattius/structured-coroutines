@@ -152,6 +152,95 @@ class UnstructuredLaunchDetectorTest {
     }
 
     @Test
+    fun `does not flag remembered scope captured by nested local functions`() {
+        checkLocalCapture(
+            """
+            fun report() {
+                fun show() {
+                    scope.launch { println("message") }
+                    scope.async { "message" }
+                }
+                show()
+            }
+            return { report() }
+        """,
+            0,
+        )
+    }
+
+    @Test
+    fun `reports local function parameter shadowing remembered scope`() {
+        checkLocalCapture(
+            """
+            fun report(scope: CoroutineScope) {
+                scope.launch { println("message") }
+                scope.async { "message" }
+            }
+            return { report(other) }
+        """,
+            2,
+        )
+    }
+
+    @Test
+    fun `reports local property shadowing remembered scope`() {
+        checkLocalCapture(
+            """
+            fun report() {
+                val scope = other
+                scope.launch { println("message") }
+                scope.async { "message" }
+            }
+            return { report() }
+        """,
+            2,
+        )
+    }
+
+    @Test
+    fun `suppresses shadowed scope launches on local function`() {
+        checkLocalCapture(
+            """
+            @Suppress("UnstructuredLaunch")
+            fun report(scope: CoroutineScope) {
+                scope.launch { println("message") }
+                scope.async { "message" }
+            }
+            return { report(other) }
+            """,
+            0,
+        )
+    }
+
+    private fun checkLocalCapture(
+        body: String,
+        errors: Int,
+    ) {
+        val code =
+            """
+            package test
+            import androidx.compose.runtime.rememberCoroutineScope
+            import kotlinx.coroutines.*
+
+            fun rememberAction(other: CoroutineScope): () -> Unit {
+                val scope = rememberCoroutineScope()
+                ${body.trimIndent()}
+            }
+            """.trimIndent()
+        val result =
+            TestLintTask
+                .lint()
+                .files(
+                    *LintTestStubs.coroutinesOnly().toTypedArray(),
+                    TestFiles.kotlin(LintTestStubs.composeRuntime).indented(),
+                    TestFiles.kotlin(code).indented(),
+                ).issues(UnstructuredLaunchDetector.ISSUE)
+                .allowMissingSdk()
+                .run()
+        if (errors == 0) result.expectClean() else result.expectErrorCount(errors)
+    }
+
+    @Test
     fun `does not flag coroutineScope builder`() {
         // launch without an explicit receiver inside coroutineScope { } cannot be resolved
         // by Lint without the full kotlinx-coroutines classpath; allowCompilationErrors()

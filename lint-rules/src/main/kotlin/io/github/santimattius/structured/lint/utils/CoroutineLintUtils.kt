@@ -83,7 +83,10 @@ object CoroutineLintUtils {
     /**
      * Checks if a UCallExpression is a framework scope call (viewModelScope, lifecycleScope, etc.).
      */
-    fun isFrameworkScopeCall(call: UCallExpression): Boolean {
+    fun isFrameworkScopeCall(
+        call: UCallExpression,
+        followLocalFunctions: Boolean = false,
+    ): Boolean {
         // Unwrap parenthesized expressions first.
         // Lint's TestMode.PARENTHESIZED wraps receivers in UParenthesizedExpression, e.g.
         // `scope.launch` → `(scope).launch`. skipParenthesizedExprDown unwraps these so
@@ -123,7 +126,7 @@ object CoroutineLintUtils {
             if (receiverPsi.calleeExpression?.text in FRAMEWORK_SCOPE_FUNCTIONS) return true
         }
         if (receiverPsi is KtNameReferenceExpression) {
-            if (isLocalVarInitializedFromFrameworkScope(receiverPsi)) return true
+            if (isLocalVarInitializedFromFrameworkScope(receiverPsi, followLocalFunctions)) return true
         }
 
         return false
@@ -132,10 +135,13 @@ object CoroutineLintUtils {
     /**
      * Uses Kotlin PSI to trace a name reference back to its local variable declaration and
      * checks if the initializer is a call to a known framework scope function
-     * (e.g. rememberCoroutineScope()). Traverses up through block expressions (crossing
-     * lambda boundaries) but stops at named function boundaries.
+     * (e.g. rememberCoroutineScope()). Traverses blocks across lambdas and local functions,
+     * stopping at shadowing parameters and non-local function boundaries.
      */
-    private fun isLocalVarInitializedFromFrameworkScope(reference: KtNameReferenceExpression): Boolean {
+    private fun isLocalVarInitializedFromFrameworkScope(
+        reference: KtNameReferenceExpression,
+        followLocalFunctions: Boolean,
+    ): Boolean {
         val name = reference.getReferencedName()
         var current: PsiElement? = reference.parent
         while (current != null) {
@@ -150,8 +156,10 @@ object CoroutineLintUtils {
                     return initializer.calleeExpression?.text in FRAMEWORK_SCOPE_FUNCTIONS
                 }
             }
-            // Stop at named function boundary — do not look in outer functions
-            if (current is KtNamedFunction) break
+            if (current is KtNamedFunction) {
+                if (current.valueParameters.any { it.name == name }) return false
+                if (!followLocalFunctions || !current.isLocal) break
+            }
             current = current.parent
         }
         return false

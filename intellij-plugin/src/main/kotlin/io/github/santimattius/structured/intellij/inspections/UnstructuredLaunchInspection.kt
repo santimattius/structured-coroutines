@@ -61,7 +61,7 @@ class UnstructuredLaunchInspection : CoroutineInspectionBase() {
                 if (CoroutinePsiUtils.isGlobalScopeCall(expression)) return
 
                 // Skip if it's a framework scope call
-                if (CoroutinePsiUtils.isFrameworkScopeCall(expression)) return
+                if (CoroutinePsiUtils.isFrameworkScopeCall(expression, followLocalFunctions = true)) return
 
                 // Skip if it's an inline CoroutineScope (handled by InlineCoroutineScopeInspection)
                 if (CoroutinePsiUtils.isInlineCoroutineScopeCreation(expression)) return
