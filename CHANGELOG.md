@@ -19,6 +19,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ### Fixed
 
+- **SCOPE_003 (planned IntelliJ 1.2.3 and Android Lint/toolkit 1.2.2)** — Recognize `rememberCoroutineScope()` captured by local functions without ignoring shadowing, and honor local-function `@Suppress`.
 - **`AndroidTraceSink` span slices truncated under concurrency**: the async slice `span:<name>` could receive `begin`/`end` out of order when segments of one span started and finished on several threads, which made Perfetto show only the first fraction of the span (observed on an Android 15 emulator: ~110 ms of a 1.3 s span). The span transition and its trace call are now one atomic operation, so `begin`/`end` strictly alternate. Covered by a multi-threaded regression test.
 
 ### Changed

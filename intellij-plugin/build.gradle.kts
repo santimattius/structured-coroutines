@@ -13,11 +13,13 @@ import org.gradle.jvm.toolchain.JavaToolchainService
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
-    id("org.jetbrains.intellij.platform") version libs.versions.intellij.platform.get()
+    id("org.jetbrains.intellij.platform") version
+        libs.versions.intellij.platform
+            .get()
 }
 
 group = "io.github.santimattius"
-version = "1.2.2"
+version = "1.2.3"
 
 repositories {
     mavenCentral()
@@ -28,7 +30,10 @@ repositories {
 
 dependencies {
     intellijPlatform {
-        intellijIdeaUltimate(libs.versions.intellij.ide.get())
+        intellijIdeaUltimate(
+            libs.versions.intellij.ide
+                .get(),
+        )
         bundledPlugin("org.jetbrains.kotlin")
         bundledPlugin("com.intellij.java")
         pluginVerifier()
@@ -66,7 +71,8 @@ intellijPlatform {
         id = "io.github.santimattius.structured-coroutines"
         name = "Structured Coroutines"
         version = project.version.toString()
-        description = """
+        description =
+            """
             <p>Enforces structured concurrency best practices for Kotlin Coroutines.</p>
             <p>Features:</p>
             <ul>
@@ -75,8 +81,13 @@ intellijPlatform {
                 <li>Intentions for code refactoring</li>
                 <li>Gutter icons for scope and dispatcher visualization</li>
             </ul>
-        """.trimIndent()
-        changeNotes = """
+            """.trimIndent()
+        changeNotes =
+            """
+            <p><b>v1.2.3</b></p>
+            <ul>
+                <li><b>SCOPE_003 false-positive fix</b> — Recognizes <code>rememberCoroutineScope()</code> captured by local functions while preserving shadowing behavior.</li>
+            </ul>
             <p><b>v1.2.2</b></p>
             <ul>
                 <li><b>IDE compatibility extended</b> — Now compatible with IntelliJ Platform build 263.* (raised <code>untilBuild</code> from <code>262.*</code> to <code>263.*</code>)</li>
@@ -187,7 +198,7 @@ intellijPlatform {
                 <li>Structured Coroutines tool window</li>
                 <li>Full K2 compiler mode support</li>
             </ul>
-        """.trimIndent()
+            """.trimIndent()
         ideaVersion {
             sinceBuild = "243"
             untilBuild = "263.*"
@@ -206,8 +217,11 @@ intellijPlatform {
     }
 
     publishing {
-        token.set(providers.gradleProperty("marketplaceToken")
-            .orElse(providers.environmentVariable("JB_MARKETPLACE_TOKEN")))
+        token.set(
+            providers
+                .gradleProperty("marketplaceToken")
+                .orElse(providers.environmentVariable("JB_MARKETPLACE_TOKEN")),
+        )
         channels.set(listOf("default"))
     }
 }

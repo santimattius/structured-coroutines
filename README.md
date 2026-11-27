@@ -117,7 +117,7 @@ Per-module rule lists and configuration examples: [detekt-rules](detekt-rules/RE
 
 ## 📦 Installation
 
-> **Release:** `1.2.1` fixes Detekt false positives in `CANCEL_001`, `CANCEL_003`, `RUNBLOCK_001` and `SCOPE_002`/`SCOPE_003` (#155). `1.2.0` added `EXCEPT_004` (`MisplacedTryCatchInScope`) and real `"disabled"`/`"error"`/`"warning"` severity handling. See the [CHANGELOG](CHANGELOG.md).
+> **Next release:** Toolkit `1.2.2` and IntelliJ `1.2.3` fix SCOPE_003 recognition of `rememberCoroutineScope()` captured by local functions. These versions are planned, not yet published. See the [CHANGELOG](CHANGELOG.md).
 
 ### Release trains
 
@@ -148,11 +148,11 @@ pluginManagement {
 // build.gradle.kts
 plugins {
     kotlin("jvm") version "2.3.0"
-    id("io.github.santimattius.structured-coroutines") version "1.2.1"
+    id("io.github.santimattius.structured-coroutines") version "1.2.2"
 }
 
 dependencies {
-    implementation("io.github.santimattius:structured-coroutines-annotations:1.2.1")
+    implementation("io.github.santimattius:structured-coroutines-annotations:1.2.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
 }
 ```
@@ -166,7 +166,7 @@ plugins {
 }
 
 dependencies {
-    detektPlugins("io.github.santimattius:structured-coroutines-detekt-rules:1.2.1")
+    detektPlugins("io.github.santimattius:structured-coroutines-detekt-rules:1.2.2")
 }
 ```
 
@@ -175,7 +175,7 @@ dependencies {
 ```kotlin
 // build.gradle.kts (Android project)
 dependencies {
-    lintChecks("io.github.santimattius:structured-coroutines-lint-rules:1.2.1")
+    lintChecks("io.github.santimattius:structured-coroutines-lint-rules:1.2.2")
 }
 ```
 
@@ -222,7 +222,7 @@ Or install manually:
 ```kotlin
 plugins {
     kotlin("multiplatform") version "2.3.0"
-    id("io.github.santimattius.structured-coroutines") version "1.2.1"
+    id("io.github.santimattius.structured-coroutines") version "1.2.2"
 }
 
 kotlin {
@@ -234,7 +234,7 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
-                implementation("io.github.santimattius:structured-coroutines-annotations:1.2.1")
+                implementation("io.github.santimattius:structured-coroutines-annotations:1.2.2")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
             }
         }

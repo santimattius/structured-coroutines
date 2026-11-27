@@ -84,31 +84,33 @@ class UnstructuredLaunchDetector : Detector(), SourceCodeScanner {
     override fun visitMethodCall(
         context: JavaContext,
         node: UCallExpression,
-        method: com.intellij.psi.PsiMethod
+        method: com.intellij.psi.PsiMethod,
     ) {
         // Skip if already caught by other detectors
         if (CoroutineLintUtils.isGlobalScopeCall(node)) return
         if (CoroutineLintUtils.isInlineCoroutineScopeCreation(node)) return
-        if (CoroutineLintUtils.isFrameworkScopeCall(node)) return
-        
+        if (CoroutineLintUtils.isFrameworkScopeCall(node, followLocalFunctions = true)) return
+
         // Check if this is inside a structured builder (coroutineScope, supervisorScope)
         if (isInsideStructuredBuilder(node)) return
-        
+
         // Check if the receiver is annotated with @StructuredScope
         val receiver = node.receiver
         if (receiver != null && isStructuredScope(receiver)) {
             return
         }
-        
+
         // If we get here, it's an unstructured launch
-        context.report(
-            ISSUE,
-            node,
-            context.getLocation(node),
-            "Unstructured coroutine launch. Use framework scopes (viewModelScope, lifecycleScope), structured builders (coroutineScope { }), or annotate the scope with @StructuredScope"
-        )
+        val message = "Unstructured coroutine launch. Use framework scopes (viewModelScope, lifecycleScope), structured builders (coroutineScope { }), or annotate the scope with @StructuredScope"
+        // PSI ancestry includes annotations on local functions that UAST may omit.
+        val source = node.sourcePsi
+        if (source != null) {
+            context.report(ISSUE, source, context.getLocation(node), message)
+        } else {
+            context.report(ISSUE, node, context.getLocation(node), message)
+        }
     }
-    
+
     /**
      * Checks if the call is inside a structured builder (coroutineScope, supervisorScope).
      */
